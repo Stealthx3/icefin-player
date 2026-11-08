@@ -4,6 +4,7 @@
 #   Upstream file = a file that exists in BASE_REF (default icefin/base, else origin/icefin/base).
 #   Rule: every line Icefin adds to an upstream file carries "ICEFIN-HOOK: <reason>", or sits directly
 #   below an added comment line that does (for formats without trailing comments, e.g. .gitignore, JSON-free text).
+#   Exempt: README.md, which Icefin replaces wholesale on purpose (upstream is credited inside it).
 #   Exit 1 if any added line is unmarked. Prints totals; --summary appends a Markdown table (CI step summary).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -15,7 +16,7 @@ if [ -z "$base" ]; then
 fi
 [ -n "$base" ] || { echo "hook-count: no base ref (fetch icefin/base)" >&2; exit 2; }
 
-git diff -U0 --no-color --diff-filter=M "$base" HEAD | awk -v base="$base" -v summary="$summary" '
+git diff -U0 --no-color --diff-filter=M "$base" HEAD -- . ":(exclude)README.md" | awk -v base="$base" -v summary="$summary" '
   /^\+\+\+ b\// { file = substr($0, 7); prevmark = 0; next }
   /^--- / { next }
   /^@@/ { prevmark = 0; next }
