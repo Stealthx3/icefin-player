@@ -22,7 +22,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak
 - [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
 - [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
-- [ ] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure; Steam Input virtual pad visibility
+- [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
 - [ ] **2.8** Spike: NVIDIA Vulkan HDR on Wayland
 - [ ] **2.9** Write go/no-go per spike in `docs/SPIKES.md`; a no-go on 2.1–2.3 switches the plan to the two-window contingency
 
@@ -65,7 +65,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **7.1** SDL3 `GamepadService` replacing `InputSDL` (build flag), hotplug, multiple pads, battery [Controller support]
 - [ ] **7.2** Standard action map, per-controller remapping, Nintendo layout option
 - [ ] **7.3** Glyph-family detection and button-prompt tokens
-- [ ] **7.4** Steam Input handling, recommended Steam layout, duplicate-input guard (Steam desktop layout only)
+- [ ] **7.4** Steam Input handling, recommended Steam layout, duplicate-input guard (Steam desktop layout only); verify Steam Input's virtual pad visibility (from spike 2.7)
 - [ ] **7.5** Hide `navigator.getGamepads` from the page; Controllers settings page
 - [ ] **7.6** Controller run of all screens inside and outside Steam
 
