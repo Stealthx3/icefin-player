@@ -154,3 +154,19 @@ Leave the user's uncommitted `docs/github/README.md` and their `scripts/bootstra
 2. `scripts/lab.sh run true` still syncs, and `node scripts/progress.mjs` writes both the page and the bar; republish the progress artifact.
 3. `git ls-remote origin` shows only `main` and `upstream/master` as branches, and the `archive/*` and `upstream/v2.0.0` tags.
 4. Add a journal line, then wait for the user to say continue.
+
+### Done by Claude Code (2026-11-08)
+- Step 0 skipped (PR #1 already merged as `01fea99`). Steps 1–5 ran without errors, in order:
+  - archive tags `archive/layer-{base,infra,brand,flatpak,audio,gpu,render,hdr,input,theme}` and `upstream/v2.0.0` created from `origin/icefin/*` and pushed before any delete;
+  - `icefin/main` renamed to `main`, which is now the default branch;
+  - deleted `icefin/{base,infra,brand,flatpak,audio,gpu,render,hdr,input,theme}`, `test-push-probe` and `chore/repo-restructure`;
+  - protection on `main`: required checks `hooks` and `flatpak` (names confirmed from PR #1's runs), 0 approvals, `enforce_admins` false, no force pushes or deletions;
+  - repo settings, description, eight topics, private vulnerability reporting on.
+- Local reset done in the only clone (`/mnt/FileDrive/Personal/Projects/Git/icefin-player`; the lab guests get rsync copies without `.git`). Upstream tags now fetch as `upstream/v*`.
+  - The user's edited `scripts/bootstrap-fork.sh` blocked the switch, since `main` deletes that file. The edits were stashed (`stash@{0}`) and the identical file put back as untracked. `docs/github/README.md` was untouched. Both are superseded.
+- Verified:
+  - `hook-count.sh` OK on `main`; `icefin-hooks` green on `main`;
+  - `lab.sh run true` syncs;
+  - `progress.mjs` writes the page and the bar, and the progress artifact is republished;
+  - `git ls-remote origin` lists only `main` and `upstream/master` as branches (plus GitHub's own `refs/pull/1/head`), with the 11 tags.
+- Stale names: only history remains (SPEC's superseded branch-model block, PLAN 1.1/1.2 wording, dated log entries). Live references fixed in the hand-back PR.

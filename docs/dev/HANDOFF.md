@@ -1,6 +1,6 @@
 # Handoff to Claude Code
 
-> **2026-11-08: GitHub restructuring done (D17).** Run the admin steps in `docs/dev/GITHUB-RESTRUCTURE.md` → *Result*, then wait for the user to say continue. From now on all work goes through pull requests into `main` (`docs/BRANCHING.md`). The first-session list below is history.
+> **2026-11-08: GitHub restructuring done (D17), admin steps done by Claude Code the same day** (`docs/dev/GITHUB-RESTRUCTURE.md` → *Result*). Wait for the user to say continue; next up is PLAN 1.10, then the HTPC tasks. From now on all work goes through pull requests into `main` (`docs/BRANCHING.md`). The first-session list below is history.
 
 **State (2026-11-07):** planning is complete; no code exists yet. This folder holds the plan, spec, decisions, standards and a bootstrap script. Next is Phase 1 in `docs/PLAN.md`.
 
