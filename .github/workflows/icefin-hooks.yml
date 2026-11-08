@@ -1,0 +1,23 @@
+# Icefin: count ICEFIN-HOOK lines in upstream files and fail on unmarked edits (PLAN 1.4).
+name: icefin-hooks
+
+on:
+  push:
+    branches: ["icefin/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch icefin/base
+        run: git fetch --quiet origin icefin/base:refs/remotes/origin/icefin/base
+      - name: Count and check hooks
+        run: scripts/icefin/hook-count.sh origin/icefin/base --summary "$GITHUB_STEP_SUMMARY"

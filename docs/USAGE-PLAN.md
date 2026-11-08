@@ -38,7 +38,7 @@ No more than 3 parallel agents per step. Parallel implementers are allowed only 
 | progress.mjs | scripts/progress.mjs | shared (verbatim) | hand-written progress page |
 | phone-alerts.mjs | scripts/phone-alerts.mjs | shared (verbatim) | — |
 | postmortem.mjs | scripts/postmortem.mjs | shared (verbatim, added at project end) | — |
-| hook-count | scripts/icefin/hook-count.sh (task 1.4) | project | counting/auditing `ICEFIN-HOOK` lines by hand |
+| hook-count | scripts/icefin/hook-count.sh | project | counting/auditing `ICEFIN-HOOK` lines by hand |
 | theme-lint | scripts/icefin/theme-lint (Phase 8) | project | checking engine code for theme ids by eye |
 | provision.sh | scripts/provision.sh | project | re-deriving guest packages |
 | restack.sh | scripts/icefin/restack.sh | project | hand-rebasing the feature stack |

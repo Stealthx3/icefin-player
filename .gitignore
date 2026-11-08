@@ -30,4 +30,5 @@ debian/debhelper-build-stamp
 dist.zip
 obj-x86_64-linux-gnu/
 deployment/dist
+# ICEFIN-HOOK: phone-alerts private config (PHONE-ALERTS-STANDARD)
 .claude/phone-alerts.local.json
