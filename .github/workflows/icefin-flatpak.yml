@@ -1,0 +1,32 @@
+# Icefin: build the Flatpak, run unit tests inside the build sandbox, upload a bundle per commit (PLAN 1.5).
+name: icefin-flatpak
+
+on:
+  push:
+    branches: ["icefin/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flatpak-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flatpak:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
+        with:
+          manifest-path: flatpak/io.github.stealthx3.IcefinPlayer.yml
+          bundle: icefin-player-${{ github.sha }}.flatpak
+          run-tests: true
+          cache-key: flatpak-builder-${{ hashFiles('flatpak/*.yml') }}

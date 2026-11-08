@@ -15,6 +15,6 @@ sudo apt-get install -y -qq --no-install-recommends \
   qml6-module-qtwebengine qml6-module-qtwebengine-controlsdelegates qml6-module-qtwebview \
   xvfb xauth shellcheck
 # Flatpak packaging (task 1.5) and containerized Jellyfin servers (task 1.7)
-sudo apt-get install -y -qq --no-install-recommends flatpak flatpak-builder appstream podman uidmap slirp4netns
+sudo apt-get install -y -qq --no-install-recommends flatpak flatpak-builder elfutils appstream librsvg2-common podman uidmap slirp4netns
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 echo "provision: OK ($(qmake6 -query QT_VERSION 2>/dev/null || echo 'qt?'), mpv $(pkg-config --modversion mpv), flatpak $(flatpak --version | cut -d' ' -f2))"
