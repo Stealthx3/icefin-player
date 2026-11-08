@@ -5,7 +5,7 @@ Design detail for every task is in `docs/SPEC.md` (section names in brackets). E
 developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the two-window contingency.
 
 ## Phase 1 — Fork setup and baseline (2 wks)
-- [ ] **1.1** Bring upstream jellyfin-desktop `v2.0.0` into this repo with `scripts/bootstrap-fork.sh` (keeps Icefin docs; sets up `upstream` remote and `icefin/base` tag)
+- [x] **1.1** Bring upstream jellyfin-desktop `v2.0.0` into this repo with `scripts/bootstrap-fork.sh` (keeps Icefin docs; sets up `upstream` remote and `icefin/base` tag)
 - [ ] **1.2** Create the feature-branch stack `brand, flatpak, audio, gpu, render, hdr, input, theme` and the nightly rebase-canary CI job [Fork, branding and upstream sync]
 - [ ] **1.3** Branding: binary/package `icefin-player`, display name Icefin Player, app ID, data/cache/log paths, `appName` in `nativeshell.js`, About page with upstream base version
 - [ ] **1.4** Add the `ICEFIN-HOOK` marker convention and a CI check that counts hook lines in upstream files

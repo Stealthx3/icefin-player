@@ -1,0 +1,14 @@
+{
+  "pageTitle": "Icefin Player Progress",
+  "eyebrow": "icefin-player · jellyfin-desktop v2.0.0 fork",
+  "heading": "Icefin Player 1.0 progress",
+  "plan": "docs/PLAN.md",
+  "out": "docs/progress/index.html",
+  "timezone": "America/Los_Angeles",
+  "artifactUrl": "https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU",
+  "theme": {
+    "light": { "bg": "#f2f5f7", "surface": "#fcfdfe", "line": "#d3dde4", "brand": "#0b5f8a", "brand-soft": "#d6e3ec" },
+    "dark":  { "bg": "#11161a", "surface": "#1a2127", "line": "#2e3a43", "brand": "#6cb6e4", "brand-soft": "#24384a" }
+  },
+  "fonts": { }
+}
