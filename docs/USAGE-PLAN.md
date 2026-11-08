@@ -41,8 +41,9 @@ No more than 3 parallel agents per step. Parallel implementers are allowed only 
 | hook-count | scripts/icefin/hook-count.sh (task 1.4) | project | counting/auditing `ICEFIN-HOOK` lines by hand |
 | theme-lint | scripts/icefin/theme-lint (Phase 8) | project | checking engine code for theme ids by eye |
 | provision.sh | scripts/provision.sh | project | re-deriving guest packages |
+| restack.sh | scripts/icefin/restack.sh | project | hand-rebasing the feature stack |
 
-Watch list for future tools: rebasing the branch stack onto `icefin/main` (likely `scripts/icefin/restack.sh`), summarizing Flatpak build logs, and diffing jellyfin-web device profiles.
+Watch list for future tools: summarizing Flatpak build logs, and diffing jellyfin-web device profiles.
 
 ## Pacing (D)
 | Session | Covers | Size | Checkpoint |
@@ -64,6 +65,7 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 
 ## Log
 - 2026-11-07: plan created.
+- 2026-11-07: restack.sh written (task 1.2); the stack gained an `icefin/infra` bottom layer.
 
 ## Handoff
 - Done: bootstrap verified, planning committed (`8f66118`), public repo Stealthx3/icefin-player as `origin`, D13 app ID, D14 repo.
