@@ -25,6 +25,7 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
 ## Commands
 - Build: `scripts/lab.sh run 'cmake -S . -B ~/build -G Ninja -DUSE_STATIC_MPVQT=ON && ninja -C ~/build 2>&1 | tail -n 50'` (build dir stays outside the synced tree)
 - Test:  `scripts/lab.sh run '<cmd> 2>&1 | tail -n 50'`
+- Flatpak: `scripts/lab.sh run 'flatpak-builder --user --install-deps-from=flathub --force-clean --state-dir=$HOME/fp-state --repo=$HOME/fp-repo $HOME/fp-build flatpak/io.github.stealthx3.IcefinPlayer.yml'` (state outside the synced tree)
 - Watch: `scripts/lab.sh view`
 
 ## Host exceptions
@@ -32,3 +33,4 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
 
 ## Log
 - 2026-11-07: lab designed; main guest created from lab-base-debian13.
+- 2026-11-07: provision.sh gains elfutils (eu-strip) and librsvg2-common (flatpak-builder runs appstreamcli compose on the build host and must load the SVG icon).
