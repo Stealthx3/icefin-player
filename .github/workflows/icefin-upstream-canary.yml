@@ -1,0 +1,51 @@
+# Icefin: daily upstream canary (docs/BRANCHING.md).
+# Test-merges upstream master into main in a throwaway branch and reports conflicts. Nothing is pushed;
+# a red run means upstream drift needs attention before the next upstream merge.
+name: icefin-upstream-canary
+
+on:
+  schedule:
+    - cron: "17 9 * * *"   # daily 09:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/jellyfin/jellyfin-desktop.git
+          git fetch --quiet --no-tags upstream master
+      - name: Test-merge upstream/master into main
+        run: |
+          git config user.name canary && git config user.email canary@invalid
+          base=$(git merge-base HEAD upstream/master)
+          behind=$(git rev-list --count "$base"..upstream/master)
+          ours=$(git rev-list --count "$base"..HEAD)
+          {
+            echo "## Upstream canary"
+            echo "- upstream master: \`$(git rev-parse --short upstream/master)\`, $behind commits not yet merged"
+            echo "- Icefin: $ours commits since the merged upstream base \`$(git rev-parse --short "$base")\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          git switch -q -c canary
+          if git merge --no-commit --no-ff upstream/master >/tmp/merge.log 2>&1; then
+            echo "- result: **clean** (upstream master merges without conflicts)" >> "$GITHUB_STEP_SUMMARY"
+            git merge --abort 2>/dev/null || true
+          else
+            {
+              echo "- result: **conflict**"
+              echo '```'
+              git diff --name-only --diff-filter=U
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            git merge --abort
+            echo "::error::upstream master conflicts with main"
+            exit 1
+          fi

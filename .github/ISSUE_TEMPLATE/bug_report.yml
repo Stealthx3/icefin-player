@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in Icefin Player doesn't work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. If the same problem happens in the official Jellyfin web client or Jellyfin Desktop, it probably belongs with the Jellyfin project instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. …\n2. …"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Icefin version or commit
+      description: Settings → About shows both the Icefin version and the upstream base.
+    validations:
+      required: true
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session
+      options:
+        - KDE Plasma (Wayland)
+        - GNOME (Wayland)
+        - Gamescope / Steam Deck Game Mode
+        - Other Wayland compositor
+        - X11 (not supported)
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: GPU, driver and distro
+      placeholder: "e.g. AMD RX 6700 XT, Mesa 25.2, Fedora 43"
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Playback / video
+        - HDR
+        - Audio / passthrough
+        - Controllers / remotes
+        - Themes
+        - Server plugins
+        - Flatpak / install
+        - Other
+  - type: input
+    id: server
+    attributes:
+      label: Jellyfin server version
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Use Settings → Copy logs, which redacts tokens. Paste here or attach a file.
+      render: text

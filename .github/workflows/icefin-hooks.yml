@@ -3,7 +3,7 @@ name: icefin-hooks
 
 on:
   push:
-    branches: ["icefin/main"]   # the stack tip; layers share commits, so building each would duplicate work
+    branches: ["main"]
   pull_request:
   workflow_dispatch:
 
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Fetch icefin/base
-        run: git fetch --quiet origin icefin/base:refs/remotes/origin/icefin/base
+      - name: Fetch the upstream mirror
+        run: git fetch --quiet origin upstream/master:refs/remotes/origin/upstream/master
       - name: Count and check hooks
-        run: scripts/icefin/hook-count.sh origin/icefin/base --summary "$GITHUB_STEP_SUMMARY"
+        run: scripts/icefin/hook-count.sh --summary "$GITHUB_STEP_SUMMARY"

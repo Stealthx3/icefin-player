@@ -41,7 +41,6 @@ No more than 3 parallel agents per step. Parallel implementers are allowed only 
 | hook-count | scripts/icefin/hook-count.sh | project | counting/auditing `ICEFIN-HOOK` lines by hand |
 | theme-lint | scripts/icefin/theme-lint (Phase 8) | project | checking engine code for theme ids by eye |
 | provision.sh | scripts/provision.sh | project | re-deriving guest packages |
-| restack.sh | scripts/icefin/restack.sh | project | hand-rebasing the feature stack |
 
 Watch list for future tools: summarizing Flatpak build logs, and diffing jellyfin-web device profiles.
 
@@ -58,14 +57,15 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 ## Context (E)
 - Never read by default: `external/` (mpvqt), `resources/`, `bundle/`, `deployment/`, `debian/`, `pdf/`,
   `build*/`, `dependencies/`, `web-client/`, `.flatpak-builder/`, the Windows/macOS-only scripts in `scripts/`.
-- On demand only: `docs/SPEC.md`, one section at a time (the section a task names); `ai-assets/*` (read the
+- On demand only: `docs/SPEC.md`, one section at a time (the section a task names); `docs/standards/*` (read the
   standard only when its process runs).
-- Locate upstream code with grep before reading it; the key files are listed in `docs/HANDOFF.md` → Verified facts.
+- Locate upstream code with grep before reading it; the key files are listed in `docs/dev/HANDOFF.md` → Verified facts.
 - CLAUDE.md line budget: 60.
 
 ## Log
 - 2026-11-07: plan created.
 - 2026-11-07: restack.sh written (task 1.2); the stack gained an `icefin/infra` bottom layer.
+- 2026-11-08: stacked branches retired for trunk-based `main` (D17); restack.sh removed. Progress script also writes the README bar (`docs/progress/progress-bar.svg`).
 
 ## Handoff
 - 2026-11-07 (S2b): Phase 1 done except 1.9 (hardware lab, needs passthrough OK). Spikes 2.1, 2.2, 2.3, 2.7 done (docs/SPIKES.md); 2.4, 2.5, 2.6, 2.8 need hardware; 2.9 waits on them. Stack tip `icefin/main` = `icefin/theme`; lower layers frozen until a force push is approved (BRANCHES.md).

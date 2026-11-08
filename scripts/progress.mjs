@@ -184,4 +184,33 @@ footer { margin-top: 28px; font: 12px var(--mono); color: var(--muted); }
 `;
 mkdirSync(dirname(outFile), { recursive: true });
 writeFileSync(outFile, html);
+
+// ---------- optional compact SVG bar (README badge) ----------
+// Enabled by "badge": "<path>" in the config. One bar, one tick per phase, light and dark via prefers-color-scheme.
+if (C.badge) {
+  const W = 820, H = 76, bx = 16, bw = W - 32, by = 40, bh = 14;
+  const L = C.theme.light, D = C.theme.dark;
+  const fill = r2((doneN / total) * bw);
+  const ticks = live.slice(1).map((p) => `<rect class="tick" x="${r2(bx + (p.at / 100) * bw - 0.75)}" y="${by}" width="1.5" height="${bh}"/>`).join("");
+  const phaseTxt = active ? `Phase ${active.n} of ${live.length}: ${trunc(plain(active.title).replace(/\s*\([^)]*\)\s*$/, ""), 44)}` : "All phases complete";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(C.heading)}: ${pctShown}% (${doneN} of ${total} tasks)">
+<title>${esc(C.heading)}: ${pctShown}%</title>
+<style>
+  .bg{fill:${L.surface};stroke:${L.line}} .fg{fill:${L.fg}} .mu{fill:${L.muted}} .track{fill:${L["brand-soft"]}} .done{fill:${L.brand}} .tick{fill:${L.surface};opacity:.9}
+  @media (prefers-color-scheme: dark){ .bg{fill:${D.surface};stroke:${D.line}} .fg{fill:${D.fg}} .mu{fill:${D.muted}} .track{fill:${D["brand-soft"]}} .done{fill:${D.brand}} .tick{fill:${D.surface}} }
+  text{font-family:-apple-system,"Segoe UI",system-ui,"Noto Sans","DejaVu Sans",sans-serif}
+</style>
+<rect class="bg" x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="10"/>
+<text class="fg" x="${bx}" y="27" font-size="15" font-weight="700">${esc(C.heading)} <tspan class="mu" font-weight="400">· ${esc(phaseTxt)}</tspan></text>
+<text class="fg" x="${W - bx}" y="27" font-size="15" font-weight="700" text-anchor="end">${pctShown}% <tspan class="mu" font-weight="400">· ${doneN}/${total} tasks</tspan></text>
+<rect class="track" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${bh / 2}"/>
+<clipPath id="c"><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${bh / 2}"/></clipPath>
+<g clip-path="url(#c)"><rect class="done" x="${bx}" y="${by}" width="${fill}" height="${bh}"/>${ticks}</g>
+<text class="mu" x="${bx}" y="${H - 6}" font-size="11">Updated ${esc(stamp)} · ${live.length} phases · click for the full tracker</text>
+</svg>
+`;
+  const badgeFile = resolve(base, C.badge);
+  mkdirSync(dirname(badgeFile), { recursive: true });
+  writeFileSync(badgeFile, svg);
+}
 console.log(`progress: ${doneN}/${total} (${pctShown}%) · phase ${active ? active.n : "all done"} · next ${next ? next.id : "—"} → ${outFile}`);

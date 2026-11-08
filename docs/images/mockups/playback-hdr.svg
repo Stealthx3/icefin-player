@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Mock-up: HDR playback with on-screen controls, a plugin skip button and audio passthrough status">
+<title>Icefin Player mock-up: HDR playback with passthrough</title>
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2b5c"/><stop offset=".45" stop-color="#d0566a"/><stop offset=".7" stop-color="#ffb35c"/><stop offset="1" stop-color="#ffd98a"/></linearGradient>
+  <radialGradient id="sun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fffbe8"/><stop offset=".4" stop-color="#ffe9a8"/><stop offset="1" stop-color="#ffcf70" stop-opacity="0"/></radialGradient>
+  <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e98a5a"/><stop offset="1" stop-color="#1a1f3d"/></linearGradient>
+  <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".85"/></linearGradient>
+  <linearGradient id="shadeTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+</defs>
+<style>text{font-family:"Segoe UI","Noto Sans","DejaVu Sans",system-ui,sans-serif;fill:#fff}</style>
+<!-- "video" -->
+<rect width="1280" height="720" fill="url(#sky)"/>
+<circle cx="760" cy="392" r="150" fill="url(#sun)"/>
+<rect y="404" width="1280" height="316" fill="url(#sea)"/>
+<g fill="#fff3c9" opacity=".55"><rect x="700" y="420" width="120" height="3" rx="1.5"/><rect x="670" y="440" width="180" height="3" rx="1.5"/><rect x="720" y="462" width="90" height="3" rx="1.5"/><rect x="640" y="488" width="230" height="3" rx="1.5"/></g>
+<path d="M0 404 L120 330 L210 372 L330 286 L470 404Z" fill="#2a1d3d"/>
+<path d="M940 404 L1060 312 L1150 360 L1280 300 V404Z" fill="#2a1d3d"/>
+<path d="M0 404 L90 368 L190 398 L300 352 L420 404Z" fill="#1a1230"/>
+
+<!-- top bar -->
+<rect width="1280" height="130" fill="url(#shadeTop)"/>
+<text x="56" y="62" font-size="28" font-weight="600">The Long Tide</text>
+<text x="56" y="92" font-size="18" opacity=".8">Season 1 · Episode 3 · “Low Water”</text>
+<g font-size="15" font-weight="600">
+  <rect x="1012" y="40" width="96" height="28" rx="6" fill="#000" fill-opacity=".45" stroke="#ffd36b"/><text x="1060" y="60" text-anchor="middle" fill="#ffd36b">HDR10</text>
+  <rect x="1116" y="40" width="108" height="28" rx="6" fill="#000" fill-opacity=".45" stroke="#fff" stroke-opacity=".6"/><text x="1170" y="60" text-anchor="middle">4K · HEVC</text>
+</g>
+
+<!-- plugin overlay -->
+<rect x="1036" y="430" width="188" height="48" rx="8" fill="#fff" fill-opacity=".92"/>
+<text x="1130" y="461" font-size="19" font-weight="600" text-anchor="middle" style="fill:#111">Skip intro  ›</text>
+
+<!-- OSD -->
+<rect y="500" width="1280" height="220" fill="url(#shade)"/>
+<text x="56" y="610" font-size="17" opacity=".9">0:42:17</text>
+<text x="1224" y="610" font-size="17" text-anchor="end" opacity=".9">−1:15:46</text>
+<rect x="56" y="580" width="1168" height="6" rx="3" fill="#fff" fill-opacity=".3"/>
+<rect x="56" y="580" width="418" height="6" rx="3" fill="#6fd3ff"/>
+<rect x="474" y="580" width="140" height="6" fill="#fff" fill-opacity=".35"/>
+<g fill="#000" opacity=".6"><rect x="210" y="580" width="2" height="6"/><rect x="380" y="580" width="2" height="6"/><rect x="760" y="580" width="2" height="6"/><rect x="980" y="580" width="2" height="6"/></g>
+<circle cx="474" cy="583" r="10" fill="#fff"/>
+
+<g transform="translate(640 656)" fill="#fff">
+  <path d="M-110 -12 v24 h4 v-24z M-104 0 l20 -12 v24z"/>
+  <circle r="26" fill="#fff" fill-opacity=".15" stroke="#fff" stroke-width="2"/>
+  <rect x="-9" y="-12" width="6" height="24"/><rect x="3" y="-12" width="6" height="24"/>
+  <path d="M84 -12 v24 l20 -12z M104 -12 v24 h4 v-24z"/>
+</g>
+<g font-size="15">
+  <rect x="56" y="636" width="300" height="40" rx="8" fill="#000" fill-opacity=".45" stroke="#6fd3ff" stroke-opacity=".7"/>
+  <circle cx="76" cy="656" r="5" fill="#5fe08a"/>
+  <text x="90" y="661">TrueHD Atmos 7.1 → <tspan font-weight="700">passthrough</tspan></text>
+  <rect x="924" y="636" width="300" height="40" rx="8" fill="#000" fill-opacity=".45"/>
+  <text x="1074" y="661" text-anchor="middle">Direct play · VA-API decode</text>
+</g>
+</svg>

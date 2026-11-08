@@ -1,8 +1,33 @@
 # Icefin Player
 
+[![Icefin Player 1.0 progress. Click for the full tracker.](docs/progress/progress-bar.svg)](https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU)
+
 A themeable, HTPC-first Jellyfin client for Linux. Icefin Player is a fork of [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) (v2.0.0). It adds a full theme engine, true HDR output, reliable HDMI audio passthrough and first-class controller support, and ships as a Flatpak.
 
 > **Status:** pre-alpha. Planning is complete and development is starting. Nothing here is ready for daily use yet. Track progress in [`docs/PLAN.md`](docs/PLAN.md).
+
+## What it will look like
+
+These are design mock-ups of the 1.0 goals, not screenshots. Titles and artwork are placeholders.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/mockups/home-media-center.svg" alt="Home screen in the Media Center theme: a vertical category list with a focused horizontal strip of options and posters"></td>
+    <td width="50%"><img src="docs/images/mockups/playback-hdr.svg" alt="HDR playback with on-screen controls, a plugin's Skip intro button over the video, and TrueHD Atmos passthrough status"></td>
+  </tr>
+  <tr>
+    <td><b>Home, Media Center theme.</b> The 10-foot reference theme, fully driven by a controller or remote.</td>
+    <td><b>HDR playback.</b> UI and video share one HDR surface, so controls and plugin overlays work over HDR10. Audio goes to the receiver bit-for-bit.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/mockups/capability-prompt.svg" alt="A dialog asking how to play a Dolby Vision profile 5 file: tone-map to HDR10, tone-map to SDR, or ask the server to transcode"></td>
+    <td><img src="docs/images/mockups/theme-picker.svg" alt="Theme picker with eight themes: Media Center, Baseline, Harbor, Spark, Plum, Plaza, Orbit and Pivot"></td>
+  </tr>
+  <tr>
+    <td><b>Capability prompt.</b> When a source can't be shown correctly, Icefin asks instead of playing wrong colors.</td>
+    <td><b>Theme picker.</b> The reference theme plus seven clone themes, chosen per user and synced through Jellyfin.</td>
+  </tr>
+</table>
 
 ## Goals
 
@@ -81,6 +106,10 @@ A themeable, HTPC-first Jellyfin client for Linux. Icefin Player is a fork of [J
 1.0 is planned in 12 phases (about 42 weeks of development): fork setup, platform spikes, audio, GPU and display, the single-surface renderer, playback routing, controllers, the theme engine, the clone themes, an upstream sync, hardening, and release. See [`docs/PLAN.md`](docs/PLAN.md) for tasks and [`docs/SPEC.md`](docs/SPEC.md) for the full design.
 
 After 1.0, the plan is to become an independent fork of Jellyfin Desktop and then drop X11 entirely.
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING](.github/CONTRIBUTING.md) and [`docs/BRANCHING.md`](docs/BRANCHING.md) for how branches, upstream merges and releases work.
 
 ## Installing
 

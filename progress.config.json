@@ -4,6 +4,7 @@
   "heading": "Icefin Player 1.0 progress",
   "plan": "docs/PLAN.md",
   "out": "docs/progress/index.html",
+  "badge": "docs/progress/progress-bar.svg",
   "timezone": "America/Los_Angeles",
   "artifactUrl": "https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU",
   "theme": {
