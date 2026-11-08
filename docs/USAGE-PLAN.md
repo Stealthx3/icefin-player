@@ -68,5 +68,7 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 - 2026-11-07: restack.sh written (task 1.2); the stack gained an `icefin/infra` bottom layer.
 
 ## Handoff
-- Done: bootstrap verified, planning committed (`8f66118`), public repo Stealthx3/icefin-player as `origin`, D13 app ID, D14 repo.
-- Next: lab setup, phone alerts, progress page, then Phase 1 from 1.2.
+- 2026-11-07 (S2): Phase 1 tasks 1.1–1.6 done and pushed (stack tip `icefin/main`). Flatpak builds and runs in lab-icefin-main; GitHub icefin-flatpak CI's first run was still in progress at handoff.
+- Next (S3): 1.7 — podman Jellyfin 10.11.x and 12.x servers in the lab plus regression plugins (read SPEC "Testing, CI and hardware lab" first); the hardware guest needs the user's OK for passthrough. Then 1.8 baseline (software rows only until hardware is attached).
+- Open: hidden "Report as Jellyfin Desktop" setting (SPEC client identity) not built yet; libcec not in the Flatpak yet (Phase 3.7); other party's README.md / bootstrap-fork.sh / docs/github edits left uncommitted per user.
+- Usage note: S2 ran long (L) as planned; the Flatpak provisioning retries were the main overrun.
