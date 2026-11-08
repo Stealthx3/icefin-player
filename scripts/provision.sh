@@ -14,6 +14,12 @@ sudo apt-get install -y -qq --no-install-recommends \
   qml6-module-qtquick-templates qml6-module-qtquick-window qml6-module-qtwebchannel \
   qml6-module-qtwebengine qml6-module-qtwebengine-controlsdelegates qml6-module-qtwebview \
   xvfb xauth x11-utils weston mesa-vulkan-drivers libvulkan-dev vulkan-tools shellcheck ffmpeg python3-websocket
+# Patched libmpv / libplacebo builds (spike 2.2, task 5.2)
+sudo apt-get install -y -qq --no-install-recommends \
+  glslang-dev glslang-tools spirv-tools python3-jinja2 python3-glad liblcms2-dev libdovi-dev libunwind-dev \
+  libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev libavdevice-dev \
+  libass-dev libwayland-dev wayland-protocols libxkbcommon-dev libpipewire-0.3-dev libjack-jackd2-dev libuchardet-dev \
+  libdrm-dev libegl-dev libgbm-dev libxext-dev libxpresent-dev libxss-dev libxinerama-dev libxv-dev libjpeg-dev zlib1g-dev
 # Flatpak packaging (task 1.5) and containerized Jellyfin servers (task 1.7)
 sudo apt-get install -y -qq --no-install-recommends flatpak flatpak-builder elfutils appstream librsvg2-common podman uidmap slirp4netns passt
 sudo loginctl enable-linger "$(id -un)"   # rootless podman without a login session
