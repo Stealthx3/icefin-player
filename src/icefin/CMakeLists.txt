@@ -2,4 +2,5 @@
 add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             audio/AudioOutput.cpp audio/AudioOutput.h audio/AudioPolicy.cpp audio/AudioPolicy.h
             audio/Fallback.cpp audio/Fallback.h
+            audio/DeviceReservation.cpp audio/DeviceReservation.h
             settings/SettingsMerge.cpp settings/SettingsMerge.h)

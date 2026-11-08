@@ -2,6 +2,8 @@
 #include "AudioOutput.h"
 #include "Eld.h"
 #include "Passthrough.h"
+#include "DeviceReservation.h"
+#include <memory>
 #include <MpvController>
 #include <QDebug>
 #include <QStandardPaths>
@@ -10,9 +12,27 @@
 namespace Icefin::Audio
 {
 static EldMonitor& monitor() { static EldMonitor m; return m; }
+static std::unique_ptr<DeviceReservation>& reservation() { static std::unique_ptr<DeviceReservation> r; return r; }
+
+void releaseReservation() { if (reservation()) reservation()->release(); }
+
+// Exclusive ALSA: claim the card from PipeWire/PulseAudio/JACK before mpv opens it (SPEC "Exclusive ALSA").
+static void reserveFor(const Output& out, Backend backend)
+{
+  if (backend != Backend::Alsa || out.card < 0) { releaseReservation(); return; }
+  auto& r = reservation();
+  if (r && r->held() && r->serviceName().endsWith(QString("Audio%1").arg(out.card))) return;
+  r = std::make_unique<DeviceReservation>(out.card);
+  if (!r->acquire()) qWarning().noquote() << "Icefin audio: could not reserve card" << out.card << "-" << r->lastError();
+}
 
 void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCodecs, bool hdmiDevice)
 {
+  {
+    const Output o = parseDevice(mpv->getProperty("audio-device").toString());
+    const auto chosen = backendForSetting(SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "backend").toString());
+    reserveFor(o, o.backend ? *o.backend : chosen.value_or(Backend::PipeWire));  // reservation is independent of passthrough
+  }
   const QString codec = mpv->getProperty("current-tracks/audio/codec").toString();
   if (codec.isEmpty() || passthroughCodecs.isEmpty()) return;  // no audio, or passthrough off: upstream behaviour
   Track t{codec, mpv->getProperty("current-tracks/audio/codec-profile").toString(),

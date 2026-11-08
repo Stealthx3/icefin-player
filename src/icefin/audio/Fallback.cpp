@@ -2,6 +2,7 @@
 #include <MpvController>
 #include <mpv/client.h>
 #include <QDebug>
+#include "AudioPolicy.h"
 
 namespace Icefin::Audio
 {
@@ -29,7 +30,8 @@ void Fallback::advance(MpvController* mpv)
   } else {
     if (m_step == 1) m_step = 2;  // no passthrough was active: go straight to the default device
     if (m_step == 2 && m_device.toString() != "auto") {
-      qWarning() << "Icefin audio fallback 2/3: device" << m_device.toString() << "failed - retrying on the default device";
+      qWarning() << "Icefin audio fallback 2/3: device" << m_device.toString() << "failed - releasing any reservation, retrying on the default device";
+      releaseReservation();
       mpv->setProperty("audio-device", "auto");
     } else {
       m_step = 3;
@@ -45,6 +47,7 @@ void Fallback::onMpvEvent(MpvController* mpv, mpv_event* event)
 {
   switch (event->event_id) {
     case MPV_EVENT_START_FILE: restore(mpv); break;
+    case MPV_EVENT_END_FILE: releaseReservation(); break;  // give the card back to the sound server
     // Judge only once playback has (re)started: AUDIO_RECONFIG fires before mpv tries to open the output.
     case MPV_EVENT_PLAYBACK_RESTART: {
       if (m_step >= 3) break;

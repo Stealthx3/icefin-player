@@ -45,7 +45,10 @@ Output parseDevice(const QString& dev, const QString& sysRoot, const QString& pr
   if (o.backend == Backend::Alsa) {
     static const QRegularExpression hdmi(R"(^hdmi:CARD=([^,]+)(?:,DEV=(\d+))?)");
     auto m = hdmi.match(rest);
-    if (m.hasMatch()) { o.card = cardIndexFromId(m.captured(1), procRoot); o.hdmiIndex = m.captured(2).isEmpty() ? 0 : m.captured(2).toInt(); }
+    if (m.hasMatch()) { o.card = cardIndexFromId(m.captured(1), procRoot); o.hdmiIndex = m.captured(2).isEmpty() ? 0 : m.captured(2).toInt(); return o; }
+    static const QRegularExpression other(R"(^(?:plug)?hw:(?:CARD=)?([^,]+))");  // hw:CARD=Intel,DEV=0 / hw:0,0
+    auto mo = other.match(rest);
+    if (mo.hasMatch()) { bool num = false; int n = mo.captured(1).toInt(&num); o.card = num ? n : cardIndexFromId(mo.captured(1), procRoot); }
     return o;
   }
   // PipeWire / PulseAudio ALSA sinks: alsa_output.<bus-path>.<profile>[-extraN]
