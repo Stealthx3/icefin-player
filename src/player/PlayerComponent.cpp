@@ -1,4 +1,5 @@
 #include "icefin/audio/AudioPolicy.h"  // ICEFIN-HOOK: Icefin audio policy
+#include "icefin/audio/Fallback.h"  // ICEFIN-HOOK: never-silent audio fallback
 #include "PlayerComponent.h"
 #include <QString>
 #include <Qt>
@@ -118,6 +119,7 @@ void PlayerComponent::initializeMpv()
   // us better flexibility how to react to such errors (instead of just
   // aborting playback immediately).
   m_mpv->setProperty( "audio-fallback-to-null", "yes");
+  m_mpv->setProperty( "audio-fallback-to-null", "no");  // ICEFIN-HOOK: never-silent fallback handles failures (PLAN 3.6)
 
   // Do not let the decoder downmix (better customization for us).
   m_mpv->setProperty( "ad-lavc-downmix", false);
@@ -501,6 +503,7 @@ void PlayerComponent::updatePlaybackState()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void PlayerComponent::handleMpvEvent(mpv_event *event)
 {
+  Icefin::Audio::fallback().onMpvEvent(m_mpv, event);  // ICEFIN-HOOK: never-silent audio fallback (PLAN 3.6)
   switch (event->event_id)
   {
     case MPV_EVENT_START_FILE:
