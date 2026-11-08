@@ -29,3 +29,4 @@ debian/debhelper-build-stamp
 dist.zip
 obj-x86_64-linux-gnu/
 deployment/dist
+.claude/phone-alerts.local.json

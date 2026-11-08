@@ -17,6 +17,13 @@ Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If t
 - `PHONE-ALERTS-STANDARD.md`: push alerts when the user is needed.
 - `POST-MORTEM-STANDARD.md`: append one line per session to `docs/postmortem/JOURNAL.md`.
 
+## Working setup
+- Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).
+- Usage plan and agents: `docs/USAGE-PLAN.md`, `.claude/agents/` (read the Handoff note at session start).
+- Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, republish to the same URL after each task).
+- Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
+- Repo: `origin` = github.com/Stealthx3/icefin-player (public), `upstream` = jellyfin/jellyfin-desktop (push disabled). App ID `io.github.stealthx3.IcefinPlayer` (D13).
+
 ## Hard rules
 - Keep upstream rebasable until the post-1.0 decoupling: new code under `src/icefin/`, `native/icefin/`, `qml/icefin/`, `external/mpv/`, `flatpak/`, `themes/`. Upstream files get small hooks marked `// ICEFIN-HOOK: <reason>`.
 - The theme engine never references a theme by id or holds theme-specific values (CI lint).
