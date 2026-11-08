@@ -129,6 +129,9 @@ private slots:
     Output usb = parseDevice("pipewire/alsa_output.usb-Foo_Bar-00.analog-stereo", sys, proc);
     QCOMPARE(usb.card, -1);
     QVERIFY(parseDevice("jack", sys, proc).backend == Backend::Jack);
+    Output hw = parseDevice("alsa/hw:CARD=PCH,DEV=0", sys, proc);
+    QCOMPARE(hw.card, 1); QVERIFY(!hw.isHdmi());
+    QCOMPARE(parseDevice("alsa/plughw:0,3", sys, proc).card, 0);
     QVERIFY(!parseDevice("auto", sys, proc).backend);
     QCOMPARE(cardIndexFromId("Generic", proc), 0);
     QCOMPARE(cardIndexFromId("Nope", proc), -1);
