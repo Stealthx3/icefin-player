@@ -40,6 +40,10 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
    └── libvirt NAT ──> lab-icefin-main: Jellyfin :8096/:8097, Flatpak repo ~/fp-repo served on :8099
 ```
 
+- **First-time setup on the HTPC:** `scripts/icefin/htpc-kit.sh` builds `build-htpc/icefin-htpc-kit.zip` (setup script,
+  README, probe, this workstation's public key). The user runs `bash icefin-htpc-setup.sh` on the HTPC as the TV
+  user: it authorizes the key as `restrict,port-forwarding,pty` (tag `icefin-lab-workstation`), offers to enable sshd,
+  and writes `~/icefin-htpc-info.txt`; `--check` changes nothing, `--remove` undoes it.
 - **Flow:** `htpc.sh build` (Flatpak into the VM's repo) → `deploy` (Flatpak `--user` from remote `icefin-lab`)
   → `play` / `probe` → results in `build-htpc/results/`. `doctor` first; `watch` opens Moonlight (Sunshine on the HTPC).
 - **Runs inside the session on screen.** Remote commands take on the environment of the user's Plasma, GNOME or
