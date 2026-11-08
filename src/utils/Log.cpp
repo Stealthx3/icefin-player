@@ -10,6 +10,7 @@
 
 #include "shared/Names.h"
 #include "shared/Paths.h"
+#include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include "settings/SettingsComponent.h"
 #include "Version.h"
 
@@ -99,7 +100,7 @@ void Log::Init()
 
   // Create unique log file for this instance
   QString logDir = getLogDir();
-  QTemporaryFile tempFile(logDir + "/jellyfin-desktop-XXXXXX.log");
+  QTemporaryFile tempFile(logDir + "/" + Names::DataName() + "-XXXXXX.log");  // ICEFIN-HOOK: Icefin log file name
   tempFile.setAutoRemove(false);
   if (!tempFile.open())
   {
@@ -111,7 +112,7 @@ void Log::Init()
   logFile = new QFile(tempLogPath);
   logFile->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate);
 
-  qInfo() << "Starting Jellyfin version:" << qPrintable(Version::GetVersionString()) << "build date:" << qPrintable(Version::GetBuildDate());
+  qInfo() << "Starting" << Icefin::DisplayName << Icefin::Version << "based on" << Icefin::UpstreamName << Icefin::UpstreamVersion << "build date:" << qPrintable(Version::GetBuildDate());  // ICEFIN-HOOK: Icefin name
   qInfo() << qPrintable(QString("  Running on: %1 [%2] arch %3").arg(QSysInfo::prettyProductName()).arg(QSysInfo::kernelVersion()).arg(QSysInfo::currentCpuArchitecture()));
   qInfo() << "  Qt Version:" << QT_VERSION_STR << qPrintable(QString("[%1]").arg(QSysInfo::buildAbi()));
 

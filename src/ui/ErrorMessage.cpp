@@ -9,13 +9,14 @@
 #include "system/SystemComponent.h"
 #include "settings/SettingsComponent.h"
 #include "ErrorMessage.h"
+#include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ErrorMessage::ErrorMessage(const QString& errorMessage, bool allowResetConfig)
   : QMessageBox(nullptr)
 {
   setIcon(Critical);
-  setText("Jellyfin encountered a fatal error and must exit");
+  setText(QString("%1 encountered a fatal error and must exit").arg(Icefin::DisplayName));  // ICEFIN-HOOK: Icefin name
   setDetailedText(errorMessage);
   setInformativeText("Press help below to be redirected to our friendly support forums." \
                      "Press reset to reset configuration to the default and try again." \

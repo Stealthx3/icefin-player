@@ -16,3 +16,6 @@ The `infra` layer is an addition to the SPEC list. It keeps docs and tooling out
 Workflow: `git switch icefin/<layer>`, commit, then `scripts/icefin/restack.sh --push`. The script replays the
 layers above, fast-forwards `icefin/main` and force-pushes with lease.
 Nightly: `.github/workflows/icefin-rebase-canary.yml` rebases the stack onto upstream `master` and fails on conflicts.
+
+Plan ticks, the regenerated progress page and journal lines go in the same commit as the work, in whatever layer that is
+(the progress standard requires it). They only touch `docs/`, so the worst case is a trivial conflict in `docs/PLAN.md` when restacking.

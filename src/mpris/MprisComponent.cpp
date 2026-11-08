@@ -69,7 +69,7 @@ bool MprisComponent::componentInitialize()
   }
 
   // Generate profile-specific service name
-  m_serviceName = QString("org.mpris.MediaPlayer2.JellyfinDesktop.profile_%1").arg(Paths::activeProfileId());
+  m_serviceName = QString("%1.profile_%2").arg(Icefin::MprisServiceName, Paths::activeProfileId());  // ICEFIN-HOOK: Icefin MPRIS bus name
 
   qDebug() << "Attempting to register MPRIS service:" << m_serviceName;
   if (!QDBusConnection::sessionBus().registerService(m_serviceName))

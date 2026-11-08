@@ -9,7 +9,8 @@ build/*
 QtCreatorDeployment.txt
 vagrant/ubuntu-x86_64/.vagrant
 vagrant/windows-x86_64/.vagrant
-build-*
+# ICEFIN-HOOK: anchor to root so scripts/build-*.py is not ignored (lab rsync)
+/build-*
 cmake-build-*
 *.pyc
 conaninfo.txt

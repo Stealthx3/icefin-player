@@ -10,6 +10,7 @@
 
 #include "ComponentManager.h"
 #include "player/PlayerComponent.h"
+#include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -37,8 +38,8 @@ public:
   bool fullscreen() const;
   void setFullscreen(bool value);
   bool hasTrackList() const { return false; }
-  QString identity() const { return "Jellyfin"; }
-  QString desktopEntry() const { return "org.jellyfin.JellyfinDesktop"; }
+  QString identity() const { return Icefin::DisplayName; }  // ICEFIN-HOOK: Icefin name
+  QString desktopEntry() const { return Icefin::AppId; }  // ICEFIN-HOOK: Icefin app ID
   QStringList supportedUriSchemes() const { return QStringList(); }
   QStringList supportedMimeTypes() const { return QStringList(); }
 

@@ -316,8 +316,8 @@ window.NativeShell.AppHost = {
     init() {
         return Promise.resolve({
             deviceName: jmpInfo.deviceName,
-            appName: "Jellyfin Desktop",
-            appVersion: jmpInfo.version
+            appName: jmpInfo.icefin.appName,  // ICEFIN-HOOK: Icefin client identity
+            appVersion: jmpInfo.icefin.appVersion  // ICEFIN-HOOK: Icefin client identity
         });
     },
     getDefaultLayout() {
@@ -329,10 +329,10 @@ window.NativeShell.AppHost = {
     getDeviceProfile,
     getSyncProfile: getDeviceProfile,
     appName() {
-        return "Jellyfin Desktop";
+        return jmpInfo.icefin.appName;  // ICEFIN-HOOK: Icefin client identity
     },
     appVersion() {
-        return jmpInfo.version;
+        return jmpInfo.icefin.appVersion;  // ICEFIN-HOOK: Icefin client identity
     },
     deviceName() {
         return jmpInfo.deviceName;
