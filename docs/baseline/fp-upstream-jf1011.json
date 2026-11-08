@@ -1,0 +1,181 @@
+{
+ "app": "flatpak:org.jellyfin.JellyfinDesktop",
+ "server": "jf1011",
+ "server_version": "10.11.11",
+ "item": {
+  "name": "SDR H264 AAC (2026)",
+  "id": "f273a71571ce45f5bb357b9c158c5480"
+ },
+ "started": "2026-11-08T04:58:01.000Z",
+ "steps": [
+  "devtools attached",
+  "server address submitted",
+  "jellyfin-web loaded",
+  "native shell on first load: True",
+  "logged in",
+  "shell: {\"icefin\":null,\"version\":\"2.0.0-dev\",\"appName\":\"Jellyfin Desktop\",\"appVersion\":\"2.0.0-dev\"}",
+  "session: Jellyfin Desktop 2.0.0-dev",
+  "PlayNow sent",
+  "Stop sent"
+ ],
+ "ok": true,
+ "first_load_shell": true,
+ "shell": "{\"icefin\":null,\"version\":\"2.0.0-dev\",\"appName\":\"Jellyfin Desktop\",\"appVersion\":\"2.0.0-dev\"}",
+ "identity": {
+  "Client": "Jellyfin Desktop",
+  "ApplicationVersion": "2.0.0-dev",
+  "DeviceName": "lab-icefin-main",
+  "SupportsMediaControl": true,
+  "SupportsRemoteControl": true,
+  "PlayableMediaTypes": [
+   "Audio",
+   "Video"
+  ],
+  "SupportedCommands": [
+   "MoveUp",
+   "MoveDown",
+   "MoveLeft",
+   "MoveRight",
+   "PageUp",
+   "PageDown",
+   "PreviousLetter",
+   "NextLetter",
+   "ToggleOsd",
+   "ToggleContextMenu",
+   "Select",
+   "Back",
+   "SendKey",
+   "SendString",
+   "GoHome",
+   "GoToSettings",
+   "VolumeUp",
+   "VolumeDown",
+   "Mute",
+   "Unmute",
+   "ToggleMute",
+   "SetVolume",
+   "SetAudioStreamIndex",
+   "SetSubtitleStreamIndex",
+   "DisplayContent",
+   "GoToSearch",
+   "DisplayMessage",
+   "SetRepeatMode",
+   "SetShuffleQueue",
+   "ChannelUp",
+   "ChannelDown",
+   "PlayMediaSource",
+   "PlayTrailers"
+  ]
+ },
+ "timeline": [
+  {
+   "t": 2.0,
+   "pos_s": 1.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 4.1,
+   "pos_s": 3.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 6.1,
+   "pos_s": 5.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 8.1,
+   "pos_s": 7.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 10.1,
+   "pos_s": 9.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 12.1,
+   "pos_s": 11.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 14.1,
+   "pos_s": 13.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 16.2,
+   "pos_s": 15.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 18.2,
+   "pos_s": 17.0,
+   "paused": false,
+   "method": "DirectPlay"
+  },
+  {
+   "t": 20.2,
+   "pos_s": 19.0,
+   "paused": false,
+   "method": "DirectPlay"
+  }
+ ],
+ "activity": [
+  {
+   "type": "VideoPlaybackStopped",
+   "name": "icefin has finished playing SDR H264 AAC (2026) on lab-icefin-main"
+  },
+  {
+   "type": "VideoPlayback",
+   "name": "icefin is playing SDR H264 AAC (2026) on lab-icefin-main"
+  },
+  {
+   "type": "SessionStarted",
+   "name": "icefin is online from lab-icefin-main"
+  },
+  {
+   "type": "SessionEnded",
+   "name": "icefin has disconnected from lab-icefin-main"
+  },
+  {
+   "type": "AuthenticationSucceeded",
+   "name": "icefin successfully authenticated"
+  },
+  {
+   "type": "SessionStarted",
+   "name": "icefin is online from lab-icefin-main"
+  },
+  {
+   "type": "AuthenticationSucceeded",
+   "name": "icefin successfully authenticated"
+  },
+  {
+   "type": "SessionStarted",
+   "name": "icefin is online from lab"
+  },
+  {
+   "type": "SessionEnded",
+   "name": "icefin has disconnected from lab"
+  }
+ ],
+ "playback_reporting": [
+  [
+   "SDR H264 AAC (2026)",
+   "Movie",
+   "DirectPlay",
+   "Jellyfin Desktop",
+   "lab-icefin-main",
+   "20"
+  ]
+ ],
+ "app_log_errors": []
+}

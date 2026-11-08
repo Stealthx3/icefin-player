@@ -25,6 +25,17 @@ def now_iso():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
+def start_weston(sock="wl-icefin"):
+    """Headless Weston with the GL renderer (llvmpipe in a VM) for Wayland runs."""
+    rt = os.environ.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    if os.path.exists(os.path.join(rt, sock)):
+        return None
+    p = subprocess.Popen(["weston", "--backend=headless", "--renderer=gl", f"--socket={sock}", "--width=1920", "--height=1080"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(3)
+    return p
+
+
 def start_x(display=":99"):
     if subprocess.run(["xdpyinfo", "-display", display], capture_output=True).returncode == 0:
         return None
@@ -33,13 +44,16 @@ def start_x(display=":99"):
     return p
 
 
-def launch(app, port, cfgdir, logf):
-    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8")
+def launch(app, port, cfgdir, logf, qpa="xcb"):
+    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM=qpa, LC_ALL="C.UTF-8")
+    if qpa == "wayland":
+        env.pop("DISPLAY", None)
+        env["WAYLAND_DISPLAY"] = "wl-icefin"
     args = ["--windowed", "--desktop", "--disable-gpu", f"--remote-debugging-port={port}", "--log-level=info"]
     if app.startswith("flatpak:"):
         # Chromium's sandbox inside a Flatpak spawns via the Flatpak portal, which needs a session bus.
         # Fresh state per run: /var/tmp inside the sandbox is the app's private, writable cache.
-        cmd = ["dbus-run-session", "--", "flatpak", "run", "--user", "--env=QT_QPA_PLATFORM=xcb", app.split(":", 1)[1],
+        cmd = ["dbus-run-session", "--", "flatpak", "run", "--user", f"--env=QT_QPA_PLATFORM={qpa}", app.split(":", 1)[1],
                f"--config-dir=/var/tmp/{os.path.basename(cfgdir)}"] + args
     else:
         cmd = [os.path.expanduser(app), f"--config-dir={cfgdir}"] + args
@@ -54,6 +68,7 @@ def main():
     ap.add_argument("--seconds", type=int, default=40)  # Playback Reporting only records plays still running ~20 s after start
     ap.add_argument("--port", type=int, default=9222)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--qpa", choices=["xcb", "wayland"], default="xcb", help="xcb = Xvfb, wayland = headless Weston")
     a = ap.parse_args()
 
     cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
@@ -74,9 +89,10 @@ def main():
     cfgdir = tempfile.mkdtemp(prefix="icefin-run-")
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     logpath = a.out.rsplit(".", 1)[0] + ".app.log"
-    xv = start_x()
+    xv = start_weston() if a.qpa == "wayland" else start_x()
+    out["qpa"] = a.qpa
     with open(logpath, "w") as logf:
-        app = launch(a.app, a.port, cfgdir, logf)
+        app = launch(a.app, a.port, cfgdir, logf, a.qpa)
     try:
         page = Page(a.port, timeout=90)
         step("devtools attached")
