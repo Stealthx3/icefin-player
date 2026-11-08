@@ -23,6 +23,7 @@ add_subdirectory(settings)
 add_subdirectory(power)
 add_subdirectory(taskbar)
 add_subdirectory(mpris)
+add_subdirectory(icefin)  # ICEFIN-HOOK: Icefin sources into jmp_core
 
 get_property(ALL_SRCS GLOBAL PROPERTY SRCS_LIST)
 set(MAIN_SRCS main.cpp)

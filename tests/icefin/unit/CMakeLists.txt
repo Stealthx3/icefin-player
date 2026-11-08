@@ -1,0 +1,6 @@
+find_package(Qt6 REQUIRED COMPONENTS Test)
+add_executable(test_icefin_audio test_audio.cpp)
+target_link_libraries(test_icefin_audio jmp_core Qt6::Test)
+target_include_directories(test_icefin_audio PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(test_icefin_audio PRIVATE ICEFIN_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+add_test(NAME test_icefin_audio COMMAND test_icefin_audio)

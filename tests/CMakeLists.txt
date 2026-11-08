@@ -21,3 +21,5 @@ target_compile_definitions(test_systemcomponent PRIVATE
 )
 
 add_test(NAME test_systemcomponent COMMAND test_systemcomponent)
+
+add_subdirectory(icefin)  # ICEFIN-HOOK: Icefin unit tests
