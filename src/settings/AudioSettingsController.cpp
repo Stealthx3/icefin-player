@@ -2,6 +2,7 @@
 // Created by Tobias Hieta on 21/08/15.
 //
 
+#include "icefin/audio/AudioOutput.h"  // ICEFIN-HOOK: audio.backend helpers
 #include "AudioSettingsController.h"
 #include "SettingsComponent.h"
 #include "SettingsSection.h"
@@ -47,6 +48,8 @@ void AudioSettingsController::valuesUpdated(const QVariantMap& values)
     setHiddenPassthrough(PlayerComponent::AudioCodecsSPDIF(), false);
     audioSection->setValueHidden("channels", true);
   }
+
+  if (Icefin::Audio::backendHidesPassthrough(SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "backend").toString())) setHiddenPassthrough(PlayerComponent::AudioCodecsAll(), true);  // ICEFIN-HOOK: no passthrough on JACK (PLAN 3.1)
 
   auto newDescriptions = audioSection->descriptions();
   if (prevDescriptions != newDescriptions)

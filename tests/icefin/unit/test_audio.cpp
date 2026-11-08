@@ -4,6 +4,9 @@
 #include "icefin/audio/Eld.h"
 #include "icefin/audio/Passthrough.h"
 #include "icefin/audio/AudioOutput.h"
+#include "icefin/settings/SettingsMerge.h"
+#include <QJsonArray>
+#include <QJsonObject>
 
 using namespace Icefin::Audio;
 
@@ -129,6 +132,29 @@ private slots:
     QVERIFY(!parseDevice("auto", sys, proc).backend);
     QCOMPARE(cardIndexFromId("Generic", proc), 0);
     QCOMPARE(cardIndexFromId("Nope", proc), -1);
+  }
+  void backendSetting()
+  {
+    QCOMPARE(aoForSetting("auto"), QString("pipewire,pulse,alsa"));  // JACK never automatic
+    QCOMPARE(aoForSetting(""), QString("pipewire,pulse,alsa"));
+    QCOMPARE(aoForSetting("jack"), QString("jack"));
+    QCOMPARE(aoForSetting("pulse"), QString("pulse"));
+    QVERIFY(backendHidesPassthrough("jack"));
+    QVERIFY(!backendHidesPassthrough("alsa"));
+    QVERIFY(backendForSetting("alsa") == Backend::Alsa);
+    QVERIFY(!backendForSetting("auto"));
+  }
+  void settingsMerge()
+  {
+    auto up = QJsonDocument::fromJson(R"([{"section":"__meta__","version":5},{"section":"audio","values":[{"value":"devicetype","default":"basic"}]}])");
+    auto ice = QJsonDocument::fromJson(R"([{"section":"audio","values":[{"value":"backend","default":"auto"}]},{"section":"icefin","values":[{"value":"x","default":1}]}])");
+    QJsonArray m = Icefin::Settings::mergeDescription(up, ice).array();
+    QCOMPARE(m.size(), 3);
+    QJsonArray audio = m[1].toObject()["values"].toArray();
+    QCOMPARE(audio.size(), 2);
+    QCOMPARE(audio[1].toObject()["value"].toString(), QString("backend"));
+    QCOMPARE(m[2].toObject()["section"].toString(), QString("icefin"));
+    QCOMPARE(Icefin::Settings::mergeDescription(up, QString("/nonexistent.json")), up);  // missing file: unchanged
   }
   void userToggleWins()
   {

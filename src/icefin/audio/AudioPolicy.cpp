@@ -5,6 +5,7 @@
 #include <MpvController>
 #include <QDebug>
 #include <QStandardPaths>
+#include "settings/SettingsComponent.h"
 
 namespace Icefin::Audio
 {
@@ -26,7 +27,9 @@ void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCode
 
   const QString device = mpv->getProperty("audio-device").toString();
   Output out = parseDevice(device);
-  const Backend backend = out.backend.value_or(autoBackend(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation)));
+  const auto chosen = backendForSetting(SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "backend").toString());
+  const Backend backend = out.backend ? *out.backend
+                        : chosen ? *chosen : autoBackend(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation));
   std::optional<Eld> eld;
   if (hdmiDevice && out.card >= 0) eld = monitor().update(device, readEld(out.card, out.hdmiIndex));
   else if (hdmiDevice && out.card < 0 && !out.backend) eld = std::nullopt;  // "auto": card unknown, trust toggles
