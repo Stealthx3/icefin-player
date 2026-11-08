@@ -1,188 +1,110 @@
-# Jellyfin Desktop
+# Icefin Player
 
-Desktop client using jellyfin-web with embedded MPV player. Supports Windows, Mac OS,
-and Linux. Media plays within the same window using the jellyfin-web interface unlike
-Jellyfin Desktop. Supports audio passthrough.
+A themeable, HTPC-first Jellyfin client for Linux. Icefin Player is a fork of [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) (v2.0.0). It adds a full theme engine, true HDR output, reliable HDMI audio passthrough and first-class controller support, and ships as a Flatpak.
 
-![Screenshot of Jellyfin Desktop](https://raw.githubusercontent.com/iwalton3/mpv-shim-misc-docs/master/images/jmp-player-win.png)
+> **Status:** pre-alpha. Planning is complete and development is starting. Nothing here is ready for daily use yet. Track progress in [`docs/PLAN.md`](docs/PLAN.md).
 
-Downloads:
- - [Windows, Mac, and Linux Releases](https://github.com/jellyfin/jellyfin-desktop/releases)
-   - Note for Mac users: builds for Intel require macOS 12+ and Apple Silicon builds requires macOS 14+
- - [Flathub (Linux)](https://flathub.org/apps/details/org.jellyfin.JellyfinDesktop)
+## Goals
 
-Related Documents:
- - Web client: Application uses server-provided web client.
- - Web client integration documentation: [for-web-developers.md](https://github.com/jellyfin/jellyfin-desktop/blob/master/for-web-developers.md)
- - API Docs in [client-api.md](https://github.com/jellyfin/jellyfin-desktop/blob/master/client-api.md)
- - Tip: For help building, look at the GitHub Actions file!
+| Goal | What "done" means |
+| --- | --- |
+| **Keep every server plugin working** | Anything that works in the Jellyfin web client works in Icefin, with or without a theme active. |
+| **Total UI conversion through themes** | Themes can replace the whole 10-foot interface (layout, navigation, motion, colors, sounds) without code changes to the engine. |
+| **HDR on modern Linux** | HDR10 and HLG reach the display on KDE Plasma, GNOME and Gamescope (Steam Deck Game Mode and similar). SDR displays get properly tone-mapped video. |
+| **HDMI audio passthrough** | AC3, E-AC3, DTS, DTS-HD MA and TrueHD reach an AV receiver on PipeWire and ALSA. AC3, E-AC3 and DTS also work on PulseAudio, and JACK gets clean multichannel PCM. |
+| **Controllers as a first-class input** | Every screen works with Xbox-style, PlayStation, Nintendo and Steam Deck controllers, inside and outside Steam. |
+| **GPU acceleration everywhere** | Hardware video decode on AMD, Intel and NVIDIA, and a GPU-rendered UI. |
+| **Flatpak as the production package** | One sandboxed package that installs alongside the official Jellyfin Desktop. |
 
-## Building at a glance (Linux)
+## How it works
 
-To download the latest stable release, get the latest version tag from the [latest releases page](https://github.com/jellyfin/jellyfin-desktop/releases/latest) and append the following to your pull command during the build phase for JMP "--branch $VERSIONTAG --single-branch"
+**Built on Jellyfin Desktop.** Icefin keeps upstream's stack: Qt 6, Qt WebEngine running the server's own jellyfin-web, and libmpv for playback. Because the server's web client still runs inside Icefin, server plugins keep working with no extra effort. Icefin's changes live in their own directories with small, marked hooks into upstream code, so the fork can follow upstream releases.
 
-Example:
-```bash
-git clone --recursive https://github.com/jellyfin/jellyfin-desktop.git --branch v1.9.1 --single-branch
-```
+**A theme engine, not a skin.** A theme-agnostic engine runs on top of jellyfin-web: router, screen templates, focus and navigation models, transitions, sounds and design tokens. Themes are installable packages, mostly declarative (JSON, CSS, sounds, fonts and shader effects), validated before they load and limited by trust level. Each user's theme choice and color overrides sync through their Jellyfin account.
 
+**One surface for UI and HDR video.** Qt Quick renders on Vulkan, and a patched libmpv draws video through libplacebo into the same surface as the interface. The whole window is composited in linear light and output as HDR10. It is tagged for the compositor through Wayland's color-management protocol, or through Gamescope's Vulkan path. The web player's own controls, skip buttons and plugin overlays therefore work over HDR video unchanged. Machines without usable Vulkan fall back to upstream's OpenGL path in SDR. When a source can't be shown correctly on a given system, Icefin asks the user what to do instead of showing a wrong picture.
 
-### Ubuntu based systems
+**Audio that respects the receiver.** Icefin reads the receiver's supported formats from HDMI ELD data and decides passthrough per track. It sets up PipeWire and PulseAudio passthrough at runtime, and can take the HDMI device exclusively through the standard device-reservation protocol. If a device fails to open, it falls back to PCM instead of playing silence.
 
-Install dependencies:
-```bash
-sudo apt install  autoconf automake build-essential cmake curl g++ git libasound2-dev libcec-dev libegl1-mesa-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libgl1-mesa-dev libgnutls28-dev libharfbuzz-dev libpulse-dev libsdl2-dev libtool libuchardet-dev libva-dev libvdpau-dev libx11-dev libxrandr-dev mesa-common-dev meson python3 qml6-module-qtqml-workerscript qml6-module-qtquick-controls qml6-module-qtquick-templates qml6-module-qtquick-window qml6-module-qtwebchannel qml6-module-qtwebengine qml6-module-qtwebengine-controlsdelegates qml6-module-qtwebview qt6-base-private-dev qt6-webengine-private-dev unzip wget yasm zlib1g-dev
-mkdir ~/jmp; cd ~/jmp
-git clone https://github.com/mpv-player/mpv-build.git
-cd mpv-build
-./use-mpv-release
-./update
-echo -Dlibmpv=true > mpv_options
-./rebuild -j$(nproc)
-sudo ./install
-sudo ln -s /usr/local/lib/x86_64-linux-gnu/libmpv.so /usr/local/lib/x86_64-linux-gnu/libmpv.so.1
-sudo ln -sf /usr/local/lib/x86_64-linux-gnu/libmpv.so /usr/local/lib/libmpv.so.2
-sudo ldconfig
-cd ~/jmp/
-git clone --recursive https://github.com/jellyfin/jellyfin-desktop.git
-cd jellyfin-desktop
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=/usr/local/ -G Ninja ..
-ninja
-sudo ninja install
-rm -rf ~/jmp/
-```
+**Measured, not assumed.** A hardware self-test records what each GPU decodes, and Icefin uses the result for playback routing and for the device profile it sends the server. A physical lab (HDR TVs, an AV receiver, controllers, remotes) gates every release.
 
-### Fedora based systems
+**Wayland-first.** Icefin targets Wayland desktops and Gamescope. Native X11 desktops are not supported, though the X11 code path remains for Gamescope.
 
-Install dependencies:
-```bash
-sudo dnf install autoconf automake libtool freetype-devel libXrandr-devel libvdpau-devel libva-devel  mesa-libGL-devel libdrm-devel libX11-devel  mesa-libEGL-devel yasm  alsa-lib pulseaudio-libs-devel zlib-devel fribidi-devel git gnutls-devel mesa-libGLU-devel  SDL2-devel cmake wget python g++  qt-devel libcec-devel qt6-qtbase-devel curl unzip qt6-qtwebchannel-devel qt6-qtwebengine-devel mpv.x86_64 qt6-qtbase.x86_64 meson.noarch ninja-build.x86_64 qt6-qtbase-private-devel mpv-libs.x86_64 mpv-devel qt6-qtdeclarative nasm libatomic libshaderc-2024.3
-```
+## Planned features
 
-Build commands for Fedora:
+**Theme engine**
+- Theme packages with design tokens, screen templates, motion presets, sounds and GPU shader backdrops
+- Per-user theme, preset and color overrides synced through Jellyfin
+- Settings screens generated from each theme's token schema
+- Trust levels for themes: user-installed themes are declarative-only unless explicitly trusted
+- Media Center reference theme inspired by the classic 10-foot media center look, with original art and sounds
+- Seven clone themes that double as engine benchmarks, all Icefin-branded with original assets:
+  - **Baseline**: the stock Jellyfin look, used as the control for plugin-compatibility testing
+  - **Harbor**: side menu with content rows, modeled on Kodi's Estuary layout
+  - **Spark**: top bar and hero carousel, modeled on the Fire TV layout
+  - **Plum**: menu column beside a tile grid, modeled on the Roku TV layout
+  - **Plaza**: paged tile grid with pointer navigation, modeled on the Wii Menu layout
+  - **Orbit**: 3D tile carousel, modeled on the Xbox 360 NXE layout
+  - **Pivot**: pivot headers and live tiles, modeled on the Xbox 360 Metro layout
 
-Note, the only real differences here is that libraries are in diffrent directories on Fedora systems.
-```bash
-mkdir ~/jmp; cd ~/jmp
-git clone https://github.com/mpv-player/mpv-build.git
-cd mpv-build/
-echo -Dlibmpv=true > mpv_options
-echo -Dpipewire=disabled >> mpv_options # hopefully temporary
-./rebuild -j`nproc`
-sudo ./install
-sudo mkdir /usr/local/lib/x86_64-linux-gnu
-sudo ln -s /usr/local/lib64/libmpv.so /usr/local/lib/x86_64-linux-gnu/libmpv.so.1
-sudo ln -s /usr/local/lib64/libmpv.so /usr/local/lib/x86_64-linux-gnu/libmpv.so
-sudo ldconfig
-cd ~/jmp/
-git clone --recursive https://github.com/jellyfin/jellyfin-desktop.git
-cd jellyfin-desktop/
-mkdir build
-cd build/
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=/usr/local/ ..
-make -j`nproc`
-sudo make install
-```
+**Video and HDR**
+- Single-surface Vulkan renderer for UI and video
+- HDR10 and HLG output on KDE Plasma 6.4+, GNOME 48+ and Gamescope, windowed or full screen
+- libplacebo tone mapping and Dolby Vision profile 5/8 handling
+- HDR capability detection, with a status page explaining why HDR is or isn't active
+- Capability prompt when the current system can't show a source correctly
+- Smarter device profile: direct play whenever the client can decode or tone-map locally
 
-## Building for Windows
+**Audio**
+- Choice of PipeWire, PulseAudio, JACK or ALSA output
+- Receiver capability detection from HDMI ELD
+- Per-track passthrough decisions with sensible fallbacks
+- Runtime PipeWire/PulseAudio passthrough setup and exclusive ALSA mode
+- "Never silent" fallback, per-device audio delay, receiver volume over HDMI-CEC
+- Audio test page for confirming formats on the receiver
 
-Please install:
- - [cmake](https://cmake.org/download/) - cmake-3.20.0-windows-x86_64.msi
-   - Add cmake to the path.
- - [ninja](https://github.com/ninja-build/ninja/releases)
-   - Place this in the build directory.
- - [QT](https://www.qt.io/download-thank-you?hsLang=en)
-   - This package is huge. You also need to make a QT account...
-   - Check "MSVC 2019 64-bit" and "Qt WebEngine" under Qt 6.
- - [VS2019 Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019)
-   - Again this will use a lot of disk space. The installer is small though.
- - [libmpv1](https://sourceforge.net/projects/mpv-player-windows/files/libmpv/)
-   - Place the contents in the build directory, in a subfolder called `mpv`.
-   - Move the contents of the `include` folder to an `mpv` folder inside the `include` folder.
-   - Move the `mpv-1.dll` to `mpv.dll`.
- - [WIX](https://wixtoolset.org/releases/v3.11.2/stable)
+**Controllers and input**
+- SDL3 gamepad support with standard mappings for current controllers
+- Steam Input cooperation and a recommended Steam layout
+- Correct on-screen button prompts per controller family
+- Per-controller remapping and a Nintendo-layout option
+- Keyboard, HDMI-CEC, LIRC and five-way remote navigation throughout
 
-You need to run these commands in git bash.
+**Performance and platform**
+- Hardware decode self-test (VA-API, NVDEC, Vulkan Video) with a Hardware settings page
+- GPU-rendered UI and GPU-accelerated web layer
+- Gamescope mode for couch and Steam Deck use
+- Flatpak with a signed repository, installable beside Jellyfin Desktop
 
-```bash
-git clone --recursive https://github.com/jellyfin/jellyfin-desktop
-cd jellyfin-desktop
-mkdir build
-cd build
-```
+## Roadmap
 
-Open the "x86_x64 Cross Tools Command Prompt for VS 2019". `cd` to the `build` directory. Run:
+1.0 is planned in 12 phases (about 42 weeks of development): fork setup, platform spikes, audio, GPU and display, the single-surface renderer, playback routing, controllers, the theme engine, the clone themes, an upstream sync, hardening, and release. See [`docs/PLAN.md`](docs/PLAN.md) for tasks and [`docs/SPEC.md`](docs/SPEC.md) for the full design.
 
-```
-set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
-cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=output -DCMAKE_MAKE_PROGRAM=ninja.exe -DQTROOT=C:/Qt/6.x.x/msvc2019_64 -DMPV_INCLUDE_DIR=mpv/include -DMPV_LIBRARY=mpv/libmpv-2.dll -DCMAKE_INSTALL_PREFIX=output ..
-lib /def:mpv\mpv.def /out:mpv\mpv.dll.lib /MACHINE:X64
-ninja
-ninja windows_package
-```
+After 1.0, the plan is to become an independent fork of Jellyfin Desktop and then drop X11 entirely.
 
-## Building for MacOS
+## Installing
 
-Install [Qt 6](https://www.qt.io/download-thank-you?hsLang=en), remember to check `Qt WebEngine`.
+Not available yet. Releases will ship as a Flatpak from a signed Icefin repository, with Flathub to follow after 1.0.
 
-Then run the following commands (replace <QT_DIR> with your QT installation location):
+## Relationship to Jellyfin
 
-```bash
-brew install mpv ninja
+Icefin Player is an independent fork and is not affiliated with or endorsed by the Jellyfin project. It is built on [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) and works with any Jellyfin server, 10.11 and later.
 
-git clone --recursive https://github.com/jellyfin/jellyfin-desktop.git
-cd jellyfin-desktop
-mkdir build
-cd build
-cmake -GNinja -DQTROOT=<QT_DIR> -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=output ..
-ninja install
-```
+The clone themes reproduce layouts and color schemes only. They contain no logos, icons, artwork, sounds, characters or proprietary fonts from Kodi, Amazon, Roku, Nintendo or Microsoft, and all product names belong to their owners.
 
-To create redistributable bundle, some library paths need to be fixed. At the project root directory, run:
+## Credits
 
-```bash
-python3 ./scripts/fix-install-names.py "./build/output/Jellyfin Desktop.app"
-```
+Icefin Player stands on a lot of open-source work:
 
-## Log File Location
+- **[Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop)** by the Jellyfin project and its contributors: the client Icefin is forked from. Its web-client integration, mpv player, input, MPRIS and settings systems are the foundation everything here builds on.
+- **Jellyfin Media Player** and, before it, **Plex Media Player**: the earlier projects Jellyfin Desktop grew out of, whose authors created the original Qt + mpv desktop client design.
+- **[Jellyfin](https://jellyfin.org)** and **[jellyfin-web](https://github.com/jellyfin/jellyfin-web)**: the server and web client Icefin talks to and runs.
+- **[mpv](https://mpv.io)**, **[libplacebo](https://code.videolan.org/videolan/libplacebo)** and **[FFmpeg](https://ffmpeg.org)**: playback, rendering and decoding.
+- **[MpvQt](https://invent.kde.org/libraries/mpvqt)** (KDE) and **[Qt](https://www.qt.io)**: the UI framework and its mpv integration.
+- **[Kodi](https://kodi.tv)** and the Estuary skin authors: the layout reference for the Harbor theme.
 
- - Windows: `%LOCALAPPDATA%\Jellyfin Desktop\logs`
- - Linux: `~/.local/share/jellyfin-desktop/logs/`
- - Linux (Flatpak): `~/.var/app/org.jellyfin.JellyfinDesktop/data/jellyfin-desktop/logs/`
- - macOS: `~/Library/Logs/Jellyfin Desktop/`
-
-## Config File Location
-
-The main configuration file is called `jellyfin-desktop.conf`. You can also add a `mpv.conf` to configure MPV directly.
-
- - Windows: `%LOCALAPPDATA%\Jellyfin Desktop\`
- - Linux: `~/.local/share/jellyfin-desktop/`
- - Linux (Flatpak): `~/.var/app/org.jellyfin.JellyfinDesktop/data/jellyfin-desktop/`
- - macOS: `~/Library/Application Support/Jellyfin Desktop/`
-
-## Web Debugger
-
-To get browser devtools, use remote debugging.
-
- - Run the application with the command argument `--remote-debugging-port=9222`.
- - Open Chromium or Google Chrome.
- - Navigate to `chrome://inspect/#devices`.
- - You can now access the developer tools.
-
-If you have problems:
-
- - Make sure "Discover Network Targets" is checked.
- - Make sure `localhost:9222` is in the list under "Configure...".
- - Make sure `--remote-debugging-port=9222` is specified correctly.
+Upstream copyright notices are preserved in the source. Thank you to everyone who built the pieces Icefin depends on.
 
 ## License
 
-Jellyfin Desktop is licensed under GPL v2. See the ``LICENSE`` file.
-Licenses of dependencies are summarized under ``resources/misc/licenses.txt``.
-This file can also be printed at runtime when using the ``--licenses`` option.
-
-## Known Issues
-
-If you build MPV from source, you currently need to disable pipewire or else the client will segfault.
+GPL-2.0, as inherited from Jellyfin Desktop. See [`LICENSE`](LICENSE).
