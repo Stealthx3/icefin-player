@@ -3,7 +3,7 @@ name: icefin-flatpak
 
 on:
   push:
-    branches: ["icefin/**"]
+    branches: ["icefin/main"]   # the stack tip; layers share commits, so building each would duplicate work
   pull_request:
   workflow_dispatch:
 
