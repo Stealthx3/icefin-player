@@ -16,7 +16,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **1.9** Hardware lab: passthrough guest (GPU, USB, HDMI audio; needs the user's OK) and the hardware rows of `docs/BASELINE-REPORT.md`
 
 ## Phase 2 — Platform spikes (4 wks)
-- [ ] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
+- [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
 - [ ] **2.2** Spike: patched libmpv rendering through libplacebo on Qt's shared Vulkan device
 - [ ] **2.3** Spike: HDR swapchain format and Wayland surface tagging on KWin and Mutter
 - [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak
