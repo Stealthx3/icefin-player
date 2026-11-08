@@ -437,7 +437,7 @@ QString SystemComponent::getUserAgent()
     .arg(Version::GetVersionString())
     .arg(kernel)
     .arg(getPlatformArchString())
-    .arg(chromeVersion)
+    .arg(chromeVersion)  // ICEFIN-HOOK: chained Icefin product token below
     .arg(Icefin::UserAgentProduct, Icefin::Version);  // ICEFIN-HOOK: Icefin product token
   return userAgent;
 }
