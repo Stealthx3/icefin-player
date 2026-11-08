@@ -3,6 +3,7 @@
 Fork of jellyfin-desktop v2.0.0 (Qt 6 + Qt WebEngine + jellyfin-web + libmpv), rebranded **icefin-player**. It adds a theme engine, a single-surface Vulkan HDR renderer, hardened HDMI audio passthrough, first-class controller support and verified GPU paths. It ships as a Flatpak; Linux, Wayland-first.
 
 ## Read first
+- `docs/GITHUB-RESTRUCTURE.md`: **development is paused** while Claude Cowork restructures the GitHub repo. Until its *Result* section is filled in and the user says to continue, only do the hand-back steps listed there.
 - `docs/HANDOFF.md`: current state and the first-session checklist. Start here.
 - `docs/PLAN.md`: task tracker (source of truth for progress; tick boxes in the same commit as the work).
 - `docs/SPEC.md`: full design. Read only the section a task names in brackets.

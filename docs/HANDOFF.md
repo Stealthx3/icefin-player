@@ -1,5 +1,7 @@
 # Handoff to Claude Code
 
+> **2026-11-08: paused for a GitHub restructuring by Claude Cowork.** See `docs/GITHUB-RESTRUCTURE.md`. Don't start PLAN work until its *Result* section is filled in and the user says to continue.
+
 **State (2026-11-07):** planning is complete; no code exists yet. This folder holds the plan, spec, decisions, standards and a bootstrap script. Next is Phase 1 in `docs/PLAN.md`.
 
 ## First session, in order
