@@ -1,0 +1,25 @@
+{
+  "_comment": "Lab Jellyfin servers and regression plugins (PLAN 1.7, SPEC 'Server plugin compatibility'). Pinned images; bump deliberately.",
+  "servers": [
+    { "name": "jf1011", "image": "docker.io/jellyfin/jellyfin:10.11.11", "port": 8096, "abi": "10.11" },
+    { "name": "jf12",   "image": "docker.io/jellyfin/jellyfin:12.4",    "port": 8097, "abi": "12.4" }
+  ],
+  "repositories": [
+    { "Name": "Jellyfin Stable", "Url": "https://repo.jellyfin.org/files/plugin/manifest.json" },
+    { "Name": "IAmParadox27", "Url": "https://www.iamparadox.dev/jellyfin/plugins/manifest.json" },
+    { "Name": "n00bcodr", "Url": "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json" },
+    { "Name": "9p4 SSO", "Url": "https://raw.githubusercontent.com/9p4/jellyfin-plugin-sso/manifest-release/manifest.json" },
+    { "Name": "Intro Skipper", "Url": "https://intro-skipper.org/manifest.json" }
+  ],
+  "plugins": [
+    { "name": "Playback Reporting",   "tier": "server work" },
+    { "name": "Trakt",                "tier": "server work (scrobbler)" },
+    { "name": "LDAP Authentication",  "tier": "server work (auth)", "installed_as": "LDAP-Auth" },
+    { "name": "Intro Skipper",        "tier": "core-API data (MediaSegments)", "github": "intro-skipper/intro-skipper" },
+    { "name": "File Transformation",  "tier": "UI injection (dependency)" },
+    { "name": "Home Screen Sections", "tier": "UI injection" },
+    { "name": "Plugin Pages",         "tier": "UI injection" },
+    { "name": "JavaScript Injector",  "tier": "UI injection" },
+    { "name": "SSO Authentication",   "tier": "web login flow", "installed_as": "SSO-Auth" }
+  ]
+}
