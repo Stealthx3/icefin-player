@@ -10,10 +10,10 @@ sudo apt-get install -y -qq --no-install-recommends \
   libasound2-dev libcec-dev libegl1-mesa-dev libgl1-mesa-dev libpulse-dev libsdl2-dev \
   libva-dev libvdpau-dev libx11-dev libxrandr-dev libicu-dev libmpv-dev \
   qt6-base-dev qt6-base-private-dev qt6-declarative-dev qt6-webengine-dev qt6-webengine-private-dev \
-  qt6-webchannel-dev qml6-module-qtqml-workerscript qml6-module-qtquick-controls \
+  qt6-webchannel-dev qt6-wayland qml6-module-qtqml-workerscript qml6-module-qtquick-controls \
   qml6-module-qtquick-templates qml6-module-qtquick-window qml6-module-qtwebchannel \
   qml6-module-qtwebengine qml6-module-qtwebengine-controlsdelegates qml6-module-qtwebview \
-  xvfb xauth x11-utils shellcheck ffmpeg python3-websocket
+  xvfb xauth x11-utils weston shellcheck ffmpeg python3-websocket
 # Flatpak packaging (task 1.5) and containerized Jellyfin servers (task 1.7)
 sudo apt-get install -y -qq --no-install-recommends flatpak flatpak-builder elfutils appstream librsvg2-common podman uidmap slirp4netns passt
 sudo loginctl enable-linger "$(id -un)"   # rootless podman without a login session
