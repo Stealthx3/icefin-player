@@ -33,3 +33,41 @@ Wayland, with the transparency the single-surface design needs.
 **Open risk.** The software rasterizer doesn't exercise the GPU texture-import path Chromium uses on real GPUs
 (DMA-BUF into Vulkan). Re-run this spike on AMD, Intel and NVIDIA in the hardware lab (1.9) before Phase 5 ships;
 a failure there is driver-specific and is handled by the OpenGL fallback (SPEC routing table), not a design no-go.
+
+## 2.2 Patched libmpv rendering through libplacebo on Qt's shared Vulkan device: **GO (functional); confirm on GPU and hwdec in 1.9 / 4.5**
+
+_2026-11-07 · `src/icefin/spikes/2.2-libmpv-vulkan/` · lab-icefin-main, Mesa lavapipe_
+
+**Question.** Can libmpv render with gpu-next (libplacebo) into an image on the same `VkDevice` Qt Quick renders with,
+so video becomes a scene-graph texture with no copies?
+
+**Patch.** mpv has no Vulkan render API (mpv PRs #16818, #17828 and #18607 are open). Two commits from
+github.com/andrewrabert/mpv (a jellyfin-desktop developer's fork, used by upstream's experimental
+`libmpv-vulkan-gpu-next-wayland-hdr` branch) apply onto mpv 0.42.0 with one trivial conflict (enum numbering). They're
+kept in `patches/` with authorship and form the starting point for 5.2. They need libplacebo ≥ 7.387 (Debian 13
+has 7.349; the Flatpak already builds 7.387).
+
+**Test.** The spike creates the Vulkan 1.3 device itself, with every supported feature on (timeline semaphores and
+host query reset included) and the external-memory/DMA-BUF extensions where present. It hands the device to Qt
+with `QQuickGraphicsDevice::fromDeviceObjects`, creates libmpv's render context on it, and renders each mpv frame
+into a `VkImage` on Qt's render thread before Qt's own pass (same thread, same queue). The image is wrapped with
+`QSGVulkanTexture::fromNative`. Window grabs check the pixels.
+
+| Platform | Source | Frames in 10 s | Result |
+|---|---|---|---|
+| X11 | SDR H.264, half red, half green, 30 fps | 301 | exact colours (`#fd0000` / `#00fe00`), shared device confirmed |
+| Wayland (headless Weston) | same | 287 | exact colours |
+| X11 | HDR10 HEVC 4K (`bt.2020/pq/yuv420p10`) | 201 | mpv sees PQ/BT.2020; libplacebo tone-maps to SDR |
+| Wayland | same | 175 | same |
+
+(HDR frame counts are below 24 fps because a 4K HEVC 10-bit software decode is running on a VM CPU.)
+
+**Verdict.** Go. The shared-device architecture works: one device, created by Icefin, used by Qt and libplacebo.
+
+**Open items for Phase 5.**
+- Use `MPV_RENDER_PARAM_VULKAN_SYNC` semaphores instead of the patch's `pl_gpu_finish` fallback, which blocks the render thread.
+- Hardware decode into the shared device (DMA-BUF import, Vulkan Video) is untested; it needs a GPU (1.9 / 4.5).
+- Render into an RGBA16F target in linear light for the HDR compositor (5.4); the spike used RGBA8 sRGB.
+- Prior art: upstream's experimental branch takes a different route, a separate Vulkan Wayland **subsurface** for
+  mpv under an OpenGL Qt window, tagged with `wp_color_manager_v1`. That's useful reference for 2.3 and the
+  contingency, but it isn't the D4 single-surface design.
