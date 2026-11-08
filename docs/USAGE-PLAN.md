@@ -68,7 +68,7 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 - 2026-11-07: restack.sh written (task 1.2); the stack gained an `icefin/infra` bottom layer.
 
 ## Handoff
-- 2026-11-07 (S2): Phase 1 tasks 1.1–1.6 done and pushed (stack tip `icefin/main`). Flatpak builds and runs in lab-icefin-main; GitHub icefin-flatpak CI's first run was still in progress at handoff.
-- Next (S3): 1.7 — podman Jellyfin 10.11.x and 12.x servers in the lab plus regression plugins (read SPEC "Testing, CI and hardware lab" first); the hardware guest needs the user's OK for passthrough. Then 1.8 baseline (software rows only until hardware is attached).
-- Open: hidden "Report as Jellyfin Desktop" setting (SPEC client identity) not built yet; libcec not in the Flatpak yet (Phase 3.7); other party's README.md / bootstrap-fork.sh / docs/github edits left uncommitted per user.
-- Usage note: S2 ran long (L) as planned; the Flatpak provisioning retries were the main overrun.
+- 2026-11-07 (S2b): Phase 1 done except 1.9 (hardware lab, needs passthrough OK). Spikes 2.1, 2.2, 2.3, 2.7 done (docs/SPIKES.md); 2.4, 2.5, 2.6, 2.8 need hardware; 2.9 waits on them. Stack tip `icefin/main` = `icefin/theme`; lower layers frozen until a force push is approved (BRANCHES.md).
+- Next: Phase 3 audio, software-testable parts first (3.1 backend setting, 3.2 ELD parser with fixtures, 3.3 decision table, 3.6 never-silent fallback); then Phase 4 decode self-test logic, Phase 6 router/probe logic with unit tests.
+- Open for the user: passthrough/GPU for the lab (1.9, 2.4–2.6, 2.8); a newer lab base for Plasma 6.4+ (KWin 6.3 tested); the HLG acceptance row (HANDOFF); force-push permission for restacks.
+- Usage note: spikes ran in the main thread (opus) as planned; lab-side failures (deps, sandbox, D-Bus) were the main overrun. Keep greps narrow.
