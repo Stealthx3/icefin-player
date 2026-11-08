@@ -69,6 +69,6 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 
 ## Handoff
 - 2026-11-07 (S2b): Phase 1 done except 1.9 (hardware lab, needs passthrough OK). Spikes 2.1, 2.2, 2.3, 2.7 done (docs/SPIKES.md); 2.4, 2.5, 2.6, 2.8 need hardware; 2.9 waits on them. Stack tip `icefin/main` = `icefin/theme`; lower layers frozen until a force push is approved (BRANCHES.md).
-- Next: Phase 3 audio, software-testable parts first (3.1 backend setting, 3.2 ELD parser with fixtures, 3.3 decision table, 3.6 never-silent fallback); then Phase 4 decode self-test logic, Phase 6 router/probe logic with unit tests.
+- Done since: 3.1, 3.2, 3.3, 3.5, 3.6 (src/icefin/audio, tests/icefin/unit). Next: 3.4 IEC958 device-restore (needs PipeWire sink with IEC958 formats; HDMI hardware to verify), 3.7 per-device delay, then Phase 4/6 software logic. Run `scripts/icefin/hook-count.sh` after committing and without a pipe.
 - Open for the user: passthrough/GPU for the lab (1.9, 2.4–2.6, 2.8); a newer lab base for Plasma 6.4+ (KWin 6.3 tested); the HLG acceptance row (HANDOFF); force-push permission for restacks.
 - Usage note: spikes ran in the main thread (opus) as planned; lab-side failures (deps, sandbox, D-Bus) were the main overrun. Keep greps narrow.
