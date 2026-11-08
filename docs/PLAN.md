@@ -28,8 +28,8 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 3 — Audio subsystem (4 wks)
 - [ ] **3.1** `audio.backend` setting (Auto, PipeWire, PulseAudio, JACK, ALSA) mapped to mpv `ao`; hide passthrough under JACK [Audio subsystem]
-- [ ] **3.2** ELD reader: map sink to ALSA card/device, parse `/proc/asound/card*/eld#*`, stale handling
-- [ ] **3.3** Per-track passthrough decision (user ∩ receiver ∩ backend; DTS core, LPCM fallbacks)
+- [x] **3.2** ELD reader: map sink to ALSA card/device, parse `/proc/asound/card*/eld#*`, stale handling
+- [x] **3.3** Per-track passthrough decision (user ∩ receiver ∩ backend; DTS core, LPCM fallbacks)
 - [ ] **3.4** Runtime IEC958 format setting via device-restore; WirePlumber drop-in fallback
 - [ ] **3.5** Exclusive ALSA with `org.freedesktop.ReserveDevice1` reservation
 - [ ] **3.6** Never-silent fallback replacing `audio-fallback-to-null` (PCM retry → release reservation → default device → notice)

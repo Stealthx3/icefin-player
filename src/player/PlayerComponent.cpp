@@ -1,3 +1,4 @@
+#include "icefin/audio/AudioPolicy.h"  // ICEFIN-HOOK: Icefin audio policy
 #include "PlayerComponent.h"
 #include <QString>
 #include <Qt>
@@ -645,6 +646,7 @@ void PlayerComponent::handleMpvEvent(mpv_event *event)
       {
         reselectStream(m_currentSubtitleStream, MediaType::Subtitle);
         reselectStream(m_currentAudioStream, MediaType::Audio);
+        Icefin::Audio::applyForCurrentTrack(m_mpv, m_passthroughCodecs, SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "devicetype").toString() == AUDIO_DEVICE_TYPE_HDMI);  // ICEFIN-HOOK: per-track passthrough decision (PLAN 3.3)
         startCodecsLoading([=] {
           m_mpv->command( QStringList() << "hook-ack" << resumeId);
         });
@@ -688,6 +690,7 @@ void PlayerComponent::handleMpvEvent(mpv_event *event)
       {
         reselectStream(m_currentSubtitleStream, MediaType::Subtitle);
         reselectStream(m_currentAudioStream, MediaType::Audio);
+        Icefin::Audio::applyForCurrentTrack(m_mpv, m_passthroughCodecs, SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "devicetype").toString() == AUDIO_DEVICE_TYPE_HDMI);  // ICEFIN-HOOK: per-track passthrough decision (PLAN 3.3)
         startCodecsLoading([=] {
           mpv_hook_continue(m_mpv->mpv(), id);
         });
