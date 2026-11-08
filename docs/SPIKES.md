@@ -3,7 +3,7 @@
 One entry per spike (PLAN 2.1–2.8). A no-go on 2.1, 2.2 or 2.3 switches the plan to the two-window contingency
 (SPEC "Contingency: two-window design"). Raw results and screenshots are in `docs/spikes/`.
 
-## 2.1 Qt Quick on Qt's Vulkan backend with Qt WebEngine inside it: **GO (functional); confirm on GPU in 1.9**
+## 2.1 Qt Quick on Qt's Vulkan backend with Qt WebEngine inside it: **GO (functional); confirm on GPU in 1.10 (HTPC tier)**
 
 _2026-11-07 · `src/icefin/spikes/2.1-webengine-vulkan/` · lab-icefin-main, Mesa lavapipe (software Vulkan 1.4)_
 
@@ -31,10 +31,10 @@ The real jellyfin-web 10.11 sign-in page also renders correctly in the Vulkan sc
 Wayland, with the transparency the single-surface design needs.
 
 **Open risk.** The software rasterizer doesn't exercise the GPU texture-import path Chromium uses on real GPUs
-(DMA-BUF into Vulkan). Re-run this spike on AMD, Intel and NVIDIA in the hardware lab (1.9) before Phase 5 ships;
+(DMA-BUF into Vulkan). Re-run this spike on AMD, Intel and NVIDIA in the hardware lab (1.10 (HTPC tier)) before Phase 5 ships;
 a failure there is driver-specific and is handled by the OpenGL fallback (SPEC routing table), not a design no-go.
 
-## 2.2 Patched libmpv rendering through libplacebo on Qt's shared Vulkan device: **GO (functional); confirm on GPU and hwdec in 1.9 / 4.5**
+## 2.2 Patched libmpv rendering through libplacebo on Qt's shared Vulkan device: **GO (functional); confirm on GPU and hwdec in 1.10 (HTPC tier) / 4.5**
 
 _2026-11-07 · `src/icefin/spikes/2.2-libmpv-vulkan/` · lab-icefin-main, Mesa lavapipe_
 
@@ -66,13 +66,13 @@ into a `VkImage` on Qt's render thread before Qt's own pass (same thread, same q
 
 **Open items for Phase 5.**
 - Use `MPV_RENDER_PARAM_VULKAN_SYNC` semaphores instead of the patch's `pl_gpu_finish` fallback, which blocks the render thread.
-- Hardware decode into the shared device (DMA-BUF import, Vulkan Video) is untested; it needs a GPU (1.9 / 4.5).
+- Hardware decode into the shared device (DMA-BUF import, Vulkan Video) is untested; it needs a GPU (1.10 (HTPC tier) / 4.5).
 - Render into an RGBA16F target in linear light for the HDR compositor (5.4); the spike used RGBA8 sRGB.
 - Prior art: upstream's experimental branch takes a different route, a separate Vulkan Wayland **subsurface** for
   mpv under an OpenGL Qt window, tagged with `wp_color_manager_v1`. That's useful reference for 2.3 and the
   contingency, but it isn't the D4 single-surface design.
 
-## 2.3 HDR swapchain format and Wayland surface tagging on KWin and Mutter: **GO (protocol level), with design notes; TV signalling in 1.9**
+## 2.3 HDR swapchain format and Wayland surface tagging on KWin and Mutter: **GO (protocol level), with design notes; TV signalling in 1.10 (HTPC tier)**
 
 _2026-11-07 · `src/icefin/spikes/2.3-hdr-surface/` (`cmprobe.c`, `vkcolorspaces.c`) · KWin 6.3.6 and Mutter 48.7 headless in lab-icefin-main_
 
@@ -109,9 +109,9 @@ Mesa can produce a PQ-encoded swapchain. Design consequences for Phase 5:
 3. **Mutter drops mastering metadata** (no `set_mastering_display_primaries`), so the TV gets Mutter's own
    metadata; MaxCLL can still be expressed through `set_luminances`.
 4. **KWin 6.3 is below the Plasma 6.4+ target.** Re-run `cmprobe` on Plasma 6.4+ (a newer lab base or the HTPC).
-5. The TV/monitor actually switching to HDR10 is a hardware check (1.9).
+5. The TV/monitor actually switching to HDR10 is a hardware check (1.10 (HTPC tier)).
 
-## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **BLOCKED (needs a GPU) → 1.9**
+## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **BLOCKED (needs a GPU) → 1.10 (HTPC tier)**
 
 _2026-11-07_ Gamescope 3.16.17 builds in the lab, and Flathub's `org.freedesktop.Platform.VulkanLayer.gamescope//25.08`
 (the WSI layer the Flatpak would use) installs. But Gamescope's headless backend refuses software Vulkan: it requires
