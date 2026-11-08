@@ -1,0 +1,52 @@
+# Icefin: nightly rebase canary (PLAN 1.2, SPEC "Fork, branding and upstream sync").
+# Rebases the whole feature stack onto upstream master in a throwaway branch and reports conflicts.
+# Nothing is pushed; a red run means upstream drift needs attention before the next sync.
+name: icefin-rebase-canary
+
+on:
+  schedule:
+    - cron: "17 9 * * *"   # daily 09:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: icefin/main
+          fetch-depth: 0
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/jellyfin/jellyfin-desktop.git
+          git fetch --quiet upstream master
+          git fetch --quiet origin 'refs/heads/icefin/*:refs/remotes/origin/icefin/*'
+      - name: Rebase stack onto upstream/master
+        run: |
+          git config user.name canary && git config user.email canary@invalid
+          base=origin/icefin/base
+          behind=$(git rev-list --count "$base"..upstream/master)
+          ours=$(git rev-list --count "$base"..origin/icefin/main)
+          {
+            echo "## Rebase canary"
+            echo "- upstream master: \`$(git rev-parse --short upstream/master)\`, $behind commits past \`icefin/base\`"
+            echo "- Icefin stack: $ours commits"
+          } >> "$GITHUB_STEP_SUMMARY"
+          git switch -q -c canary origin/icefin/main
+          if git rebase --onto upstream/master "$base" canary >/tmp/rebase.log 2>&1; then
+            echo "- result: **clean** (stack applies on upstream master)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            stopped=$(git log -1 --format='%h %s' REBASE_HEAD 2>/dev/null || echo unknown)
+            {
+              echo "- result: **conflict** at \`$stopped\`"
+              echo '```'
+              git diff --name-only --diff-filter=U
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            git rebase --abort
+            echo "::error::Icefin stack conflicts with upstream master at $stopped"
+            exit 1
+          fi
