@@ -257,7 +257,7 @@ Window
         worldId: WebEngineScript.MainWorld
       }
 
-      web.userScripts.collection = [ nativeshell ];
+      web.profile.userScripts.collection = [ nativeshell ];  // ICEFIN-HOOK: backport upstream cabddc6 (first-load injection race)
     }
 
     onLoadingChanged: function(loadingInfo)
