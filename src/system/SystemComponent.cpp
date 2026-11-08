@@ -554,7 +554,7 @@ QString SystemComponent::getNativeShellScript()
   clientData.insert("deviceName", QJsonValue::fromVariant(SettingsComponent::Get().getClientName()));
   clientData.insert("version", QJsonValue::fromVariant(Version::GetVersionString()));
   clientData.insert("userAgent", QJsonValue::fromVariant(getUserAgent()));
-  clientData.insert("icefin", QJsonObject{{"appName", Icefin::DisplayName}, {"appVersion", Icefin::Version}, {"upstreamName", Icefin::UpstreamName}, {"upstreamVersion", Icefin::UpstreamVersion}});  // ICEFIN-HOOK: client identity for nativeshell.js
+  clientData.insert("icefin", QJsonObject{{"appName", Icefin::DisplayName}, {"appVersion", Icefin::Version}, {"upstreamName", Icefin::UpstreamName}, {"upstreamVersion", Icefin::UpstreamVersion}, {"flatpak", Icefin::Flatpak}});  // ICEFIN-HOOK: client identity for nativeshell.js
   clientData.insert("scriptPath", QJsonValue::fromVariant("file:///" + path));
   QString defaultMode = SettingsComponent::Get().value(SETTINGS_SECTION_MAIN, "layout").toString();
 
@@ -599,7 +599,9 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/mpvVideoPlayer.js",
     ":/web-client/extension/mpvAudioPlayer.js",
     ":/web-client/extension/inputPlugin.js",
+#ifndef ICEFIN_FLATPAK  // ICEFIN-HOOK: Flatpak builds do not load the update plugin
     ":/web-client/extension/updatePlugin.js",
+#endif  // ICEFIN-HOOK: end Flatpak exclusion
     ":/web-client/extension/connectivityHelper.js",
     ":/web-client/extension/nativeshell.js"
   };

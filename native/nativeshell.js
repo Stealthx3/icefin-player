@@ -19,7 +19,7 @@ const features = [
 const getPlugins = () => {
     const basePlugins = [
         'inputPlugin',
-        'updatePlugin'
+        ...(jmpInfo.icefin.flatpak ? [] : ['updatePlugin'])  // ICEFIN-HOOK: no update plugin in Flatpak builds
     ];
 
     const mpvEnabled = jmpInfo.settings?.main?.enableMPV !== false;

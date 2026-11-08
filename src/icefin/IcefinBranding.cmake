@@ -14,6 +14,15 @@ string(STRIP "${ICEFIN_UPSTREAM_VERSION}" ICEFIN_UPSTREAM_VERSION)
 set(MAIN_NAME icefin-player)
 set(DATA_NAME icefin-player)
 
+# Flatpak builds (PLAN 1.6): Flatpak handles updates, so drop upstream's GitHub release check and its plugin.
+option(ICEFIN_FLATPAK "Build for the Icefin Flatpak (no update check)" OFF)
+if(ICEFIN_FLATPAK)
+  add_definitions(-DICEFIN_FLATPAK -DDISABLE_UPDATE_CHECK)
+  set(ICEFIN_FLATPAK_BOOL true)
+else()
+  set(ICEFIN_FLATPAK_BOOL false)
+endif()
+
 configure_file("${CMAKE_SOURCE_DIR}/src/icefin/Branding.h.in" "${CMAKE_BINARY_DIR}/src/icefin/Branding.h" @ONLY)
 include_directories("${CMAKE_BINARY_DIR}/src/icefin")
 

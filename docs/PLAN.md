@@ -10,7 +10,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **1.3** Branding: binary/package `icefin-player`, display name Icefin Player, app ID, data/cache/log paths, `appName` in `nativeshell.js`, About page with upstream base version
 - [x] **1.4** Add the `ICEFIN-HOOK` marker convention and a CI check that counts hook lines in upstream files
 - [x] **1.5** Write `flatpak/` manifest from Flathub's `org.jellyfin.JellyfinDesktop`, new app ID; CI builds it and runs unit tests in the sandbox [Flatpak packaging]
-- [ ] **1.6** Remove update checks in Flatpak builds (`ICEFIN_FLATPAK` drops `updatePlugin.js`)
+- [x] **1.6** Remove update checks in Flatpak builds (`ICEFIN_FLATPAK` drops `updatePlugin.js`)
 - [ ] **1.7** Stand up the lab: guests per `docs/LAB.md`, containerized Jellyfin 10.11.x and 12.x servers with the regression plugins installed
 - [ ] **1.8** Baseline report: measure every acceptance goal against unmodified upstream v2.0.0 and write `docs/BASELINE-REPORT.md`
 
