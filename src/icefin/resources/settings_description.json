@@ -1,0 +1,20 @@
+[
+  {
+    "section": "audio",
+    "values": [
+      {
+        "value": "backend",
+        "display_name": "Audio Backend",
+        "help": "Which sound system plays audio.\n\n- Auto: PipeWire if running, otherwise PulseAudio, otherwise ALSA.\n- PipeWire / PulseAudio: through the sound server (passthrough via the HDMI sink's formats).\n- ALSA: direct to the device; most reliable for TrueHD and DTS-HD MA.\n- JACK: PCM only (up to 7.1); passthrough is not available.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "pipewire", "PipeWire" ],
+          [ "pulse", "PulseAudio" ],
+          [ "alsa", "ALSA" ],
+          [ "jack", "JACK" ]
+        ]
+      }
+    ]
+  }
+]

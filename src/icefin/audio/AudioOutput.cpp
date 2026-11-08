@@ -58,6 +58,23 @@ Output parseDevice(const QString& dev, const QString& sysRoot, const QString& pr
   return o;
 }
 
+QString aoForSetting(const QString& s)
+{
+  if (s == "pipewire" || s == "pulse" || s == "alsa" || s == "jack") return s;
+  return "pipewire,pulse,alsa";
+}
+
+bool backendHidesPassthrough(const QString& s) { return s == "jack"; }
+
+std::optional<Backend> backendForSetting(const QString& s)
+{
+  if (s == "pipewire") return Backend::PipeWire;
+  if (s == "pulse") return Backend::PulseAudio;
+  if (s == "alsa") return Backend::Alsa;
+  if (s == "jack") return Backend::Jack;
+  return std::nullopt;
+}
+
 Backend autoBackend(const QString& runtimeDir)
 {
   if (QFileInfo::exists(runtimeDir + "/pipewire-0")) return Backend::PipeWire;

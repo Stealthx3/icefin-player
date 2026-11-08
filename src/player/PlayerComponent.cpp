@@ -1,5 +1,6 @@
 #include "icefin/audio/AudioPolicy.h"  // ICEFIN-HOOK: Icefin audio policy
 #include "icefin/audio/Fallback.h"  // ICEFIN-HOOK: never-silent audio fallback
+#include "icefin/audio/AudioOutput.h"  // ICEFIN-HOOK: audio.backend mapping
 #include "PlayerComponent.h"
 #include <QString>
 #include <Qt>
@@ -1241,6 +1242,7 @@ void PlayerComponent::setAudioConfiguration()
   m_mpv->setProperty( "audio-exclusive", SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "exclusive").toBool());
 
   updateAudioDevice();
+  m_mpv->setProperty("ao", Icefin::Audio::aoForSetting(SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "backend").toString()));  // ICEFIN-HOOK: audio.backend (PLAN 3.1)
 
   bool normalize = SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "normalize").toBool();
   m_mpv->setProperty( "audio-normalize-downmix", normalize ? "yes" : "no");

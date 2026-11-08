@@ -1,3 +1,4 @@
+#include "icefin/settings/SettingsMerge.h"  // ICEFIN-HOOK: Icefin settings
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
@@ -519,7 +520,7 @@ QVariantList SettingsComponent::settingDescriptions()
 bool SettingsComponent::loadDescription()
 {
   QJsonParseError err;
-  auto doc = Utils::OpenJsonDocument(":/settings/settings_description.json", &err);
+  auto doc = Icefin::Settings::mergeDescription(Utils::OpenJsonDocument(":/settings/settings_description.json", &err));  // ICEFIN-HOOK: merge Icefin settings
   if (doc.isNull())
   {
     qCritical() << "Failed to read settings description:" << err.errorString();
