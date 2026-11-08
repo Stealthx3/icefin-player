@@ -1,0 +1,10 @@
+# Spike 2.1 (PLAN): Qt Quick on Qt's Vulkan backend with Qt WebEngine inside it. Standalone; not part of the app.
+cmake_minimum_required(VERSION 3.16)
+project(spike_webengine_vulkan CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+find_package(Qt6 REQUIRED COMPONENTS Gui Quick Qml WebEngineQuick)
+add_executable(spike-webengine-vulkan main.cpp spike.qrc)
+target_link_libraries(spike-webengine-vulkan Qt6::Gui Qt6::Quick Qt6::Qml Qt6::WebEngineQuick)
+install(TARGETS spike-webengine-vulkan)
