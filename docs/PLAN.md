@@ -13,7 +13,8 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **1.6** Remove update checks in Flatpak builds (`ICEFIN_FLATPAK` drops `updatePlugin.js`)
 - [x] **1.7** Stand up the lab: guests per `docs/LAB.md`, containerized Jellyfin 10.11.x and 12.x servers with the regression plugins installed
 - [x] **1.8** Baseline report: measure every acceptance goal against unmodified upstream v2.0.0 and write `docs/BASELINE-REPORT.md`
-- [ ] **1.9** Hardware lab: passthrough guest (GPU, USB, HDMI audio; needs the user's OK) and the hardware rows of `docs/BASELINE-REPORT.md`
+- [x] **1.9** Hardware lab: the HTPC tier (D16): `scripts/icefin/htpc.sh` (deploy from the lab repo, run in the TV session, HDR/passthrough probe, house rules), tested end to end on a stand-in guest
+- [ ] **1.10** Hardware baseline on the HTPC: SSH access from the user, then the hardware rows of `docs/BASELINE-REPORT.md`
 
 ## Phase 2 — Platform spikes (4 wks)
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it

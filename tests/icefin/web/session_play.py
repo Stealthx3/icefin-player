@@ -6,6 +6,8 @@ Usage:
   python3 session_play.py --app ~/build-upstream/src/jellyfin-desktop --server jf1011 --item "SDR H264 AAC" \
       --seconds 20 --out ~/baseline/upstream-jf1011.json
   --app may be a binary path or flatpak:<app-id>.
+  --qpa session runs in the graphical session already on screen (the HTPC tier, scripts/icefin/htpc.sh play):
+  no Xvfb/Weston, no --disable-gpu, the real session bus.
 
 Writes JSON with: the session identity the server recorded (client name, version, capabilities), the
 playback timeline (position/play method samples), Activity Log entries and Playback Reporting rows for the
@@ -18,7 +20,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-JF = os.path.expanduser("~/jf")
+JF = os.path.expanduser(os.environ.get("ICEFIN_JF_DIR", "~/jf"))
 
 
 def now_iso():
@@ -44,12 +46,21 @@ def start_x(display=":99"):
     return p
 
 
-def launch(app, port, cfgdir, logf, qpa="xcb"):
+def launch(app, port, cfgdir, logf, qpa="xcb", extra=()):
+    if qpa == "session":
+        # Whatever the session gives us (Plasma, GNOME or Gamescope); htpc.sh imports its environment.
+        env = dict(os.environ, LC_ALL="C.UTF-8")
+        args = [f"--remote-debugging-port={port}", "--log-level=info"] + list(extra)
+        if app.startswith("flatpak:"):
+            cmd = ["flatpak", "run", "--user", app.split(":", 1)[1], f"--config-dir=/var/tmp/{os.path.basename(cfgdir)}"] + args
+        else:
+            cmd = [os.path.expanduser(app), f"--config-dir={cfgdir}"] + args
+        return subprocess.Popen(cmd, env=env, stdout=logf, stderr=subprocess.STDOUT, start_new_session=True)
     env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM=qpa, LC_ALL="C.UTF-8")
     if qpa == "wayland":
         env.pop("DISPLAY", None)
         env["WAYLAND_DISPLAY"] = "wl-icefin"
-    args = ["--windowed", "--desktop", "--disable-gpu", f"--remote-debugging-port={port}", "--log-level=info"]
+    args = ["--windowed", "--desktop", "--disable-gpu", f"--remote-debugging-port={port}", "--log-level=info"] + list(extra)
     if app.startswith("flatpak:"):
         # Chromium's sandbox inside a Flatpak spawns via the Flatpak portal, which needs a session bus.
         # Fresh state per run: /var/tmp inside the sandbox is the app's private, writable cache.
@@ -68,10 +79,13 @@ def main():
     ap.add_argument("--seconds", type=int, default=40)  # Playback Reporting only records plays still running ~20 s after start
     ap.add_argument("--port", type=int, default=9222)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--qpa", choices=["xcb", "wayland"], default="xcb", help="xcb = Xvfb, wayland = headless Weston")
+    ap.add_argument("--qpa", choices=["xcb", "wayland", "session"], default="xcb",
+                    help="xcb = Xvfb, wayland = headless Weston, session = the graphical session on screen (HTPC)")
+    ap.add_argument("--app-arg", action="append", default=[], help="extra argument for the app (repeatable)")
     a = ap.parse_args()
 
     cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+    cfg["port"] = int(os.environ.get(f"ICEFIN_PORT_{a.server.upper()}", cfg["port"]))  # HTPC tier: tunnelled, shifted ports
     cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
     admin = Server(cfg)
     admin.wait()
@@ -89,10 +103,10 @@ def main():
     cfgdir = tempfile.mkdtemp(prefix="icefin-run-")
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     logpath = a.out.rsplit(".", 1)[0] + ".app.log"
-    xv = start_weston() if a.qpa == "wayland" else start_x()
+    xv = {"wayland": start_weston, "xcb": start_x}.get(a.qpa, lambda: None)()
     out["qpa"] = a.qpa
     with open(logpath, "w") as logf:
-        app = launch(a.app, a.port, cfgdir, logf, a.qpa)
+        app = launch(a.app, a.port, cfgdir, logf, a.qpa, a.app_arg)
     try:
         page = Page(a.port, timeout=90)
         step("devtools attached")

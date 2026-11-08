@@ -1,11 +1,11 @@
 # Baseline report: jellyfin-desktop v2.0.0
 
-_PLAN 1.8 · measured 2026-11-07 in `lab-icefin-main` (KVM, no GPU or audio hardware) · hardware rows: PLAN 1.9_
+_PLAN 1.8 · measured 2026-11-07 in `lab-icefin-main` (KVM, no GPU or audio hardware) · hardware rows: PLAN 1.10_
 
 This report measures each acceptance goal in SPEC "Goals and acceptance criteria" against **unmodified
 upstream v2.0.0** (`1634d3d`, built from source in the lab) and Flathub's `org.jellyfin.JellyfinDesktop`.
 Where a row needs hardware the VM doesn't have (GPU, HDR display, receiver, controllers), the report gives
-the static evidence from the v2.0.0 source and leaves the measurement to task 1.9. Icefin 0.1.0 (Phase 1:
+the static evidence from the v2.0.0 source and leaves the measurement to task 1.10 on the HTPC tier. Icefin 0.1.0 (Phase 1:
 branding, Flatpak, update-check removal) is measured alongside, to confirm Phase 1 changed nothing it shouldn't.
 
 Raw results: `docs/baseline/*.json` (from `tests/icefin/web/session_play.py`). Compare any two with
@@ -28,12 +28,12 @@ Raw results: `docs/baseline/*.json` (from `tests/icefin/web/session_play.py`). C
 |---|---|---|---|
 | **Keep all server plugins working** | **Pass (engine off).** DirectPlay, Activity Log `VideoPlayback`/`VideoPlaybackStopped`, one Playback Reporting row on both servers | `upstream-jf1011.json`, `upstream-jf12.json` | **Identical** to upstream on both servers except the intended client name and version (`compare_runs.py`: 0 unexpected differences). Baseline and styled-theme runs wait for Phases 8–9 |
 | **Flatpak as the production package** | Not upstream's (Flathub owns its manifest; upstream CI builds macOS, Windows, AppImage) | SPEC Baseline | **Pass so far.** Builds in GitHub CI (`icefin-flatpak`, green) and the lab; installs beside Flathub's upstream with separate app IDs and data dirs (`~/.var/app/<id>/data/icefin-player` vs `…/jellyfin-desktop`); the harness passes inside both Flatpaks on both servers |
-| **HDMI passthrough on every sound system** | **Fails "never silent".** With no audio device, mpv fell back to `AO: [null]` with no notice to the user. Passthrough itself is `audio-spdif` with per-codec toggles; no backend choice, no receiver detection | `PlayerComponent.cpp:119` (`audio-fallback-to-null=yes`), `:1235`, `:1270`; run log of `upstream-jf1011` | Same as upstream (Phase 3). Receiver rows: **1.9** |
-| **HDR on KWin, GNOME and Gamescope** | **Fails by design.** Qt Quick is forced onto OpenGL and video is MpvQt `vo=libmpv`, so there is no HDR output path | `main.cpp:167` (`setGraphicsApi(OpenGL)`) | Same (Phases 2 and 5). TV rows: **1.9** |
+| **HDMI passthrough on every sound system** | **Fails "never silent".** With no audio device, mpv fell back to `AO: [null]` with no notice to the user. Passthrough itself is `audio-spdif` with per-codec toggles; no backend choice, no receiver detection | `PlayerComponent.cpp:119` (`audio-fallback-to-null=yes`), `:1235`, `:1270`; run log of `upstream-jf1011` | Same as upstream (Phase 3). Receiver rows: **1.10** |
+| **HDR on KWin, GNOME and Gamescope** | **Fails by design.** Qt Quick is forced onto OpenGL and video is MpvQt `vo=libmpv`, so there is no HDR output path | `main.cpp:167` (`setGraphicsApi(OpenGL)`) | Same (Phases 2 and 5). TV rows: **1.10** |
 | **Correct picture or an honest choice** | **Fails by design.** Direct-plays everything unless a static force-transcode toggle is set (e.g. `force_transcode_dovi`); nothing checks what the display path can show | `nativeshell.js:67` | Same (Phase 6) |
-| **GPU decode and UI rendering** | Not measurable in the VM (no GPU: llvmpipe, `hwdec` unavailable). `hardwareDecoding` maps to `auto` / `auto-copy` only | `PlayerComponent.cpp:1455–1457` | **1.9** |
+| **GPU decode and UI rendering** | Not measurable in the VM (no GPU: llvmpipe, `hwdec` unavailable). `hardwareDecoding` maps to `auto` / `auto-copy` only | `PlayerComponent.cpp:1455–1457` | **1.10** |
 | **Theme engine** | **Fails.** No theme engine | — | Phases 6, 8, 9 |
-| **Controller support** | Not measurable in the VM. SDL2 raw joystick API with per-model maps | `InputSDL.cpp:23, 211` | **1.9**, Phase 7 |
+| **Controller support** | Not measurable in the VM. SDL2 raw joystick API with per-model maps | `InputSDL.cpp:23, 211` | **1.10**, Phase 7 |
 | **Wayland-first** | **Pass (functional).** Native and Flathub builds connect, play and report correctly as Wayland clients on headless Weston | `wl-upstream-jf1011.json`, `wl-fp-upstream-jf1011.json` | **Pass**, native and Flatpak (`wl-icefin-…`, `wl-fp-icefin-…`). Refresh-rate matching on Wayland: none upstream (`src/display/` has X11 XRandR only) |
 
 ## Findings
@@ -54,9 +54,10 @@ Raw results: `docs/baseline/*.json` (from `tests/icefin/web/session_play.py`). C
 5. **Flatpak runs need a D-Bus session**, because Chromium's sandbox inside a Flatpak spawns through the portal.
    `--config-dir` doesn't reset WebEngine storage either. Both are handled in the harness and noted in `docs/LAB.md`.
 
-## Still to measure (task 1.9, hardware lab)
+## Still to measure (task 1.10, HTPC tier)
 
 The receiver formats on PipeWire, PulseAudio, JACK and exclusive ALSA; HDR10 and HLG signalling on Plasma,
 GNOME and Gamescope; 4K HDR HEVC and AV1 hardware decode with frame drops on AMD, Intel and NVIDIA; WebEngine
 GPU rasterization; UI frame rate on the lowest-spec HTPC; every controller inside and outside Steam. These need
-a lab guest with GPU, USB and HDMI-audio passthrough, or the bare-metal HTPC, and the user's approval.
+the HTPC tier (D16, `scripts/icefin/htpc.sh`): `htpc.sh play` repeats this report's runs on the HTPC and
+`htpc.sh probe` records the HDR signal and passthrough state. PLAN 1.10.

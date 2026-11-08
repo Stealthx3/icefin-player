@@ -614,7 +614,7 @@ Twelve phases, about 42 weeks for one developer. The Phase 2 spikes settle the s
 
 ## Testing, CI and hardware lab
 
-Testing runs in three tiers. CI catches logic and protocol errors on every commit, VMs cover the desktop matrix, and a bare-metal HTPC with a real TV and receiver gates each release.
+Testing runs in three tiers. CI catches logic and protocol errors on every commit, VMs build and cover the desktop matrix, and the user's Bazzite HTPC with a real TV and receiver is the primary runtime environment: every hardware test runs there over SSH, and it gates each release (D16, `docs/LAB.md` *HTPC tier*).
 
 **CI (every commit, inside the Flatpak build)**
 
