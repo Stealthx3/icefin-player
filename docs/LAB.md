@@ -23,7 +23,7 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
 - scripts/provision.sh: native build deps (Qt 6 + WebEngine dev, libmpv-dev, SDL2, CEC), flatpak + flatpak-builder + Flathub remote, podman.
 
 ## Commands
-- Build: `scripts/lab.sh run 'cmake -S . -B build -G Ninja && ninja -C build 2>&1 | tail -n 50'`
+- Build: `scripts/lab.sh run 'cmake -S . -B ~/build -G Ninja -DUSE_STATIC_MPVQT=ON && ninja -C ~/build 2>&1 | tail -n 50'` (build dir stays outside the synced tree)
 - Test:  `scripts/lab.sh run '<cmd> 2>&1 | tail -n 50'`
 - Watch: `scripts/lab.sh view`
 

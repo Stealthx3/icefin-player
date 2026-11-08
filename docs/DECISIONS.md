@@ -18,3 +18,4 @@ All decisions made with the user during planning on 2026-11-07 (Cowork session).
 | D12 | 2026-11-07 | Packaging | Flatpak only; self-hosted signed repo first, Flathub after 1.0 | |
 | D13 | 2026-11-07 | App ID | `io.github.stealthx3.IcefinPlayer` | Owner = GitHub account Stealthx3. Resolves the D2 open point. |
 | D14 | 2026-11-07 | Repository | Public GitHub repo `Stealthx3/icefin-player` as `origin`; `upstream` = jellyfin/jellyfin-desktop | Default branch `icefin/main`. |
+| D15 | 2026-11-07 | Branding assets | Source: the user's IceSuite folder `/mnt/FileDrive/Personal/Projects/IceSuite/IceFin` (fin mark `Icefin.svg`, wordmark, favicon). App icon = the fin mark alone (`src/icefin/resources/icon.svg`) | Copy only Icefin's own artwork from there. Library banners and badges in that folder include third-party images and are not app branding. |

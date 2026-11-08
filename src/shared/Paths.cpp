@@ -175,7 +175,7 @@ QString Paths::logDir(const QString& file)
 QString Paths::socketName(const QString& serverName)
 {
   QString profileId = g_activeProfileId.isEmpty() ? "default" : g_activeProfileId;
-  QString socketFile = QString("jellyfin-desktop.%1.%2").arg(profileId, serverName);
+  QString socketFile = QString("%1.%2.%3").arg(Names::DataName(), profileId, serverName);  // ICEFIN-HOOK: Icefin socket name (installs beside upstream)
 
 #ifdef Q_OS_UNIX
   QString runtimeDir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);

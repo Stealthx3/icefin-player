@@ -1,0 +1,15 @@
+// Icefin Player branding constants. Generated from src/icefin/Branding.h.in by IcefinBranding.cmake.
+#pragma once
+
+namespace Icefin
+{
+inline constexpr char AppId[] = "@ICEFIN_APP_ID@";
+inline constexpr char DisplayName[] = "@ICEFIN_DISPLAY_NAME@";
+inline constexpr char ShortName[] = "Icefin";        // CEC OSD name and MPRIS identity (short)
+inline constexpr char OrgDomain[] = "@ICEFIN_ORG_DOMAIN@";
+inline constexpr char Version[] = "@ICEFIN_VERSION@";
+inline constexpr char UserAgentProduct[] = "@ICEFIN_USER_AGENT_PRODUCT@";
+inline constexpr char UpstreamName[] = "jellyfin-desktop";
+inline constexpr char UpstreamVersion[] = "@ICEFIN_UPSTREAM_VERSION@";
+inline constexpr char MprisServiceName[] = "org.mpris.MediaPlayer2.IcefinPlayer";
+}

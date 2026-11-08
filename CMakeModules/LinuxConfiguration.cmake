@@ -22,5 +22,5 @@ set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR})
 set(INSTALL_RESOURCE_DIR ${CMAKE_INSTALL_DATADIR}/jellyfin-desktop)
 
 if(NOT OPENELEC)
-  include(InstallLinuxDesktopFile)
+  include(${CMAKE_SOURCE_DIR}/src/icefin/IcefinInstallLinux.cmake)  # ICEFIN-HOOK: Icefin desktop entry, metainfo, icon
 endif()

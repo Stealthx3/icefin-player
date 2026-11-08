@@ -10,6 +10,7 @@
 #include <QtQml>
 #include <Qt>
 #include <QtWebEngineQuick>
+#include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include <qtwebenginecoreglobal.h>
 #include <QtWebEngineCore/QWebEngineProfile>
 #include <QErrorMessage>
@@ -49,8 +50,8 @@
 static void preinitQt()
 {
   QCoreApplication::setApplicationName(Names::MainName());
-  QCoreApplication::setApplicationVersion(Version::GetVersionString());
-  QCoreApplication::setOrganizationDomain("jellyfin.org");
+  QCoreApplication::setApplicationVersion(Icefin::Version);  // ICEFIN-HOOK: Icefin version
+  QCoreApplication::setOrganizationDomain(Icefin::OrgDomain);  // ICEFIN-HOOK: Icefin org domain
 
 #ifdef Q_OS_WIN32
   QVariant useOpengl = SettingsComponent::readPreinitValue(SETTINGS_SECTION_MAIN, "useOpenGL");
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
   try
   {
     QCommandLineParser parser;
-    parser.setApplicationDescription("Jellyfin Desktop");
+    parser.setApplicationDescription(Icefin::DisplayName);  // ICEFIN-HOOK: Icefin name
     parser.addVersionOption();
     parser.addOptions({{{"h", "help"},              "Show this help"},
                        {{"l", "licenses"},          "Show license information"},
@@ -503,9 +504,9 @@ int main(int argc, char *argv[])
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)
   	// Set window icon on Linux using system icon theme
-  	app.setWindowIcon(QIcon::fromTheme("org.jellyfin.JellyfinDesktop", QIcon(":/images/icon.png")));
+  	app.setWindowIcon(QIcon::fromTheme(Icefin::AppId, QIcon(":/icefin/icon.svg")));  // ICEFIN-HOOK: Icefin app ID and icon
     // Set app id for Wayland compositor window icon
-    app.setDesktopFileName("org.jellyfin.JellyfinDesktop");
+    app.setDesktopFileName(Icefin::AppId);  // ICEFIN-HOOK: Icefin app ID (Wayland app_id)
 #endif
 
     // Configure default WebEngineProfile paths early (profile is already set)

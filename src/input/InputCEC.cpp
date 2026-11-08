@@ -3,6 +3,7 @@
 #include "InputCEC.h"
 #include "settings/SettingsComponent.h"
 #include "power/PowerComponent.h"
+#include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 
 struct KeyAction
 {
@@ -84,7 +85,7 @@ bool InputCECWorker::init()
   m_verboseLogging = SettingsComponent::Get().value(SETTINGS_SECTION_CEC, "verbose_logging").toBool();
 
   m_configuration.clientVersion = LIBCEC_VERSION_CURRENT;
-  qstrcpy(m_configuration.strDeviceName, "Jellyfin");
+  qstrcpy(m_configuration.strDeviceName, Icefin::ShortName);  // ICEFIN-HOOK: Icefin CEC OSD name
   m_configuration.bActivateSource = 0;
   m_callbacks.logMessage = &CecLogMessage;
   m_callbacks.commandReceived = &CecCommand;

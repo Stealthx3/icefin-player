@@ -1,0 +1,30 @@
+[Desktop Entry]
+Version=1.0
+Name=Icefin Player
+GenericName=Media Player
+Comment=Themeable Jellyfin client for the desktop and the living room
+Exec=icefin-player
+Icon=io.github.stealthx3.IcefinPlayer
+Terminal=false
+Type=Application
+StartupWMClass=io.github.stealthx3.IcefinPlayer
+Categories=AudioVideo;Video;Player;TV;
+Keywords=jellyfin;media;htpc;video;tv;
+
+Actions=DesktopF;DesktopW;TVF;TVW
+
+[Desktop Action DesktopF]
+Name=Desktop [Fullscreen]
+Exec=icefin-player --fullscreen --desktop
+
+[Desktop Action DesktopW]
+Name=Desktop [Windowed]
+Exec=icefin-player --windowed --desktop
+
+[Desktop Action TVF]
+Name=TV [Fullscreen]
+Exec=icefin-player --fullscreen --tv
+
+[Desktop Action TVW]
+Name=TV [Windowed]
+Exec=icefin-player --windowed --tv

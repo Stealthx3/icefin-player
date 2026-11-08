@@ -63,11 +63,13 @@ add_custom_command(OUTPUT resources.qrc
           /=${CMAKE_SOURCE_DIR}/resources/
           ui/webview.qml=${CMAKE_SOURCE_DIR}/src/ui/webview.qml
           /web-client/extension=${CMAKE_SOURCE_DIR}/native/
+          /icefin=${CMAKE_SOURCE_DIR}/src/icefin/resources/  # ICEFIN-HOOK: Icefin qrc files
   COMMENT "Creating resources.qrc"
   DEPENDS ${CMAKE_SOURCE_DIR}/scripts/build-qt-resources.py
     ${RESOURCE_FILES}
     ${CMAKE_SOURCE_DIR}/src/ui/webview.qml
     ${NATIVE_FILES}
+    ${ICEFIN_RESOURCE_FILES}  # ICEFIN-HOOK: rebuild qrc on Icefin resource change
 )
 set_source_files_properties(resources.qrc PROPERTIES GENERATED TRUE)
 add_custom_command(OUTPUT qrc_resources.cpp

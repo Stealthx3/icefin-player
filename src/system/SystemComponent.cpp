@@ -1,4 +1,5 @@
 #include <QSysInfo>
+#include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include <QProcess>
 #include <QMap>
 #include <QtNetwork/qnetworkinterface.h>
@@ -432,11 +433,12 @@ QString SystemComponent::getUserAgent()
   QString kernel = QSysInfo::kernelType();
   kernel[0] = kernel[0].toUpper();
   QString chromeVersion = QString(qWebEngineChromiumVersion()).split('.').first() + ".0.0.0";
-  QString userAgent = QString("JellyfinDesktop/%1 (%2; %3) Chrome/%4")
+  QString userAgent = QString("%5/%6 JellyfinDesktop/%1 (%2; %3) Chrome/%4")  // ICEFIN-HOOK: Icefin product token first, upstream token kept for compatibility
     .arg(Version::GetVersionString())
     .arg(kernel)
     .arg(getPlatformArchString())
-    .arg(chromeVersion);
+    .arg(chromeVersion)
+    .arg(Icefin::UserAgentProduct, Icefin::Version);  // ICEFIN-HOOK: Icefin product token
   return userAgent;
 }
 
@@ -446,7 +448,7 @@ QString SystemComponent::debugInformation()
   QString debugInfo;
   QTextStream stream(&debugInfo);
 
-  stream << "Jellyfin\n";
+  stream << Icefin::DisplayName << " " << Icefin::Version << " (based on " << Icefin::UpstreamName << " " << Icefin::UpstreamVersion << ")\n";  // ICEFIN-HOOK: Icefin name and base
   stream << "  Version: " << Version::GetVersionString() << " built: " << Version::GetBuildDate() << "\n";
   stream << "  Web Client Version: " << Version::GetWebVersion() << "\n";
   stream << "  Web Client URL: " << SettingsComponent::Get().value(SETTINGS_SECTION_PATH, "startupurl").toString() << "\n";
@@ -552,6 +554,7 @@ QString SystemComponent::getNativeShellScript()
   clientData.insert("deviceName", QJsonValue::fromVariant(SettingsComponent::Get().getClientName()));
   clientData.insert("version", QJsonValue::fromVariant(Version::GetVersionString()));
   clientData.insert("userAgent", QJsonValue::fromVariant(getUserAgent()));
+  clientData.insert("icefin", QJsonObject{{"appName", Icefin::DisplayName}, {"appVersion", Icefin::Version}, {"upstreamName", Icefin::UpstreamName}, {"upstreamVersion", Icefin::UpstreamVersion}});  // ICEFIN-HOOK: client identity for nativeshell.js
   clientData.insert("scriptPath", QJsonValue::fromVariant("file:///" + path));
   QString defaultMode = SettingsComponent::Get().value(SETTINGS_SECTION_MAIN, "layout").toString();
 
