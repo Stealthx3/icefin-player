@@ -28,5 +28,7 @@
 - Minimum HTPC hardware for the performance budget?
 - Confirm the bundled themes: Media Center and Baseline by default, the six others in the optional benchmark pack.
 
+- **HLG acceptance row (spike 2.3):** KWin 6.3 and Mutter 48 don't accept the HLG transfer function on surfaces, so Icefin outputs HLG sources as PQ (HDR10). Change the acceptance row to "HLG sources play as HDR", or keep "TV reports HLG" as a target for compositors that add HLG later?
+
 ## Hardware the lab will need (Phase 1.7 / 11.1)
 AMD, Intel and NVIDIA GPUs; an HDR10 TV, an HDR monitor and an SDR display; an AV receiver over HDMI (TrueHD, DTS-HD MA, E-AC3); controllers (Xbox Series pad, DualSense, Switch Pro, an 8BitDo pad, Steam Deck); a five-way remote and a Wii Remote with a sensor bar.
