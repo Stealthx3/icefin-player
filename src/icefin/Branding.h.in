@@ -11,5 +11,6 @@ inline constexpr char Version[] = "@ICEFIN_VERSION@";
 inline constexpr char UserAgentProduct[] = "@ICEFIN_USER_AGENT_PRODUCT@";
 inline constexpr char UpstreamName[] = "jellyfin-desktop";
 inline constexpr char UpstreamVersion[] = "@ICEFIN_UPSTREAM_VERSION@";
+inline constexpr bool Flatpak = @ICEFIN_FLATPAK_BOOL@;  // ICEFIN_FLATPAK build: no update check
 inline constexpr char MprisServiceName[] = "org.mpris.MediaPlayer2.IcefinPlayer";
 }
