@@ -110,3 +110,43 @@ Mesa can produce a PQ-encoded swapchain. Design consequences for Phase 5:
    metadata; MaxCLL can still be expressed through `set_luminances`.
 4. **KWin 6.3 is below the Plasma 6.4+ target.** Re-run `cmprobe` on Plasma 6.4+ (a newer lab base or the HTPC).
 5. The TV/monitor actually switching to HDR10 is a hardware check (1.9).
+
+## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **BLOCKED (needs a GPU) → 1.9**
+
+_2026-11-07_ Gamescope 3.16.17 builds in the lab, and Flathub's `org.freedesktop.Platform.VulkanLayer.gamescope//25.08`
+(the WSI layer the Flatpak would use) installs. But Gamescope's headless backend refuses software Vulkan: it requires
+`VK_EXT_physical_device_drm`, which lavapipe doesn't offer. The spike command is ready in this entry's history
+(`gamescope --backend headless --hdr-enabled --hdr-debug-force-output -- flatpak … QSG_RHI_HDR=hdr10 ENABLE_GAMESCOPE_WSI=1`).
+It runs as soon as the lab has a real GPU: passthrough, a virtio-gpu Venus guest, or the HTPC.
+
+## 2.7 `icefin-theme:` scheme vs jellyfin-web CSP; Gamepad API in WebEngine: **GO**; Steam Input part moved to 7.4
+
+_2026-11-07 · `src/icefin/spikes/2.7-scheme-csp-gamepad/` · Qt 6.8.2_
+
+**Theme scheme.** A C++ `QWebEngineUrlSchemeHandler` serves `icefin-theme://` stylesheets, scripts and images. The
+probe injects each into the loaded page and checks it took effect:
+
+| Page | CSP | Flag `ContentSecurityPolicyIgnored` | img | css | script | blob: css | fetch() |
+|---|---|---|---|---|---|---|---|
+| jellyfin-web 10.11.11 | none sent | off / on | ✓ / ✓ | ✓ / ✓ | ✓ / ✓ | ✓ / ✓ | ✗ / ✗ |
+| jellyfin-web 12.4.0 | none sent | off / on | ✓ / ✓ | ✓ / ✓ | ✓ / ✓ | ✓ / ✓ | ✗ / ✗ |
+| strict proxy page (`default-src 'self'`) | strict | off | ✗ | ✗ | ✗ | ✗ | ✗ |
+| strict proxy page | strict | on | ✓ | ✓ | ✓ | ✗ | ✗ |
+
+Decisions for Phase 8: register `icefin-theme` with `SecureScheme | CorsEnabled | ContentSecurityPolicyIgnored`, and
+add `FetchApiAllowed` if the theme runtime needs `fetch()`. The SPEC's fallback, in-page `blob:` URLs, does **not**
+survive a strict CSP, so the scheme with that flag is the primary path and blob: isn't a real fallback.
+
+**Gamepad API.** A virtual Xbox 360 pad (uinput, `virtual_pad.py`) pressing A:
+
+| Shim (hide `navigator.getGamepads`) | `gamepadconnected` fires | `getGamepads()` |
+|---|---|---|
+| off | yes | `["Microsoft X-Box 360 pad (STANDARD GAMEPAD …)"]` |
+| on | **yes** | `[]` |
+
+WebEngine exposes pads to the page, so without the shim jellyfin-web's gamepad-to-key code would double every press,
+as the SPEC predicted. The getter shim works, but the connect/disconnect events still reach the page, so task 7.5
+also stops those events at capture. Only a focused page sees pads (a Chromium rule). The lab now runs Debian's full
+kernel for `/dev/uinput`.
+
+**Steam Input** virtual-pad visibility needs Steam, so it moves to 7.4 (Steam Input handling) on the Deck or HTPC.

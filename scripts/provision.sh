@@ -13,13 +13,16 @@ sudo apt-get install -y -qq --no-install-recommends \
   qt6-webchannel-dev qt6-wayland qml6-module-qtqml-workerscript qml6-module-qtquick-controls \
   qml6-module-qtquick-templates qml6-module-qtquick-window qml6-module-qtwebchannel \
   qml6-module-qtwebengine qml6-module-qtwebengine-controlsdelegates qml6-module-qtwebview \
-  xvfb xauth x11-utils weston kwin-wayland mutter wayland-utils mesa-vulkan-drivers libvulkan-dev vulkan-tools shellcheck ffmpeg python3-websocket
+  xvfb xauth x11-utils python3-evdev weston kwin-wayland mutter wayland-utils mesa-vulkan-drivers libvulkan-dev vulkan-tools shellcheck ffmpeg python3-websocket
 # Patched libmpv / libplacebo builds (spike 2.2, task 5.2)
 sudo apt-get install -y -qq --no-install-recommends \
   glslang-dev glslang-tools spirv-tools python3-jinja2 python3-glad liblcms2-dev libdovi-dev libunwind-dev \
   libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev libavdevice-dev \
   libass-dev libwayland-dev wayland-protocols libxkbcommon-dev libpipewire-0.3-dev libjack-jackd2-dev libuchardet-dev \
   libdrm-dev libegl-dev libgbm-dev libxext-dev libxpresent-dev libxss-dev libxinerama-dev libxv-dev libjpeg-dev zlib1g-dev
+# Full kernel (the cloud kernel lacks uinput, needed for virtual gamepads in controller tests); takes effect after reboot
+sudo apt-get install -y -qq --no-install-recommends linux-image-amd64
+echo uinput | sudo tee /etc/modules-load.d/uinput.conf >/dev/null
 # Flatpak packaging (task 1.5) and containerized Jellyfin servers (task 1.7)
 sudo apt-get install -y -qq --no-install-recommends flatpak flatpak-builder elfutils appstream librsvg2-common podman uidmap slirp4netns passt
 sudo loginctl enable-linger "$(id -un)"   # rootless podman without a login session
