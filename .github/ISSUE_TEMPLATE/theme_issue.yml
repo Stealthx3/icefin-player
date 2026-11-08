@@ -1,0 +1,44 @@
+name: Theme issue
+description: A problem with a theme or the theme engine
+labels: ["themes"]
+body:
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      options:
+        - Media Center
+        - Baseline
+        - Harbor
+        - Spark
+        - Plum
+        - Plaza
+        - Orbit
+        - Pivot
+        - A third-party theme
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong
+      description: Layout, navigation, focus, motion, sound, colors, or a plugin's UI hidden or broken by the theme.
+    validations:
+      required: true
+  - type: dropdown
+    id: baseline
+    attributes:
+      label: Does it also happen with the Baseline theme?
+      description: Baseline looks like stock Jellyfin but runs the whole theme engine, so this tells engine bugs from theme bugs.
+      options:
+        - "Yes"
+        - "No"
+        - Didn't check
+  - type: input
+    id: version
+    attributes:
+      label: Icefin version or commit
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or recording

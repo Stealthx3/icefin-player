@@ -81,4 +81,76 @@ Development resumes only after that, and only when the user says so.
 
 ## Result
 
-_(Cowork: fill in.)_
+**2026-11-08, Claude Cowork.** The user chose: trunk-based fork (B); PRs into `main` with owner bypass; full tidy-up; Icefin owns `v*`, upstream tags namespaced. Recorded as **D17**; the guide is `docs/BRANCHING.md`.
+
+### Done from Cowork
+- Pushed branch `upstream/master` (mirror of jellyfin-desktop `master`, `3fa72e5`).
+- PR `chore/repo-restructure` into `icefin/main`, containing:
+  - moves: `ai-assets/` → `docs/standards/`; `docs/HANDOFF.md` and this file → `docs/dev/`;
+  - removed: `pdf/` (the PDF goes on releases; `/pdf/` is ignored), `scripts/bootstrap-fork.sh`, `scripts/icefin/restack.sh`, `docs/BRANCHES.md`, upstream's Markdown issue templates;
+  - CI: workflows trigger on `main` and on every PR; `icefin-rebase-canary` → `icefin-upstream-canary` (test-merges `upstream/master` into `main`); new `icefin-upstream-mirror` (daily fast-forward of the mirror branch);
+  - `hook-count.sh` base = `merge-base(HEAD, upstream/master)` (falls back to `origin/upstream/master`); dependabot targets `main`;
+  - community files: `.github/` CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CODEOWNERS, PR template, issue forms (bug, feature, theme) and `config.yml`; root `CHANGELOG.md`;
+  - README: progress bar (from `node scripts/progress.mjs`, which now also writes `docs/progress/progress-bar.svg`), design mock-ups (`docs/images/mockups/`), Contributing section;
+  - doc updates: `CLAUDE.md`, `docs/dev/HANDOFF.md`, `docs/USAGE-PLAN.md`, `docs/DECISIONS.md` (D14 note, D17), PLAN 10.1, SPEC branch-model note.
+
+### Blocked in Cowork: Claude Code runs these with the user's `gh` login
+The Cowork session's GitHub proxy refuses tag pushes, branch deletes and renames, and settings writes. Run in order from the repo root; stop and report if one fails.
+
+```sh
+R=Stealthx3/icefin-player
+git fetch origin --prune
+
+# 0. If the PR is still open: merge it (squash) once both checks pass.
+gh pr merge chore/repo-restructure --repo $R --squash --delete-branch
+
+# 1. Archive tags for the old layers, plus the upstream base tag
+for l in base infra brand flatpak audio gpu render hdr input theme; do
+  git tag -a "archive/layer-$l" "origin/icefin/$l" -m "Retired stacked branch icefin/$l (D17)"
+done
+git tag -a upstream/v2.0.0 1634d3d263b881dccc62bf278d1289b471ec7af1 -m "jellyfin-desktop v2.0.0, Icefin's base"
+git push origin 'refs/tags/archive/*' refs/tags/upstream/v2.0.0
+
+# 2. Rename the default branch (GitHub retargets open PRs and redirects the old name)
+gh api -X POST "repos/$R/branches/icefin%2Fmain/rename" -f new_name=main
+
+# 3. Delete the retired branches and the junk probe branch
+for b in base infra brand flatpak audio gpu render hdr input theme; do git push origin --delete "icefin/$b"; done
+git push origin --delete test-push-probe
+
+# 4. Branch protection on main (owner can bypass: enforce_admins false)
+gh api -X PUT "repos/$R/branches/main/protection" --input - <<'JSON'
+{"required_status_checks":{"strict":false,"contexts":["hooks","flatpak"]},
+ "enforce_admins":false,
+ "required_pull_request_reviews":{"required_approving_review_count":0},
+ "restrictions":null,"allow_force_pushes":false,"allow_deletions":false}
+JSON
+
+# 5. Repo settings, description, topics, private vulnerability reporting
+gh api -X PATCH "repos/$R" -F allow_squash_merge=true -F allow_merge_commit=true -F allow_rebase_merge=false \
+  -F delete_branch_on_merge=true -F allow_auto_merge=true \
+  -f description="Themeable, HTPC-first Jellyfin client for Linux: theme engine, HDR, HDMI passthrough, controllers. Fork of Jellyfin Desktop."
+gh api -X PUT "repos/$R/topics" -f 'names[]=jellyfin' -f 'names[]=htpc' -f 'names[]=mpv' -f 'names[]=hdr' \
+  -f 'names[]=flatpak' -f 'names[]=wayland' -f 'names[]=qt6' -f 'names[]=media-player'
+gh api -X PUT "repos/$R/private-vulnerability-reporting"
+```
+
+The check contexts are the job ids `hooks` and `flatpak`; if GitHub lists them differently under *Settings → Branches*, use the names shown there. The social preview image is set by hand in *Settings → General*.
+
+### Local reset (every clone, including the user's disk copy)
+```sh
+git fetch origin --prune --prune-tags
+git switch -C main origin/main && git branch -u origin/main
+git branch -D icefin/main icefin/base icefin/infra icefin/brand icefin/flatpak icefin/audio icefin/gpu icefin/render icefin/hdr icefin/input icefin/theme 2>/dev/null || true
+git remote set-head origin -a
+git config remote.upstream.tagOpt --no-tags
+git config --add remote.upstream.fetch '+refs/tags/*:refs/tags/upstream/*'
+git tag -d $(git tag -l 'v*') 2>/dev/null || true   # drop un-prefixed upstream tags, if any were fetched
+```
+Leave the user's uncommitted `docs/github/README.md` and their `scripts/bootstrap-fork.sh` edits alone; both files are now superseded (the README is in the repo root and the script was removed), so tell the user they can delete them.
+
+### Then verify
+1. `scripts/icefin/hook-count.sh` reports OK on `main`; CI is green on `main`.
+2. `scripts/lab.sh run true` still syncs, and `node scripts/progress.mjs` writes both the page and the bar; republish the progress artifact.
+3. `git ls-remote origin` shows only `main` and `upstream/master` as branches, and the `archive/*` and `upstream/v2.0.0` tags.
+4. Add a journal line, then wait for the user to say continue.

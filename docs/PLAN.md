@@ -91,7 +91,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **9.10** All clone acceptance lists pass; lint finds no theme-specific engine code
 
 ## Phase 10 — Upstream sync (1 wk)
-- [ ] **10.1** Rebase onto jellyfin-desktop 2.1.0 (or latest release); full suite passes
+- [ ] **10.1** Merge upstream jellyfin-desktop 2.1.0 (or latest release) into `main` via `sync/upstream-<ver>` (`docs/BRANCHING.md`); full suite passes
 - [ ] **10.2** Send generic fixes upstream (ELD, audio fallback, Flatpak CI, Wayland work)
 
 ## Phase 11 — Hardening and beta (2 wks)

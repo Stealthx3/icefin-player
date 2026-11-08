@@ -3,14 +3,14 @@
 Fork of jellyfin-desktop v2.0.0 (Qt 6 + Qt WebEngine + jellyfin-web + libmpv), rebranded **icefin-player**. It adds a theme engine, a single-surface Vulkan HDR renderer, hardened HDMI audio passthrough, first-class controller support and verified GPU paths. It ships as a Flatpak; Linux, Wayland-first.
 
 ## Read first
-- `docs/GITHUB-RESTRUCTURE.md`: **development is paused** while Claude Cowork restructures the GitHub repo. Until its *Result* section is filled in and the user says to continue, only do the hand-back steps listed there.
-- `docs/HANDOFF.md`: current state and the first-session checklist. Start here.
+- `docs/dev/GITHUB-RESTRUCTURE.md`: **development is paused** after the GitHub restructuring (D17). Run the admin steps in its *Result* section first; start PLAN work only when the user says to continue.
+- `docs/dev/HANDOFF.md`: current state and the first-session checklist. Start here.
 - `docs/PLAN.md`: task tracker (source of truth for progress; tick boxes in the same commit as the work).
 - `docs/SPEC.md`: full design. Read only the section a task names in brackets.
 - `docs/DECISIONS.md`: settled decisions. Don't reopen them without the user.
 - Plan doc (claude.ai, may be newer than SPEC): https://claude.ai/artifact/H95okuizWUjCofUumXG1Mo
 
-## Standards (in `ai-assets/`, they apply to this project)
+## Standards (in `docs/standards/`, they apply to this project)
 Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If the master copies change, ask the user before updating these.
 - `VM-LAB-STANDARD.md`: all build/run/test happens in libvirt guests via `scripts/lab.sh`, watchable in virt-manager. Never build on the host.
 - `TOKEN-USAGE-OPTIMIZATION-STANDARD.md`: `docs/USAGE-PLAN.md` before substantive work.
@@ -25,6 +25,7 @@ Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If t
 - HTPC tier (D16): hardware tests run on the user's Bazzite HTPC via `scripts/icefin/htpc.sh` (docs/LAB.md *HTPC tier*); respect its house rules.
 - Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
 - Branding assets: `/mnt/FileDrive/Personal/Projects/IceSuite/IceFin` (D15). App icon is the fin mark.
+- Git workflow (D17, `docs/BRANCHING.md`): trunk-based. Branch `feat/<task>-<topic>` (or `fix/`, `docs/`, `ci/`, `chore/`) from `main`, push, open a PR, squash-merge when `icefin-hooks` and `icefin-flatpak` pass. Upstream merges use `sync/upstream-<ver>` and a merge commit. Never force-push `main`; never commit to `upstream/master`.
 - Repo: `origin` = github.com/Stealthx3/icefin-player (public), `upstream` = jellyfin/jellyfin-desktop (push disabled). App ID `io.github.stealthx3.IcefinPlayer` (D13).
 
 ## Hard rules

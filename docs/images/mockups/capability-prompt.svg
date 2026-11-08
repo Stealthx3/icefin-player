@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Mock-up: capability prompt asking how to play a Dolby Vision profile 5 file">
+<title>Icefin Player mock-up: capability prompt</title>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b3f57"/><stop offset="1" stop-color="#0c131c"/></linearGradient>
+  <linearGradient id="art" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d6e8a"/><stop offset="1" stop-color="#1a2836"/></linearGradient>
+</defs>
+<style>text{font-family:"Segoe UI","Noto Sans","DejaVu Sans",system-ui,sans-serif;fill:#eef4f8}</style>
+<!-- dimmed detail page behind -->
+<rect width="1280" height="720" fill="url(#bg)"/>
+<rect x="80" y="110" width="250" height="370" rx="10" fill="url(#art)"/>
+<rect x="380" y="130" width="420" height="34" rx="6" fill="#fff" opacity=".18"/>
+<rect x="380" y="186" width="560" height="14" rx="7" fill="#fff" opacity=".1"/>
+<rect x="380" y="212" width="520" height="14" rx="7" fill="#fff" opacity=".1"/>
+<rect x="380" y="238" width="480" height="14" rx="7" fill="#fff" opacity=".1"/>
+<rect width="1280" height="720" fill="#05080c" opacity=".62"/>
+
+<!-- dialog -->
+<rect x="290" y="96" width="700" height="528" rx="16" fill="#151d27" stroke="#3b4c5e"/>
+<circle cx="342" cy="152" r="18" fill="none" stroke="#ffd36b" stroke-width="2.5"/>
+<text x="342" y="160" text-anchor="middle" font-size="22" font-weight="700" fill="#ffd36b">!</text>
+<text x="374" y="160" font-size="26" font-weight="600">How should this video play?</text>
+<text x="324" y="206" font-size="17" opacity=".85">This file is Dolby Vision profile 5. On this display and session it can’t</text>
+<text x="324" y="230" font-size="17" opacity=".85">be shown as-is without wrong colors, so Icefin won’t play it silently.</text>
+
+<g font-size="18">
+  <rect x="324" y="262" width="632" height="74" rx="10" fill="#1f5f86" fill-opacity=".55" stroke="#6fd3ff" stroke-width="2.5"/>
+  <circle cx="352" cy="299" r="9" fill="none" stroke="#6fd3ff" stroke-width="2.5"/><circle cx="352" cy="299" r="4" fill="#6fd3ff"/>
+  <text x="376" y="292" font-weight="600">Tone-map to HDR10 in Icefin</text>
+  <text x="376" y="318" font-size="15" opacity=".75">Correct colors, full HDR. Uses the GPU (recommended for this system).</text>
+
+  <rect x="324" y="348" width="632" height="74" rx="10" fill="#fff" fill-opacity=".04" stroke="#3b4c5e"/>
+  <circle cx="352" cy="385" r="9" fill="none" stroke="#9fb1c2" stroke-width="2"/>
+  <text x="376" y="378" font-weight="600">Tone-map to SDR</text>
+  <text x="376" y="404" font-size="15" opacity=".75">Correct colors at standard brightness.</text>
+
+  <rect x="324" y="434" width="632" height="74" rx="10" fill="#fff" fill-opacity=".04" stroke="#3b4c5e"/>
+  <circle cx="352" cy="471" r="9" fill="none" stroke="#9fb1c2" stroke-width="2"/>
+  <text x="376" y="464" font-weight="600">Ask the server to transcode</text>
+  <text x="376" y="490" font-size="15" opacity=".75">Lower quality; uses server CPU or GPU.</text>
+</g>
+<rect x="324" y="530" width="20" height="20" rx="4" fill="#6fd3ff"/>
+<path d="M328 540 l5 5 9 -10" stroke="#0c131c" stroke-width="2.5" fill="none"/>
+<text x="356" y="546" font-size="16">Remember for this display</text>
+
+<g font-size="16" opacity=".9">
+  <circle cx="724" cy="586" r="12" fill="none" stroke="#eef4f8" stroke-width="2"/><text x="724" y="592" text-anchor="middle" font-size="14" font-weight="700">A</text><text x="744" y="592">Play</text>
+  <circle cx="824" cy="586" r="12" fill="none" stroke="#eef4f8" stroke-width="2"/><text x="824" y="592" text-anchor="middle" font-size="14" font-weight="700">B</text><text x="844" y="592">Cancel</text>
+</g>
+</svg>

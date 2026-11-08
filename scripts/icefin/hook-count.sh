@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # hook-count.sh — count and check ICEFIN-HOOK lines in upstream files (PLAN 1.4). Git only, host-safe.
 # Usage: scripts/icefin/hook-count.sh [BASE_REF] [--summary FILE]
-#   Upstream file = a file that exists in BASE_REF (default icefin/base, else origin/icefin/base).
+#   Upstream file = a file that exists in BASE_REF. Default: the newest upstream commit already merged into HEAD,
+#   i.e. merge-base(HEAD, upstream/master or origin/upstream/master). It moves forward by itself after each upstream merge.
 #   Rule: every line Icefin adds to an upstream file carries "ICEFIN-HOOK: <reason>", or sits directly
 #   below an added comment line that does (for formats without trailing comments, e.g. .gitignore, JSON-free text).
 #   Exempt: README.md, which Icefin replaces wholesale on purpose (upstream is credited inside it).
@@ -12,9 +13,11 @@ base="${1:-}"; summary=""
 [ "${1:-}" = --summary ] && base=""
 [ "${2:-}" = --summary ] && summary="${3:-}"; [ "${1:-}" = --summary ] && summary="${2:-}"
 if [ -z "$base" ]; then
-  for r in icefin/base origin/icefin/base; do git rev-parse -q --verify "$r^{commit}" >/dev/null && { base="$r"; break; }; done
+  for r in upstream/master origin/upstream/master; do
+    git rev-parse -q --verify "$r^{commit}" >/dev/null && { base="$(git merge-base HEAD "$r")"; break; }
+  done
 fi
-[ -n "$base" ] || { echo "hook-count: no base ref (fetch icefin/base)" >&2; exit 2; }
+[ -n "$base" ] || { echo "hook-count: no base (fetch the upstream mirror: git fetch origin upstream/master)" >&2; exit 2; }
 
 git diff -U0 --no-color --diff-filter=M "$base" HEAD -- . ":(exclude)README.md" | awk -v base="$base" -v summary="$summary" '
   /^\+\+\+ b\// { file = substr($0, 7); prevmark = 0; next }
