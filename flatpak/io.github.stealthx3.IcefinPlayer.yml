@@ -55,8 +55,6 @@ modules:
           - .flatpak-builder
           - build
           - flatpak/build-dir
-          - pdf
-          - ai-assets
           - docs
     modules:
       - name: libmpv

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Mock-up: Icefin home screen in the Media Center theme">
+<title>Icefin Player mock-up: home screen, Media Center theme</title>
+<defs>
+  <radialGradient id="bg" cx="50%" cy="38%" r="80%">
+    <stop offset="0" stop-color="#1b4f93"/><stop offset=".55" stop-color="#0b2a5a"/><stop offset="1" stop-color="#030c1f"/>
+  </radialGradient>
+  <linearGradient id="ribbon" x1="0" x2="1"><stop offset="0" stop-color="#6fd3ff" stop-opacity="0"/><stop offset=".5" stop-color="#6fd3ff" stop-opacity=".35"/><stop offset="1" stop-color="#6fd3ff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="focus" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0ff" stop-opacity=".55"/><stop offset="1" stop-color="#2a8fd0" stop-opacity=".25"/></linearGradient>
+  <linearGradient id="p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a6f8f"/><stop offset="1" stop-color="#0f2233"/></linearGradient>
+  <linearGradient id="p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c46a3c"/><stop offset="1" stop-color="#3b1610"/></linearGradient>
+  <linearGradient id="p3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5f8f4a"/><stop offset="1" stop-color="#14230f"/></linearGradient>
+  <linearGradient id="p4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5aa8"/><stop offset="1" stop-color="#1c1230"/></linearGradient>
+  <linearGradient id="p5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8a04a"/><stop offset="1" stop-color="#2d240b"/></linearGradient>
+  <linearGradient id="p6" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a8fa8"/><stop offset="1" stop-color="#0c1d26"/></linearGradient>
+  <filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs>
+<style>text{font-family:"Segoe UI","Noto Sans","DejaVu Sans",system-ui,sans-serif;fill:#eaf6ff}</style>
+<rect width="1280" height="720" fill="url(#bg)"/>
+<path d="M-40 520 C 260 420, 520 640, 820 520 S 1180 430, 1320 500" stroke="url(#ribbon)" stroke-width="40" fill="none" opacity=".5"/>
+<path d="M-40 560 C 300 480, 560 680, 860 560 S 1200 480, 1320 560" stroke="url(#ribbon)" stroke-width="14" fill="none" opacity=".6"/>
+
+<!-- header -->
+<text x="56" y="62" font-size="26" font-weight="300" letter-spacing="1">icefin</text>
+<circle cx="146" cy="53" r="4" fill="#6fd3ff"/>
+<text x="1224" y="62" font-size="26" font-weight="300" text-anchor="end">8:42</text>
+
+<!-- category strip -->
+<text x="120" y="186" font-size="34" font-weight="300" opacity=".35">music</text>
+<text x="120" y="248" font-size="38" font-weight="300" opacity=".55">tv</text>
+
+<!-- focused category -->
+<text x="120" y="330" font-size="56" font-weight="300">movies</text>
+<g font-size="22" font-weight="400">
+  <rect x="436" y="296" width="196" height="46" rx="4" fill="url(#focus)" stroke="#bfefff" stroke-opacity=".8"/>
+  <rect x="436" y="296" width="196" height="46" rx="4" fill="#9ae6ff" opacity=".25" filter="url(#glow)"/>
+  <text x="534" y="327" text-anchor="middle">continue</text>
+  <text x="662" y="327" opacity=".8">library</text>
+  <text x="758" y="327" opacity=".8">recently added</text>
+  <text x="944" y="327" opacity=".8">genres</text>
+  <text x="1040" y="327" opacity=".8">collections</text>
+</g>
+
+<!-- poster row for focused item -->
+<g>
+  <rect x="436" y="364" width="120" height="176" rx="6" fill="url(#p1)" stroke="#bfefff" stroke-width="3"/>
+  <path d="M436 470 l40 -38 30 26 22 -18 28 30 v54 a6 6 0 0 1 -6 6 h-108 a6 6 0 0 1 -6 -6z" fill="#0b1822" opacity=".7"/>
+  <rect x="436" y="528" width="120" height="6" fill="#0b1822"/><rect x="436" y="528" width="74" height="6" fill="#6fd3ff"/>
+  <rect x="572" y="364" width="120" height="176" rx="6" fill="url(#p2)"/>
+  <circle cx="632" cy="430" r="26" fill="#f2b56b" opacity=".8"/>
+  <rect x="708" y="364" width="120" height="176" rx="6" fill="url(#p3)"/>
+  <path d="M708 500 l30 -50 24 34 20 -26 46 60 v16 h-120z" fill="#0a1508" opacity=".7"/>
+  <rect x="844" y="364" width="120" height="176" rx="6" fill="url(#p4)"/>
+  <rect x="980" y="364" width="120" height="176" rx="6" fill="url(#p5)"/>
+  <rect x="1116" y="364" width="120" height="176" rx="6" fill="url(#p6)" opacity=".6"/>
+</g>
+<text x="436" y="572" font-size="22">The Long Tide</text>
+<text x="436" y="600" font-size="17" opacity=".7">2024 · 1h 58m · 42 min left</text>
+
+<text x="120" y="420" font-size="38" font-weight="300" opacity=".55">live tv</text>
+<text x="120" y="480" font-size="34" font-weight="300" opacity=".35">settings</text>
+
+<!-- controller hints -->
+<g font-size="17" opacity=".85">
+  <circle cx="68" cy="672" r="13" fill="none" stroke="#eaf6ff" stroke-width="2"/><text x="68" y="678" text-anchor="middle" font-size="15" font-weight="700">A</text><text x="90" y="678">Select</text>
+  <circle cx="176" cy="672" r="13" fill="none" stroke="#eaf6ff" stroke-width="2"/><text x="176" y="678" text-anchor="middle" font-size="15" font-weight="700">B</text><text x="198" y="678">Back</text>
+  <circle cx="270" cy="672" r="13" fill="none" stroke="#eaf6ff" stroke-width="2"/><text x="270" y="678" text-anchor="middle" font-size="15" font-weight="700">Y</text><text x="292" y="678">Search</text>
+</g>
+<text x="1224" y="678" font-size="15" text-anchor="end" opacity=".5">Theme: Media Center · Accent: Glacier</text>
+</svg>

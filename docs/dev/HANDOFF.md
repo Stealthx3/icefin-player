@@ -1,13 +1,13 @@
 # Handoff to Claude Code
 
-> **2026-11-08: paused for a GitHub restructuring by Claude Cowork.** See `docs/GITHUB-RESTRUCTURE.md`. Don't start PLAN work until its *Result* section is filled in and the user says to continue.
+> **2026-11-08: GitHub restructuring done (D17).** Run the admin steps in `docs/dev/GITHUB-RESTRUCTURE.md` → *Result*, then wait for the user to say continue. From now on all work goes through pull requests into `main` (`docs/BRANCHING.md`). The first-session list below is history.
 
 **State (2026-11-07):** planning is complete; no code exists yet. This folder holds the plan, spec, decisions, standards and a bootstrap script. Next is Phase 1 in `docs/PLAN.md`.
 
 ## First session, in order
 1. Read `CLAUDE.md`, `docs/DECISIONS.md` and `docs/PLAN.md`. Skim `docs/SPEC.md` headings only.
 2. **Bring in upstream (task 1.1).** Run `scripts/bootstrap-fork.sh` on the host. It uses only git, no build. It initializes the repo, adds the `upstream` remote, checks out `v2.0.0` as `icefin/main` with the planning files kept, and creates `icefin/base`. Commit as the script prints.
-3. **Apply the standards in `ai-assets/`** (each one says what to do on first use):
+3. **Apply the standards in `docs/standards/`** (formerly `ai-assets/`) (each one says what to do on first use):
    1. `TOKEN-USAGE-OPTIMIZATION-STANDARD.md` → write `docs/USAGE-PLAN.md`.
    2. `VM-LAB-STANDARD.md` → choose VM vs LXC (Qt/WebEngine/Vulkan builds and HDR/audio hardware tests suggest a KVM VM with GPU and USB passthrough for hardware work; confirm with the standard's §2), write `docs/LAB.md`, `lab.env`, `scripts/lab.sh`.
    3. `PHONE-ALERTS-STANDARD.md` → install hooks, run the check, give the user the phone checklist.

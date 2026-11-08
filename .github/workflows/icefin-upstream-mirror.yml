@@ -1,0 +1,27 @@
+# Icefin: keep the upstream/master mirror branch current (docs/BRANCHING.md).
+# The mirror is read-only: it only ever fast-forwards to jellyfin/jellyfin-desktop master. Never commit to it.
+name: icefin-upstream-mirror
+
+on:
+  schedule:
+    - cron: "47 8 * * *"   # daily 08:47 UTC, before the canary
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: upstream/master
+          fetch-depth: 0
+      - name: Fast-forward upstream/master
+        run: |
+          git remote add upstream https://github.com/jellyfin/jellyfin-desktop.git
+          git fetch --quiet --no-tags upstream master
+          git merge --ff-only upstream/master
+          git push origin HEAD:refs/heads/upstream/master
+          echo "upstream/master at \`$(git rev-parse --short HEAD)\`" >> "$GITHUB_STEP_SUMMARY"

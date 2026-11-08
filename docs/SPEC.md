@@ -115,6 +115,8 @@ This rebase-friendly discipline holds through 1.0. The single-surface renderer i
 
 **Branch model**
 
+> Superseded on 2026-11-08 by D17: trunk-based `main` with upstream merges. See `docs/BRANCHING.md`. The text below is the original design, kept for history.
+
 - `upstream/*` mirrors jellyfin-desktop untouched. `icefin/base` is the upstream release tag Icefin builds on (starting at `v2.0.0`).
 - One branch per feature, stacked in a fixed order: `brand`, `flatpak`, `audio`, `gpu`, `render`, `hdr`, `input`, `theme`. `icefin/main` is the merge of all of them.
 - A nightly CI job rebases the stack onto upstream `master` in a throwaway branch and reports conflicts, so drift shows up weeks before a release instead of during one.
