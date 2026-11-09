@@ -41,7 +41,9 @@
   receiver in the HDMI chain would be needed for the TrueHD row.
 - `htpc.sh doctor` OK, `deploy` OK. The house rules held off the first probe while a game was running.
 - Quiet hours (user, 2026-11-08): TV off-limits 10:00–midnight Pacific (`HTPC_QUIET_HOURS=10-00`); tests run 00:00–10:00.
-- Still open for the user: permission to switch sessions (`HTPC_ALLOW_SESSION_SWITCH`).
+- Session switching (user, 2026-11-08): allowed (`HTPC_ALLOW_SESSION_SWITCH=1`), and **only** inside the lab window
+  (00:00–10:00) for the Plasma rows. `session plasma` enforces the house rules. Always run `session gamescope` afterwards;
+  it skips the quiet-hours check so it can always restore game mode.
 
 ## Hardware the lab will need (Phase 1.7 / 11.1)
 AMD, Intel and NVIDIA GPUs; an HDR10 TV, an HDR monitor and an SDR display; an AV receiver over HDMI (TrueHD, DTS-HD MA, E-AC3); controllers (Xbox Series pad, DualSense, Switch Pro, an 8BitDo pad, Steam Deck); a five-way remote and a Wii Remote with a sensor bar.

@@ -191,7 +191,8 @@ cmd_session() {
     status) cmd_push >/dev/null; rexec "sess_env; python3 \"\$D/src/tests/icefin/htpc/probe.py\" host" ;;
     plasma|gamescope)
       [ "$HTPC_ALLOW_SESSION_SWITCH" = 1 ] || die "session switching is off (HTPC_ALLOW_SESSION_SWITCH=1 in htpc.env)"
-      house
+      # Leaving the user's default (game mode) obeys the house rules; going back to it never waits on quiet hours.
+      [ "$1" = gamescope ] || house
       rexec "command -v steamos-session-select >/dev/null || { echo 'no steamos-session-select on this image' >&2; exit 1; }
              steamos-session-select $(printf %q "$1")"
       echo "htpc: switching to $1; the TV session restarts" ;;
