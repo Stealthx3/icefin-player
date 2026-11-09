@@ -79,8 +79,7 @@
             const list = el('div', 'pl-menu');
             rail.append(list);
             const client = window.ApiClient;
-            let views = [];
-            try { views = ((await client.getUserViews({}, client.getCurrentUserId())).Items) || []; } catch (e) { console.warn('Plum: views', e); }
+            const views = await T.ui.userViews();
             if (!S) return;
             S.views = views;
             const sections = [{ label: 'Home' }, ...views.map((v) => ({ label: v.Name, view: v })),
@@ -159,6 +158,8 @@
         loadArt();
         S.content.setAttribute('data-pl-ready', String(S.cells.length));
         S.content.setAttribute('data-pl-cols', String(cols));
+        // Refilled under a focused grid: the old focus is gone with its cell, so it moves to the new grid (or the menu).
+        if (S.zone === 'grid') { if (S.cells.length) focusCell(0); else if (S.menu) focusMenu(S.menuIndex); }
     }
 
     // Art is requested only for the rows on screen plus a short lookahead, so a 300-item library loads like a short one.

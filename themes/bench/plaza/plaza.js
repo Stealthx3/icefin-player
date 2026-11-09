@@ -214,7 +214,7 @@
             root.plazaFill = (list) => fill(list);
 
             const client = S.client;
-            Promise.resolve(client.getUserViews({}, client.getCurrentUserId())).then((r) => (r && r.Items) || [], () => []).then((views) => {
+            ui.userViews().then((views) => {
                 if (!S) return;
                 fill(channels(client, views));
                 const first = S.pages.querySelector('.pz-tile');

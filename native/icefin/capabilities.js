@@ -12,6 +12,7 @@
 //   ui.carousel3d    a perspective carousel: depth, tilt, the focused item in front (9.2)
 //   ui.liveTile      a tile cycling content (Next Up, Latest, ...); frozen under reduced or low motion (9.2)
 //   ui.mutedPreview  a muted SDR preview in the page's own video element, never mpv or the audio device (9.2)
+//   ui.userViews     the signed-in user's libraries, once the client is ready (cold start), with a short retry
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -140,13 +141,16 @@
     }
 
     // ---- global overlay (9.3) ----
-    let overlaySpec = null, overlayEl = null, overlayPrevFocus = null;
+    let overlaySpec = null, overlayEl = null, overlayPrevFocus = null, overlayScreenFocus = null;
     const overlay = {
         set(spec) { overlaySpec = spec; },
         isOpen: () => !!overlayEl,
         open() {
             if (!overlaySpec || overlayEl) return !!overlayEl;
             overlayPrevFocus = document.activeElement;
+            // The overlay is modal: the screen underneath gives up its focus ring until the overlay closes.
+            overlayScreenFocus = E.focused();
+            if (overlayScreenFocus) overlayScreenFocus.classList.remove('icefin-focused');
             overlayEl = document.createElement('div');
             overlayEl.id = 'icefin-theme-overlay';
             overlayEl.setAttribute('role', 'dialog');
@@ -163,7 +167,9 @@
             try { overlaySpec.unmount && overlaySpec.unmount(); } catch (e) { console.error(e); }
             overlayEl.remove();
             overlayEl = null;
-            if (overlayPrevFocus && overlayPrevFocus.focus) overlayPrevFocus.focus();
+            if (overlayScreenFocus && overlayScreenFocus.isConnected) E.focus(overlayScreenFocus);
+            else if (overlayPrevFocus && overlayPrevFocus.focus) overlayPrevFocus.focus();
+            overlayScreenFocus = null;
             E.sound('back');
         }
     };
@@ -323,6 +329,25 @@
         return { video: v, stop: () => { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); } };
     }
 
+    // ---- the user's libraries, safe on a cold start ----
+    // A screen can mount while jellyfin-web is still restoring the session: the client has no user yet, or the first
+    // request fails. Waits for a user and a token, then asks; an error or an empty answer is retried with backoff
+    // (a server with no libraries still resolves, empty, after the last try).
+    async function userViews() {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const ready = () => { const c = window.ApiClient; return c && c.getCurrentUserId() && c.accessToken() ? c : null; };
+        for (let t = 0; t < 40 && !ready(); t++) await wait(250);
+        let views = [];
+        for (const delay of [0, 500, 1000, 2000, 4000]) {
+            if (delay) await wait(delay);
+            const c = ready();
+            if (!c) continue;
+            try { views = ((await c.getUserViews({}, c.getCurrentUserId())) || {}).Items || []; } catch (e) { views = []; }
+            if (views.length) break;
+        }
+        return views;
+    }
+
     E.addActionHook(overlayHook);
     E.onReset(() => {
         cap = 'normal';
@@ -338,5 +363,5 @@
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview };
+    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews };
 })();
