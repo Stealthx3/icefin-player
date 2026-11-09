@@ -47,6 +47,11 @@ def main():
         page.eval("window.NativeShell.openClientSettings(); true")
         page.wait_for("document.querySelectorAll('#icefin-hardware-section .icefin-hw-row').length === 4", timeout=20)
         check("Client Settings shows Hardware with 4 rows", True)
+        page.wait_for("(document.querySelector('#icefin-hardware-section .icefin-hw-web') || {}).textContent.startsWith('Web layer: ') && !document.querySelector('#icefin-hardware-section .icefin-hw-web').textContent.includes('checking')", timeout=30)
+        web = results().get("web", {})
+        # The lab harness starts the app with --disable-gpu, so "not accelerated" is the expected answer here.
+        check("web layer status read from chrome://gpu", bool(web.get("features")) and web.get("accelerated") is False,
+              page.eval("document.querySelector('#icefin-hardware-section .icefin-hw-web').textContent"))
         before = r["time"]
         time.sleep(1.2)
         page.eval("document.querySelector('#icefin-hardware-section .icefin-hw-run').click(); true")
