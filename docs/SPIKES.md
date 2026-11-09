@@ -134,7 +134,7 @@ Mesa can produce a PQ-encoded swapchain. Design consequences for Phase 5:
   itself (5.5); without a tag KWin treats the PQ swapchain as sRGB.
 - Note 4 is done: Plasma 6.8 is above the 6.4+ target.
 
-## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **BLOCKED (WSI layer extension not installed on the HTPC)**
+## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **GO (HTPC, 2026-11-09)**
 
 _2026-11-07_ Gamescope 3.16.17 builds in the lab, and Flathub's `org.freedesktop.Platform.VulkanLayer.gamescope//25.08`
 (the WSI layer the Flatpak would use) installs. But Gamescope's headless backend refuses software Vulkan: it requires
@@ -142,13 +142,21 @@ _2026-11-07_ Gamescope 3.16.17 builds in the lab, and Flathub's `org.freedesktop
 (`gamescope --backend headless --hdr-enabled --hdr-debug-force-output -- flatpak … QSG_RHI_HDR=hdr10 ENABLE_GAMESCOPE_WSI=1`).
 It runs as soon as the lab has a real GPU: passthrough, a virtio-gpu Venus guest, or the HTPC.
 
-_2026-11-09 (HTPC)._ The renderer itself works as a Gamescope XWayland client inside the Flatpak (2.1 above: Vulkan
-and OpenGL in Steam's game mode at 3840×2160). The HDR part needs Gamescope's WSI layer inside the sandbox: the host
-has `VkLayer_FROG_gamescope_wsi` in `/usr/share/vulkan/implicit_layer.d`, but a Flatpak only sees layers from
-`org.freedesktop.Platform.VulkanLayer.gamescope`, which isn't installed on the HTPC (system or user). Installing it
-(`flatpak install --user flathub org.freedesktop.Platform.VulkanLayer.gamescope//25.08`) waits for the user's OK;
-then the spike runs unattended in game mode. The SPEC's install guide should list the extension for Steam Deck /
-Bazzite users either way.
+_2026-11-09 (HTPC: RX 9070 XT, Steam game mode, Icefin's Flatpak as an XWayland client, `QSG_RHI_HDR=hdr10`)._
+
+| Setup | Result |
+|---|---|
+| No WSI layer in the sandbox (the host's `VkLayer_FROG_gamescope_wsi` isn't visible to Flatpaks) | Qt: "Requested a HDR10 swapchain but it is reported to be unsupported", so SDR |
+| `org.freedesktop.Platform.VulkanLayer.gamescope//25.08` installed (`--user`), no socket access | `[Gamescope WSI] Failed to connect to gamescope socket: gamescope-0`, so SDR |
+| Layer plus `--filesystem=xdg-run/gamescope-0:ro` | `[Gamescope WSI] Created swapchain` (A2B10G10R10, 10-bit), Qt "Creating HDR10 swapchain" (SDR white 200, max 1000 nits); the grab is PQ-encoded, as on Plasma |
+
+**Verdict.** Go. The same Vulkan renderer gets an HDR10 swapchain in game mode. What it takes:
+- the manifest's read-only `xdg-run/gamescope-0` access (#32);
+- the user having Flathub's gamescope VulkanLayer extension (Steam Deck and Bazzite users usually do; the install
+  guide lists it);
+- `ENABLE_GAMESCOPE_WSI=1` and `GAMESCOPE_WAYLAND_DISPLAY`, which Steam's session already exports.
+
+Without the extension Icefin stays SDR in game mode, and the capability prompt covers it.
 
 ## 2.7 `icefin-theme:` scheme vs jellyfin-web CSP; Gamepad API in WebEngine: **GO**; Steam Input part moved to 7.4
 

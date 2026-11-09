@@ -20,7 +20,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
 - [x] **2.2** Spike: patched libmpv rendering through libplacebo on Qt's shared Vulkan device
 - [x] **2.3** Spike: HDR swapchain format and Wayland surface tagging on KWin and Mutter
-- [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (renderer works in game mode; open: HDR, which needs Flathub's gamescope VulkanLayer extension on the HTPC, waiting for the user's OK)
+- [x] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (GO: HDR10 swapchain in game mode with Flathub's gamescope VulkanLayer and `xdg-run/gamescope-0` access, #32)
 - [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
 - [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
 - [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
