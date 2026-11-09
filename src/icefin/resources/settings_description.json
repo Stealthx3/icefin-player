@@ -74,6 +74,12 @@
           [ "off", "Off" ]
         ],
         "platforms_excluded": "oe_rpi"
+      },
+      {
+        "value": "icefin_auto_profile",
+        "display_name": "Automatic Device Profile",
+        "help": "Ask the server to convert only what this machine can't play, based on the hardware test in Client Settings -> Hardware. The force-transcode switches still apply on top.",
+        "default": true
       }
     ]
   }

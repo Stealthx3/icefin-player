@@ -10,9 +10,9 @@
     const TRANSCODE = { transcodeHdr10: 'SDR|HDR10|HDR10Plus|HLG', transcodeSdr: 'SDR' };
     let override = null;  // one-shot device profile change for a transcode restart
 
-    // Wrapped around nativeshell.js's getDeviceProfile (ICEFIN-HOOK there): the next profile asks the server to
-    // convert video outside the allowed ranges.
-    window.icefinAdjustProfile = (profile) => {
+    // Called by deviceProfile.js for every profile: the next one asks the server to convert video outside the
+    // allowed ranges.
+    window.icefinPromptProfile = (profile) => {
         if (!override) return profile;
         const ranges = override;
         override = null;
