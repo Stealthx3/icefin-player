@@ -12,4 +12,6 @@ namespace Icefin::Audio
 void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCodecs, bool hdmiDevice);
 // Release the exclusive-ALSA device reservation, if Icefin holds one (end of file, or fallback step 2).
 void releaseReservation();
+// Update AudioState's bitstream flag: passthrough, or exclusive output (reservation held or audio-exclusive).
+void refreshBitstream(MpvController* mpv, bool passthrough, const QString& why);
 }

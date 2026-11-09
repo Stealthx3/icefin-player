@@ -1,6 +1,7 @@
 #include "icefin/audio/AudioPolicy.h"  // ICEFIN-HOOK: Icefin audio policy
 #include "icefin/audio/Fallback.h"  // ICEFIN-HOOK: never-silent audio fallback
 #include "icefin/audio/AudioOutput.h"  // ICEFIN-HOOK: audio.backend mapping
+#include "icefin/audio/DeviceDelay.h"  // ICEFIN-HOOK: per-device audio delay (PLAN 3.7)
 #include "PlayerComponent.h"
 #include <QString>
 #include <Qt>
@@ -1079,6 +1080,7 @@ void PlayerComponent::setAudioStream(const QVariant &audioStream)
 void PlayerComponent::setAudioDelay(qint64 milliseconds)
 {
   m_playbackAudioDelay = milliseconds;
+  Icefin::Audio::deviceDelay().remember();  // ICEFIN-HOOK: per-device audio delay (PLAN 3.7)
 
   double displayFps = DisplayComponent::Get().currentRefreshRate();
   const char *audioDelaySetting = "audio_delay.normal";
@@ -1217,6 +1219,7 @@ void PlayerComponent::updateAudioDeviceList()
 void PlayerComponent::updateAudioDevice()
 {
   QString device = SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "device").toString();
+  Icefin::Audio::deviceDelay().switchDevice(device);  // ICEFIN-HOOK: per-device audio delay, keyed by the user's choice (PLAN 3.7)
 
   if (!m_audioDevices.contains(device))
   {
