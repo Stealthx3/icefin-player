@@ -1,0 +1,36 @@
+/* Pivot: big lowercase pivot headers over a column-flowing grid of flat tiles in three sizes. Proportions follow the
+   benchmark target at 16:9; all colours from tokens. No shadows, no rounded corners: type and colour do the work. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Segoe UI", "Noto Sans", "Open Sans", sans-serif; }
+
+[data-pv] { overflow: clip !important; background: var(--icefin-color-background); }
+.pv-clock { position: absolute; right: 4vw; top: 4vh; font-size: 1.5em; color: var(--icefin-color-textSecondary); }
+.pv-host { position: absolute; left: 6vw; right: 0; top: 7vh; bottom: 0; overflow: clip; }
+
+/* Headers: the active one full strength, the rest faded; they slide left with the content. */
+.pv-host .icefin-pivot-headers { gap: 3vw !important; margin-bottom: 5vh; }
+.pv-host .icefin-pivot-header { font-size: 4.2em; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: var(--icefin-color-textSecondary);
+  opacity: 0.45; cursor: pointer; }
+.pv-host .icefin-pivot-header.active { color: var(--icefin-color-text); opacity: 1; }
+.pv-host .icefin-pivot-body { height: 62vh; }
+
+/* The grid: three rows of units, filled column by column; large 2×2, wide 2×1, small 1×1. */
+.pv-grid { display: grid; grid-auto-flow: column dense; grid-template-rows: repeat(3, 1fr); grid-auto-columns: 12.5vw; gap: 1vw; height: 100%; }
+.pv-tile { position: relative; outline: none; background: var(--icefin-color-tile); color: var(--icefin-color-onTile); overflow: hidden; cursor: pointer; }
+.pv-large { grid-column: span 2; grid-row: span 2; }
+.pv-wide { grid-column: span 2; }
+.pv-face { position: absolute; inset: 0; background: center / cover no-repeat; display: flex; align-items: center; justify-content: center; }
+.pv-glyph { font-size: 3.4em; font-weight: 300; opacity: 0.9; }
+.pv-label { position: absolute; left: 0.7em; bottom: 0.5em; right: 0.7em; font-size: 1.05em; font-weight: 600; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; text-transform: lowercase; }
+.pv-art .pv-label, .pv-live .pv-label { text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.8); }
+.pv-frame { position: absolute; inset: 0; background: center / cover no-repeat; animation: pv-flip 420ms ease-out; transform-origin: 50% 0; }
+@keyframes pv-flip { from { transform: perspective(800px) rotateX(-70deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.pv-caption { position: absolute; left: 0.7em; right: 0.7em; top: 0.5em; font-size: 0.95em; text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.8);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Focus: a heavy dark frame inside the tile and a small lift; flat, no glow. */
+.pv-tile.icefin-focused { box-shadow: inset 0 0 0 0.3em var(--icefin-color-focus); transform: scale(1.03); z-index: 1; }
+.pv-tile { transition: transform 120ms ease; }
+
+html[data-icefin-motion="low"] .pv-frame { animation: none; }
+html[data-icefin-motion="low"] .pv-tile { transition-duration: 0ms; }
