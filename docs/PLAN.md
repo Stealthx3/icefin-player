@@ -78,8 +78,8 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`) (schemas `docs/themes/schema/`; Client Settings → Theme picker; passthrough mute verified with the receiver in 3.8)
 - [ ] **8.6** Media Center reference theme; benchmark checklist passes
 
-## Phase 9 — Benchmark clone themes (11 wks)
-- [ ] **9.1** Reference captures for the eight targets
+## Phase 9 — Benchmark clone themes (15 wks)
+- [ ] **9.1** Reference captures for the eleven targets
 - [ ] **9.2** Generic capabilities: 3D carousel, paged grid, live tiles, muted previews
 - [ ] **9.3** Generic capabilities: top bar and side rail, pivot headers, pointer-first mode, global overlay, low-motion profile
 - [ ] **9.4** Harbor (Kodi Estuary layout)
@@ -91,7 +91,11 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **9.11** Generic capabilities for Lumen and Marquee: focus parallax and highlight, translucent materials, expanding side rail, in-row card expansion (D19) [Benchmark clone themes]
 - [ ] **9.12** Lumen (Apple TV layout)
 - [ ] **9.13** Marquee (Netflix layout)
-- [ ] **9.10** All clone acceptance lists pass (9.4–9.9, 9.12, 9.13); lint finds no theme-specific engine code
+- [ ] **9.14** Generic capabilities for Almanac, Arcade and Tide: guide grid, on-screen keyboard, time-of-day palettes (D19) [Benchmark clone themes]
+- [ ] **9.15** Almanac (TiVo / cable guide layout)
+- [ ] **9.16** Arcade (Steam Big Picture layout)
+- [ ] **9.17** Tide (PS3 XMB layout; needs the native backdrop, 8.4)
+- [ ] **9.10** All clone acceptance lists pass (9.4–9.9, 9.12, 9.13, 9.15–9.17); lint finds no theme-specific engine code
 
 ## Phase 10 — Upstream sync (1 wk)
 - [ ] **10.1** Merge upstream jellyfin-desktop 2.1.0 (or latest release) into `main` via `sync/upstream-<ver>` (`docs/BRANCHING.md`); full suite passes
