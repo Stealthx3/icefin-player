@@ -15,4 +15,9 @@ QString hwdecFor(const QString& setting);
 QString migratedSetting(const QString& setting);
 // What the debug overlay prints for the UI renderer: "Vulkan" or "OpenGL (fallback)", from Qt Quick's graphics API.
 QString rendererName();
+// Before QApplication (ICEFIN-HOOK in main.cpp): EGL instead of GLX for Qt's xcb OpenGL contexts, unless the user set
+// QT_XCB_GL_INTEGRATION. mpv's VA-API interop through the render API needs EGL; under GLX (Qt's xcb default) mpv falls
+// back to vaapi-copy. Measured on the HTPC under Gamescope's XWayland (PLAN 4.5): vaapi-copy with GLX, zero-copy vaapi
+// with EGL. No effect on Wayland or on the Vulkan path.
+void applyGlEnv();
 }

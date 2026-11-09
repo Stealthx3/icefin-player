@@ -13,6 +13,7 @@
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include "icefin/theme/ThemeScheme.h"  // ICEFIN-HOOK: icefin-theme: scheme registration (PLAN 8.3)
 #include "icefin/gpu/WebGpuStatus.h"  // ICEFIN-HOOK: web GPU buffers switch (PLAN 4.3)
+#include "icefin/gpu/Hwdec.h"  // ICEFIN-HOOK: EGL on xcb (PLAN 4.5)
 #include <qtwebenginecoreglobal.h>
 #include <QtWebEngineCore/QWebEngineProfile>
 #include <QErrorMessage>
@@ -498,6 +499,7 @@ int main(int argc, char *argv[])
 
     Icefin::Theme::registerScheme();  // ICEFIN-HOOK: icefin-theme: scheme, before WebEngine starts (PLAN 8.3)
     Icefin::Gpu::applyWebEngineEnv();  // ICEFIN-HOOK: QTWEBENGINE_FORCE_USE_GBM=0 when turned off in settings (PLAN 4.3)
+    Icefin::Gpu::applyGlEnv();  // ICEFIN-HOOK: EGL on xcb so mpv's VA-API interop stays zero-copy (PLAN 4.5)
     QtWebEngineQuick::initialize();
     QApplication app(newArgc, newArgv);
 
