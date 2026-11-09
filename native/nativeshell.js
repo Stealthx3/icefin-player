@@ -326,7 +326,7 @@ window.NativeShell.AppHost = {
     supports(command) {
         return features.includes(command.toLowerCase());
     },
-    getDeviceProfile,
+    getDeviceProfile: () => (window.icefinAdjustProfile ? window.icefinAdjustProfile(getDeviceProfile()) : getDeviceProfile()),  // ICEFIN-HOOK: one-shot transcode from the capability prompt (PLAN 6.3)
     getSyncProfile: getDeviceProfile,
     appName() {
         return jmpInfo.icefin.appName;  // ICEFIN-HOOK: Icefin client identity

@@ -44,6 +44,17 @@
             : `Web layer: ${web.accelerated ? 'GPU-accelerated' : 'not GPU-accelerated'} (rasterization: ${f.Rasterization || '?'}; compositing: ${f.Compositing || '?'})`
               + (web.gbm === false ? ' · GBM off' : '') }));
         const btn = el('button', { className: 'raised emby-button icefin-hw-run', type: 'button', textContent: 'Test again', disabled: !!r.running });
+        // Playback choices remembered from the capability prompt (6.3), with a reset.
+        window.apiPromise.then((api) => api.router && api.router.rememberedChoices((m) => {
+            const n = Object.keys(m || {}).length;
+            const row = el('p', { className: 'fieldDescription icefin-hw-choices', textContent: n ? `Remembered playback choices: ${n}. ` : 'No remembered playback choices.' });
+            if (n) {
+                const forget = el('button', { className: 'raised emby-button icefin-hw-forget', type: 'button', textContent: 'Forget them' });
+                forget.addEventListener('click', () => { api.router.forgetChoices(); row.textContent = 'No remembered playback choices.'; });
+                row.append(forget);
+            }
+            body.insertBefore(row, btn);
+        }));
         btn.addEventListener('click', () => window.apiPromise.then((api) => { api.hardware.run(); render(section, Object.assign({}, r, { running: true })); }));
         body.append(btn);
         section.append(body);
