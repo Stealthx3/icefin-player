@@ -62,7 +62,8 @@ To check the HTPC without changing anything, run `bash icefin-htpc-setup.sh --ch
 
 - Before taking over the TV, it checks whether a Steam game is running and whether it's inside your quiet hours. If either is true, it doesn't start.
 - It switches between desktop and game mode only if you allowed it.
-- Anything only you can confirm (the TV's HDR badge, the receiver's format display) is asked on your phone; the lab never guesses.
+- Anything only you can confirm (the TV's HDR badge, the receiver's format display) is saved for later, never guessed.
+  When the lab's time on the TV ends, you get one phone notification listing what needs you.
 - It never installs system packages, uses rpm-ostree, or runs sudo on the HTPC.
 
 ## Undo everything
