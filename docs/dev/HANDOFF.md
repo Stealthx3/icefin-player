@@ -34,9 +34,11 @@
 
 ## HTPC tier (D16): connected 2026-11-08
 - HTPC `192.168.2.131`, user `htpc`, Bazzite 45 `bazzite-deck` (game mode by default; Plasma via desktop mode), kernel 7.2.
-- AMD RX 9070 XT (Navi 48) on `card1-HDMI-A-2` → Hisense 55005N TV; Denon AVR-S660H receiver. The ELD names the TV
-  (HISENSE) and lists AC-3, E-AC-3, DTS, DTS-HD and LPCM, no TrueHD, so the receiver is probably on the TV's (e)ARC
-  rather than in the HDMI chain. Confirm with the user.
+- AMD RX 9070 XT (Navi 48) on `card1-HDMI-A-2` → Hisense 55005N TV. The Denon AVR-S660H is on the TV's eARC/ARC
+  (user, 2026-11-08), so the HTPC sees the TV's ELD (HISENSE): AC-3, E-AC-3, DTS, DTS-HD and LPCM, but no TrueHD.
+  Passthrough rows are limited to what the TV forwards. TrueHD can't be bitstreamed on this setup, so the
+  per-track decision should send PCM, which is the expected result. Check DTS-HD MA on the receiver's display. A
+  receiver in the HDMI chain would be needed for the TrueHD row.
 - `htpc.sh doctor` OK, `deploy` OK. The house rules held off the first probe while a game was running.
 - Quiet hours (user, 2026-11-08): TV off-limits 10:00–midnight Pacific (`HTPC_QUIET_HOURS=10-00`); tests run 00:00–10:00.
 - Still open for the user: permission to switch sessions (`HTPC_ALLOW_SESSION_SWITCH`).
