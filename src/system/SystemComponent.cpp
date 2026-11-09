@@ -606,7 +606,8 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/nativeshell.js",  // ICEFIN-HOOK: the list continues with the theme token engine
     ":/web-client/extension/icefin/tokenEngine.js",  // ICEFIN-HOOK: theme token engine (PLAN 6.5)
     ":/web-client/extension/icefin/themeEngine.js",  // ICEFIN-HOOK: theme web runtime (PLAN 8.3)
-    ":/web-client/extension/icefin/themeSync.js"  // ICEFIN-HOOK: per-user theme choice (PLAN 8.5)
+    ":/web-client/extension/icefin/themeSync.js",  // ICEFIN-HOOK: per-user theme choice (PLAN 8.5)
+    ":/web-client/extension/icefin/hardwarePage.js"  // ICEFIN-HOOK: Client Settings -> Hardware (PLAN 4.1)
   };
 
   cachedScript = jmpInfoDeclaration;

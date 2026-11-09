@@ -3,6 +3,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include "icefin/gpu/Hwdec.h"
+#include "icefin/gpu/DecoderSelfTest.h"
+#include <QTemporaryDir>
 #include "icefin/settings/SettingsMerge.h"
 
 using namespace Icefin::Gpu;
@@ -40,6 +42,36 @@ private slots:
     QCOMPARE(v.size(), 3);  // replaced in place, not appended
     QCOMPARE(v[1].toObject()["value"].toString(), QString("hardwareDecoding"));
     QCOMPARE(v[1].toObject()["default"].toString(), QString("auto"));
+  }
+  void selfTestDecodesSample()
+  {
+    // Software is fine here (the lab VM has no GPU); the point is that the harness decodes to the end and times it.
+    SampleResult r = testSample("h264", QString(ICEFIN_TESTMEDIA) + "/h264.mp4");
+    QVERIFY2(r.ok, qPrintable(r.error));
+    QVERIFY(r.speed > 0);
+    SampleResult bad = testSample("h264", "/nonexistent.mp4");
+    QVERIFY(!bad.ok);
+    QVERIFY(!bad.error.isEmpty());
+  }
+  void transcodeRule()
+  {
+    SampleResult hw; hw.codec = "hevc"; hw.ok = true; hw.hwdec = "vaapi-copy"; hw.speed = 0.5;
+    SampleResult sw; sw.codec = "h264"; sw.ok = true; sw.speed = 8;
+    SampleResult slow; slow.codec = "av1"; slow.ok = true; slow.speed = 0.7;
+    SampleResult broken; broken.codec = "vp9"; broken.error = "x";
+    QCOMPARE(transcodeCodecs({hw, sw, slow, broken}), (QStringList{"av1", "vp9"}));
+  }
+  void fingerprintReadsGpus()
+  {
+    QTemporaryDir d;
+    for (auto [card, vendor, device] : {std::tuple{"card0", "0x1002", "0x7550"}, std::tuple{"card1", "0x8086", "0x56a0"}}) {
+      QDir().mkpath(d.path() + "/class/drm/" + card + "/device");
+      QFile v(d.path() + "/class/drm/" + card + "/device/vendor"); v.open(QIODevice::WriteOnly); v.write(vendor);
+      QFile w(d.path() + "/class/drm/" + card + "/device/device"); w.open(QIODevice::WriteOnly); w.write(device);
+    }
+    const QString f = fingerprint(d.path());
+    QVERIFY2(f.startsWith("0x1002:0x7550, 0x8086:0x56a0, kernel "), qPrintable(f));
+    QVERIFY(f.contains("mpv-api"));
   }
 };
 
