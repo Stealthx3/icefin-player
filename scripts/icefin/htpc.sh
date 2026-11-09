@@ -18,9 +18,15 @@
 #   uninstall            remove Icefin, the icefin-lab remote and the lab dir from the HTPC
 #   watch                open Moonlight on this machine to watch the HTPC (Sunshine on the HTPC)
 #   ssh                  interactive shell on the HTPC
+#   window               lab window or quiet hours now (HTPC time), and minutes to the next change
+#   defer ROW WHAT       queue a step that needs the user (read the receiver, confirm the TV's HDR badge, ...)
+#   deferred             list queued steps that are still open
+#   handoff              once quiet hours start: print the open steps as the user's hand-off and mark them handed off
 # Config: tests/icefin/htpc/htpc.env (from htpc.env.example; git-ignored). HTPC_ENV=<file> picks another.
 # House rules: play/probe/session/deploy refuse during HTPC_QUIET_HOURS or while HTPC_BUSY_PROCS run;
-# HTPC_FORCE=1 overrides (only when the user said so).
+# HTPC_FORCE=1 overrides (only when the user said so). Tests don't start with less than HTPC_MIN_LEFT minutes of
+# lab window left. Policy (docs/LAB.md "Lab window"): inside the window run only unattended tests; anything that
+# needs a person goes to `defer`, and `handoff` reports the queue when the window closes.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -33,7 +39,7 @@ source "$ENVF"
 : "${HTPC_SSH_PORT:=22}" "${HTPC_SSH_KEY:=$HOME/.ssh/id_ed25519}" "${HTPC_HOSTKEY:=accept-new}"
 : "${HTPC_DEST:=.local/share/icefin-lab}" "${HTPC_APP_ID:=io.github.stealthx3.IcefinPlayer}"
 : "${HTPC_PORT_SHIFT:=30000}" "${HTPC_REPO_PORT:=8099}" "${HTPC_QUIET_HOURS:=}" "${HTPC_BUSY_PROCS:=reaper}"
-: "${HTPC_ALLOW_SESSION_SWITCH:=0}" "${HTPC_LAB_ENV:=lab.env}" "${HTPC_FORCE:=0}"
+: "${HTPC_ALLOW_SESSION_SWITCH:=0}" "${HTPC_LAB_ENV:=lab.env}" "${HTPC_FORCE:=0}" "${HTPC_MIN_LEFT:=15}"
 
 die() { echo "htpc: $*" >&2; exit 1; }
 [[ "$HTPC_APP_ID" =~ ^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$ ]] || die "bad HTPC_APP_ID"
@@ -50,7 +56,7 @@ TUN="$RUN/tunnel-$HTPC_USER-$HOST"
 SSH=(-i "$HTPC_SSH_KEY" -p "$HTPC_SSH_PORT" -o BatchMode=yes -o ConnectTimeout=8 -o "StrictHostKeyChecking=$HTPC_HOSTKEY"
      -o ControlMaster=auto -o "ControlPath=$RUN/c-%C" -o ControlPersist=120 -o LogLevel=ERROR)
 [ "$HTPC_HOSTKEY" = no ] && SSH+=(-o UserKnownHostsFile=/dev/null)
-OUTDIR="$ROOT/build-htpc"; RESULTS="$OUTDIR/results"
+OUTDIR="$ROOT/build-htpc"; RESULTS="$OUTDIR/results"; QUEUE="$OUTDIR/deferred.tsv"
 
 # Server ports come from servers.json; on the HTPC each is shifted so a real Jellyfin there is never shadowed.
 server_ports() { python3 -c 'import json,sys; print(" ".join(str(s["port"]) for s in json.load(open(sys.argv[1]))["servers"]))' \
@@ -88,18 +94,30 @@ $1"
   ssh "${SSH[@]}" "$TARGET" "bash -c $(printf %q "$script")" </dev/null; }
 q() { local out="" a; for a in "$@"; do out+=" $(printf %q "$a")"; done; printf '%s' "$out"; }
 
-house() { # refuse during quiet hours or while something else is using the TV
+# window_at HHMM: "lab <minutes left>" or "quiet <minutes until the lab window>" for HTPC_QUIET_HOURS (a-b, hours).
+# No quiet hours: always "lab 1440".
+window_at() {
+  local t=$((10#$1)) m
+  m=$(( (t / 100) * 60 + t % 100 ))
+  [[ "$HTPC_QUIET_HOURS" =~ ^([0-9]{1,2})-([0-9]{1,2})$ ]] || { echo "lab 1440"; return; }
+  local a=$(( 10#${BASH_REMATCH[1]} * 60 )) b=$(( 10#${BASH_REMATCH[2]} * 60 )) quiet=0
+  if (( a > b )); then (( m >= a || m < b )) && quiet=1; elif (( a < b )); then (( m >= a && m < b )) && quiet=1; fi
+  if (( quiet )); then echo "quiet $(( (b - m + 1440) % 1440 ))"; else echo "lab $(( (a - m + 1440) % 1440 ))"; fi
+}
+htpc_now() { rexec "date +%H%M"; }
+
+house() { # refuse during quiet hours, near their start, or while something else is using the TV
   [ "$HTPC_FORCE" = 1 ] && { echo "htpc: house rules overridden (HTPC_FORCE=1)"; return 0; }
-  local out h busy
-  out="$(rexec "date +%H; for p in $HTPC_BUSY_PROCS; do pgrep -x \"\$p\" >/dev/null && echo \"busy \$p\"; done; true")"
-  h=$((10#$(head -n1 <<<"$out")))
+  local out now busy w
+  out="$(rexec "date +%H%M; for p in $HTPC_BUSY_PROCS; do pgrep -x \"\$p\" >/dev/null && echo \"busy \$p\"; done; true")"
+  now="$(head -n1 <<<"$out")"
   busy="$(grep '^busy ' <<<"$out" | cut -d' ' -f2 | paste -sd, - || true)"
   [ -z "$busy" ] || die "HTPC is in use ($busy running); try later or HTPC_FORCE=1 with the user's OK"
-  if [[ "$HTPC_QUIET_HOURS" =~ ^([0-9]{1,2})-([0-9]{1,2})$ ]]; then
-    local a=$((10#${BASH_REMATCH[1]})) b=$((10#${BASH_REMATCH[2]})) quiet=0
-    if (( a > b )); then (( h >= a || h < b )) && quiet=1; else (( h >= a && h < b )) && quiet=1; fi
-    (( quiet )) && die "quiet hours ($HTPC_QUIET_HOURS, HTPC time ${h}h); try later or HTPC_FORCE=1 with the user's OK"
-  fi
+  w="$(window_at "$now")"
+  case "$w" in
+    quiet*) die "quiet hours ($HTPC_QUIET_HOURS, HTPC time ${now:0:2}:${now:2}); lab window opens in ${w#quiet } min" ;;
+    lab*) (( ${w#lab } >= HTPC_MIN_LEFT )) || die "only ${w#lab } min of lab window left (HTPC_MIN_LEFT=$HTPC_MIN_LEFT); defer the rest" ;;
+  esac
   return 0
 }
 
@@ -204,6 +222,26 @@ cmd_session() {
   esac
 }
 
+cmd_window() { local now; now="$(htpc_now)"; echo "htpc: ${now:0:2}:${now:2} HTPC time - $(window_at "$now" | sed 's/^lab /lab window, minutes left: /; s/^quiet /quiet hours, minutes until the lab window: /')"; }
+
+cmd_defer() { # defer ROW WHAT: a step that needs the user waits for the hand-off
+  [ $# -ge 2 ] || die "defer ROW WHAT (e.g. defer 'audio: DTS-HD MA' 'read the format on the receiver display while it plays')"
+  mkdir -p "$OUTDIR"
+  printf '%s\topen\t%s\t%s\n' "$(date -Iminutes)" "${1//$'\t'/ }" "${2//$'\t'/ }" >> "$QUEUE"
+  echo "htpc: deferred to the post-lab hand-off: $1"
+}
+
+cmd_deferred() { [ -s "$QUEUE" ] && awk -F'\t' '$2=="open" {printf "- %s: %s (queued %s)\n", $3, $4, $1}' "$QUEUE" || true; }
+
+cmd_handoff() { # run when the lab window closes: report the open steps, mark them handed off
+  local now w open; now="$(htpc_now)"; w="$(window_at "$now")"
+  [[ "$w" == quiet* || "${1:-}" == --now ]] || die "lab window still open (${w#lab } min left); handoff runs when it closes (--now to force)"
+  open="$(cmd_deferred)"
+  if [ -z "$open" ]; then echo "htpc: handoff: nothing needs you"; return 0; fi
+  echo "htpc: handoff: $(grep -c '^- ' <<<"$open") step(s) need you, moved to the post-lab timeframe:"; echo "$open"
+  awk -F'\t' -v OFS='\t' -v d="$(date -Iminutes)" '$2=="open" {$2="handed-off " d} {print}' "$QUEUE" > "$QUEUE.tmp" && mv "$QUEUE.tmp" "$QUEUE"
+}
+
 cmd_exec() { [ $# -gt 0 ] || die "exec CMD"; rexec "sess_env; cd \"\$D/src\" 2>/dev/null || cd; $*"; }
 
 cmd_clean() {
@@ -262,6 +300,6 @@ cmd_doctor() {
 
 c="${1:-}"; shift || true
 case "$c" in
-  doctor|tunnel|build|deploy|play|probe|session|exec|push|pull|clean|uninstall|watch|ssh) "cmd_$c" "$@" ;;
+  doctor|tunnel|build|deploy|play|probe|session|exec|push|pull|clean|uninstall|watch|ssh|window|defer|deferred|handoff) "cmd_$c" "$@" ;;
   *) sed -n '2,23p' "$0"; exit 2 ;;
 esac
