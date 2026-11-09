@@ -61,6 +61,38 @@
         "display_name": "Theme Sounds",
         "help": "Play the theme's interface sounds. They are always silent while a movie's audio goes straight to your receiver (passthrough).",
         "default": true
+      },
+      {
+        "value": "benchPack",
+        "display_name": "Benchmark Themes",
+        "help": "Also offer the benchmark pack: themes that reproduce the layout of other TV interfaces, used to test the theme engine. They use Icefin's own art, names and sounds.",
+        "default": false
+      }
+    ]
+  },
+  {
+    "section": "video",
+    "values": [
+      {
+        "value": "hardwareDecoding",
+        "display_name": "Hardware Decoding",
+        "help": "How video is decoded. Auto is right for almost everyone.\n\n- Auto: the GPU decodes what it safely can; everything else is decoded in software.\n- VA-API: AMD and Intel GPUs.\n- NVDEC: NVIDIA GPUs.\n- Vulkan: Vulkan Video, on recent drivers.\n- Copy: GPU decoding with a copy back to memory; slower, but works around driver bugs.\n- Off: software decoding only. Use this if video is glitchy.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "vaapi", "VA-API" ],
+          [ "nvdec", "NVDEC" ],
+          [ "vulkan", "Vulkan" ],
+          [ "copy", "Copy" ],
+          [ "off", "Off" ]
+        ],
+        "platforms_excluded": "oe_rpi"
+      },
+      {
+        "value": "icefin_auto_profile",
+        "display_name": "Automatic Device Profile",
+        "help": "Ask the server to convert only what this machine can't play, based on the hardware test in Client Settings -> Hardware. The force-transcode switches still apply on top.",
+        "default": true
       }
     ]
   },

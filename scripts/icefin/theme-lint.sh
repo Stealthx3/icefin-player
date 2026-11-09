@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # theme-lint.sh: the theme engine must stay theme-agnostic (CLAUDE.md hard rule, DECISIONS D3).
-#  1. Engine code never names a theme: no theme id from themes/*/theme.json or tests/icefin/themes/*/theme.json.
+#  1. Engine code never names a theme: no theme id from themes/*/theme.json, themes/bench/*/theme.json or tests/icefin/themes/*/theme.json.
 #  2. Engine code holds no theme values: no color literals (#hex, rgb()/rgba()/hsl()/hsla() with numbers).
 # Engine code: src/icefin/theme/, native/icefin/, qml/icefin/. Exit 1 on a finding.
 set -euo pipefail
@@ -9,7 +9,7 @@ ENGINE=()
 for d in src/icefin/theme native/icefin qml/icefin; do [ -d "$d" ] && ENGINE+=("$d"); done
 [ ${#ENGINE[@]} -gt 0 ] || { echo "theme-lint: no engine code yet"; exit 0; }
 bad=0
-ids="$(for f in themes/*/theme.json tests/icefin/themes/*/theme.json; do [ -f "$f" ] && python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("id",""))' "$f"; done | sort -u | grep -v '^$' || true)"
+ids="$(for f in themes/*/theme.json themes/bench/*/theme.json tests/icefin/themes/*/theme.json; do [ -f "$f" ] && python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("id",""))' "$f"; done | sort -u | grep -v '^$' || true)"
 for id in $ids; do
   if hits="$(grep -rnwF -- "$id" "${ENGINE[@]}")"; then echo "theme-lint: engine code names theme '$id':"; echo "$hits"; bad=1; fi
 done
