@@ -11,6 +11,7 @@
 #include "shared/Names.h"
 #include "shared/Paths.h"
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
+#include "icefin/log/Redact.h"  // ICEFIN-HOOK: more log redaction (PLAN 11.2)
 #include "settings/SettingsComponent.h"
 #include "Version.h"
 
@@ -82,6 +83,7 @@ void Log::CensorAuthTokens(QString& msg)
   elidePattern(msg, "ApiKey=", 32);
   elidePattern(msg, "AccessToken=", 32);
   elidePattern(msg, "AccessToken\":\"", 32);
+  Icefin::Log::redact(msg);  // ICEFIN-HOOK: headers, passwords and any-length tokens (PLAN 11.2)
 }
 
 
