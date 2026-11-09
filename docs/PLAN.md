@@ -101,5 +101,5 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 12 — Release 1.0 (1 wk)
 - [ ] **12.1** Stable Flatpak channel (signed self-hosted repo, `.flatpakrepo`/`.flatpakref`)
-- [ ] **12.2** Install docs (device approval, udev rules, WirePlumber note) and compatibility table
+- [x] **12.2** Install docs (device approval, udev rules, WirePlumber note) and compatibility table (`docs/INSTALL.md`; the table is updated as hardware runs land)
 - [ ] **12.3** Tag 1.0 with source published
