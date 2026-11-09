@@ -1,6 +1,9 @@
 #include <QDebug>
 #include "InputComponent.h"
 #include "icefin/audio/AudioState.h"  // ICEFIN-HOOK: receiver volume over CEC during passthrough (PLAN 3.7)
+#ifdef ICEFIN_SDL3  // ICEFIN-HOOK: SDL3 gamepad layer (PLAN 7.1)
+#include "icefin/input/GamepadService.h"  // ICEFIN-HOOK: SDL3 gamepad layer (PLAN 7.1)
+#endif  // ICEFIN-HOOK: SDL3 gamepad layer
 #include "settings/SettingsComponent.h"
 #include "system/SystemComponent.h"
 #include "power/PowerComponent.h"
@@ -94,6 +97,10 @@ bool InputComponent::componentInitialize()
   if (SettingsComponent::Get().value(SETTINGS_SECTION_MAIN, "sdlEnabled").toBool())
     addInput(new InputSDL(this));
 #endif
+#ifdef ICEFIN_SDL3  // ICEFIN-HOOK: SDL3 gamepad layer replaces InputSDL (PLAN 7.1)
+  if (SettingsComponent::Get().value(SETTINGS_SECTION_MAIN, "sdlEnabled").toBool())  // ICEFIN-HOOK: same switch as upstream
+    addInput(new Icefin::Input::GamepadService(this));  // ICEFIN-HOOK: SDL3 gamepad layer
+#endif  // ICEFIN-HOOK: SDL3 gamepad layer
 #ifdef HAVE_LIRC
   addInput(new InputLIRC(this));
 #endif

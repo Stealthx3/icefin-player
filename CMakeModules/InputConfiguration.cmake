@@ -1,5 +1,8 @@
 message(STATUS ${CMAKE_FIND_ROOT_PATH})
 OPTION(ENABLE_SDL2 "Enable SDL2 for joystick handling" ON)
+if(NOT ENABLE_SDL2)  # ICEFIN-HOOK: with SDL2 off (Icefin's SDL3 layer, PLAN 7.1) a fresh configure fails later in
+  find_package(Iconv)  # ICEFIN-HOOK: FindX11's try_compile ("No known features for CXX compiler"); this C++ check primes it
+endif()  # ICEFIN-HOOK: end SDL2-off workaround
 if(ENABLE_SDL2)
   find_package(SDL2)
   if(SDL2_FOUND)

@@ -13,7 +13,7 @@ sudo apt-get install -y -qq --no-install-recommends \
   qt6-webchannel-dev qt6-wayland qml6-module-qtqml-workerscript qml6-module-qtquick-controls \
   qml6-module-qtquick-templates qml6-module-qtquick-window qml6-module-qtwebchannel \
   qml6-module-qtwebengine qml6-module-qtwebengine-controlsdelegates qml6-module-qtwebview \
-  xvfb xauth x11-utils python3-evdev pipewire pipewire-pulse pipewire-alsa wireplumber pipewire-bin alsa-utils psmisc weston kwin-wayland mutter wayland-utils mesa-vulkan-drivers libvulkan-dev vulkan-tools shellcheck ffmpeg python3-websocket xdotool python3-pil qt6-multimedia-dev
+  xvfb xauth x11-utils python3-evdev pipewire pipewire-pulse pipewire-alsa wireplumber pipewire-bin alsa-utils psmisc weston kwin-wayland mutter wayland-utils mesa-vulkan-drivers libvulkan-dev vulkan-tools shellcheck ffmpeg python3-websocket xdotool python3-pil qt6-multimedia-dev libsdl3-dev
 # Patched libmpv / libplacebo builds (spike 2.2, task 5.2)
 sudo apt-get install -y -qq --no-install-recommends \
   glslang-dev glslang-tools spirv-tools python3-jinja2 python3-glad liblcms2-dev libdovi-dev libunwind-dev \
