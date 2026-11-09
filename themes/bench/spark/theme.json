@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "spark",
+  "name": "Spark",
+  "version": "0.1.0",
+  "description": "Benchmark theme (Fire TV layout): a top navigation bar, a large hero carousel with muted auto-playing previews, and long rows of 16:9 tiles on a near-black background; focus by scale and a white outline. Icefin names and type; no Amazon assets.",
+  "styles": "styles.css",
+  "scripts": ["spark.js"]
+}
