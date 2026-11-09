@@ -22,10 +22,30 @@
     let screens = {};         // route -> {mount(root, ctx), unmount?(), onBack?()}
     let loadingTheme = null;  // id that registerScreen calls belong to while its scripts load
     let current = null;       // {route, screen}
+    let actionHooks = [];     // engine capabilities (capabilities.js) that take actions first: (action) => handled
+    let resetHooks = [];      // called when the theme changes, so capabilities drop their state
 
     function route() {
         const h = (location.hash || '#/').split('?')[0];
         return h.replace(/\.html$/, '');
+    }
+
+    // While a themed screen is up, jellyfin-web's own chrome and page step aside (kept in the DOM, so their state and any
+    // plugin injection survive; they come back as soon as the route is jellyfin-web's again).
+    const SCREEN_CLASS = 'icefin-screen';
+    function screenShown(on) {
+        const h = document.documentElement;
+        if (!h) return;
+        h.classList.toggle(SCREEN_CLASS, on);
+        if (on && !document.getElementById('icefin-screen-style')) {
+            const st = document.createElement('style');
+            st.id = 'icefin-screen-style';
+            // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
+            st.textContent = `html.${SCREEN_CLASS} .skinHeader, html.${SCREEN_CLASS} .mainDrawer, html.${SCREEN_CLASS} .mainDrawerHandle,`
+                + ` html.${SCREEN_CLASS} .mainAnimatedPages, html.${SCREEN_CLASS} .backgroundContainer, html.${SCREEN_CLASS} #reactRoot`
+                + ' { visibility: hidden !important; }';
+            (document.head || h).append(st);
+        }
     }
 
     function root() {
@@ -90,6 +110,8 @@
         unmountScreen();
         clearAssets();
         screens = {};
+        actionHooks = [];
+        resetHooks.forEach((f) => { try { f(); } catch (e) { console.error('icefinTheme: reset hook', e); } });
         pkg = next && next.id && !(api && standDown(api)) ? next : null;
         document.documentElement.toggleAttribute('data-icefin-theme', !!pkg);
         if (!pkg) { route_(); return; }
@@ -121,12 +143,22 @@
         try { current.screen.unmount && current.screen.unmount(); } catch (e) { console.error('icefinTheme: unmount', e); }
         current = null;
         const r = document.getElementById(ROOT_ID);
-        if (r) { r.hidden = true; r.textContent = ''; }
+        if (r) {
+            r.hidden = true;
+            r.textContent = '';
+            // A fresh root for the next screen: no styles, classes or data attributes left behind.
+            for (const at of [...r.attributes]) if (!['id', 'role', 'hidden'].includes(at.name)) r.removeAttribute(at.name);
+            r.style.cssText = 'position:fixed;inset:0;z-index:999;overflow:auto';
+        }
+        screenShown(false);
     }
 
     function route_() {
         const path = route();
-        const screen = pkg ? screens[path] : null;
+        // "?icefin=stock" on any route shows jellyfin-web's own page, so plugin UI a themed screen replaces (home
+        // sections, for example) stays one step away.
+        const stock = /[?&]icefin=stock\b/.test(location.hash);
+        const screen = pkg && !stock ? screens[path] : null;
         if (current && current.route === path && current.screen === screen) return;
         unmountScreen();
         if (!screen) return;  // jellyfin-web's own page
@@ -134,6 +166,7 @@
         if (!r) return;
         current = { route: path, screen };
         r.hidden = false;
+        screenShown(true);
         sound('navigate');
         try {
             screen.mount(r, ctx);
@@ -143,7 +176,7 @@
             return;
         }
         const first = r.querySelector(FOCUS);
-        if (first) focus(first);
+        if (first && !focused()) focus(first);  // unless the screen already chose what has focus
     }
 
     let apiRef = null;
@@ -153,7 +186,8 @@
         sound,
         navigate: (hash) => { location.hash = hash; },
         apiClient: () => window.ApiClient,
-        focus: (el) => focus(el)
+        focus: (el) => focus(el),
+        focused: () => focused()
     };
 
     // ---- focus engine ----
@@ -170,31 +204,51 @@
         el.dispatchEvent(new CustomEvent('icefin-focus', { bubbles: true }));
     }
 
-    // Nearest focusable in a direction: smallest distance along the axis, with off-axis drift weighted.
+    // Nearest focusable in a direction. Beam first: candidates overlapping the current element across the direction
+    // of travel (same row for left/right, same column for up/down) win, nearest first; only if there are none does
+    // distance with off-axis drift decide. Without the beam, a wide element (a full-width bar) can steal the move.
+    function pick(all, cur, dir) {
+        const a = cur.getBoundingClientRect();
+        const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+        const horiz = dir === 'left' || dir === 'right';
+        let beamBest = null, beamDist = Infinity, best = null, bestScore = Infinity;
+        for (const e of all) {
+            const b = e.getBoundingClientRect();
+            const bx = b.left + b.width / 2, by = b.top + b.height / 2;
+            const along = dir === 'left' ? a.left - b.right + (ax - bx) / 1e3 : dir === 'right' ? b.left - a.right + (bx - ax) / 1e3
+                : dir === 'up' ? a.top - b.bottom + (ay - by) / 1e3 : b.top - a.bottom + (by - ay) / 1e3;
+            const centre = dir === 'left' ? ax - bx : dir === 'right' ? bx - ax : dir === 'up' ? ay - by : by - ay;
+            if (centre <= 0) continue;
+            const overlap = horiz ? Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) : Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            if (overlap > 0 && along > -1) {
+                if (along < beamDist) { beamDist = along; beamBest = e; }
+                continue;
+            }
+            const score = centre + (horiz ? Math.abs(by - ay) : Math.abs(bx - ax)) * 2;
+            if (score < bestScore) { bestScore = score; best = e; }
+        }
+        return beamBest || best;
+    }
+
     function move(dir) {
         const r = document.getElementById(ROOT_ID);
         const cur = focused();
         const all = Array.from(r.querySelectorAll(FOCUS)).filter((e) => e !== cur && e.offsetParent !== null);
         if (!cur) { if (all[0]) focus(all[0]); return true; }
-        const a = cur.getBoundingClientRect();
-        const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
-        let best = null, bestScore = Infinity;
-        for (const e of all) {
-            const b = e.getBoundingClientRect();
-            const bx = b.left + b.width / 2, by = b.top + b.height / 2;
-            const dx = bx - ax, dy = by - ay;
-            const along = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy;
-            if (along <= 0) continue;
-            const off = (dir === 'left' || dir === 'right') ? Math.abs(dy) : Math.abs(dx);
-            const score = along + off * 2;
-            if (score < bestScore) { bestScore = score; best = e; }
-        }
+        const best = pick(all, cur, dir);
         if (best) { focus(best); sound('focus'); }
         return true;  // a themed screen keeps arrows even at its edge
     }
 
     function handleAction(action) {
+        for (const h of actionHooks.slice()) {
+            try { if (h(action)) return true; } catch (e) { console.error('icefinTheme: action hook', e); }
+        }
         if (!current) return false;
+        // A screen may own its navigation (rows, strips): it sees every action first and returns true when it used it.
+        if (current.screen.onAction) {
+            try { if (current.screen.onAction(action, ctx)) return true; } catch (e) { console.error('icefinTheme: screen onAction', e); }
+        }
         switch (action) {
             case 'up': case 'down': case 'left': case 'right':
                 return move(action);
@@ -240,6 +294,18 @@
         handleAction,
         sound,
         active: () => (pkg ? { id: pkg.id, source: pkg.source, route: current ? current.route : null } : null),
+        // For the engine's own capability library (capabilities.js), not for themes.
+        _engine: {
+            focus: (el) => focus(el),
+            focused: () => focused(),
+            move: (dir) => move(dir),
+            pick: (all, cur, dir) => pick(all, cur, dir),
+            root: () => root(),
+            hasScreen: () => !!current,
+            sound: (n) => sound(n),
+            addActionHook(fn) { actionHooks.push(fn); return () => { actionHooks = actionHooks.filter((f) => f !== fn); }; },
+            onReset(fn) { resetHooks.push(fn); }
+        },
         stoodDown: () => !!window.icefinPluginRuntime,
         screens: () => Object.keys(screens)
     };

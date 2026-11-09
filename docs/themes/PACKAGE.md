@@ -3,6 +3,7 @@
 A theme is a folder. Icefin looks in, in order:
 - `ICEFIN_THEME_PATH`, for development;
 - the bundled themes;
+- the benchmark pack (`themes/bench/`), only when Client Settings → Benchmark Themes is on (or `ICEFIN_BENCH_THEMES=1`). It ships with the app but isn't offered by default (SPEC "Benchmark clone themes", Distribution); turning it off while one of its themes is active switches the engine off;
 - the user's `themes` folder in Icefin's data directory.
 The first package found with a given id wins.
 
@@ -78,3 +79,28 @@ The theme picker is in Client Settings → Theme. The choice belongs to the sign
 - it's synced to the server's DisplayPreferences (`usersettings`, client `icefin-player`, custom pref `icefin.theme` =
   `{"schema":1,"theme","preset","timestamp"}`); the newest timestamp wins;
 - under stand-down, the plugin's settings API owns the choice and Icefin doesn't sync.
+
+## Engine capabilities for screens (`window.icefinTheme.ui`)
+Built once in the engine (`native/icefin/capabilities.js`, PLAN 9.2, 9.3) for any theme. Call them from a screen
+script while it loads, or from a screen's `mount()`. They all reset when the theme changes.
+
+| Call | What it gives |
+|---|---|
+| `ui.chrome.set('topBar' \| 'sideRail', {height \| width, mount(el)})`, then `ui.chrome.frame(root)` in a screen | Persistent navigation chrome around the screen. `frame()` returns the content element to fill |
+| `ui.pivot(el, [{title, mount(el)}])` | Pivot headers. Left/right at a section's edge slides to the next one, headers with it |
+| `ui.pagedGrid(el, items, {cols, rows, render})` | A grid in pages with indicators. Arrows past the edge turn the page |
+| `ui.carousel3d(el, items, {render, spacing, depth, tilt})` | A perspective carousel with the focused item in front. Left/right step through it |
+| `ui.liveTile(el, {fetch, render, interval})` | Cycling content, frozen under reduced or low motion |
+| `ui.mutedPreview(el, {itemId \| src})` | A muted SDR preview in the page's own `<video>` (a small VP8 server transcode). Never mpv, never the passthrough device |
+| `ui.overlay.set({mount(el, ctx)})` | A global panel over any screen, themed or stock: a long press on View (`icefin_overlay`) opens it, and Back closes it. It's modal |
+| `ui.pointerFirst(true)` | Hover moves focus, and `html[data-icefin-pointer]` lets the theme enlarge hit targets |
+| `ui.motion.cap('low')`, `ui.motion.duration(ms)` | A theme-level motion cap, separate from the user's reduced-motion setting. `html[data-icefin-motion]` follows it |
+
+While a themed screen is up, jellyfin-web's header, drawer and page are hidden (`visibility`, so their state and any
+plugin injection survive). Focus moves are beam-first: elements overlapping across the direction of travel win.
+
+## Screens that own navigation, and the stock escape
+- A screen can define `onAction(action, ctx)`: it sees every action before the runtime's spatial focus does, and
+  returns true when it used it. Rows, strips and carousels use this; `ctx.focused()` and `ctx.focus(el)` help.
+- `?icefin=stock` on any route shows jellyfin-web's own page. A theme that replaces home should link to
+  `#/home?icefin=stock` (Media Center's "Classic home"), so plugin home sections stay one step away.

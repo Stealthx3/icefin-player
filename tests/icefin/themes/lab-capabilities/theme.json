@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "lab-capabilities",
+  "name": "Lab Capabilities (test fixture)",
+  "version": "1.0.0",
+  "description": "Uses every generic engine capability (PLAN 9.2, 9.3) so tests can drive them. Not a real theme.",
+  "styles": "styles.css",
+  "scripts": ["screens.js"]
+}

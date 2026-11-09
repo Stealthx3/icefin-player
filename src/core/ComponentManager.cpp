@@ -18,6 +18,8 @@
 #include "icefin/theme/ThemeComponent.h"  // ICEFIN-HOOK: theme engine service (PLAN 6.5)
 #include "icefin/gpu/HardwareComponent.h"  // ICEFIN-HOOK: decoder self-test (PLAN 4.1)
 #include "icefin/render/RouterComponent.h"  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
+#include "icefin/input/GamepadComponent.h"  // ICEFIN-HOOK: controller layer (PLAN 7.x)
+#include "icefin/audio/AudioTest.h"  // ICEFIN-HOOK: audio test page (PLAN 3.8)
 
 #ifdef KONVERGO_OPENELEC
 #include "system/openelec/OESystemComponent.h"
@@ -72,6 +74,8 @@ void ComponentManager::initialize()
   registerComponent(&Icefin::Theme::ThemeComponent::Get());  // ICEFIN-HOOK: theme engine service (PLAN 6.5)
   registerComponent(&Icefin::Gpu::HardwareComponent::Get());  // ICEFIN-HOOK: decoder self-test (PLAN 4.1)
   registerComponent(&Icefin::Render::RouterComponent::Get());  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
+  registerComponent(&Icefin::Input::GamepadComponent::Get());  // ICEFIN-HOOK: controller layer (PLAN 7.x)
+  registerComponent(&Icefin::Audio::AudioTestComponent::Get());  // ICEFIN-HOOK: audio test page (PLAN 3.8)
 
 #ifdef KONVERGO_OPENELEC
   registerComponent(&OESystemComponent::Get());

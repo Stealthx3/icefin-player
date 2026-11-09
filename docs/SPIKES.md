@@ -3,7 +3,7 @@
 One entry per spike (PLAN 2.1–2.8). A no-go on 2.1, 2.2 or 2.3 switches the plan to the two-window contingency
 (SPEC "Contingency: two-window design"). Raw results and screenshots are in `docs/spikes/`.
 
-## 2.1 Qt Quick on Qt's Vulkan backend with Qt WebEngine inside it: **GO (functional); confirm on GPU in 1.10 (HTPC tier)**
+## 2.1 Qt Quick on Qt's Vulkan backend with Qt WebEngine inside it: **GO; confirmed on AMD (HTPC, 2026-11-09)**
 
 _2026-11-07 · `src/icefin/spikes/2.1-webengine-vulkan/` · lab-icefin-main, Mesa lavapipe (software Vulkan 1.4)_
 
@@ -33,6 +33,16 @@ Wayland, with the transparency the single-surface design needs.
 **Open risk.** The software rasterizer doesn't exercise the GPU texture-import path Chromium uses on real GPUs
 (DMA-BUF into Vulkan). Re-run this spike on AMD, Intel and NVIDIA in the hardware lab (1.10 (HTPC tier)) before Phase 5 ships;
 a failure there is driver-specific and is handled by the OpenGL fallback (SPEC routing table), not a design no-go.
+
+**On the GPU (HTPC, 2026-11-09).** AMD RX 9070 XT, RADV (Flatpak Mesa 26.2.5), run inside Icefin's installed Flatpak
+(`flatpak run --command=…`, the app's own Qt 6.11.3 and WebEngine), page rendered and transparent over QML on all four:
+
+| Session | QPA | Vulkan | OpenGL |
+|---|---|---|---|
+| Gamescope (Steam game mode), 3840×2160 | xcb (XWayland) | yes | yes |
+| Plasma 6.8.2 Wayland | wayland | yes | yes |
+
+The open risk is closed for AMD. Intel and NVIDIA wait for that hardware (4.5, 11.1).
 
 ## 2.2 Patched libmpv rendering through libplacebo on Qt's shared Vulkan device: **GO (functional); confirm on GPU and hwdec in 1.10 (HTPC tier) / 4.5**
 
@@ -72,7 +82,7 @@ into a `VkImage` on Qt's render thread before Qt's own pass (same thread, same q
   mpv under an OpenGL Qt window, tagged with `wp_color_manager_v1`. That's useful reference for 2.3 and the
   contingency, but it isn't the D4 single-surface design.
 
-## 2.3 HDR swapchain format and Wayland surface tagging on KWin and Mutter: **GO (protocol level), with design notes; TV signalling in 1.10 (HTPC tier)**
+## 2.3 HDR swapchain format and Wayland surface tagging on KWin and Mutter: **GO (protocol level), with design notes; re-checked on Plasma 6.8 (HTPC)**
 
 _2026-11-07 · `src/icefin/spikes/2.3-hdr-surface/` (`cmprobe.c`, `vkcolorspaces.c`) · KWin 6.3.6 and Mutter 48.7 headless in lab-icefin-main_
 
@@ -111,13 +121,42 @@ Mesa can produce a PQ-encoded swapchain. Design consequences for Phase 5:
 4. **KWin 6.3 is below the Plasma 6.4+ target.** Re-run `cmprobe` on Plasma 6.4+ (a newer lab base or the HTPC).
 5. The TV/monitor actually switching to HDR10 is a hardware check (1.10 (HTPC tier)).
 
-## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **BLOCKED (needs a GPU) → 1.10 (HTPC tier)**
+**Re-run on the HTPC (2026-11-09: Plasma 6.8.2 / KWin 6.8.2 Wayland, RADV with Flatpak Mesa 26.2.5, HDR on in KWin).**
+- `cmprobe`: features as KWin 6.3 plus the same mastering-metadata support; transfer functions bt1886, gamma22,
+  ext_linear, st2084_pq **and hlg**; an HLG/BT.2020 surface description is **accepted**. So design note 2 no longer
+  holds for Plasma 6.8: HLG can go to KWin as HLG. Mutter and Gamescope still need the PQ conversion. Output
+  description: BT.2020, 0–800 nits, reference white 200.
+- `vkcs-fp` (in the app's sandbox): HDR10_ST2084, BT2020_LINEAR, EXTENDED_SRGB_LINEAR, DOLBYVISION, ADOBERGB_LINEAR
+  and SRGB_NONLINEAR on every format, so Phase 5's HDR10 swapchain is available on the real driver.
+- Qt 6.11.3 with `QSG_RHI_HDR=hdr10` created an HDR10 swapchain (SDR white 200, max 1000 nits), but the Wayland trace
+  (`WAYLAND_DEBUG=client`) shows only capability queries: **Mesa did not call `get_surface` or
+  `set_image_description`**, on real KWin either. Design note 1 is confirmed on hardware: Icefin tags the surface
+  itself (5.5); without a tag KWin treats the PQ swapchain as sRGB.
+- Note 4 is done: Plasma 6.8 is above the 6.4+ target.
+
+## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **GO (HTPC, 2026-11-09)**
 
 _2026-11-07_ Gamescope 3.16.17 builds in the lab, and Flathub's `org.freedesktop.Platform.VulkanLayer.gamescope//25.08`
 (the WSI layer the Flatpak would use) installs. But Gamescope's headless backend refuses software Vulkan: it requires
 `VK_EXT_physical_device_drm`, which lavapipe doesn't offer. The spike command is ready in this entry's history
 (`gamescope --backend headless --hdr-enabled --hdr-debug-force-output -- flatpak … QSG_RHI_HDR=hdr10 ENABLE_GAMESCOPE_WSI=1`).
 It runs as soon as the lab has a real GPU: passthrough, a virtio-gpu Venus guest, or the HTPC.
+
+_2026-11-09 (HTPC: RX 9070 XT, Steam game mode, Icefin's Flatpak as an XWayland client, `QSG_RHI_HDR=hdr10`)._
+
+| Setup | Result |
+|---|---|
+| No WSI layer in the sandbox (the host's `VkLayer_FROG_gamescope_wsi` isn't visible to Flatpaks) | Qt: "Requested a HDR10 swapchain but it is reported to be unsupported", so SDR |
+| `org.freedesktop.Platform.VulkanLayer.gamescope//25.08` installed (`--user`), no socket access | `[Gamescope WSI] Failed to connect to gamescope socket: gamescope-0`, so SDR |
+| Layer plus `--filesystem=xdg-run/gamescope-0:ro` | `[Gamescope WSI] Created swapchain` (A2B10G10R10, 10-bit), Qt "Creating HDR10 swapchain" (SDR white 200, max 1000 nits); the grab is PQ-encoded, as on Plasma |
+
+**Verdict.** Go. The same Vulkan renderer gets an HDR10 swapchain in game mode. What it takes:
+- the manifest's read-only `xdg-run/gamescope-0` access (#32);
+- the user having Flathub's gamescope VulkanLayer extension (Steam Deck and Bazzite users usually do; the install
+  guide lists it);
+- `ENABLE_GAMESCOPE_WSI=1` and `GAMESCOPE_WAYLAND_DISPLAY`, which Steam's session already exports.
+
+Without the extension Icefin stays SDR in game mode, and the capability prompt covers it.
 
 ## 2.7 `icefin-theme:` scheme vs jellyfin-web CSP; Gamepad API in WebEngine: **GO**; Steam Input part moved to 7.4
 

@@ -1,6 +1,5 @@
 #include "Hwdec.h"
 #include <QMap>
-#include <QtGlobal>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
 
@@ -32,10 +31,5 @@ QString rendererName()
     case QSGRendererInterface::Software: return "Software";
     default: return "other";
   }
-}
-
-void applyGlEnv()
-{
-  if (!qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) qputenv("QT_XCB_GL_INTEGRATION", "xcb_egl");
 }
 }

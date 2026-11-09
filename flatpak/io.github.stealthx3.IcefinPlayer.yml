@@ -17,6 +17,7 @@ finish-args:
   - --share=network                 # Jellyfin servers
   - --socket=pulseaudio             # PulseAudio / pipewire-pulse output, IEC958 format setting
   - --filesystem=xdg-run/pipewire-0 # mpv's native PipeWire output
+  - --filesystem=xdg-run/gamescope-0:ro # Gamescope WSI layer (Flathub VulkanLayer.gamescope): HDR swapchains in game mode (spike 2.4)
   - --device=all                    # GPU, /dev/snd for exclusive ALSA, USB CEC, LIRC, gamepads
   - --filesystem=/run/lirc:ro       # LIRC remotes
   - --talk-name=org.freedesktop.ScreenSaver
@@ -43,6 +44,8 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DUSE_STATIC_MPVQT=ON
       - -DICEFIN_FLATPAK=ON
+      - -DENABLE_SDL2=OFF   # Icefin: SDL3 gamepad layer replaces InputSDL (PLAN 7.1)
+      - -DICEFIN_SDL3=ON
     run-tests: true
     build-options:
       test-args:

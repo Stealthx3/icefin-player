@@ -26,16 +26,6 @@ private slots:
     QCOMPARE(hwdecFor("disabled"), QString("no"));
     QCOMPARE(hwdecFor("nonsense"), QString("auto-safe"));
   }
-  void glEnvDefaultsToEgl()
-  {
-    qunsetenv("QT_XCB_GL_INTEGRATION");
-    applyGlEnv();
-    QCOMPARE(qgetenv("QT_XCB_GL_INTEGRATION"), QByteArray("xcb_egl"));
-    qputenv("QT_XCB_GL_INTEGRATION", "xcb_glx");  // the user's choice wins
-    applyGlEnv();
-    QCOMPARE(qgetenv("QT_XCB_GL_INTEGRATION"), QByteArray("xcb_glx"));
-    qunsetenv("QT_XCB_GL_INTEGRATION");
-  }
   void migration()
   {
     QCOMPARE(migratedSetting("enabled"), QString("auto"));

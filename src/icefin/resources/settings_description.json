@@ -24,7 +24,8 @@
       { "value": "icefin_theme", "default": "", "hidden": true },
       { "value": "icefin_theme_trust", "default": "{}", "hidden": true },
       { "value": "icefin_hw_selftest", "default": "", "hidden": true },
-      { "value": "icefin_prompt_memory", "default": "{}", "hidden": true }
+      { "value": "icefin_prompt_memory", "default": "{}", "hidden": true },
+      { "value": "icefin_pad_remaps", "default": "{}", "hidden": true }
     ]
   },
   {
@@ -35,6 +36,12 @@
         "display_name": "Web GPU Buffers (GBM)",
         "help": "Leave on. Turn off only if the app crashes or shows a black window at start with your graphics driver. Takes effect after a restart.",
         "default": true
+      },
+      {
+        "value": "icefin_nintendo_layout",
+        "display_name": "Nintendo Button Layout",
+        "help": "On Nintendo controllers, the button marked A confirms and B goes back, as printed. Other controllers are unchanged.",
+        "default": false
       }
     ]
   },
@@ -54,6 +61,12 @@
         "display_name": "Theme Sounds",
         "help": "Play the theme's interface sounds. They are always silent while a movie's audio goes straight to your receiver (passthrough).",
         "default": true
+      },
+      {
+        "value": "benchPack",
+        "display_name": "Benchmark Themes",
+        "help": "Also offer the benchmark pack: themes that reproduce the layout of other TV interfaces, used to test the theme engine. They use Icefin's own art, names and sounds.",
+        "default": false
       }
     ]
   },
