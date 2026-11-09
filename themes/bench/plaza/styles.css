@@ -1,0 +1,67 @@
+/* Plaza: paged grid of rounded channel tiles over a light background, a bottom bar with the clock and two round
+   buttons. Proportions follow the benchmark target at 16:9; all colours from tokens. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", Roboto, sans-serif; }
+
+[data-pz] { background: var(--icefin-color-background)
+  repeating-linear-gradient(0deg, transparent 0 0.5vh, rgb(var(--icefin-color-text-channel) / 0.025) 0.5vh 0.6vh); overflow: clip !important; }
+
+/* Stage: the grid between two page arrows. */
+.pz-stage { position: absolute; left: 0; right: 0; top: 5vh; height: 70vh; display: grid; grid-template-columns: 6vw 1fr 6vw; align-items: center; }
+.pz-pages { height: 100%; display: flex; flex-direction: column; }
+.pz-pages .icefin-grid-page { flex: 1; grid-auto-rows: 1fr; }
+.pz-pages .icefin-page-indicators { display: none; }
+.pz-arrow { justify-self: center; width: 4vw; height: 4vw; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 3em; line-height: 1; color: var(--icefin-color-accentStrong); background: var(--icefin-color-surface);
+  box-shadow: 0 0.2em 0.6em rgba(0, 0, 0, 0.15); cursor: pointer; }
+.pz-arrow.pz-hidden { visibility: hidden; }
+
+/* Channel tiles: rounded screens with a grey frame; the focused tile gets a blue outline and lifts. */
+.pz-tile { position: relative; outline: none; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface);
+  border: 0.22em solid var(--icefin-color-divider); overflow: hidden; transition: transform 140ms ease, border-color 140ms; cursor: pointer; }
+.pz-tile.empty { background: var(--icefin-color-tileEmpty); cursor: default; }
+.pz-tile.icefin-focused { border-color: var(--icefin-color-focus); transform: scale(1.04); z-index: 1;
+  box-shadow: 0 0 0 0.25em rgb(var(--icefin-color-focus-channel) / 0.35); }
+.pz-tile.empty.icefin-focused { transform: none; }
+.pz-screen { position: absolute; inset: 0; }
+.pz-frame { position: absolute; inset: 0; background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
+  display: flex; align-items: center; justify-content: center; animation: pz-fade 500ms ease; }
+@keyframes pz-fade { from { opacity: 0; } to { opacity: 1; } }
+.pz-frame.pz-static { background: linear-gradient(160deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); animation: none; }
+.pz-frame-title { font-size: 1.5em; font-weight: 600; color: var(--icefin-color-accentStrong); text-align: center; padding: 0 0.6em; }
+.pz-tile-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.4em 0.7em; font-size: 0.95em; color: var(--icefin-color-text);
+  background: rgb(var(--icefin-color-surface-channel) / 0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; }
+.pz-tile.icefin-focused .pz-tile-label, .pz-tile.pz-has-items .pz-tile-label { opacity: 1; }
+
+/* Bottom bar: a shallow curved panel; round buttons at each end, the clock and date in the middle. */
+.pz-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 21vh; background: var(--icefin-color-bar);
+  border-top: 0.25em solid var(--icefin-color-accent); border-radius: 50% 50% 0 0 / 3vh 3vh 0 0;
+  display: grid; grid-template-columns: 22vw 1fr 22vw; align-items: center; }
+.pz-bar-mid { text-align: center; }
+.pz-clock { font-size: 3.2em; font-weight: 300; color: var(--icefin-color-text); letter-spacing: 0.02em; }
+.pz-date { font-size: 1.3em; color: var(--icefin-color-textSecondary); }
+.pz-round { justify-self: center; width: 9vw; height: 9vw; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--icefin-color-surface); border: 0.25em solid var(--icefin-color-divider); color: var(--icefin-color-accentStrong);
+  font-size: 1.4em; font-weight: 700; outline: none; cursor: pointer; transition: transform 140ms ease, border-color 140ms; }
+.pz-round.pz-right { font-size: 2.4em; font-weight: 400; }
+.pz-round.icefin-focused { border-color: var(--icefin-color-focus); transform: scale(1.06); }
+
+/* Zoom: a copy of the tile grows to fill the screen, then the channel screen sits on it. */
+.pz-zoom { position: absolute; z-index: 10; background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
+  border-radius: var(--icefin-shape-cardRadius); transition-property: left, top, width, height, border-radius; transition-timing-function: ease-in-out; }
+.pz-channel { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+  background: linear-gradient(0deg, rgb(var(--icefin-color-background-channel) / 0.96) 0%, rgb(var(--icefin-color-background-channel) / 0.2) 55%, transparent 100%); }
+.pz-channel-title { position: absolute; left: 4vw; top: 5vh; font-size: 2.4em; font-weight: 700; color: var(--icefin-color-text);
+  background: rgb(var(--icefin-color-surface-channel) / 0.85); padding: 0.2em 0.7em; border-radius: var(--icefin-shape-cardRadius); }
+.pz-channel-item { margin: 0 0 3vh 4vw; font-size: 1.5em; color: var(--icefin-color-text); }
+.pz-channel-bar { height: 21vh; display: flex; align-items: center; justify-content: center; gap: 14vw; background: var(--icefin-color-bar);
+  border-top: 0.25em solid var(--icefin-color-accent); }
+.pz-pill { min-width: 16vw; padding: 0.7em 2em; text-align: center; font-size: 1.6em; border-radius: 2em; outline: none; cursor: pointer;
+  background: var(--icefin-color-surface); border: 0.2em solid var(--icefin-color-divider); color: var(--icefin-color-text); }
+.pz-pill.icefin-focused { border-color: var(--icefin-color-focus); color: var(--icefin-color-accentStrong); }
+.pz-pill.pz-disabled { opacity: 0.45; }
+
+/* Pointer-first: larger hit targets for the arrows. */
+html[data-icefin-pointer] .pz-arrow { width: 5vw; height: 5vw; }
+
+html[data-icefin-motion="low"] .pz-tile, html[data-icefin-motion="low"] .pz-round { transition-duration: 0ms; }
+html[data-icefin-motion="low"] .pz-frame { animation: none; }
