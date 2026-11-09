@@ -35,10 +35,14 @@ public:
   Q_INVOKABLE void forgetChoices();
   // Diagnostics/tests: the decision for a VideoRangeType on this system, without loading anything.
   Q_INVOKABLE QVariantMap decide(const QString& videoRangeType) const;
+  // The display state the router uses (6.1): {hdr: yes/no/unknown, transfer, primaries, maxLuminance, source, error}.
+  Q_INVOKABLE QVariantMap display() const;
+  void componentPostInitialize() override;
 
 Q_SIGNALS:
   // {key, range, reason, options[{id, label}], remembered, itemId, serverId, startMs}
   void promptRequested(const QVariantMap& info);
+  void displayChanged(const QVariantMap& info);
 
 private:
   RouterComponent() = default;

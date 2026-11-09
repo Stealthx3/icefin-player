@@ -44,6 +44,12 @@
             : `Web layer: ${web.accelerated ? 'GPU-accelerated' : 'not GPU-accelerated'} (rasterization: ${f.Rasterization || '?'}; compositing: ${f.Compositing || '?'})`
               + (web.gbm === false ? ' · GBM off' : '') }));
         const btn = el('button', { className: 'raised emby-button icefin-hw-run', type: 'button', textContent: 'Test again', disabled: !!r.running });
+        // Display (6.1): what the router knows about the screen the window is on.
+        window.apiPromise.then((api) => api.router && api.router.display((d) => {
+            const lum = d.maxLuminance >= 0 ? `, peak ${d.maxLuminance} nits, reference white ${d.referenceLuminance}` : '';
+            const text = d.hdr === 'yes' ? `HDR (${d.transfer}, ${d.primaries}${lum})` : d.hdr === 'no' ? `SDR (${d.transfer || '?'}${lum})` : `unknown: ${d.error}`;
+            body.insertBefore(el('p', { className: 'fieldDescription icefin-hw-display', textContent: `Display: ${text}` }), btn);
+        }));
         // Playback choices remembered from the capability prompt (6.3), with a reset.
         window.apiPromise.then((api) => api.router && api.router.rememberedChoices((m) => {
             const n = Object.keys(m || {}).length;

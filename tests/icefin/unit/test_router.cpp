@@ -1,6 +1,7 @@
 // Unit tests for the PlaybackRouter: every row of SPEC's routing table (PLAN 6.2).
 #include <QtTest>
 #include "icefin/render/PlaybackRouter.h"
+#include "icefin/render/HdrCapabilityProbe.h"
 
 using namespace Icefin::Render;
 
@@ -74,6 +75,14 @@ private slots:
     QCOMPARE(full.options, (QList<Option>{Option::PlayAnyway, Option::TranscodeHdr10, Option::TranscodeSdr, Option::SwitchToVulkan, Option::Cancel}));
     QCOMPARE(route(Range::DolbyVision7, gl()).output, Output::Prompt);
     QCOMPARE(route(Range::DolbyVisionUnknown, gl()).output, Output::Prompt);
+  }
+  void displayClassification()
+  {
+    QCOMPARE(hdrForTransfer("st2084_pq"), DisplayInfo::Hdr::Yes);
+    QCOMPARE(hdrForTransfer("hlg"), DisplayInfo::Hdr::Yes);
+    QCOMPARE(hdrForTransfer("srgb"), DisplayInfo::Hdr::No);
+    QCOMPARE(hdrForTransfer("gamma22"), DisplayInfo::Hdr::No);
+    QCOMPARE(hdrForTransfer(""), DisplayInfo::Hdr::Unknown);
   }
   void rangeFromItem()
   {

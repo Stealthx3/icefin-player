@@ -41,7 +41,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **4.1** Decoder self-test on bundled samples and Settings → Hardware page [GPU acceleration and display] (hardware results on real GPUs: 4.5)
 - [x] **4.2** `hardwareDecoding` options: Auto (auto-safe), VA-API, NVDEC, Vulkan, Copy, Off; renderer shown on debug overlay (`src/icefin/gpu/Hwdec`; upstream values migrate)
 - [x] **4.3** WebEngine GPU-rasterization check and `QTWEBENGINE_FORCE_USE_GBM=0` switch (Hardware page; Client Settings → Web GPU Buffers)
-- [ ] **4.4** Multi-display HDR probe re-run on output change; measure low-power (`dmabuf-wayland`) savings for post-1.0
+- [ ] **4.4** Multi-display HDR probe re-run on output change; measure low-power (`dmabuf-wayland`) savings for post-1.0 (re-run on screen and output-description change done with 6.1; open: the power measurement on the HTPC)
 - [ ] **4.5** Confirm zero-copy hardware decode on AMD, Intel and NVIDIA inside the Flatpak
 
 ## Phase 5 — Single-surface renderer (7 wks)
@@ -55,7 +55,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **5.8** Verify HDR10/HLG signals on KWin, Mutter and Gamescope; jellyfin-web controls readable over video; 60 fps UI on lowest-spec HTPC
 
 ## Phase 6 — Router, capability prompt and token engine (4 wks)
-- [ ] **6.1** `HdrCapabilityProbe` (Wayland image description; Vulkan color spaces under X11)
+- [ ] **6.1** `HdrCapabilityProbe` (Wayland image description; Vulkan color spaces under X11) (Wayland done: `src/icefin/render/HdrCapabilityProbe`; open: the X11/Gamescope Vulkan colour-space path, with 5.6)
 - [x] **6.2** `PlaybackRouter` implementing the routing table (`src/icefin/render/PlaybackRouter`; logs its decision at load until 6.3 acts on it)
 - [x] **6.3** Capability prompt with per-device "remember" and Settings reset (`RouterComponent`, `native/icefin/capabilityPrompt.js`; reset in Client Settings → Hardware; "switch to Vulkan" appears with 5.1)
 - [x] **6.4** Auto device profile replacing static force-transcode toggles (`native/icefin/deviceProfile.js`; the toggles stay as overrides; Vulkan HDR direct-play arrives with 5.x)
