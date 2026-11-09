@@ -35,7 +35,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **3.5** Exclusive ALSA with `org.freedesktop.ReserveDevice1` reservation
 - [x] **3.6** Never-silent fallback replacing `audio-fallback-to-null` (PCM retry → release reservation → default device → notice)
 - [x] **3.7** Per-device audio delay; CEC volume during passthrough; UI sounds muted during passthrough (CEC verified with the receiver in 3.8; UI sounds read `AudioState` from 8.5)
-- [ ] **3.8** Audio test page; receiver run of every audio acceptance row
+- [ ] **3.8** Audio test page; receiver run of every audio acceptance row (page done: Client Settings → Audio test, `tests/icefin/web/audio_test_page.py`; open: the receiver run on the HTPC)
 
 ## Phase 4 — GPU and display (2 wks)
 - [x] **4.1** Decoder self-test on bundled samples and Settings → Hardware page [GPU acceleration and display] (hardware results on real GPUs: 4.5)
