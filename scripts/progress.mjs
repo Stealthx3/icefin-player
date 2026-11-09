@@ -69,10 +69,12 @@ for (const p of live) {
   p.at = (before / total) * 100; before += p.tasks.length;
   p.doneN = p.tasks.filter((t) => t.done).length;
   if (p.doneN === p.tasks.length) p.state = "done";
-  else if (!activeFound) { p.state = "active"; activeFound = true; next = p.tasks.find((t) => !t.done); next.now = true; }
-  else p.state = "todo";
+  else {
+    if (!activeFound) { activeFound = true; p.current = true; next = p.tasks.find((t) => !t.done); next.now = true; }
+    p.state = p.current || p.doneN > 0 ? "active" : "todo";  // any phase with work done is in progress, not "not started"
+  }
 }
-const active = live.find((p) => p.state === "active");
+const active = live.find((p) => p.current);
 const LABEL = { done: "Complete", active: "In progress", todo: "Not started" };
 const r2 = (n) => Math.round(n * 100) / 100;
 const trunc = (s, n) => (s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s);
@@ -82,11 +84,15 @@ const stamp = new Intl.DateTimeFormat("en-US", { timeZone: C.timezone, month: "s
 // ---------- render ----------
 const vars = (o) => Object.entries(o).map(([k, v]) => `--${k}: ${v};`).join(" ");
 const markers = live.map((p) =>
-  `<li class="m ${p.state}" style="--at:${r2(p.at)}%"><span class="dot" aria-hidden="true"></span><span class="mk">P${esc(p.n)}</span><span class="sr">Phase ${esc(p.n)}, ${LABEL[p.state]}</span></li>`).join("");
+  `<li class="m ${p.state}${p.current ? " current" : ""}" style="--at:${r2(p.at)}%"><span class="dot" aria-hidden="true"></span><span class="mk">P${esc(p.n)}</span><span class="sr">Phase ${esc(p.n)}, ${LABEL[p.state]}</span></li>`).join("");
+// Inside the one bar, each phase's section fills on its own: starts at the phase's offset, as wide as its done tasks.
+const fills = live.filter((p) => p.doneN > 0).map((p) =>
+  `<span class="pfill ${p.state}${p.current ? " current" : ""}" style="--at:${r2(p.at)}%;--w:${r2((p.doneN / total) * 100)}%"></span>`).join("");
+const seps = live.slice(1).map((p) => `<span class="psep" style="--at:${r2(p.at)}%"></span>`).join("");
 const ledgers = live.map((p) => {
   const tasks = p.tasks.map((t) =>
     `<li class="t ${t.done ? "done" : t.now ? "now" : ""}"><span class="box" aria-hidden="true"></span><span class="tid">${esc(t.id)}</span><span class="tx">${inline(t.text)}</span>${t.now ? '<span class="nowtag">Up next</span>' : ""}</li>`).join("");
-  return `<details class="ph ${p.state}" ${p.state === "active" ? "open" : ""}><summary><span class="pn">Phase ${esc(p.n)}</span><span class="pt">${inline(p.title)}</span><span class="pill ${p.state}">${LABEL[p.state]}</span><span class="cnt">${p.doneN}/${p.tasks.length}</span><span class="mini" aria-hidden="true"><span style="width:${r2((p.doneN / p.tasks.length) * 100)}%"></span></span></summary><ol class="tasks">${tasks}</ol></details>`;
+  return `<details class="ph ${p.state}" ${p.current ? "open" : ""}><summary><span class="pn">Phase ${esc(p.n)}</span><span class="pt">${inline(p.title)}</span><span class="pill ${p.state}">${LABEL[p.state]}</span><span class="cnt">${p.doneN}/${p.tasks.length}</span><span class="mini" aria-hidden="true"><span style="width:${r2((p.doneN / p.tasks.length) * 100)}%"></span></span></summary><ol class="tasks">${tasks}</ol></details>`;
 }).join("");
 
 const html = `<!doctype html>
@@ -116,8 +122,12 @@ h1 { font: italic 700 clamp(26px, 4vw, 36px)/1.15 var(--display); color: var(--b
 .stat span { font: 12px/1.2 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .rail { position: relative; margin: 8px 0 54px; }
 .track { height: 14px; border-radius: 7px; background: var(--brand-soft); overflow: hidden; position: relative; }
-.fill { height: 100%; width: var(--pct); background: repeating-linear-gradient(-45deg, var(--brand) 0 10px, color-mix(in srgb, var(--brand) 82%, var(--surface)) 10px 20px);
-  background-size: 28px 28px; border-radius: 7px; transform-origin: left; animation: grow 1.4s cubic-bezier(.2,.8,.2,1) both, stripe 1.2s linear infinite; }
+.pfill { position: absolute; top: 0; bottom: 0; left: var(--at); width: var(--w); background: var(--brand); transform-origin: left;
+  animation: grow 1.4s cubic-bezier(.2,.8,.2,1) both; }
+.pfill.done { background: var(--done); }
+.pfill.current { background: repeating-linear-gradient(-45deg, var(--brand) 0 10px, color-mix(in srgb, var(--brand) 82%, var(--surface)) 10px 20px);
+  background-size: 28px 28px; animation: grow 1.4s cubic-bezier(.2,.8,.2,1) both, stripe 1.2s linear infinite; }
+.psep { position: absolute; top: 0; bottom: 0; left: var(--at); width: 2px; margin-left: -1px; background: var(--surface); opacity: .9; }
 @keyframes grow { from { transform: scaleX(.02); } to { transform: scaleX(1); } }
 @keyframes stripe { to { background-position: 28px 0; } }
 .markers { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
@@ -125,7 +135,8 @@ h1 { font: italic 700 clamp(26px, 4vw, 36px)/1.15 var(--display); color: var(--b
 .m:first-child { transform: none; align-items: flex-start; }
 .dot { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 3px solid var(--todo); }
 .m.done .dot { background: var(--done); border-color: var(--done); }
-.m.active .dot { border-color: var(--brand); background: var(--surface); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); animation: pulse 1.8s ease-out infinite; }
+.m.active .dot { border-color: var(--brand); }
+.m.current .dot { border-color: var(--brand); background: var(--surface); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); animation: pulse 1.8s ease-out infinite; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .mk { font: 600 12px/1 var(--mono); color: var(--muted); }
 .m.active .mk { color: var(--brand); }
@@ -160,7 +171,7 @@ summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; bo
 code { font: 12.5px var(--mono); background: color-mix(in srgb, var(--brand-soft) 55%, transparent); padding: 1px 4px; border-radius: 4px; }
 footer { margin-top: 28px; font: 12px var(--mono); color: var(--muted); }
 @media (max-width: 560px) { .mk { font-size: 10px; } .dot { width: 18px; height: 18px; } summary { grid-template-columns: 1fr auto; } .pn { grid-column: 1 / -1; } .t { grid-template-columns: 16px 30px 1fr; } .nowtag { grid-column: 3; } }
-@media (prefers-reduced-motion: reduce) { .fill, .m.active .dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .pfill, .m.current .dot { animation: none; } }
 </style></head><body>
 <div class="wrap">
   ${C.eyebrow ? `<div class="eyebrow">${esc(C.eyebrow)}</div>` : ""}
@@ -173,7 +184,7 @@ footer { margin-top: 28px; font: 12px var(--mono); color: var(--muted); }
     <div class="stat"><span>Next task</span><b>${next ? `${esc(next.id)} ${esc(trunc(plain(next.text), 70))}` : "—"}</b></div>
   </div>
   <div class="rail" role="img" aria-label="${pctShown} percent of tasks complete">
-    <div class="track"><div class="fill" style="--pct:${pctExact.toFixed(1)}%"></div></div>
+    <div class="track">${fills}${seps}</div>
     <ol class="markers">${markers}</ol>
   </div>
   <div class="legend"><span><i style="background:var(--done)"></i>Complete</span><span><i style="background:var(--brand)"></i>In progress</span><span><i style="background:var(--todo)"></i>Not started</span></div>
@@ -190,14 +201,15 @@ writeFileSync(outFile, html);
 if (C.badge) {
   const W = 820, H = 76, bx = 16, bw = W - 32, by = 40, bh = 14;
   const L = C.theme.light, D = C.theme.dark;
-  const fill = r2((doneN / total) * bw);
+  const pfills = live.filter((p) => p.doneN > 0).map((p) =>
+    `<rect class="${p.state === "done" ? "full" : "done"}" x="${r2(bx + (p.at / 100) * bw)}" y="${by}" width="${r2((p.doneN / total) * bw)}" height="${bh}"/>`).join("");
   const ticks = live.slice(1).map((p) => `<rect class="tick" x="${r2(bx + (p.at / 100) * bw - 0.75)}" y="${by}" width="1.5" height="${bh}"/>`).join("");
   const phaseTxt = active ? `Phase ${active.n} of ${live.length}: ${trunc(plain(active.title).replace(/\s*\([^)]*\)\s*$/, ""), 44)}` : "All phases complete";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(C.heading)}: ${pctShown}% (${doneN} of ${total} tasks)">
 <title>${esc(C.heading)}: ${pctShown}%</title>
 <style>
-  .bg{fill:${L.surface};stroke:${L.line}} .fg{fill:${L.fg}} .mu{fill:${L.muted}} .track{fill:${L["brand-soft"]}} .done{fill:${L.brand}} .tick{fill:${L.surface};opacity:.9}
-  @media (prefers-color-scheme: dark){ .bg{fill:${D.surface};stroke:${D.line}} .fg{fill:${D.fg}} .mu{fill:${D.muted}} .track{fill:${D["brand-soft"]}} .done{fill:${D.brand}} .tick{fill:${D.surface}} }
+  .bg{fill:${L.surface};stroke:${L.line}} .fg{fill:${L.fg}} .mu{fill:${L.muted}} .track{fill:${L["brand-soft"]}} .done{fill:${L.brand}} .full{fill:${L.done}} .tick{fill:${L.surface};opacity:.9}
+  @media (prefers-color-scheme: dark){ .bg{fill:${D.surface};stroke:${D.line}} .fg{fill:${D.fg}} .mu{fill:${D.muted}} .track{fill:${D["brand-soft"]}} .done{fill:${D.brand}} .full{fill:${D.done}} .tick{fill:${D.surface}} }
   text{font-family:-apple-system,"Segoe UI",system-ui,"Noto Sans","DejaVu Sans",sans-serif}
 </style>
 <rect class="bg" x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="10"/>
@@ -205,7 +217,7 @@ if (C.badge) {
 <text class="fg" x="${W - bx}" y="27" font-size="15" font-weight="700" text-anchor="end">${pctShown}% <tspan class="mu" font-weight="400">· ${doneN}/${total} tasks</tspan></text>
 <rect class="track" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${bh / 2}"/>
 <clipPath id="c"><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${bh / 2}"/></clipPath>
-<g clip-path="url(#c)"><rect class="done" x="${bx}" y="${by}" width="${fill}" height="${bh}"/>${ticks}</g>
+<g clip-path="url(#c)">${pfills}${ticks}</g>
 <text class="mu" x="${bx}" y="${H - 6}" font-size="11">Updated ${esc(stamp)} · ${live.length} phases · click for the full tracker</text>
 </svg>
 `;
