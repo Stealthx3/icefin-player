@@ -7,7 +7,7 @@
 
 Icefin Player is a fork of [jellyfin-desktop](https://github.com/jellyfin/jellyfin-desktop) v2.0.0 (tagged December 14, 2025). It keeps upstream's Qt WebEngine + jellyfin-web + libmpv stack, so every server plugin keeps working, and adds five things:
 
-- a theme-engine layer, with Media Center as the reference theme and seven clone themes as capability benchmarks: Baseline (stock Jellyfin, also the plugin-compatibility control) plus Kodi Estuary, Fire TV, Roku TV, Wii Menu, Xbox 360 NXE and Metro layouts, all Icefin-branded;
+- a theme-engine layer, with Media Center as the reference theme and twelve clone themes as capability benchmarks: Baseline (stock Jellyfin, also the plugin-compatibility control) plus Kodi Estuary, Fire TV, Roku TV, Wii Menu, Xbox 360 NXE, Xbox 360 Metro, Apple TV, Netflix, TiVo guide, Steam Big Picture and PS3 XMB layouts, all Icefin-branded;
 - a single-surface Vulkan renderer that draws the UI and HDR video into one window, on Wayland first with an X11 fallback for Gamescope;
 - a hardened audio subsystem for HDMI passthrough on PipeWire, PulseAudio, JACK and ALSA;
 - first-class controller support through SDL, Steam Input and Xbox-style (XInput) pads;
@@ -25,7 +25,7 @@ Estimated effort: about 42 weeks for one developer to reach 1.0, including about
 | Sources a path can't show correctly (for example Dolby Vision profile 5 without the Vulkan renderer) | Icefin shows the user the options available on their system and lets them choose |
 | Phase order | Token engine built with the playback work, so player controls are themed from the start |
 | Long term (after 1.0) | Decouple from upstream completely and drop X11 support |
-| Theme benchmarks | Media Center plus seven clone themes, all required for 1.0, under final names: Baseline (stock Jellyfin; plugin-compatibility control), Harbor (Kodi Estuary), Spark (Fire TV), Plum (Roku TV), Plaza (Wii Menu), Orbit (Xbox 360 NXE) and Pivot (Xbox 360 Metro); Icefin branding and original assets throughout |
+| Theme benchmarks | Media Center plus twelve clone themes, all required for 1.0, under final names: Baseline (stock Jellyfin; plugin-compatibility control), Harbor (Kodi Estuary), Spark (Fire TV), Plum (Roku TV), Plaza (Wii Menu), Orbit (Xbox 360 NXE), Pivot (Xbox 360 Metro), Lumen (Apple TV), Marquee (Netflix), Almanac (TiVo guide), Arcade (Steam Big Picture) and Tide (PS3 XMB); Icefin branding and original assets throughout |
 
 The theme package format matches the server-plugin plan, so that plugin can still be built later without redoing themes.
 
@@ -41,7 +41,7 @@ Each goal has a test that passes or fails in the hardware lab; 1.0 ships when ev
 | HDR on KWin, GNOME and Gamescope | With the single-surface renderer, the TV reports HDR10 for HDR10 sources and HLG for HLG sources on Plasma 6.4+ and GNOME 48+ (Wayland), and in Gamescope (X11 fallback); jellyfin-web's player controls stay visible and readable over HDR video; an SDR display gets a tone-mapped picture with no washed-out or clipped highlights |
 | Correct picture or an honest choice | No source plays with known-wrong colors without the user choosing it: when the active path can't show a source correctly (for example Dolby Vision profile 5 on the OpenGL fallback), Icefin lists the options available on that system and remembers the choice if asked |
 | GPU decode and UI rendering | 4K HDR HEVC and AV1 decode in hardware on AMD, Intel and NVIDIA with zero dropped frames over 10 minutes; UI stays at 60 fps on the lab's lowest-spec HTPC on the Vulkan renderer; WebEngine reports GPU rasterization |
-| Theme engine | The Media Center checklist and all seven clone checklists pass, each theme built from its package alone with no theme-specific engine code; the stock UI returns with one setting |
+| Theme engine | The Media Center checklist and all twelve clone checklists pass, each theme built from its package alone with no theme-specific engine code; the stock UI returns with one setting |
 | Controller support (primary) | Every screen, including playback controls over HDR video, is fully usable with an Xbox-style pad, a DualSense, a Switch Pro controller, an 8BitDo pad and a Steam Deck (inside Steam and outside it), with hotplug, correct button prompts, and no double inputs |
 | Wayland-first (decided) | All acceptance tests run on Wayland sessions and inside Gamescope; native X11 desktop sessions are not tested |
 
@@ -105,7 +105,7 @@ The web view and C++ component framework are upstream's. The theme runtime, nati
 | `src/input/` | Hook | Use `GamepadService` in place of `InputSDL` |
 | `src/settings/`, `resources/settings/settings_description.json` | Hook | New audio, HDR, renderer, controller and theme settings |
 | `CMakeLists.txt` | Hook | `ICEFIN_FLATPAK` (drops `updatePlugin.js`), `ICEFIN_X11` and `ICEFIN_OPENGL_FALLBACK` build options |
-| `themes/` | New | media-center/ and baseline/ (bundled), and bench/ with harbor, spark, plum, plaza, orbit and pivot (optional benchmark pack) |
+| `themes/` | New | media-center/ and baseline/ (bundled), and bench/ with harbor, spark, plum, plaza, orbit, pivot, lumen, marquee, almanac, arcade and tide (optional benchmark pack) |
 
 ## Fork, branding and upstream sync
 
@@ -441,7 +441,7 @@ The Media Center theme ships only original art, sounds and an open font, and no 
 
 ## Benchmark clone themes
 
-Seven clone themes join Media Center as engine benchmarks, and all seven are required for 1.0. Each reproduces a well-known TV interface's layout, navigation feel and color palette, carries Icefin branding, and uses only original assets. Together they cover the main ways TV interfaces are built, so if all eight run from theme packages alone, the engine is general. They replace the single "second theme" in earlier drafts.
+Twelve clone themes join Media Center as engine benchmarks, and all twelve are required for 1.0. Each reproduces a well-known TV interface's layout, navigation feel and color palette, carries Icefin branding, and uses only original assets. Together they cover the main ways TV interfaces are built, so if all thirteen run from theme packages alone, the engine is general. They replace the single "second theme" in earlier drafts.
 
 **Clone rules (every clone)**
 
@@ -468,6 +468,11 @@ Seven clone themes join Media Center as engine benchmarks, and all seven are req
 | Wii Menu | Plaza | Paged 4×3 grid of rounded tiles with animated previews, page arrows, and a bottom bar with clock, date and two round buttons; light grey and white with blue accents; zoom into a tile on select | Paged grid, pointer-first navigation, animated tile previews, zoom transition, light theme |
 | Xbox 360 NXE (2008) | Orbit | Vertical category channels, each a horizontal carousel of large tiles receding in 3D depth; a guide panel that opens over any screen | 3D perspective carousel, depth and parallax, global overlay panel |
 | Xbox 360 Metro dashboard (2011) | Pivot | Horizontal pivot headers across the top, each with a grid of flat, mixed-size tiles; live tiles cycling content; bold typography | Pivot navigation, mixed-size tile grid, live tiles, typography-led tokens |
+| Apple TV (tvOS home) | Lumen | A top tab bar that hides once focus leaves it; a full-bleed "top shelf" hero for the focused row's item; rows of posters that lift on focus and tilt with a moving highlight as the remote or stick moves; translucent, blurred panels over the artwork; dark with white type (an open font in place of SF Pro) | Focus parallax and specular highlight, translucent blurred materials over moving content, hide-on-scroll chrome |
+| Netflix (TV app) | Marquee | A collapsed left icon rail that expands with labels when focused; a billboard hero whose muted trailer starts after a dwell and fades the title art; rows that jump-scroll by page, the focused card growing into an inline preview with details; black with a red accent (no Netflix logo, ribbon or Netflix Sans) | Expanding side rail, in-row card expansion without reflowing the row, billboard trailer, page jump scrolling |
+| TiVo / cable program guide | Almanac | A Live TV guide: channels down the side, a time axis across the top, programme cells sized by duration, a "now" line, and a small live preview of the focused channel in a corner; deep blue with a yellow-green focus | Two-axis virtualized grid with a time axis, Live TV data, a live channel preview |
+| Steam Big Picture (2023) | Arcade | Controller-first library: a home of large capsules, a filterable and sortable grid, a quick-access panel that slides in from the right, and an on-screen keyboard for search and sign-in; dark slate with blue focus (Steam Deck glyphs from the engine, no Valve assets) | On-screen keyboard for every text field, filter and sort dialogs, a side quick-access panel |
+| PlayStation 3 XMB | Tide | A horizontal row of category icons crossing a vertical list of items at a fixed focus point; an animated wave over a gradient whose colour follows the time of day (and month); original line icons (no Sony icons, sounds or fonts) | Cross-axis navigation around a fixed point, an animated shader backdrop (the native backdrop, 8.4), time-of-day palettes |
 
 **Baseline as the control.** Baseline runs every engine layer (router, focus engine, token engine, backdrop host) but must look and behave like stock jellyfin-web. That makes it the control that separates engine bugs from theme bugs.
 
@@ -493,6 +498,13 @@ Seven clone themes join Media Center as engine benchmarks, and all seven are req
 | Pointer-first mode | Plaza | Hover focus and large hit targets. A Wii Remote works as a pointer through the kernel's wiimote driver, which upstream already has an input map for |
 | Global overlay panel | Orbit | Opens from any screen. It uses a long press on Back/View by default, because the real Guide button stays with Steam and the system |
 | Low-motion profile | Plum | A theme-level motion cap, separate from the user's reduced-motion setting |
+| Focus parallax and highlight | Lumen | The focused item tilts and its highlight moves with stick, touchpad or pointer motion; frozen under reduced or low motion |
+| Translucent materials | Lumen | Blurred, translucent panels as tokens (`material.*`), with an opaque fallback when the GPU can't hold 60 fps |
+| Expanding side rail | Marquee | The side-rail chrome slot gets collapsed and expanded states (icons only, then labels on focus) |
+| In-row card expansion | Marquee | A focused card grows into a larger preview (details, muted trailer) over its neighbours, without reflowing the row |
+| Guide grid | Almanac | A two-axis virtualized grid (rows of channels, cells positioned on a time axis) that pages by time and by channel; also usable for schedules |
+| On-screen keyboard | Arcade | A focusable keyboard for any text field in themed screens and in jellyfin-web's own pages, for controllers and remotes |
+| Time-of-day palettes | Tide | Token sets chosen by the local time (and month), cross-faded; frozen under reduced motion |
 
 **Acceptance per clone**
 
@@ -501,7 +513,7 @@ Seven clone themes join Media Center as engine benchmarks, and all seven are req
 - Every screen works with a five-way remote alone (arrows, OK, Back, Home) and with a controller; Plaza also works with a pointer alone.
 - The theme builds from its package with no engine change made for it.
 
-**Distribution.** Recommended: Harbor, Spark, Plum, Plaza, Orbit and Pivot ship as an optional *benchmark pack*, built and tested in CI but not installed by default. This limits trade-dress exposure, since several of these companies actively protect their interfaces. Baseline carries no such risk, because it reproduces jellyfin-web's own GPL-licensed look, so it is bundled alongside Media Center.
+**Distribution.** Recommended: Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide ship as an optional *benchmark pack*, built and tested in CI but not installed by default. This limits trade-dress exposure, since several of these companies actively protect their interfaces. Baseline carries no such risk, because it reproduces jellyfin-web's own GPL-licensed look, so it is bundled alongside Media Center.
 
 ## Server plugin compatibility and client identity
 
@@ -609,7 +621,7 @@ Twelve phases, about 42 weeks for one developer. The Phase 2 spikes settle the s
 6. **Router, prompt and token engine (4 wks).** `HdrCapabilityProbe`, `PlaybackRouter`, capability prompt, Auto device profile, and `ThemeComponent`'s token loading plus the web token engine, so player controls and the prompt are themed from the start. *Exit:* every routing-table row behaves as written, playback reports match upstream's, and Dolby Vision 5 on the OpenGL fallback raises the prompt.
 7. **Controller layer (2 wks).** SDL3 gamepad service replacing `InputSDL`, standard action map with per-controller remapping, Nintendo layout, glyph tokens, Steam Input layout and duplicate guard, web Gamepad API suppression, Controllers page. *Exit:* every controller in the acceptance row navigates all screens, including playback over HDR video, inside and outside Steam, with no double inputs.
 8. **Theme-engine layer (5 wks).** Web runtime, native backdrop, trust levels, per-user settings, stand-down, sounds, the Media Center theme and the Baseline control theme, building on Phase 6's token engine; Baseline comes first so every later plugin run has its control. *Exit:* Media Center benchmark and Baseline acceptance pass; plugin suite green with the engine off, with Baseline and with Media Center.
-9. **Benchmark clone themes (8 wks).** Reference captures of the six targets; the nine generic capabilities they need (about 3 weeks); then Harbor, Spark, Plum, Plaza, Orbit and Pivot (about 5 weeks). *Exit:* every clone passes its acceptance list from its package alone, and the lint finds no theme-specific engine code.
+9. **Benchmark clone themes (15 wks).** Reference captures of the eleven targets; the sixteen generic capabilities they need (about 5 weeks); then Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide (about 10 weeks). *Exit:* every clone passes its acceptance list from its package alone, and the lint finds no theme-specific engine code.
 10. **Upstream sync (1 wk).** Rebase onto 2.1.0 (or the latest release) and send generic fixes upstream. *Exit:* full suite passes on the new base.
 11. **Hardening and beta (2 wks).** Full lab matrix, log redaction check, beta on the nightly channel. *Exit:* no open P1 bugs; every acceptance row passes.
 12. **Release 1.0 (1 wk).** Stable channel, install docs (including device approval), compatibility table. *Exit:* 1.0 tagged with source published.
@@ -693,7 +705,7 @@ After 1.0, Icefin decouples from upstream completely and then drops X11, in that
 - [ ] Is refresh-rate matching on KDE required for 1.0? KWin offers no output control to sandboxed apps.
 - [ ] When does decoupling from upstream start: right after 1.0, or after a stable 1.x?
 - [ ] Minimum HTPC hardware for the performance budget?
-- [ ] Confirm the bundled set: Media Center and Baseline installed by default, with Harbor, Spark, Plum, Plaza, Orbit and Pivot in the optional benchmark pack?
+- [ ] Confirm the bundled set: Media Center and Baseline installed by default, with Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide in the optional benchmark pack?
 
 ## Sources
 
