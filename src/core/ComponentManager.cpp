@@ -16,6 +16,7 @@
 #include "mpris/MprisComponent.h"
 #include "ProfileManager.h"
 #include "icefin/theme/ThemeComponent.h"  // ICEFIN-HOOK: theme engine service (PLAN 6.5)
+#include "icefin/gpu/HardwareComponent.h"  // ICEFIN-HOOK: decoder self-test (PLAN 4.1)
 
 #ifdef KONVERGO_OPENELEC
 #include "system/openelec/OESystemComponent.h"
@@ -68,6 +69,7 @@ void ComponentManager::initialize()
   registerComponent(&WindowManager::Get());
   registerComponent(&MprisComponent::Get());
   registerComponent(&Icefin::Theme::ThemeComponent::Get());  // ICEFIN-HOOK: theme engine service (PLAN 6.5)
+  registerComponent(&Icefin::Gpu::HardwareComponent::Get());  // ICEFIN-HOOK: decoder self-test (PLAN 4.1)
 
 #ifdef KONVERGO_OPENELEC
   registerComponent(&OESystemComponent::Get());

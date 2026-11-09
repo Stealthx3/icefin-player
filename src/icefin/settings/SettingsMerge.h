@@ -6,7 +6,8 @@
 
 namespace Icefin::Settings
 {
-// Values in an Icefin section are appended to the upstream section of the same name; new sections are appended.
+// Values in an Icefin section are appended to the upstream section of the same name (a value with the same key
+// replaces upstream's); new sections are appended.
 QJsonDocument mergeDescription(const QJsonDocument& upstream, const QString& icefinPath = ":/icefin/settings_description.json");
 QJsonDocument mergeDescription(const QJsonDocument& upstream, const QJsonDocument& icefin);
 }
