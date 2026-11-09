@@ -22,6 +22,7 @@ class inputPlugin {
         this.durationCheckInterval = null;
         this.positionUpdateInterval = null;
         this.attachedPlayer = null;
+        window.icefinPlaybackManager = playbackManager;  // ICEFIN-HOOK: the capability prompt restarts playback for a transcode (PLAN 6.3)
 
         (async () => {
             const api = await window.apiPromise;
