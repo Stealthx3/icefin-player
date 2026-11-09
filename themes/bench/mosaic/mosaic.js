@@ -1,4 +1,4 @@
-// Pivot (benchmark theme, PLAN 9.9; target: the Xbox 360 Metro dashboard's layout). Built from the engine's generic
+// Mosaic (benchmark theme, PLAN 9.9; target: the Xbox 360 Metro dashboard's layout). Built from the engine's generic
 // capabilities only: bold pivot headers across the top that slide with their sections (ui.pivot), each section a grid
 // of flat tiles in three sizes (large 2×2, wide 2×1, small 1×1) laid out in columns, and live tiles cycling content
 // (ui.liveTile). Typography carries the design: large lowercase headers, flat colour, no shadows. Every other route is
@@ -32,7 +32,7 @@
         const c = el('div', `pv-tile pv-${t.size}`);
         c.setAttribute('data-icefin-focus', '');
         c.tabIndex = -1;
-        c.pivotTile = t;
+        c.mosaicTile = t;
         const face = el('div', 'pv-face');
         c.append(face, el('div', 'pv-label', t.label));
         if (t.live) {
@@ -45,7 +45,7 @@
                     const url = it ? t.live.art(it) : '';
                     if (url) f.style.backgroundImage = `url("${url}")`;
                     if (it) f.append(el('div', 'pv-caption', title(it)));
-                    f.pivotItem = it;
+                    f.mosaicItem = it;
                     return f;
                 }
             });
@@ -57,7 +57,7 @@
         }
         c.addEventListener('click', () => {
             const f = face.querySelector('.pv-frame');
-            t.go(f ? f.pivotItem : null);
+            t.go(f ? f.mosaicItem : null);
         });
         return c;
     }
@@ -144,9 +144,9 @@
             S.clockTimer = setInterval(tick, 15000);
             S.host = el('div', 'pv-host');
             root.append(clock, S.host);
-            root.pivotBuild = (sections) => build(sections);
+            root.mosaicBuild = (sections) => build(sections);
             const client = window.ApiClient;
-            safe(client.getUserViews({}, client.getCurrentUserId())).then((views) => { if (S) build(sectionsFor(client, views)); });
+            ui.userViews().then((views) => { if (S) build(sectionsFor(client, views)); });
         },
         unmount() {
             if (!S) return;

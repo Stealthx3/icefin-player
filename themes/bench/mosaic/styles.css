@@ -1,4 +1,4 @@
-/* Pivot: big lowercase pivot headers over a column-flowing grid of flat tiles in three sizes. Proportions follow the
+/* Mosaic: big lowercase pivot headers over a column-flowing grid of flat tiles in three sizes. Proportions follow the
    benchmark target at 16:9; all colours from tokens. No shadows, no rounded corners: type and colour do the work. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Segoe UI", "Noto Sans", "Open Sans", sans-serif; }
 

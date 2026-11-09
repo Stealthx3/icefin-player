@@ -28,8 +28,8 @@
 
     // ---- channels: { title, tiles: [{ label, sub, art, go }] } ----
     async function channelsFor(client) {
+        const views = await ui.userViews();  // also waits out a cold start, so uid below is set
         const uid = client.getCurrentUserId();
-        const views = await safe(client.getUserViews({}, uid));
         const media = (it) => ({ label: it.Type === 'Episode' ? (it.SeriesName || it.Name) : it.Name,
             sub: it.Type === 'Episode' ? it.Name : (it.ProductionYear ? String(it.ProductionYear) : ''), art: art(client, it), go: () => { location.hash = detailsHash(client, it); } });
         const [resume, next, ...latest] = await Promise.all([

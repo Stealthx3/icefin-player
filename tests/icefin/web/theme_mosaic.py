@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""theme_pivot.py — the Pivot benchmark theme in the running app (PLAN 9.9; target Xbox 360 Metro). Lab guests only.
+"""theme_mosaic.py — the Mosaic benchmark theme in the running app (PLAN 9.9; target Xbox 360 Metro). Lab guests only.
 
-  - Pivot is in the opt-in benchmark pack: offered only with Client Settings → Benchmark Themes on;
+  - Mosaic is in the opt-in benchmark pack: offered only with Client Settings → Benchmark Themes on;
   - pivot headers across the top (home, each library, settings), large and lowercase, the active one at the left;
   - each section a grid of flat tiles in three sizes (large 2×2, wide 2×1, small 1×1) flowing in columns;
   - live tiles cycle their content and freeze under low motion;
   - five-way: arrows move between mixed-size tiles; right past a section's last column moves to the next section and
     its header slides to the left; Back on another section returns to home;
-  - Enter on a tile opens its page, styled by Pivot's tokens.
+  - Enter on a tile opens its page, styled by Mosaic's tokens.
 Layout positions and timings against reference captures stay with 9.1. Screenshots go to --out.
-Usage: python3 theme_pivot.py --app ~/build/src/icefin-player --server jf12 --out ~/r99/jf12
+Usage: python3 theme_mosaic.py --app ~/build/src/icefin-player --server jf12 --out ~/r99/jf12
 """
 import argparse, base64, json, os, signal, sys, tempfile, time
 
@@ -42,7 +42,7 @@ def main():
     fails = []
 
     def check(label, ok, detail=""):
-        print(f"theme_pivot: {'ok  ' if ok else 'FAIL'} {label} {detail}", flush=True)
+        print(f"theme_mosaic: {'ok  ' if ok else 'FAIL'} {label} {detail}", flush=True)
         if not ok:
             fails.append(label)
 
@@ -66,22 +66,22 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
         root = lambda name: js(f"document.getElementById('icefin-theme-root').getAttribute({json.dumps(name)})")
-        foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f || !f.pivotTile) return ''; "
-                         "return f.pivotTile.size + '/' + f.pivotTile.label; })()")
+        foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f || !f.mosaicTile) return ''; "
+                         "return f.mosaicTile.size + '/' + f.mosaicTile.label; })()")
 
-        check("benchmark pack off by default", "pivot" not in themes())
+        check("benchmark pack off by default", "mosaic" not in themes())
         setv("benchPack", True)
         time.sleep(1)
-        p = themes().get("pivot", {})
-        check("Benchmark Themes on: Pivot offered, bundled, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
-        js("new Promise(r => window.api.theme.setActiveTheme('pivot', '', r))")
+        p = themes().get("mosaic", {})
+        check("Benchmark Themes on: Mosaic offered, bundled, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
+        js("new Promise(r => window.api.theme.setActiveTheme('mosaic', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pv]'); return !!r && +r.getAttribute('data-pv-ready') > 0; })()", timeout=40)
         time.sleep(1.5)
         heads = json.loads(js("JSON.stringify([...document.querySelectorAll('.icefin-pivot-header')].map(e => e.textContent))"))
         check("pivot headers: home, the libraries, settings", heads[0] == "home" and heads[-1] == "settings" and all(h == h.lower() for h in heads), json.dumps(heads))
         hsize = js("parseFloat(getComputedStyle(document.querySelector('.icefin-pivot-header.active')).fontSize) / innerHeight")
         check("headers are large type (typography-led)", hsize >= 0.06, f"{hsize:.3f} of the height")
-        sizes = json.loads(js("JSON.stringify([...document.querySelectorAll('.pv-tile')].map(t => t.pivotTile.size))"))
+        sizes = json.loads(js("JSON.stringify([...document.querySelectorAll('.pv-tile')].map(t => t.mosaicTile.size))"))
         check("home is a grid of mixed sizes: large, wide and small", {"large", "wide", "small"} <= set(sizes), json.dumps(sizes))
         geo = json.loads(js("JSON.stringify((() => { const r = s => document.querySelector('.pv-' + s).getBoundingClientRect(); "
                             "const L = r('large'), W = r('wide'), Sm = r('small'); return {lw: L.width / Sm.width, lh: L.height / Sm.height, ww: W.width / Sm.width, wh: W.height / Sm.height}; })())"))
@@ -99,7 +99,7 @@ def main():
         shot("home.png")
 
         # Known sections so the navigation checks don't depend on the server's content.
-        js("document.getElementById('icefin-theme-root').pivotBuild([0, 1, 2].map(s => ({title: 'sec' + s, tiles: ["
+        js("document.getElementById('icefin-theme-root').mosaicBuild([0, 1, 2].map(s => ({title: 'sec' + s, tiles: ["
            "{size: 'large', label: 'L' + s, go: () => { location.hash = '#/search'; }}, {size: 'small', label: 'a' + s, go: () => {}}, "
            "{size: 'small', label: 'b' + s, go: () => {}}, {size: 'wide', label: 'W' + s, go: () => {}}]}))); true")
         time.sleep(0.6)
@@ -121,12 +121,12 @@ def main():
         act("enter")
         page.wait_for("location.hash.startsWith('#/search')", timeout=10)
         time.sleep(2)
-        check("Enter on a tile opens its page, styled by Pivot's tokens", js("window.icefinTheme.active().route") is None
+        check("Enter on a tile opens its page, styled by Mosaic's tokens", js("window.icefinTheme.active().route") is None
               and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim().toLowerCase()") == "#2f8f1f")
 
         setv("benchPack", False)
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Pivot gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "pivot" not in themes())
+        check("pack turned off while active: engine off, Mosaic gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "mosaic" not in themes())
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
@@ -138,7 +138,7 @@ def main():
         if xv:
             xv.terminate()
         log.close()
-    print("theme_pivot:", "OK" if not fails else f"FAILED {fails}", "->", a.out)
+    print("theme_mosaic:", "OK" if not fails else f"FAILED {fails}", "->", a.out)
     return 1 if fails else 0
 
 
