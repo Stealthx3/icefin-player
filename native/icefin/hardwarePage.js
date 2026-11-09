@@ -1,6 +1,7 @@
 // Icefin: Client Settings -> Hardware (PLAN 4.1). Appended to the injected native shell script.
 // Adds a Hardware section to nativeshell.js's Client Settings dialog when it opens: the decoder self-test result
-// (which decoder each sample used and how fast it decoded) and a button to run the test again.
+// (which decoder each sample used and how fast it decoded), whether the web layer is GPU-accelerated (4.3), and a
+// button to run the test again.
 (function () {
     'use strict';
     if (window.icefinHardwarePage || !window.apiPromise) return;
@@ -37,6 +38,11 @@
                 textContent: tc.length ? `The server will convert ${tc.join(', ')} for this machine.` : 'Every tested format plays directly on this machine.' }));
             body.append(el('p', { className: 'fieldDescription', textContent: `Tested ${new Date(r.time).toLocaleString()} · ${r.fingerprint}` }));
         }
+        const web = r.web || {};
+        const f = web.features || {};
+        body.append(el('p', { className: 'fieldDescription icefin-hw-web', textContent: !web.features ? 'Web layer: checking…'
+            : `Web layer: ${web.accelerated ? 'GPU-accelerated' : 'not GPU-accelerated'} (rasterization: ${f.Rasterization || '?'}; compositing: ${f.Compositing || '?'})`
+              + (web.gbm === false ? ' · GBM off' : '') }));
         const btn = el('button', { className: 'raised emby-button icefin-hw-run', type: 'button', textContent: 'Test again', disabled: !!r.running });
         btn.addEventListener('click', () => window.apiPromise.then((api) => { api.hardware.run(); render(section, Object.assign({}, r, { running: true })); }));
         body.append(btn);
@@ -52,6 +58,7 @@
         section.append(el('legend', {}, el('h2', { textContent: 'Hardware' })));
         content.append(section);
         api.hardware.results((r) => render(section, r));
+        api.hardware.checkWeb();
     }
 
     window.icefinHardwarePage = true;
@@ -62,9 +69,8 @@
         });
         const start = () => new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
         if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
-        api.hardware.finished.connect((r) => {
-            const s = document.getElementById(ID);
-            if (s) render(s, r);
-        });
+        const redraw = () => api.hardware.results((r) => { const s = document.getElementById(ID); if (s) render(s, r); });
+        api.hardware.finished.connect(redraw);
+        api.hardware.webStatusReady.connect(redraw);
     });
 })();

@@ -9,6 +9,7 @@
 #include <QThread>
 #include <QTimer>
 #include "settings/SettingsComponent.h"
+#include "WebGpuStatus.h"
 
 namespace Icefin::Gpu
 {
@@ -35,6 +36,7 @@ QVariantMap HardwareComponent::results() const
 {
   QVariantMap m = stored().toVariantMap();
   m["running"] = m_running;
+  m["web"] = m_web;
   return m;
 }
 
@@ -78,5 +80,19 @@ void HardwareComponent::run()
   });
   connect(worker, &QThread::finished, worker, &QObject::deleteLater);
   worker->start();
+}
+
+void HardwareComponent::checkWeb()
+{
+  auto* w = new WebGpuStatus(this);
+  connect(w, &WebGpuStatus::done, this, [this, w](const QVariantMap& status) {
+    m_web = status;
+    qInfo().noquote() << "Icefin hardware: web layer" << (status.value("accelerated").toBool() ? "GPU-accelerated" : "not GPU-accelerated")
+                      << "- rasterization:" << status.value("features").toMap().value("Rasterization").toString()
+                      << "- compositing:" << status.value("features").toMap().value("Compositing").toString();
+    emit webStatusReady(status);
+    w->deleteLater();
+  });
+  w->check();
 }
 }
