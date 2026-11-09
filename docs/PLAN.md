@@ -59,7 +59,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **6.2** `PlaybackRouter` implementing the routing table
 - [ ] **6.3** Capability prompt with per-device "remember" and Settings reset
 - [ ] **6.4** Auto device profile replacing static force-transcode toggles
-- [ ] **6.5** `ThemeComponent` token loading and the web token engine, so controls and prompt are themed
+- [x] **6.5** `ThemeComponent` token loading and the web token engine, so controls and prompt are themed (the prompt reads `ThemeComponent::tokens()` when 6.3 lands; token set: `themes/TOKENS.md`)
 - [ ] **6.6** Verify every routing row; playback reports match upstream; DV5 on OpenGL raises the prompt
 
 ## Phase 7 — Controller layer (2 wks)
