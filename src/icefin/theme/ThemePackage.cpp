@@ -1,5 +1,8 @@
 #include "ThemePackage.h"
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
 
@@ -29,6 +32,23 @@ Package loadPackage(const QString& dir, Source source)
     static const QRegularExpression idRe(QStringLiteral("^[a-z0-9][a-z0-9-]{1,47}$"));
     if (!idRe.match(p.id).hasMatch()) p.errors << "theme.json: id must be 2-48 characters of a-z, 0-9 and -";
     if (p.name.trimmed().isEmpty()) p.errors << "theme.json: name is required";
+    // Declared assets must exist inside the package (served later only as its trust level allows: ThemeScheme).
+    auto asset = [&](const QString& rel, const QString& what) {
+      const QString clean = QDir::cleanPath(rel);
+      if (rel.isEmpty() || clean.startsWith("..") || clean.startsWith('/') || !QFileInfo(dir + '/' + clean).isFile())
+        { p.errors << QString("theme.json: %1 '%2' is not a file in the package").arg(what, rel); return QString(); }
+      return clean;
+    };
+    if (meta.contains("styles")) p.styles = asset(meta.value("styles").toString(), "styles");
+    for (const QJsonValue& v : meta.value("scripts").toArray()) { const QString s = asset(v.toString(), "script"); if (!s.isEmpty()) p.scripts << s; }
+    for (const QJsonValue& v : meta.value("fonts").toArray()) {
+      const QJsonObject f = v.toObject();
+      const QString file = asset(f.value("file").toString(), "font");
+      static const QRegularExpression fam(QStringLiteral("^[A-Za-z0-9 _-]{1,64}$"));
+      if (!fam.match(f.value("family").toString()).hasMatch()) { p.errors << "theme.json: font family must be 1-64 letters, digits, spaces, _ or -"; continue; }
+      if (!file.isEmpty()) p.fonts << QVariantMap{{"family", f.value("family").toString()}, {"file", file},
+                                                  {"weight", f.value("weight").toVariant().toString().isEmpty() ? QString("400") : f.value("weight").toVariant().toString()}, {"style", f.value("style").toString("normal")}};
+    }
     const QJsonObject presets = meta.value("presets").toObject();
     for (auto it = presets.begin(); it != presets.end(); ++it) {
       if (!it.value().isObject()) { p.errors << QString("theme.json: preset '%1' must be an object of tokens").arg(it.key()); continue; }

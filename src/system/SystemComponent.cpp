@@ -604,7 +604,8 @@ QString SystemComponent::getNativeShellScript()
 #endif  // ICEFIN-HOOK: end Flatpak exclusion
     ":/web-client/extension/connectivityHelper.js",
     ":/web-client/extension/nativeshell.js",  // ICEFIN-HOOK: the list continues with the theme token engine
-    ":/web-client/extension/icefin/tokenEngine.js"  // ICEFIN-HOOK: theme token engine (PLAN 6.5)
+    ":/web-client/extension/icefin/tokenEngine.js",  // ICEFIN-HOOK: theme token engine (PLAN 6.5)
+    ":/web-client/extension/icefin/themeEngine.js"  // ICEFIN-HOOK: theme web runtime (PLAN 8.3)
   };
 
   cachedScript = jmpInfoDeclaration;

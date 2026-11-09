@@ -6,6 +6,8 @@
 #include <QJsonObject>
 #include <QProcessEnvironment>
 #include "settings/SettingsComponent.h"
+#include "ThemeScheme.h"
+#include <QQuickWebEngineProfile>
 #include "shared/Paths.h"
 
 namespace Icefin::Theme
@@ -101,5 +103,36 @@ QString ThemeComponent::stylesheet() const
     else qCritical() << "Icefin theme: adapter stylesheet missing:" << kAdapter;
   }
   return toCss(m_tokens) + adapter;
+}
+
+QVariantMap ThemeComponent::activePackage() const
+{
+  if (m_active.isEmpty() || !m_packages.contains(m_active)) return {};
+  const Package& p = m_packages[m_active];
+  const QString base = QString("icefin-theme://%1/").arg(p.id);
+  QVariantMap out{{"id", p.id}, {"source", sourceName(p.source)}};
+  out["styles"] = (!p.styles.isEmpty() && mayServe(p, p.styles)) ? base + p.styles : QString();
+  QVariantList fonts;
+  for (const QVariantMap& f : p.fonts) {
+    if (!mayServe(p, f["file"].toString())) continue;
+    QVariantMap g = f;
+    g["url"] = base + f["file"].toString();
+    g.remove("file");
+    fonts << g;
+  }
+  out["fonts"] = fonts;
+  QStringList scripts;
+  for (const QString& s : p.scripts) if (mayServe(p, s)) scripts << base + s;
+  out["scripts"] = scripts;
+  return out;
+}
+
+void ThemeComponent::installSchemeHandler(QObject* profile)
+{
+  auto* prof = qobject_cast<QQuickWebEngineProfile*>(profile);
+  if (!prof) { qCritical() << "Icefin theme: installSchemeHandler needs the view's WebEngineProfile"; return; }
+  if (!m_scheme) m_scheme = new SchemeHandler([this](const QString& id) -> const Package* { return m_packages.contains(id) ? &m_packages[id] : nullptr; }, this);
+  if (!prof->urlSchemeHandler("icefin-theme")) prof->installUrlSchemeHandler("icefin-theme", m_scheme);
+  qInfo() << "Icefin theme: icefin-theme: scheme served on the web view's profile";
 }
 }

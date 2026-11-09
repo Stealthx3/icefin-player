@@ -258,6 +258,7 @@ Window
       }
 
       web.profile.userScripts.collection = [ nativeshell ];  // ICEFIN-HOOK: backport upstream cabddc6 (first-load injection race)
+      components.theme.installSchemeHandler(web.profile)  // ICEFIN-HOOK: icefin-theme: assets (PLAN 8.3)
     }
 
     onLoadingChanged: function(loadingInfo)
