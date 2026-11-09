@@ -14,13 +14,13 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **1.7** Stand up the lab: guests per `docs/LAB.md`, containerized Jellyfin 10.11.x and 12.x servers with the regression plugins installed
 - [x] **1.8** Baseline report: measure every acceptance goal against unmodified upstream v2.0.0 and write `docs/BASELINE-REPORT.md`
 - [x] **1.9** Hardware lab: the HTPC tier (D16): `scripts/icefin/htpc.sh` (deploy from the lab repo, run in the TV session, HDR/passthrough probe, house rules), tested end to end on a stand-in guest
-- [ ] **1.10** Hardware baseline on the HTPC: SSH access from the user, then the hardware rows of `docs/BASELINE-REPORT.md`
+- [ ] **1.10** Hardware baseline on the HTPC: SSH access from the user, then the hardware rows of `docs/BASELINE-REPORT.md` (unattended rows done 2026-11-09, BASELINE-REPORT *Hardware rows*; open: the TV's HDR badge and the receiver's display, deferred to the user)
 
 ## Phase 2 — Platform spikes (4 wks)
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
 - [x] **2.2** Spike: patched libmpv rendering through libplacebo on Qt's shared Vulkan device
 - [x] **2.3** Spike: HDR swapchain format and Wayland surface tagging on KWin and Mutter
-- [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak
+- [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (renderer works in game mode; open: HDR, which needs Flathub's gamescope VulkanLayer extension on the HTPC, waiting for the user's OK)
 - [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
 - [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
 - [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
@@ -41,8 +41,8 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **4.1** Decoder self-test on bundled samples and Settings → Hardware page [GPU acceleration and display] (hardware results on real GPUs: 4.5)
 - [x] **4.2** `hardwareDecoding` options: Auto (auto-safe), VA-API, NVDEC, Vulkan, Copy, Off; renderer shown on debug overlay (`src/icefin/gpu/Hwdec`; upstream values migrate)
 - [x] **4.3** WebEngine GPU-rasterization check and `QTWEBENGINE_FORCE_USE_GBM=0` switch (Hardware page; Client Settings → Web GPU Buffers)
-- [ ] **4.4** Multi-display HDR probe re-run on output change; measure low-power (`dmabuf-wayland`) savings for post-1.0 (re-run on screen and output-description change done with 6.1; open: the power measurement on the HTPC)
-- [ ] **4.5** Confirm zero-copy hardware decode on AMD, Intel and NVIDIA inside the Flatpak
+- [x] **4.4** Multi-display HDR probe re-run on output change; measure low-power (`dmabuf-wayland`) savings for post-1.0 (re-run done with 6.1; power on the HTPC: 45 W `gpu-next` vs 37 W `dmabuf-wayland` for 4K HDR10 HEVC, BASELINE-REPORT)
+- [ ] **4.5** Confirm zero-copy hardware decode on AMD, Intel and NVIDIA inside the Flatpak (AMD done: zero-copy on Plasma; on Gamescope after the EGL-on-xcb fix; open: Intel and NVIDIA)
 
 ## Phase 5 — Single-surface renderer (7 wks)
 - [ ] **5.1** Switch Qt Quick to the Vulkan backend; create the shared Vulkan device with explicit features [Rendering, playback routing and HDR]
