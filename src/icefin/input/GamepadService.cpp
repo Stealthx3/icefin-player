@@ -1,5 +1,6 @@
 #include "GamepadService.h"
 #include "GamepadNames.h"
+#include "GamepadComponent.h"
 #include <QDebug>
 #include <QHash>
 #include <SDL3/SDL.h>
@@ -55,8 +56,12 @@ void GamepadWorker::refresh()
 void GamepadWorker::emitKey(const Pad& p, const QString& keycode, bool down)
 {
   const QString k = applyNintendoLayout(keycode, p.family, m_svc->m_nintendo.load());
-  QMetaObject::invokeMethod(m_svc, [svc = m_svc, k, down] {
-    emit svc->receivedInput("Gamepad", k, down ? InputBase::KeyDown : InputBase::KeyUp);
+  QMetaObject::invokeMethod(m_svc, [svc = m_svc, k, down, name = p.name] {
+    // Per-controller remap (7.2): a remapped button sends its action directly ("direct" source: no map lookup).
+    const QString action = GamepadComponent::remapped(name, k);
+    if (action == "none") return;  // remapped to nothing
+    if (!action.isEmpty()) emit svc->receivedInput("direct", action, down ? InputBase::KeyDown : InputBase::KeyUp);
+    else emit svc->receivedInput("Gamepad", k, down ? InputBase::KeyDown : InputBase::KeyUp);
   }, Qt::QueuedConnection);
   if (down) {
     bool changed = false;
