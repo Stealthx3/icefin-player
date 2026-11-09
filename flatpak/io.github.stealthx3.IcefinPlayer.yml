@@ -49,6 +49,7 @@ modules:
     build-options:
       test-args:
         - --env=QT_QPA_PLATFORM=offscreen
+        - --env=CTEST_OUTPUT_ON_FAILURE=1   # Icefin: show a failing test's output in CI
     sources:
       - type: dir
         path: ..
