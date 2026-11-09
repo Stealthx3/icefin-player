@@ -4,6 +4,7 @@
 #include <QDebug>
 #include "AudioPolicy.h"
 #include "AudioState.h"
+#include "Iec958Formats.h"
 
 namespace Icefin::Audio
 {
@@ -50,7 +51,7 @@ void Fallback::onMpvEvent(MpvController* mpv, mpv_event* event)
 {
   switch (event->event_id) {
     case MPV_EVENT_START_FILE: restore(mpv); break;
-    case MPV_EVENT_END_FILE: releaseReservation(); state().setBitstream(false, "playback ended"); break;  // give the card back to the sound server
+    case MPV_EVENT_END_FILE: releaseReservation(); restoreSinkFormats(); state().setBitstream(false, "playback ended"); break;  // give the card back to the sound server
     // Judge only once playback has (re)started: AUDIO_RECONFIG fires before mpv tries to open the output.
     case MPV_EVENT_PLAYBACK_RESTART: {
       if (m_step >= 3) break;

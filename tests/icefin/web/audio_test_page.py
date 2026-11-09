@@ -8,7 +8,7 @@ say so plainly. The bitstream itself is checked on the HTPC.
 The receiver run (what the receiver shows) is an HTPC row.
 Usage: python3 audio_test_page.py --app ~/build/src/icefin-player
 """
-import argparse, json, os, signal, sys, tempfile, time
+import argparse, json, os, signal, subprocess, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -65,8 +65,28 @@ def main():
         o = r.get("output", {})
         # The VM has no sound device that takes a bitstream: the page must say so, not pretend.
         check("passthrough on: AC-3 decided as passthrough", r["decision"]["mode"] == "passthrough" and r["decision"]["spdif"] == "ac3")
-        check("no bitstream-capable output in the VM: reported plainly",
-              r.get("ok") is False and "didn't accept the ac3 bitstream" in r.get("error", ""), r.get("error", ""))
+        o = r.get("output", {})
+        sent = r.get("ok") and str(o.get("format", "")).startswith("spdif")
+        check("bitstream either went out or the refusal is reported plainly",
+              sent or (r.get("ok") is False and "didn't accept the ac3 bitstream" in r.get("error", "")),
+              f"sent {o.get('format')} via {o.get('ao')}" if sent else r.get("error", ""))
+        # 3.4: through the sound server (PipeWire in the lab), the sink's formats are tried first. The VM's emulated analog
+        # card keeps PCM only, so the page must show the WirePlumber fallback rule, and the formats must be restored.
+        for k, v in (("backend", "pipewire"),):
+            js("new Promise(r => window.api.settings.setValue('audio', %s, %s, () => r(true)))" % (json.dumps(k), json.dumps(v)))
+        time.sleep(1)
+        js("delete window.labAt.ac3; document.querySelector('#icefin-audiotest-section .icefin-at-row[data-id=ac3] .icefin-at-play').click(); true")
+        page.wait_for("!!window.labAt.ac3", timeout=30)
+        r = json.loads(js("JSON.stringify(window.labAt.ac3)"))
+        fm = r.get("formats") or {}
+        check("3.4: sink formats tried through the sound server", bool(fm) and fm.get("sink") == "@DEFAULT_SINK@", json.dumps(fm)[:300])
+        check("3.4: the server's refusal is detected", fm.get("ok") is False and bool(fm.get("error")), fm.get("error", ""))
+        time.sleep(0.5)
+        check("3.4: WirePlumber rule offered with a copy button",
+              "iec958.codecs" in js("(document.querySelector('#icefin-audiotest-section .icefin-at-row[data-id=ac3] .icefin-at-rule') || {}).textContent || ''")
+              and js("!!document.querySelector('#icefin-audiotest-section .icefin-at-row[data-id=ac3] .icefin-at-copy')"))
+        after = subprocess.run(["pactl", "list", "sinks"], capture_output=True, text=True).stdout
+        check("3.4: formats restored after the clip", "iec61937" not in after)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

@@ -2,6 +2,7 @@
 #include "AudioOutput.h"
 #include "Eld.h"
 #include "Passthrough.h"
+#include "Iec958Formats.h"
 #include <QDebug>
 #include <QFile>
 #include <QStandardPaths>
@@ -64,8 +65,17 @@ void AudioTestComponent::play(const QString& id)
   const Decision d = decide({clip.codec, QString(), clip.channels}, user, eld, backend);
   const QString ao = aoForSetting(backendSetting);
 
-  QThread* worker = QThread::create([this, clip, d, ao, device] {
+  const bool server = backend == Backend::PipeWire || backend == Backend::PulseAudio;
+  QThread* worker = QThread::create([this, clip, d, ao, device, server] {
     QVariantMap r{{"id", clip.id}, {"decision", QVariantMap{{"mode", d.mode == Decision::Pcm ? "pcm" : "passthrough"}, {"spdif", d.spdif}, {"reason", d.reason}}}};
+    bool changed = false;
+    if (!d.spdif.isEmpty() && server) {  // as playback does (3.4): the sink must accept the bitstream first
+      const QString sink = sinkFromDevice(device);
+      const FormatChange fc = ensureSinkFormats(sink.isEmpty() ? QStringLiteral("@DEFAULT_SINK@") : sink, d.spdif.split(','));
+      changed = true;
+      r["formats"] = QVariantMap{{"ok", fc.ok}, {"sink", fc.sink}, {"before", fc.before}, {"after", fc.after}, {"error", fc.error},
+                                 {"rule", fc.ok ? QString() : wirePlumberRule(sink.isEmpty() ? QString("<your HDMI sink>") : sink, d.spdif.split(','))}};
+    }
     QTemporaryDir tmp;
     const QString path = tmp.path() + "/" + clip.file;
     if (!QFile::copy(":/icefin/audiotest/" + clip.file, path)) {
@@ -104,6 +114,7 @@ void AudioTestComponent::play(const QString& id)
       }
       mpv_terminate_destroy(h);
     }
+    if (changed) restoreSinkFormats();
     QMetaObject::invokeMethod(this, [this, r] {
       const QVariantMap o = r.value("output").toMap();
       qInfo().noquote() << "Icefin audio test:" << r.value("id").toString() << "->" << o.value("format").toString()

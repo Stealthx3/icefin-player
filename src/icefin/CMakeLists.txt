@@ -4,7 +4,7 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             audio/Fallback.cpp audio/Fallback.h
             audio/DeviceReservation.cpp audio/DeviceReservation.h
             audio/AudioState.cpp audio/AudioState.h audio/DeviceDelay.cpp audio/DeviceDelay.h
-            audio/AudioTest.cpp audio/AudioTest.h
+            audio/AudioTest.cpp audio/AudioTest.h audio/Iec958Formats.cpp audio/Iec958Formats.h
             settings/SettingsMerge.cpp settings/SettingsMerge.h
             theme/Tokens.cpp theme/Tokens.h theme/ThemePackage.cpp theme/ThemePackage.h
             theme/ThemeComponent.cpp theme/ThemeComponent.h theme/ThemeScheme.cpp theme/ThemeScheme.h
@@ -14,6 +14,11 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             render/PlaybackRouter.cpp render/PlaybackRouter.h render/RouterComponent.cpp render/RouterComponent.h
             log/Redact.cpp log/Redact.h
             input/GamepadNames.cpp input/GamepadNames.h input/GamepadComponent.cpp input/GamepadComponent.h)
+
+# libpulse for the IEC958 format setting (PLAN 3.4; pipewire-pulse implements the same protocol).
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ICEFIN_PULSE REQUIRED IMPORTED_TARGET GLOBAL libpulse)
+cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_link_libraries jmp_core PkgConfig::ICEFIN_PULSE)
 
 # SDL3 gamepad layer (PLAN 7.1). It replaces upstream's SDL2 InputSDL: SDL2 and SDL3 export the same symbol names, so
 # they can't share a process. jmp_core is defined after this directory, so link and define through deferred calls.
