@@ -616,7 +616,7 @@ Twelve phases, about 42 weeks for one developer. The Phase 2 spikes settle the s
 
 ## Testing, CI and hardware lab
 
-Testing runs in three tiers. CI catches logic and protocol errors on every commit, VMs build and cover the desktop matrix, and the user's Bazzite HTPC with a real TV and receiver is the primary runtime environment: every hardware test runs there over SSH, and it gates each release (D16, `docs/LAB.md` *HTPC tier*).
+Testing runs in four tiers. CI catches logic and protocol errors on every commit, VMs build and cover the desktop matrix, a virtual TV and receiver in a nested guest check what Icefin sends over HDMI (D18), and the user's Bazzite HTPC with a real TV and receiver is the primary runtime environment: every hardware test runs there over SSH, and it gates each release (D16, `docs/LAB.md` *HTPC tier*).
 
 **CI (every commit, inside the Flatpak build)**
 
@@ -632,6 +632,14 @@ Testing runs in three tiers. CI catches logic and protocol errors on every commi
 - **Rebase canary:** the nightly attempt to rebase Icefin's stack onto upstream `master`.
 
 **VMs (weekly and per phase)**, run as KVM/LXC guests under libvirt: KDE Plasma 6.4+ and GNOME 48 and 50 sessions for UI, theme, web-layer and controller-mapping tests (USB pads passed through to the guest).
+
+**Virtual AV tier (every audio or HDR change, D18)**, in a nested guest inside the lab VM (`docs/LAB.md` *Virtual AV tier*):
+
+- `hda-hdmi-sink`, a QEMU HDA codec that plays the TV or receiver: it reports a chosen ELD through the stock Linux HDMI driver, sends hotplug events, and captures every stream with its format, IEC958 non-audio bit, HBR mode and audio infoframe.
+- Sink profiles mirror the unit-test ELD fixtures and the HTPC's real chain; the kernel's ELD text must match the fixtures, so the parser is tested against what a driver really reports.
+- Bitstreams are checked burst by burst against `ffmpeg -f spdif` of the same track; Icefin's per-track decision runs against every profile.
+- The HDR half is the Weston protocol test above, run as a virtual HDR display per routing row.
+- It shows what Icefin sends. What the TV and receiver do with it stays on the hardware lab.
 
 **Hardware lab (release gate)**
 
