@@ -23,7 +23,8 @@
       { "value": "icefin_audio_delays", "default": "{}", "hidden": true },
       { "value": "icefin_theme", "default": "", "hidden": true },
       { "value": "icefin_theme_trust", "default": "{}", "hidden": true },
-      { "value": "icefin_hw_selftest", "default": "", "hidden": true }
+      { "value": "icefin_hw_selftest", "default": "", "hidden": true },
+      { "value": "icefin_prompt_memory", "default": "{}", "hidden": true }
     ]
   },
   {

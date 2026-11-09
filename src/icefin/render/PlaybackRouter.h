@@ -2,8 +2,8 @@
 //
 // Pure decision logic: given the source's dynamic range, the active renderer, the display state and the user's HDR
 // preference, it says how the file will be shown, or that the capability prompt (6.3) must ask first, and which
-// prompt options this system really has. Until the prompt (6.3) and the Vulkan renderer (5.x) exist, PlayerComponent
-// only logs the decision (logRoute), so playback is unchanged.
+// prompt options this system really has. PlayerComponent logs the decision (logRoute) and RouterComponent (6.3) acts
+// on a prompt.
 #pragma once
 #include <QString>
 #include <QStringList>

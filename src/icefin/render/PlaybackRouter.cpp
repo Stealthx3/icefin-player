@@ -136,6 +136,6 @@ void logRoute(const QVariantMap& item)
   for (Option o : r.options) opts << optionName(o);
   qInfo().noquote() << "Icefin router:" << (vrt.isEmpty() ? QString("(no VideoRangeType)") : vrt) << "->" << outputName(r.output)
                     << "(" + r.reason + ")" << (opts.isEmpty() ? QString() : "options: " + opts.join(" | "))
-                    << "[log only until 6.3]";
+                    ;
 }
 }
