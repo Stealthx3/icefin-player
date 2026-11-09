@@ -55,3 +55,18 @@ window.icefinTheme.registerScreen('#/home', {
 - Focus: arrows move between `[data-icefin-focus]` elements by position; Enter clicks; the focused element gets
   the class `icefin-focused`. Themes can't remap input (SPEC "One input pipeline").
 - Routes are written as jellyfin-web uses them, without query or `.html`: `#/home`, `#/details`.
+
+## Trust (user-installed themes)
+- Stylesheets are sanitized as they're served (`src/icefin/theme/CssSanitizer`):
+  - `@import`, `image-set()`, `expression()` and `-moz-binding` are removed;
+  - `url()` inside the package is rewritten to `icefin-theme:`, and any other `url()` becomes `none`;
+  - escapes that spell ASCII refuse the whole stylesheet.
+- Scripts and SVG load only after the user trusts the theme (`theme.setTrusted(id, true)`, after
+  `theme.trustWarning()`). Trust is bound to a SHA-256 of the package's files: any change drops it.
+
+## Stand-down (server plugin runtime)
+If the server already injects the theme plugin's runtime, Icefin's web layers step aside:
+- The plugin runtime defines `window.icefinPluginRuntime`, then dispatches `window.dispatchEvent(new Event('icefin-plugin-runtime'))`.
+- Icefin removes its token stylesheet and doesn't mount its runtime or screens.
+- Icefin calls `icefinPluginRuntime.attachNative({version: 1, client: 'icefin-player', tokens(), services})` once,
+  so the plugin can use native services: the active tokens now; UI sounds and the backdrop as they land.

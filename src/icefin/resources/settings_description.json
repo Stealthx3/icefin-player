@@ -20,7 +20,9 @@
   {
     "section": "state",
     "values": [
-      { "value": "icefin_audio_delays", "default": "{}", "hidden": true }
+      { "value": "icefin_audio_delays", "default": "{}", "hidden": true },
+      { "value": "icefin_theme", "default": "", "hidden": true },
+      { "value": "icefin_theme_trust", "default": "{}", "hidden": true }
     ]
   }
 ]

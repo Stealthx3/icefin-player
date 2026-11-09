@@ -24,6 +24,7 @@ struct Package
   QString styles;                   // relative path, or empty
   QList<QVariantMap> fonts;         // {family, file, weight, style}
   QStringList scripts;              // relative paths
+  QByteArray contentHash;           // sha256 over every file's path and bytes: trust is bound to it (8.5)
   QStringList errors;               // empty when the package can be used
   bool ok() const { return errors.isEmpty(); }
 
@@ -32,4 +33,6 @@ struct Package
 };
 
 Package loadPackage(const QString& dir, Source source);
+// sha256 hex over the sorted relative paths and contents of every file in dir.
+QByteArray hashDirectory(const QString& dir);
 }

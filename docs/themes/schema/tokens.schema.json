@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Stealthx3/icefin-player/docs/themes/schema/tokens.schema.json",
+  "title": "Icefin theme tokens (tokens.json), schema 1",
+  "description": "Nested token groups. The required token set and value rules: docs/themes/TOKENS.md (checked by the engine).",
+  "$ref": "#/$defs/group",
+  "$defs": {
+    "group": {
+      "type": "object",
+      "propertyNames": { "pattern": "^(\\$description|\\$type|[A-Za-z][A-Za-z0-9]*)$" },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          {
+            "type": "object",
+            "required": ["$value"],
+            "properties": { "$value": { "type": ["string", "number"] }, "$description": { "type": "string" }, "$type": { "type": "string" } },
+            "additionalProperties": false
+          },
+          { "$ref": "#/$defs/group" }
+        ]
+      }
+    }
+  }
+}

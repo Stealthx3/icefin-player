@@ -14,6 +14,12 @@ namespace Icefin::Theme
 {
 static const char* kStateKey = "icefin_theme";  // state section: {"id": ..., "preset": ...}
 static const char* kAdapter = ":/web-client/extension/icefin/jellyfin-web.css";
+static const char* kTrustKey = "icefin_theme_trust";  // state section: {"<id>": "<content hash>"}
+
+static QJsonObject trustStore()
+{
+  return QJsonDocument::fromJson(SettingsComponent::Get().value(SETTINGS_SECTION_STATE, kTrustKey).toString().toUtf8()).object();
+}
 
 static QString sourceName(Source s) { return s == Source::Bundled ? "bundled" : s == Source::Development ? "development" : "user"; }
 
@@ -57,7 +63,8 @@ QVariantList ThemeComponent::themes()
   QVariantList out;
   for (const Package& p : m_packages) {
     out << QVariantMap{{"id", p.id}, {"name", p.name}, {"version", p.version}, {"source", sourceName(p.source)},
-                       {"presets", QStringList(p.presets.keys())}, {"ok", p.ok()}, {"errors", p.errors}};
+                       {"presets", QStringList(p.presets.keys())}, {"ok", p.ok()}, {"errors", p.errors},
+                       {"hasScripts", !p.scripts.isEmpty()}, {"trusted", trusted(p)}};
   }
   return out;
 }
@@ -111,10 +118,12 @@ QVariantMap ThemeComponent::activePackage() const
   const Package& p = m_packages[m_active];
   const QString base = QString("icefin-theme://%1/").arg(p.id);
   QVariantMap out{{"id", p.id}, {"source", sourceName(p.source)}};
-  out["styles"] = (!p.styles.isEmpty() && mayServe(p, p.styles)) ? base + p.styles : QString();
+  const bool t = trusted(p);
+  out["trusted"] = t;
+  out["styles"] = (!p.styles.isEmpty() && mayServe(p, p.styles, t)) ? base + p.styles : QString();
   QVariantList fonts;
   for (const QVariantMap& f : p.fonts) {
-    if (!mayServe(p, f["file"].toString())) continue;
+    if (!mayServe(p, f["file"].toString(), t)) continue;
     QVariantMap g = f;
     g["url"] = base + f["file"].toString();
     g.remove("file");
@@ -122,7 +131,7 @@ QVariantMap ThemeComponent::activePackage() const
   }
   out["fonts"] = fonts;
   QStringList scripts;
-  for (const QString& s : p.scripts) if (mayServe(p, s)) scripts << base + s;
+  for (const QString& s : p.scripts) if (mayServe(p, s, t)) scripts << base + s;
   out["scripts"] = scripts;
   return out;
 }
@@ -131,8 +140,37 @@ void ThemeComponent::installSchemeHandler(QObject* profile)
 {
   auto* prof = qobject_cast<QQuickWebEngineProfile*>(profile);
   if (!prof) { qCritical() << "Icefin theme: installSchemeHandler needs the view's WebEngineProfile"; return; }
-  if (!m_scheme) m_scheme = new SchemeHandler([this](const QString& id) -> const Package* { return m_packages.contains(id) ? &m_packages[id] : nullptr; }, this);
+  if (!m_scheme)
+    m_scheme = new SchemeHandler([this](const QString& id) -> const Package* { return m_packages.contains(id) ? &m_packages[id] : nullptr; },
+                                 [this](const Package& p) { return trusted(p); }, this);
   if (!prof->urlSchemeHandler("icefin-theme")) prof->installUrlSchemeHandler("icefin-theme", m_scheme);
   qInfo() << "Icefin theme: icefin-theme: scheme served on the web view's profile";
+}
+
+bool ThemeComponent::trusted(const Package& p) const
+{
+  if (p.source != Source::User) return true;  // bundled, or development (ICEFIN_THEME_PATH)
+  return trustStore().value(p.id).toString().toUtf8() == p.contentHash;
+}
+
+bool ThemeComponent::isTrusted(const QString& id) const { return m_packages.contains(id) && trusted(m_packages[id]); }
+
+QString ThemeComponent::trustWarning() const
+{
+  return "Theme scripts run inside the signed-in page. They can read your server access token and act as you on "
+         "the server. Only trust a theme from someone you trust. Changing the theme's files removes the trust.";
+}
+
+bool ThemeComponent::setTrusted(const QString& id, bool on)
+{
+  if (!m_packages.contains(id)) return false;
+  const Package& p = m_packages[id];
+  if (p.source != Source::User) return true;
+  QJsonObject store = trustStore();
+  if (on) store[id] = QString::fromUtf8(p.contentHash); else store.remove(id);
+  SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kTrustKey, QString::fromUtf8(QJsonDocument(store).toJson(QJsonDocument::Compact)));
+  qInfo().noquote() << "Icefin theme:" << id << (on ? "trusted (scripts allowed)" : "no longer trusted");
+  if (id == m_active) emit changed(m_active, m_preset);  // reload its assets with the new rights
+  return true;
 }
 }

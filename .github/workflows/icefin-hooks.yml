@@ -23,3 +23,8 @@ jobs:
         run: scripts/icefin/hook-count.sh --summary "$GITHUB_STEP_SUMMARY"
       - name: Theme engine stays theme-agnostic
         run: scripts/icefin/theme-lint.sh
+      - name: Theme packages match the shared schemas
+        run: |
+          python3 -m venv /tmp/schema-venv
+          /tmp/schema-venv/bin/pip install --quiet 'jsonschema>=4.18'
+          /tmp/schema-venv/bin/python scripts/icefin/theme-schemas.py

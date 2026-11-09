@@ -36,6 +36,11 @@ public:
   // For the web runtime (8.3): {id, source, styles, fonts[{family, url, weight, style}], scripts[]} as icefin-theme:
   // URLs, already filtered by the package's trust level; empty map when the engine is off.
   Q_INVOKABLE QVariantMap activePackage() const;
+  // Trust a user-installed theme's scripts (SPEC "Theme trust levels"). Bound to the package's content hash: any
+  // change to the package's files drops the trust. Show trustWarning() first.
+  Q_INVOKABLE bool setTrusted(const QString& id, bool trusted);
+  Q_INVOKABLE bool isTrusted(const QString& id) const;
+  Q_INVOKABLE QString trustWarning() const;
   // Called from webview.qml (ICEFIN-HOOK) with the view's WebEngineProfile: serve icefin-theme: on it.
   Q_INVOKABLE void installSchemeHandler(QObject* profile);
 
@@ -48,6 +53,7 @@ Q_SIGNALS:
 private:
   ThemeComponent() = default;
   bool apply(const QString& id, const QString& preset, bool save);
+  bool trusted(const Package& p) const;
   QMap<QString, Package> m_packages;
   QString m_active, m_preset;
   TokenMap m_tokens;
