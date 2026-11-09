@@ -76,7 +76,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **8.3** Web runtime `native/icefin/themeEngine.js` appended to the injected shell script; `icefin-theme:` scheme [Theme-engine layer] (package format: `docs/themes/PACKAGE.md`)
 - [ ] **8.4** Native backdrop layer (QML shaders); measure transparent web-view cost
 - [x] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`) (schemas `docs/themes/schema/`; Client Settings → Theme picker; passthrough mute verified with the receiver in 3.8)
-- [ ] **8.6** Media Center reference theme; benchmark checklist passes
+- [ ] **8.6** Media Center reference theme; benchmark checklist passes (first version bundled: `themes/media-center`, start strip, focus glow, CSS ribbons, sounds, Now Playing inset; open: native ribbon backdrop (8.4), themed poster wall and details, the full checklist)
 
 ## Phase 9 — Benchmark clone themes (8 wks)
 - [ ] **9.1** Reference captures for the six targets
