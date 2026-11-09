@@ -59,7 +59,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **6.2** `PlaybackRouter` implementing the routing table
 - [ ] **6.3** Capability prompt with per-device "remember" and Settings reset
 - [ ] **6.4** Auto device profile replacing static force-transcode toggles
-- [x] **6.5** `ThemeComponent` token loading and the web token engine, so controls and prompt are themed (the prompt reads `ThemeComponent::tokens()` when 6.3 lands; token set: `themes/TOKENS.md`)
+- [x] **6.5** `ThemeComponent` token loading and the web token engine, so controls and prompt are themed (the prompt reads `ThemeComponent::tokens()` when 6.3 lands; token set: `docs/themes/TOKENS.md`)
 - [ ] **6.6** Verify every routing row; playback reports match upstream; DV5 on OpenGL raises the prompt
 
 ## Phase 7 — Controller layer (2 wks)
@@ -71,9 +71,9 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **7.6** Controller run of all screens inside and outside Steam
 
 ## Phase 8 — Theme-engine layer (5 wks)
-- [ ] **8.1** Baseline control theme first (stock jellyfin-web look, every engine layer on) [Benchmark clone themes]
+- [x] **8.1** Baseline control theme first (stock jellyfin-web look, every engine layer on) [Benchmark clone themes] (bundled `themes/baseline`; pixel-identical to stock on jellyfin-web 10.12+; 10.11's older palette differs slightly, measured in `theme_baseline.py`)
 - [ ] **8.2** Three-way plugin runs in CI: engine off, Baseline, styled themes
-- [x] **8.3** Web runtime `native/icefin/themeEngine.js` appended to the injected shell script; `icefin-theme:` scheme [Theme-engine layer] (package format: `themes/PACKAGE.md`)
+- [x] **8.3** Web runtime `native/icefin/themeEngine.js` appended to the injected shell script; `icefin-theme:` scheme [Theme-engine layer] (package format: `docs/themes/PACKAGE.md`)
 - [ ] **8.4** Native backdrop layer (QML shaders); measure transparent web-view cost
 - [ ] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`)
 - [ ] **8.6** Media Center reference theme; benchmark checklist passes

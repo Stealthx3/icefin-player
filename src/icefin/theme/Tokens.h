@@ -2,7 +2,7 @@
 // theme by id or holds a theme's values (CI: scripts/icefin/theme-lint.sh).
 //
 // tokens.json is nested JSON. A leaf is a string or number, or {"$value": ..., "$description": ...}.
-// A string value "{group.name}" refers to another token. Token names and the required set: themes/TOKENS.md.
+// A string value "{group.name}" refers to another token. Token names and the required set: docs/themes/TOKENS.md.
 #pragma once
 #include <QJsonObject>
 #include <QMap>

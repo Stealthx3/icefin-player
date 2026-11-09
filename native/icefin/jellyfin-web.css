@@ -1,9 +1,11 @@
-/* Icefin theme engine: jellyfin-web adapter (PLAN 6.5). Maps the standard tokens (themes/TOKENS.md) onto jellyfin-web.
+/* Icefin theme engine: jellyfin-web adapter (PLAN 6.5). Maps the standard tokens (docs/themes/TOKENS.md) onto jellyfin-web.
  * Theme-agnostic: only var(--icefin-*) references, never a color or a theme name (CI: scripts/icefin/theme-lint.sh).
  * Applies only while the engine has a theme active (html.icefin-themed); turning the theme off removes it live.
  *
  * Part 1 - jellyfin-web 10.12+ draws its dark theme from --jf-palette-* variables: set them from the tokens.
- * Part 2 - jellyfin-web 10.11 hard-codes colors in themes/dark/theme.css: the same controls, restated. */
+ * Part 2 - jellyfin-web 10.11 hard-codes colors in themes/dark/theme.css: the same controls, restated with the
+ *          meaning 10.12+ gives them, so on 10.12+ they produce exactly what its own rules would.
+ * Optional tokens (errorSoft, inputBorder, focusTint, button, buttonHover, toast, toastText) fall back to a required one. */
 
 /* ---- Part 1: palette variables (10.12+) ---- */
 html.icefin-themed {
@@ -21,16 +23,16 @@ html.icefin-themed {
   --jf-palette-secondary-contrastText: var(--icefin-color-onFocus);
   --jf-palette-divider: var(--icefin-color-divider);
   --jf-palette-error-main: var(--icefin-color-error);
-  --jf-palette-error-light: var(--icefin-color-error);
+  --jf-palette-error-light: var(--icefin-color-errorSoft, var(--icefin-color-error));
   --jf-palette-error-contrastText: var(--icefin-color-onError);
   --jf-palette-FilledInput-bg: var(--icefin-color-inputBackground);
-  --jf-palette-FilledInput-borderColor: var(--icefin-color-divider);
+  --jf-palette-FilledInput-borderColor: var(--icefin-color-inputBorder, var(--icefin-color-divider));
   --jf-palette-action-hover: var(--icefin-color-hover);
-  --jf-palette-action-focus: var(--icefin-color-hover);
-  --jf-palette-Button-inheritContainedBg: var(--icefin-color-surfaceRaised);
-  --jf-palette-Button-inheritContainedHoverBg: var(--icefin-color-hover);
-  --jf-palette-SnackbarContent-bg: var(--icefin-color-surfaceRaised);
-  --jf-palette-SnackbarContent-color: var(--icefin-color-text);
+  --jf-palette-action-focus: var(--icefin-color-focusTint, var(--icefin-color-hover));
+  --jf-palette-Button-inheritContainedBg: var(--icefin-color-button, var(--icefin-color-surfaceRaised));
+  --jf-palette-Button-inheritContainedHoverBg: var(--icefin-color-buttonHover, var(--icefin-color-hover));
+  --jf-palette-SnackbarContent-bg: var(--icefin-color-toast, var(--icefin-color-surfaceRaised));
+  --jf-palette-SnackbarContent-color: var(--icefin-color-toastText, var(--icefin-color-text));
   --jf-card-borderRadius: var(--icefin-shape-cardRadius);
 }
 html.icefin-themed body { font-family: var(--icefin-font-family, inherit); }
@@ -44,8 +46,7 @@ html.icefin-themed .mainDrawer,
 html.icefin-themed .drawer-open { background-color: var(--icefin-color-background); }
 html.icefin-themed,
 html.icefin-themed .skinHeader { color: var(--icefin-color-textSecondary); }
-html.icefin-themed .skinHeader-withBackground,
-html.icefin-themed .detailRibbon { background-color: var(--icefin-color-surfaceRaised); }
+html.icefin-themed .skinHeader-withBackground { background-color: var(--icefin-color-surfaceRaised); }
 html.icefin-themed .paperList,
 html.icefin-themed .visualCardBox,
 html.icefin-themed .cardBox:not(.visualCardBox) .cardPadder,
@@ -78,19 +79,21 @@ html.icefin-themed .button-link,
 html.icefin-themed .button-flat:hover,
 html.icefin-themed .metadataSidebarIcon,
 html.icefin-themed .upNextDialog-countdownText { color: var(--icefin-color-accent); }
+html.icefin-themed .playstatebutton-icon-played,
+html.icefin-themed .ratingbutton-icon-withrating { color: var(--icefin-color-errorSoft, var(--icefin-color-error)); }
 html.icefin-themed .itemProgressBarForeground,
 html.icefin-themed .emby-checkbox:checked + span + .checkboxOutline { background-color: var(--icefin-color-accent); border-color: var(--icefin-color-accent); }
 html.icefin-themed .progressring-spiner { border-color: var(--icefin-color-accent); }
 
 html.icefin-themed .raised,
-html.icefin-themed .fab { background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-textSecondary); }
+html.icefin-themed .fab { background: var(--icefin-color-button, var(--icefin-color-surfaceRaised)); color: var(--icefin-color-textSecondary); }
 html.icefin-themed .raised:hover,
-html.icefin-themed .fab:hover { background: var(--icefin-color-hover); }
+html.icefin-themed .fab:hover { background: var(--icefin-color-buttonHover, var(--icefin-color-hover)); }
 
 /* Focus: what a remote or controller user follows. */
-html.icefin-themed .emby-button.show-focus:focus,
 html.icefin-themed .raised:focus,
-html.icefin-themed .fab:focus,
+html.icefin-themed .fab:focus { background: var(--icefin-color-focus); }
+html.icefin-themed .emby-button.show-focus:focus,
 html.icefin-themed .button-submit:focus,
 html.icefin-themed .alphaPickerButton-tv:focus,
 html.icefin-themed .guide-date-tab-button.show-focus:focus { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
@@ -107,19 +110,19 @@ html.icefin-themed .emby-select-withcolor:focus { border-color: var(--icefin-col
 html.icefin-themed .emby-select-tv-withcolor:focus,
 html.icefin-themed .guide-channelHeaderCell:focus,
 html.icefin-themed .programCell:focus { background-color: var(--icefin-color-focus) !important; color: var(--icefin-color-onFocus) !important; }
-html.icefin-themed .listItem:focus,
+html.icefin-themed .listItem:focus { background-color: var(--icefin-color-focusTint, var(--icefin-color-hover)); }
 html.icefin-themed .listItem:hover,
 html.icefin-themed .navMenuOption:hover { background-color: var(--icefin-color-hover); }
 
 html.icefin-themed .emby-input,
-html.icefin-themed .emby-textarea { background: var(--icefin-color-inputBackground); border-color: var(--icefin-color-divider); }
+html.icefin-themed .emby-textarea { background: var(--icefin-color-inputBackground); border-color: var(--icefin-color-inputBorder, var(--icefin-color-divider)); }
 html.icefin-themed .emby-select-withcolor,
-html.icefin-themed .emby-select-withcolor > option { background: var(--icefin-color-surface); border-color: var(--icefin-color-divider); }
+html.icefin-themed .emby-select-withcolor > option { background: var(--icefin-color-surface); border-color: var(--icefin-color-inputBorder, var(--icefin-color-divider)); }
 html.icefin-themed .listItem-border,
 html.icefin-themed .emby-collapsible-button { border-color: var(--icefin-color-divider); }
 html.icefin-themed .actionsheetDivider { background: var(--icefin-color-divider); }
 html.icefin-themed .button-delete { background: var(--icefin-color-error); color: var(--icefin-color-onError); }
-html.icefin-themed .toast { background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); }
+html.icefin-themed .toast { background: var(--icefin-color-toast, var(--icefin-color-surfaceRaised)); color: var(--icefin-color-toastText, var(--icefin-color-text)); }
 html.icefin-themed .paperList,
 html.icefin-themed .visualCardBox,
 html.icefin-themed .cardContent,
