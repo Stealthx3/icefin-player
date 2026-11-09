@@ -12,6 +12,7 @@
 #include <QtWebEngineQuick>
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include "icefin/theme/ThemeScheme.h"  // ICEFIN-HOOK: icefin-theme: scheme registration (PLAN 8.3)
+#include "icefin/gpu/WebGpuStatus.h"  // ICEFIN-HOOK: web GPU buffers switch (PLAN 4.3)
 #include <qtwebenginecoreglobal.h>
 #include <QtWebEngineCore/QWebEngineProfile>
 #include <QErrorMessage>
@@ -496,6 +497,7 @@ int main(int argc, char *argv[])
       qputenv("QTWEBENGINE_REMOTE_DEBUGGING", parser.value("remote-debugging-port").toUtf8());
 
     Icefin::Theme::registerScheme();  // ICEFIN-HOOK: icefin-theme: scheme, before WebEngine starts (PLAN 8.3)
+    Icefin::Gpu::applyWebEngineEnv();  // ICEFIN-HOOK: QTWEBENGINE_FORCE_USE_GBM=0 when turned off in settings (PLAN 4.3)
     QtWebEngineQuick::initialize();
     QApplication app(newArgc, newArgv);
 

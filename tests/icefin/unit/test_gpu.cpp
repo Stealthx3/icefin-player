@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include "icefin/gpu/Hwdec.h"
 #include "icefin/gpu/DecoderSelfTest.h"
+#include "icefin/gpu/WebGpuStatus.h"
 #include <QTemporaryDir>
 #include "icefin/settings/SettingsMerge.h"
 
@@ -72,6 +73,17 @@ private slots:
     const QString f = fingerprint(d.path());
     QVERIFY2(f.startsWith("0x1002:0x7550, 0x8086:0x56a0, kernel "), qPrintable(f));
     QVERIFY(f.contains("mpv-api"));
+  }
+  void webFeatureStatus()
+  {
+    const auto f = parseFeatureStatus({"*   Canvas: Hardware accelerated", "*   Compositing: Hardware accelerated",
+                                       "*   Rasterization: Hardware accelerated on all pages", "*   WebGL: Unavailable", "noise"});
+    QCOMPARE(f.value("Canvas"), QString("Hardware accelerated"));
+    QCOMPARE(f.size(), 4);
+    QVERIFY(webAccelerated(f));
+    auto sw = f;
+    sw["Compositing"] = "Software only. Hardware acceleration disabled";
+    QVERIFY(!webAccelerated(sw));
   }
 };
 
