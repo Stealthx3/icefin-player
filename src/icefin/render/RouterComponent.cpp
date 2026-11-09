@@ -5,6 +5,10 @@
 #include <QQuickWindow>
 #include <QSGRendererInterface>
 #include "settings/SettingsComponent.h"
+#include "HdrCapabilityProbe.h"
+#include <QGuiApplication>
+#include <QTimer>
+#include <QWindow>
 
 namespace Icefin::Render
 {
@@ -33,7 +37,11 @@ System RouterComponent::system() const
   System s;
   s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan ? Renderer::Vulkan : Renderer::OpenGlFallback;
   s.vulkanAvailable = false;     // until the Vulkan renderer exists (5.1): no "switch to Vulkan" option
-  s.display = DisplayState::Unknown;  // HdrCapabilityProbe: 6.1
+  switch (HdrCapabilityProbe::instance().current().hdr) {  // 6.1
+    case DisplayInfo::Hdr::Yes: s.display = DisplayState::Hdr; break;
+    case DisplayInfo::Hdr::No: s.display = DisplayState::Sdr; break;
+    default: s.display = DisplayState::Unknown;
+  }
   s.serverTranscode = true;      // the page drops the transcode options when the user's policy forbids them
   return s;
 }
@@ -109,5 +117,20 @@ void RouterComponent::forgetChoices()
 {
   SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kMemory, QString("{}"));
   qInfo() << "Icefin router: remembered playback choices cleared";
+}
+
+QVariantMap RouterComponent::display() const { return HdrCapabilityProbe::instance().current().toMap(); }
+
+void RouterComponent::componentPostInitialize()
+{
+  connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &RouterComponent::displayChanged);
+  // The main window exists once QML has loaded; attach the probe to the first visible top-level window.
+  auto* t = new QTimer(this);
+  t->setInterval(1000);
+  connect(t, &QTimer::timeout, this, [t] {
+    for (QWindow* w : QGuiApplication::topLevelWindows())
+      if (w->isVisible()) { HdrCapabilityProbe::instance().attach(w); t->stop(); t->deleteLater(); return; }
+  });
+  t->start();
 }
 }
