@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "harbor",
+  "name": "Harbor",
+  "version": "0.1.0",
+  "description": "Benchmark theme (Kodi Estuary layout): a persistent left menu, and for the focused section rows of In progress, Next up and Recently added over the focused item's full-screen fanart. Dark blue-grey with cyan focus. Icefin names and type; no Kodi assets.",
+  "styles": "styles.css",
+  "scripts": ["harbor.js"]
+}

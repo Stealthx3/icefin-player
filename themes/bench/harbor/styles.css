@@ -1,0 +1,57 @@
+/* Harbor: left menu, shelves over fanart. Proportions follow the benchmark target at 16:9; all colours from tokens. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: Roboto, "Noto Sans", "Open Sans", sans-serif; }
+
+/* Fanart layer: two full-screen images cross-fading behind everything, with a scrim for legibility. */
+[data-hb] .hb-fanart { position: absolute; inset: 0; z-index: 0; background: center / cover no-repeat; opacity: 0;
+  transition: opacity 400ms ease; pointer-events: none; }
+[data-hb] .hb-fanart.on { opacity: 1; }
+[data-hb] .hb-scrim { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(90deg, var(--icefin-color-scrim) 0%, transparent 70%), linear-gradient(0deg, var(--icefin-color-scrim) 0%, transparent 60%); }
+[data-hb] > nav, [data-hb] > .icefin-content { position: relative; z-index: 1; }
+
+/* The persistent main menu. */
+[data-hb] .icefin-siderail { background: var(--icefin-color-rail); display: flex; flex-direction: column; padding-top: 4.5vh;
+  box-shadow: 0.4em 0 1.2em rgba(0, 0, 0, 0.35); }
+.hb-brand { padding: 0 1.6vw 4vh; font-size: 1.9em; font-weight: 300; letter-spacing: 0.06em; color: var(--icefin-color-text); }
+.hb-rail-list { display: flex; flex-direction: column; }
+.hb-rail-item { padding: 1.55vh 1.6vw; font-size: 1.45em; color: var(--icefin-color-textSecondary); outline: none; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; transition: background 120ms, color 120ms; }
+.hb-rail-item.current { color: var(--icefin-color-text); }
+.hb-rail-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+
+/* Content: shelves stacked; the focused shelf scrolls to the upper line, the row scrolls to keep the poster in view. */
+[data-hb] .icefin-content { position: relative; }
+.hb-clock { position: absolute; right: 2.4vw; top: 3.4vh; font-size: 1.6em; font-weight: 300; z-index: 2; }
+.hb-shelves { position: absolute; left: 2vw; right: 0; top: 30vh; bottom: 0; overflow: hidden; }
+.hb-shelf-box { transition: transform 200ms ease; }
+.hb-shelf-box.hb-fade { animation: hb-in 200ms ease; }
+@keyframes hb-in { from { opacity: 0; } to { opacity: 1; } }
+html[data-icefin-motion="low"] .hb-shelf-box, html[data-icefin-motion="low"] .hb-row, html[data-icefin-motion="low"] .hb-fanart { transition-duration: 0ms; }
+html[data-icefin-motion="low"] .hb-shelf-box.hb-fade { animation: none; }
+.hb-shelf { margin-bottom: 3.2vh; }
+.hb-shelf-title { font-size: 1.25em; margin: 0 0 1.2vh 0.2vw; color: var(--icefin-color-text); }
+.hb-row { display: flex; gap: 0.9vw; transition: transform 200ms ease; }
+.hb-poster { flex: 0 0 auto; width: 9.4vw; aspect-ratio: 2 / 3; position: relative; outline: none;
+  background: var(--icefin-color-surface) center / cover no-repeat; border-radius: var(--icefin-shape-cardRadius);
+  box-shadow: 0 0 0 0.16em transparent; transition: box-shadow 120ms; }
+.hb-poster.wide { width: 18vw; aspect-ratio: 16 / 9; }
+.hb-poster.icefin-focused { box-shadow: 0 0 0 0.2em var(--icefin-color-focus); }
+.hb-caption { position: absolute; left: 0; right: 0; top: calc(100% + 0.5vh); font-size: 0.9em; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; color: var(--icefin-color-textSecondary); }
+.hb-poster.icefin-focused .hb-caption { color: var(--icefin-color-text); }
+.hb-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.3em; background: rgba(0, 0, 0, 0.5); }
+.hb-progress::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p); background: var(--icefin-color-accent); }
+.hb-empty { font-size: 1.4em; color: var(--icefin-color-textSecondary); padding-top: 4vh; }
+
+/* Info dialog: centred panel over a dimmed screen. */
+.hb-info { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); }
+.hb-info-box, .hb-info-title, .hb-button { color: var(--icefin-color-text); }
+.hb-info-box { display: grid; grid-template-columns: 17vw 1fr; gap: 2vw; width: 62vw; padding: 2.4vw; background: var(--icefin-color-surface);
+  border-top: 0.25em solid var(--icefin-color-accent); }
+.hb-info-art { aspect-ratio: 2 / 3; background: var(--icefin-color-surfaceRaised) center / cover no-repeat; }
+.hb-info-title { margin: 0 0 1vh; font-weight: 400; font-size: 2em; }
+.hb-info-meta { color: var(--icefin-color-textSecondary); margin-bottom: 1.6vh; }
+.hb-info-overview { line-height: 1.45; max-height: 11em; overflow: hidden; }
+.hb-info-buttons { display: flex; gap: 1vw; margin-top: 2.4vh; }
+.hb-button { padding: 0.7em 1.6em; background: var(--icefin-color-surfaceRaised); outline: none; font-size: 1.1em; }
+.hb-button.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
