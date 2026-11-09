@@ -4,33 +4,102 @@
   "title": "Icefin theme package metadata (theme.json), schema 1",
   "description": "Shared with the server-plugin plan. Semantic checks (files exist inside the package, tokens resolve) are the engine's: src/icefin/theme/ThemePackage.cpp.",
   "type": "object",
-  "required": ["schema", "id", "name", "version"],
+  "required": [
+    "schema",
+    "id",
+    "name",
+    "version"
+  ],
   "properties": {
-    "schema": { "const": 1 },
-    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,47}$" },
-    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "version": { "type": "string", "minLength": 1, "maxLength": 32 },
-    "description": { "type": "string" },
-    "styles": { "$ref": "#/$defs/relPath" },
-    "scripts": { "type": "array", "items": { "$ref": "#/$defs/relPath" } },
+    "schema": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,47}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "description": {
+      "type": "string"
+    },
+    "styles": {
+      "$ref": "#/$defs/relPath"
+    },
+    "scripts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relPath"
+      }
+    },
     "fonts": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["family", "file"],
+        "required": [
+          "family",
+          "file"
+        ],
         "properties": {
-          "family": { "type": "string", "pattern": "^[A-Za-z0-9 _-]{1,64}$" },
-          "file": { "$ref": "#/$defs/relPath" },
-          "weight": { "type": ["integer", "string"] },
-          "style": { "enum": ["normal", "italic", "oblique"] }
+          "family": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9 _-]{1,64}$"
+          },
+          "file": {
+            "$ref": "#/$defs/relPath"
+          },
+          "weight": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "style": {
+            "enum": [
+              "normal",
+              "italic",
+              "oblique"
+            ]
+          }
         },
         "additionalProperties": false
       }
     },
-    "presets": { "type": "object", "additionalProperties": { "$ref": "tokens.schema.json#/$defs/group" } }
+    "presets": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "tokens.schema.json#/$defs/group"
+      }
+    },
+    "sounds": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "focus",
+          "select",
+          "back",
+          "navigate",
+          "error"
+        ]
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/relPath"
+      }
+    }
   },
   "additionalProperties": false,
   "$defs": {
-    "relPath": { "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9._/-]+$" }
+    "relPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9._/-]+$"
+    }
   }
 }

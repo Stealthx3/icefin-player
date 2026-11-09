@@ -13,6 +13,7 @@ The first package found with a given id wins.
 | `styles.css` | no | Extra CSS on top of the tokens, declared as `"styles"` |
 | fonts, images, sounds | no | Served from inside the package over `icefin-theme://<id>/<path>` |
 | scripts | no | Screens and effects, declared as `"scripts"` |
+| sounds | no | UI sounds, declared as `"sounds": {"focus"\|"select"\|"back"\|"navigate"\|"error": "path.wav"}`; volume token `sound.volume` (0–1) |
 
 ## theme.json
 ```json
@@ -70,3 +71,10 @@ If the server already injects the theme plugin's runtime, Icefin's web layers st
 - Icefin removes its token stylesheet and doesn't mount its runtime or screens.
 - Icefin calls `icefinPluginRuntime.attachNative({version: 1, client: 'icefin-player', tokens(), services})` once,
   so the plugin can use native services: the active tokens now; UI sounds and the backdrop as they land.
+
+## Per-user choice
+The theme picker is in Client Settings → Theme. The choice belongs to the signed-in user:
+- it's cached on the device (instant at startup, works offline);
+- it's synced to the server's DisplayPreferences (`usersettings`, client `icefin-player`, custom pref `icefin.theme` =
+  `{"schema":1,"theme","preset","timestamp"}`); the newest timestamp wins;
+- under stand-down, the plugin's settings API owns the choice and Icefin doesn't sync.
