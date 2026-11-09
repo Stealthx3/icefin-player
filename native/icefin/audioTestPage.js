@@ -45,6 +45,23 @@
                 res.textContent = !r ? '' : r.pending ? 'Playing…' : describe(r);
                 if (r && r.pending) btn.disabled = true;
                 row.append(btn, exp, res);
+                const fm = r && r.formats;
+                if (fm && !fm.ok && fm.rule) {
+                    // 3.4 fallback: the sound server didn't take the format at runtime; WirePlumber can be told once.
+                    const why = document.createElement('div');
+                    why.className = 'fieldDescription icefin-at-formats';
+                    why.textContent = `This output didn't accept the format (${fm.error}). A WirePlumber rule fixes it for good:`;
+                    const pre = document.createElement('pre');
+                    pre.className = 'icefin-at-rule';
+                    pre.style.cssText = 'white-space:pre-wrap;font-size:0.8em';
+                    pre.textContent = fm.rule;
+                    const copy = document.createElement('button');
+                    copy.type = 'button';
+                    copy.className = 'raised emby-button icefin-at-copy';
+                    copy.textContent = 'Copy the rule';
+                    copy.addEventListener('click', () => navigator.clipboard.writeText(fm.rule).then(() => { copy.textContent = 'Copied'; }, () => { copy.textContent = 'Select and copy it above'; }));
+                    row.append(why, pre, copy);
+                }
                 body.append(row);
             }
             section.append(body);

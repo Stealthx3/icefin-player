@@ -4,6 +4,7 @@
 #include "Passthrough.h"
 #include "DeviceReservation.h"
 #include "AudioState.h"
+#include "Iec958Formats.h"
 #include <memory>
 #include <MpvController>
 #include <QDebug>
@@ -65,6 +66,12 @@ void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCode
   else if (hdmiDevice && out.card < 0 && !out.backend) eld = std::nullopt;  // "auto": card unknown, trust toggles
 
   const Decision d = decide(t, user, eld, backend);
+  // Sound-server output: make sure the sink accepts the bitstream before mpv opens it (3.4).
+  if (!d.spdif.isEmpty() && (backend == Backend::PipeWire || backend == Backend::PulseAudio)) {
+    const QString sink = sinkFromDevice(device);
+    const FormatChange fc = ensureSinkFormats(sink.isEmpty() ? QStringLiteral("@DEFAULT_SINK@") : sink, d.spdif.split(','));
+    if (!fc.ok) qWarning().noquote() << "Icefin audio: passthrough may fail:" << fc.error << "- Client Settings -> Audio test offers a WirePlumber rule";
+  }
   mpv->setProperty("audio-spdif", d.spdif);
   refreshBitstream(mpv, d.mode != Decision::Pcm, d.mode != Decision::Pcm ? "passthrough " + d.spdif : d.reason);
   qInfo().noquote() << "Icefin audio:" << codec << t.profile << t.channels << "ch on" << device
