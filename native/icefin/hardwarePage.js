@@ -1,0 +1,70 @@
+// Icefin: Client Settings -> Hardware (PLAN 4.1). Appended to the injected native shell script.
+// Adds a Hardware section to nativeshell.js's Client Settings dialog when it opens: the decoder self-test result
+// (which decoder each sample used and how fast it decoded) and a button to run the test again.
+(function () {
+    'use strict';
+    if (window.icefinHardwarePage || !window.apiPromise) return;
+    const ID = 'icefin-hardware-section';
+
+    const el = (tag, props, ...kids) => {
+        const e = Object.assign(document.createElement(tag), props || {});
+        kids.forEach((k) => e.append(k));
+        return e;
+    };
+
+    function render(section, r) {
+        section.querySelectorAll('.icefin-hw-body').forEach((n) => n.remove());
+        const body = el('div', { className: 'icefin-hw-body' });
+        if (r.running) {
+            body.append(el('p', { className: 'fieldDescription', textContent: 'Testing the decoders…' }));
+        } else if (!r.samples || !r.samples.length) {
+            body.append(el('p', { className: 'fieldDescription', textContent: 'Not tested yet on this machine.' }));
+        } else {
+            const table = el('table', { className: 'icefin-hw-table' });
+            table.style.cssText = 'width:100%;border-collapse:collapse;margin:0.5em 0;text-align:left';
+            table.append(el('tr', {}, ...['Codec', 'Decoder', 'Speed'].map((h) => el('th', { textContent: h }))));
+            for (const s of r.samples) {
+                const dec = !s.ok ? `failed: ${s.error}` : s.hardware ? `hardware (${s.hwdec})` : 'software';
+                const speed = s.ok ? `${s.speed.toFixed(1)}× real time` : '';
+                const tr = el('tr', { className: 'icefin-hw-row' },
+                    ...[s.codec.toUpperCase(), dec, speed].map((t) => el('td', { textContent: t })));
+                tr.setAttribute('data-codec', s.codec);
+                table.append(tr);
+            }
+            body.append(table);
+            const tc = (r.transcode || []).map((c) => c.toUpperCase());
+            body.append(el('p', { className: 'fieldDescription icefin-hw-transcode',
+                textContent: tc.length ? `The server will convert ${tc.join(', ')} for this machine.` : 'Every tested format plays directly on this machine.' }));
+            body.append(el('p', { className: 'fieldDescription', textContent: `Tested ${new Date(r.time).toLocaleString()} · ${r.fingerprint}` }));
+        }
+        const btn = el('button', { className: 'raised emby-button icefin-hw-run', type: 'button', textContent: 'Test again', disabled: !!r.running });
+        btn.addEventListener('click', () => window.apiPromise.then((api) => { api.hardware.run(); render(section, Object.assign({}, r, { running: true })); }));
+        body.append(btn);
+        section.append(body);
+    }
+
+    function attach(api, dialog) {
+        const content = dialog.querySelector('.formDialogContent');
+        if (!content || content.querySelector('#' + ID)) return;
+        const section = el('fieldset', { id: ID, className: 'editItemMetadataForm editMetadataForm dialog-content-centered' });
+        section.style.border = 0;
+        section.style.outline = 0;
+        section.append(el('legend', {}, el('h2', { textContent: 'Hardware' })));
+        content.append(section);
+        api.hardware.results((r) => render(section, r));
+    }
+
+    window.icefinHardwarePage = true;
+    window.apiPromise.then((api) => {
+        if (!api.hardware) return;
+        const scan = () => document.querySelectorAll('.formDialogHeaderTitle').forEach((t) => {
+            if (t.textContent === 'Client Settings') attach(api, t.closest('.dialog'));
+        });
+        const start = () => new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+        if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+        api.hardware.finished.connect((r) => {
+            const s = document.getElementById(ID);
+            if (s) render(s, r);
+        });
+    });
+})();

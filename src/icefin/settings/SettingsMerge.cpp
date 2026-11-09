@@ -18,7 +18,13 @@ QJsonDocument mergeDescription(const QJsonDocument& upstream, const QJsonDocumen
       QJsonObject sec = out[i].toObject();
       if (sec.value("section").toString() != name) continue;
       QJsonArray values = sec.value("values").toArray();
-      for (const QJsonValue& val : add.value("values").toArray()) values.append(val);
+      for (const QJsonValue& val : add.value("values").toArray()) {
+        // A value with the same key replaces upstream's (Icefin's own choices for an upstream setting, PLAN 4.2).
+        bool replaced = false;
+        for (int j = 0; j < values.size(); ++j)
+          if (values[j].toObject().value("value") == val.toObject().value("value")) { values[j] = val; replaced = true; break; }
+        if (!replaced) values.append(val);
+      }
       sec["values"] = values;
       out[i] = sec;
       merged = true;
