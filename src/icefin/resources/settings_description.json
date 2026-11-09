@@ -35,6 +35,12 @@
         "display_name": "Web GPU Buffers (GBM)",
         "help": "Leave on. Turn off only if the app crashes or shows a black window at start with your graphics driver. Takes effect after a restart.",
         "default": true
+      },
+      {
+        "value": "icefin_nintendo_layout",
+        "display_name": "Nintendo Button Layout",
+        "help": "On Nintendo controllers, the button marked A confirms and B goes back, as printed. Other controllers are unchanged.",
+        "default": false
       }
     ]
   },

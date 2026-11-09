@@ -80,6 +80,7 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
 
 ## Commands
 - Build: `scripts/lab.sh run 'cmake -S . -B ~/build -G Ninja -DUSE_STATIC_MPVQT=ON && ninja -C ~/build 2>&1 | tail -n 50'` (build dir stays outside the synced tree)
+- SDL3 controller build (as the Flatpak): add `-DENABLE_SDL2=OFF -DICEFIN_SDL3=ON` (separate build dir, e.g. `~/build-sdl3`). After adding files under `native/` or `src/icefin/resources/`, re-run cmake: upstream globs those at configure time.
 - Test:  `scripts/lab.sh run '<cmd> 2>&1 | tail -n 50'`
 - Flatpak: `scripts/lab.sh run 'flatpak-builder --user --install-deps-from=flathub --force-clean --state-dir=$HOME/fp-state --repo=$HOME/fp-repo $HOME/fp-build flatpak/io.github.stealthx3.IcefinPlayer.yml'` (state outside the synced tree)
 - Watch: `scripts/lab.sh view`

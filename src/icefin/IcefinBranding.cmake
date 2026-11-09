@@ -27,5 +27,5 @@ configure_file("${CMAKE_SOURCE_DIR}/src/icefin/Branding.h.in" "${CMAKE_BINARY_DI
 include_directories("${CMAKE_BINARY_DIR}/src/icefin")
 
 # Files served from qrc under :/icefin/ (mapped in src/CMakeLists.txt, ICEFIN-HOOK)
-file(GLOB_RECURSE ICEFIN_RESOURCE_FILES "${CMAKE_SOURCE_DIR}/src/icefin/resources/*" "${CMAKE_SOURCE_DIR}/themes/*")  # bundled themes too (PLAN 8.1)
+file(GLOB_RECURSE ICEFIN_RESOURCE_FILES "${CMAKE_SOURCE_DIR}/src/icefin/resources/*" "${CMAKE_SOURCE_DIR}/themes/*" "${CMAKE_SOURCE_DIR}/src/icefin/inputmaps/*")  # bundled themes and input maps too (PLAN 8.1, 7.2)
 message(STATUS "Icefin: ${ICEFIN_DISPLAY_NAME} ${ICEFIN_VERSION} (${ICEFIN_APP_ID}), upstream base ${ICEFIN_UPSTREAM_VERSION}")
