@@ -43,5 +43,25 @@
         "default": true
       }
     ]
+  },
+  {
+    "section": "video",
+    "values": [
+      {
+        "value": "hardwareDecoding",
+        "display_name": "Hardware Decoding",
+        "help": "How video is decoded. Auto is right for almost everyone.\n\n- Auto: the GPU decodes what it safely can; everything else is decoded in software.\n- VA-API: AMD and Intel GPUs.\n- NVDEC: NVIDIA GPUs.\n- Vulkan: Vulkan Video, on recent drivers.\n- Copy: GPU decoding with a copy back to memory; slower, but works around driver bugs.\n- Off: software decoding only. Use this if video is glitchy.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "vaapi", "VA-API" ],
+          [ "nvdec", "NVDEC" ],
+          [ "vulkan", "Vulkan" ],
+          [ "copy", "Copy" ],
+          [ "off", "Off" ]
+        ],
+        "platforms_excluded": "oe_rpi"
+      }
+    ]
   }
 ]

@@ -2,6 +2,7 @@
 #include "icefin/audio/Fallback.h"  // ICEFIN-HOOK: never-silent audio fallback
 #include "icefin/audio/AudioOutput.h"  // ICEFIN-HOOK: audio.backend mapping
 #include "icefin/audio/DeviceDelay.h"  // ICEFIN-HOOK: per-device audio delay (PLAN 3.7)
+#include "icefin/gpu/Hwdec.h"  // ICEFIN-HOOK: hardware decoding choices and renderer name (PLAN 4.2)
 #include "PlayerComponent.h"
 #include <QString>
 #include <Qt>
@@ -1452,6 +1453,8 @@ void PlayerComponent::setVideoConfiguration()
   m_mpv->setProperty( "video-sync", syncMode);
 
   QString hardwareDecodingMode = SettingsComponent::Get().value(SETTINGS_SECTION_VIDEO, "hardwareDecoding").toString();
+  if (QString m = Icefin::Gpu::migratedSetting(hardwareDecodingMode); !m.isEmpty())  // ICEFIN-HOOK: upstream value -> Icefin choice (PLAN 4.2)
+    SettingsComponent::Get().setValue(SETTINGS_SECTION_VIDEO, "hardwareDecoding", hardwareDecodingMode = m);  // ICEFIN-HOOK: saved once
   QString hwdecMode = "no";
   QString hwdecVTFormat = "no";
   if (hardwareDecodingMode == "enabled")
@@ -1465,6 +1468,7 @@ void PlayerComponent::setVideoConfiguration()
   {
     hwdecMode = "auto-copy";
   }
+  hwdecMode = Icefin::Gpu::hwdecFor(hardwareDecodingMode);  // ICEFIN-HOOK: Icefin's choices replace the mapping above (PLAN 4.2)
   m_mpv->setProperty( "hwdec", hwdecMode);
   m_mpv->setProperty( "hwdec-image-format", hwdecVTFormat);
 
@@ -1798,6 +1802,7 @@ QString PlayerComponent::videoInformation() const
                           << " (" << displayFps << ")" << "\n";
   info << "Hardware Decoding: " << MPV_PROPERTY("hwdec-current")
                                 << " (" << MPV_PROPERTY("hwdec-interop") << ")\n";
+  info << "Renderer: " << Icefin::Gpu::rendererName() << "\n";  // ICEFIN-HOOK: Vulkan or OpenGL fallback (PLAN 4.2)
   info << "\n";
   info << "Audio:\n";
   info << "Codec: " << MPV_PROPERTY("audio-codec") << "\n";
