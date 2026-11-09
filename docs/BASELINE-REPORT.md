@@ -54,6 +54,33 @@ Raw results: `docs/baseline/*.json` (from `tests/icefin/web/session_play.py`). C
 5. **Flatpak runs need a D-Bus session**, because Chromium's sandbox inside a Flatpak spawns through the portal.
    `--config-dir` doesn't reset WebEngine storage either. Both are handled in the harness and noted in `docs/LAB.md`.
 
+## Hardware rows (task 1.10, HTPC tier)
+
+_Measured 2026-11-09 00:10–01:40 Pacific, unattended, on the HTPC (D16): Bazzite 45, kernel 7.2, AMD RX 9070 XT
+(RADV / radeonsi, VA-API), Hisense 55005N on HDMI-A-2 (3840×2160), Denon AVR-S660H on the TV's eARC. Icefin 0.1.0
+Flatpak from `main` @ `6f069d7` (upstream behaviour: Phases 3, 5 and 6 aren't merged yet). Raw files: `build-htpc/`
+(not committed)._
+
+| Goal | Gamescope (Steam game mode, XWayland) | Plasma 6.8.2 Wayland |
+|---|---|---|
+| **Keep all server plugins working** | SDR rows on jf1011 and jf12: 0 differences from the lab baseline (`compare_runs.py`); identity, Activity Log and Playback Reporting as in the lab | Same, 0 differences (jf12; jf1011 on the re-run, see finding 6) |
+| **HDR on KWin, GNOME and Gamescope** | Output already HDR10 (PQ, BT2020_RGB, 16 bpc) while idle, from Steam; HDR10/HLG content is tone-mapped to SDR by the app and composited into it. HDR_OUTPUT_METADATA never changes with content; HLG is never signalled | Same: KWin HDR on (PQ, max CLL 0); no per-content signalling. As expected for upstream; Phase 5 |
+| **HDMI passthrough on every sound system** | Defaults (passthrough off): every codec decoded to stereo PCM through PipeWire (`AO: [pipewire] stereo`); ALSA HDMI held by PipeWire at 48 kHz 6 ch S32_LE; no IEC958 non-audio state | Same |
+| **GPU decode** | Hardware decode on every play, 4K HDR HEVC Main10 included, but `vaapi-copy`: under Qt's xcb GLX contexts mpv's VA-API interop isn't available. With `QT_XCB_GL_INTEGRATION=xcb_egl` the same build gets zero-copy `vaapi` (fixed in 4.5) | Zero-copy `vaapi` (`vaapi[nv12]` / `vaapi[p010]`) |
+| **UI rendering (WebEngine on the GPU)** | Spike 2.1 on RADV: Vulkan and OpenGL scenes with WebEngine, both correct | Same |
+| **Controller support** | Not run (7.6) | Not run |
+
+**GPU power, 4K HDR10 HEVC looped, audio off (Plasma, `/app/bin/mpv` from the Flatpak):** idle 13 W; `vo=gpu-next`
+45 W (repeat 45 W); `vo=dmabuf-wayland` 37 W. dmabuf-wayland saves about 8 W (18 %) on this GPU (PLAN 4.4).
+
+6. **Display hotplug leaves playback paused.** The first play after switching to Plasma stalled at 0 s: mpv opened,
+   then Qt logged "There are no outputs - creating placeholder screen" (the TV re-handshaking after login) and the
+   player stayed paused until stopped. The immediate re-run was clean. Upstream behaviour; tracked for Phase 5's
+   output-change handling.
+7. **Still open on the hardware:** the TV's HDR badge and the receiver's format display (need a person; deferred to
+   the user's hand-off), passthrough rows (Phase 3 build), the DTS track of the TrueHD/DTS clip (harness can't select
+   it yet), frame-drop counts, GNOME (no GNOME session on the HTPC), Intel and NVIDIA.
+
 ## Still to measure (task 1.10, HTPC tier)
 
 The receiver formats on PipeWire, PulseAudio, JACK and exclusive ALSA; HDR10 and HLG signalling on Plasma,
