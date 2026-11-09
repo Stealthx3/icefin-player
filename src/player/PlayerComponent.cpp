@@ -3,6 +3,7 @@
 #include "icefin/audio/AudioOutput.h"  // ICEFIN-HOOK: audio.backend mapping
 #include "icefin/audio/DeviceDelay.h"  // ICEFIN-HOOK: per-device audio delay (PLAN 3.7)
 #include "icefin/gpu/Hwdec.h"  // ICEFIN-HOOK: hardware decoding choices and renderer name (PLAN 4.2)
+#include "icefin/render/PlaybackRouter.h"  // ICEFIN-HOOK: playback routing (PLAN 6.2)
 #include "PlayerComponent.h"
 #include <QString>
 #include <Qt>
@@ -313,6 +314,7 @@ void PlayerComponent::queueMedia(const QString& url, const QVariantMap& options,
 
   m_mediaFrameRate = metadata["frameRate"].toFloat(); // returns 0 on failure
   m_serverMediaInfo = metadata["media"].toMap();
+  Icefin::Render::logRoute(metadata);  // ICEFIN-HOOK: routing decision, logged only until the prompt (PLAN 6.2)
 
   updateVideoConfiguration();
 
