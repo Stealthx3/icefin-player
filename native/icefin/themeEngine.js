@@ -63,12 +63,34 @@
         });
     }
 
-    async function mount(next) {
+    // Stand-down (SPEC "Stand-down", docs/themes/PACKAGE.md): if the server injects the theme plugin's runtime,
+    // this runtime doesn't mount; the native side still offers its services to that runtime once.
+    let handshakeDone = false;
+    function standDown(api) {
+        const rt = window.icefinPluginRuntime;
+        if (!rt) return false;
+        if (!handshakeDone && typeof rt.attachNative === 'function') {
+            handshakeDone = true;
+            try {
+                rt.attachNative({
+                    version: 1,
+                    client: 'icefin-player',
+                    tokens: () => new Promise((r) => api.theme.tokens(r)),
+                    playSound: (name) => api.theme.playSound(String(name)),
+                    // The native backdrop joins this handshake when it exists (8.4).
+                    services: ['tokens', 'sounds']
+                });
+            } catch (e) { console.error('icefinTheme: plugin runtime handshake failed', e); }
+        }
+        return true;
+    }
+
+    async function mount(next, api) {
         const gen = ++generation;
         unmountScreen();
         clearAssets();
         screens = {};
-        pkg = next && next.id ? next : null;
+        pkg = next && next.id && !(api && standDown(api)) ? next : null;
         document.documentElement.toggleAttribute('data-icefin-theme', !!pkg);
         if (!pkg) { route_(); return; }
         if (pkg.styles) {
@@ -112,6 +134,7 @@
         if (!r) return;
         current = { route: path, screen };
         r.hidden = false;
+        sound('navigate');
         try {
             screen.mount(r, ctx);
         } catch (e) {
@@ -123,7 +146,11 @@
         if (first) focus(first);
     }
 
+    let apiRef = null;
+    const sound = (name) => { if (apiRef && pkg) apiRef.theme.playSound(name); };
+
     const ctx = {
+        sound,
         navigate: (hash) => { location.hash = hash; },
         apiClient: () => window.ApiClient,
         focus: (el) => focus(el)
@@ -162,7 +189,7 @@
             const score = along + off * 2;
             if (score < bestScore) { bestScore = score; best = e; }
         }
-        if (best) focus(best);
+        if (best) { focus(best); sound('focus'); }
         return true;  // a themed screen keeps arrows even at its edge
     }
 
@@ -173,11 +200,15 @@
                 return move(action);
             case 'enter': case 'select': {
                 const f = focused();
-                if (f) { f.click(); return true; }
+                if (f) { sound('select'); f.click(); return true; }
                 return false;
             }
             case 'back':
-                try { return !!(current.screen.onBack && current.screen.onBack()); } catch (e) { return false; }
+                try {
+                    const used = !!(current.screen.onBack && current.screen.onBack());
+                    if (used) sound('back');
+                    return used;
+                } catch (e) { return false; }
             default:
                 return false;
         }
@@ -207,15 +238,19 @@
             return true;
         },
         handleAction,
+        sound,
         active: () => (pkg ? { id: pkg.id, source: pkg.source, route: current ? current.route : null } : null),
+        stoodDown: () => !!window.icefinPluginRuntime,
         screens: () => Object.keys(screens)
     };
 
-    function refresh(api) { api.theme.activePackage((p) => mount(p)); }
+    function refresh(api) { api.theme.activePackage((p) => mount(p, api)); }
     window.apiPromise.then((api) => {
         if (!api.theme || !api.theme.activePackage) return;
+        apiRef = api;
         const go = () => refresh(api);
         if (document.body) go(); else document.addEventListener('DOMContentLoaded', go);
         api.theme.changed.connect(go);
+        window.addEventListener('icefin-plugin-runtime', go);
     });
 })();

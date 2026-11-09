@@ -75,7 +75,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **8.2** Three-way plugin runs in CI: engine off, Baseline, styled themes
 - [x] **8.3** Web runtime `native/icefin/themeEngine.js` appended to the injected shell script; `icefin-theme:` scheme [Theme-engine layer] (package format: `docs/themes/PACKAGE.md`)
 - [ ] **8.4** Native backdrop layer (QML shaders); measure transparent web-view cost
-- [ ] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`)
+- [x] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`) (schemas `docs/themes/schema/`; Client Settings → Theme picker; passthrough mute verified with the receiver in 3.8)
 - [ ] **8.6** Media Center reference theme; benchmark checklist passes
 
 ## Phase 9 — Benchmark clone themes (8 wks)

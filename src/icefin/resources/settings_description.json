@@ -20,7 +20,28 @@
   {
     "section": "state",
     "values": [
-      { "value": "icefin_audio_delays", "default": "{}", "hidden": true }
+      { "value": "icefin_audio_delays", "default": "{}", "hidden": true },
+      { "value": "icefin_theme", "default": "", "hidden": true },
+      { "value": "icefin_theme_trust", "default": "{}", "hidden": true }
+    ]
+  },
+  {
+    "section": "theme",
+    "order": 3,
+    "values": [
+      {
+        "value": "active",
+        "display_name": "Theme",
+        "help": "The look of the app. Off keeps the stock look. Your choice is saved for your user on the server, so it follows you to other Icefin devices.",
+        "default": "",
+        "possible_values": [ [ "", "Off (stock look)" ] ]
+      },
+      {
+        "value": "sounds",
+        "display_name": "Theme Sounds",
+        "help": "Play the theme's interface sounds. They are always silent while a movie's audio goes straight to your receiver (passthrough).",
+        "default": true
+      }
     ]
   }
 ]

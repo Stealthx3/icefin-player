@@ -4,12 +4,17 @@
 // active theme and preset, resolves its tokens, and gives the page a stylesheet: the token custom properties plus
 // the engine's jellyfin-web adapter (native/icefin/jellyfin-web.css). No active theme = engine off = stock UI.
 // Native layers (backdrop, capability prompt) read tokens() and follow changed().
-// Later: per-user settings in DisplayPreferences (8.5), assets over icefin-theme: (8.3), UI sounds (8.5).
+// Per-user choice (8.5): the web side (native/icefin/themeSync.js) tells it the signed-in user, and syncs the choice
+// with the server's DisplayPreferences (client icefin-player, key icefin.theme); newest timestamp wins. Locally the
+// choice is cached per user in state.icefin_theme, so startup is instant and works offline.
 #pragma once
 #include "core/ComponentManager.h"
 #include "ThemePackage.h"
+#include <QHash>
 #include <QVariantList>
 #include <QVariantMap>
+
+class QSoundEffect;
 
 namespace Icefin::Theme
 {
@@ -29,6 +34,16 @@ public:
   Q_INVOKABLE QString activePreset() const { return m_preset; }
   // Empty id turns the engine off. Returns false (and keeps the current theme) if the theme can't be used.
   Q_INVOKABLE bool setActiveTheme(const QString& id, const QString& preset = QString());
+  // Per-user selection: setUser() applies that user's cached choice; selection() is {theme, preset, timestamp}
+  // (timestamp 0 = never chosen on this device); applyRemote() takes a newer choice from the server.
+  Q_INVOKABLE void setUser(const QString& userId);
+  Q_INVOKABLE QVariantMap selection() const;
+  Q_INVOKABLE bool applyRemote(const QString& id, const QString& preset, double timestamp);
+  // UI sound for an event (focus, select, back, navigate, error) from the active theme. Silent while the user
+  // turned theme sounds off, or during passthrough and exclusive playback (Audio::AudioState).
+  Q_INVOKABLE void playSound(const QString& event);
+  // Diagnostics for the settings page and tests: {played, suppressed, last, reason}.
+  Q_INVOKABLE QVariantMap soundState() const { return m_soundState; }
   Q_INVOKABLE QVariantMap tokens() const;  // resolved tokens of the active theme; empty when off
   Q_INVOKABLE QString stylesheet() const;  // CSS for the page; empty when off
   Q_INVOKABLE QStringList lastErrors() const { return m_errors; }
@@ -36,6 +51,11 @@ public:
   // For the web runtime (8.3): {id, source, styles, fonts[{family, url, weight, style}], scripts[]} as icefin-theme:
   // URLs, already filtered by the package's trust level; empty map when the engine is off.
   Q_INVOKABLE QVariantMap activePackage() const;
+  // Trust a user-installed theme's scripts (SPEC "Theme trust levels"). Bound to the package's content hash: any
+  // change to the package's files drops the trust. Show trustWarning() first.
+  Q_INVOKABLE bool setTrusted(const QString& id, bool trusted);
+  Q_INVOKABLE bool isTrusted(const QString& id) const;
+  Q_INVOKABLE QString trustWarning() const;
   // Called from webview.qml (ICEFIN-HOOK) with the view's WebEngineProfile: serve icefin-theme: on it.
   Q_INVOKABLE void installSchemeHandler(QObject* profile);
 
@@ -47,11 +67,19 @@ Q_SIGNALS:
 
 private:
   ThemeComponent() = default;
-  bool apply(const QString& id, const QString& preset, bool save);
+  bool apply(const QString& id, const QString& preset, qint64 saveTimestamp);  // 0 = don't save
+  void mirrorSetting();
+  void updateChoices();
+  bool trusted(const Package& p) const;
   QMap<QString, Package> m_packages;
   QString m_active, m_preset;
   TokenMap m_tokens;
   QStringList m_errors;
   class SchemeHandler* m_scheme = nullptr;
+  QString m_user;
+  bool m_mirroring = false;
+  QHash<QString, QSoundEffect*> m_sounds;
+  QVariantMap m_soundState{{"played", 0}, {"suppressed", 0}};
+  void soundNote(bool played, const QString& event, const QString& reason);
 };
 }

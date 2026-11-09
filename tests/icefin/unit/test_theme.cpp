@@ -3,6 +3,9 @@
 #include <QJsonDocument>
 #include "icefin/theme/Tokens.h"
 #include "icefin/theme/ThemePackage.h"
+#include "icefin/theme/CssSanitizer.h"
+#include "icefin/theme/ThemeScheme.h"
+#include <QTemporaryDir>
 
 using namespace Icefin::Theme;
 
@@ -94,6 +97,62 @@ private slots:
     QVERIFY(all.contains("won't put in CSS"));
     QVERIFY(all.contains("not a #hex"));
     QVERIFY(!loadPackage("/nonexistent", Source::User).ok());
+  }
+  void sanitizer()
+  {
+    SanitizedCss s = sanitizeCss("@import url(https://evil.example/x.css);\n"
+                                 ".a{background:url(img/bg.png)} .b{background:url('https://evil.example/leak?x')}\n"
+                                 ".c{background:url(//evil.example/y)} .d{background-image:image-set(\"https://e/x.png\" 1x)}\n"
+                                 ".e{background:url(../../etc/passwd)} .f{width:expression(alert(1))} /* url(http://in.comment) */\n"
+                                 "@font-face{font-family:x;src:url(\"fonts/x.woff2\")}", "my-theme", "css/styles.css");
+    QVERIFY2(s.refusedReason.isEmpty(), qPrintable(s.refusedReason));
+    QVERIFY(!s.css.contains("evil"));
+    QVERIFY(!s.css.contains("@import"));
+    QVERIFY(!s.css.contains("image-set"));
+    QVERIFY(!s.css.contains("expression("));
+    QVERIFY(!s.css.contains("passwd"));
+    QVERIFY(s.css.contains("url(\"icefin-theme://my-theme/css/img/bg.png\")"));
+    QVERIFY(s.css.contains("url(\"icefin-theme://my-theme/css/fonts/x.woff2\")"));
+    QVERIFY(s.removed.size() >= 5);
+    // Escapes that spell ASCII are refused; non-ASCII ones (icon fonts) are fine.
+    QVERIFY(!sanitizeCss(".a{background:\\75 rl(https://e/x)}", "t", "s.css").refusedReason.isEmpty());
+    QVERIFY(!sanitizeCss(".a{background:u\\rl(https://e/x)}", "t", "s.css").refusedReason.isEmpty());
+    QVERIFY(sanitizeCss(".i::before{content:\"\\f101\"}", "t", "s.css").refusedReason.isEmpty());
+    // A url( the parser can't read is refused, not guessed.
+    QVERIFY(!sanitizeCss(".a{background:url(\"x)}", "t", "s.css").refusedReason.isEmpty());
+  }
+  void trustRules()
+  {
+    Package user; user.source = Source::User;
+    Package bundled; bundled.source = Source::Bundled;
+    QVERIFY(mayServe(bundled, "a.js", false));
+    QVERIFY(!mayServe(user, "a.js", false));
+    QVERIFY(!mayServe(user, "a.svg", false));
+    QVERIFY(mayServe(user, "a.css", false));
+    QVERIFY(mayServe(user, "a.woff2", false));
+    QVERIFY(mayServe(user, "a.js", true));
+    QVERIFY(!mayServe(bundled, "a.exe", false));
+  }
+  void contentHashFollowsFiles()
+  {
+    QTemporaryDir d;
+    QFile f(d.path() + "/a.css"); QVERIFY(f.open(QIODevice::WriteOnly)); f.write("x"); f.close();
+    const QByteArray h1 = hashDirectory(d.path());
+    QCOMPARE(hashDirectory(d.path()), h1);
+    QVERIFY(f.open(QIODevice::WriteOnly)); f.write("y"); f.close();
+    QVERIFY(hashDirectory(d.path()) != h1);
+    QDir(d.path()).mkdir("sub");
+    QFile g(d.path() + "/sub/b.js"); QVERIFY(g.open(QIODevice::WriteOnly)); g.write("z"); g.close();
+    QVERIFY(hashDirectory(d.path()) != h1);
+  }
+  void unknownMetaKeyRefused()
+  {
+    QTemporaryDir d;
+    QFile m(d.path() + "/theme.json"); QVERIFY(m.open(QIODevice::WriteOnly));
+    m.write("{\"schema\": 1, \"id\": \"x-theme\", \"name\": \"X\", \"version\": \"1\", \"scrpits\": []}"); m.close();
+    QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", d.path() + "/tokens.json");
+    Package p = loadPackage(d.path(), Source::User);
+    QVERIFY(p.errors.join(" ").contains("unknown key 'scrpits'"));
   }
 };
 

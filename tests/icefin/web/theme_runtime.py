@@ -8,7 +8,7 @@ and a stylesheet that must NOT load), signs in, opens home, then checks:
   - input: arrow keys and Enter move focus and click, through the real input pipeline (TV mode: X key events ->
     InputComponent -> inputPlugin.js hook) or page keys (desktop mode); Back is offered to the screen first;
   - other routes stay jellyfin-web's; coming back remounts the screen;
-  - the user theme: font and image served, stylesheet refused, no scripts; a path outside the package is refused;
+  - the user theme: font, image and (sanitized, theme_trust.py) stylesheet served, no scripts; a path outside the package is refused;
   - engine off: overlay and assets gone with no reload.
 Usage: python3 theme_runtime.py --app ~/build/src/icefin-player --server jf1011 --mode tv --out ~/r83/jf1011-tv
 """
@@ -134,12 +134,11 @@ def main():
         check("set lab-user", call("setActiveTheme", "lab-user", "") is True)
         time.sleep(1.5)
         pkg = call("activePackage")
-        check("user theme: no stylesheet or scripts offered", pkg.get("styles") == "" and pkg.get("scripts") == [], json.dumps(pkg)[:160])
+        check("user theme: stylesheet offered (sanitized, 8.5), no scripts", pkg.get("styles", "").endswith("/styles.css") and pkg.get("scripts") == [], json.dumps(pkg)[:160])
         check("user theme: font offered", len(pkg.get("fonts", [])) == 1)
         check("user theme: font loads", js("document.fonts.load('16px \"Lab Sans\"').then(f => f.length > 0, () => false)") is True)
         check("user theme: image served", js("fetch('icefin-theme://lab-user/img.png').then(r => r.ok, () => false)") is True)
-        check("user theme: stylesheet refused", js("fetch('icefin-theme://lab-user/styles.css').then(r => r.ok, () => false)") is False)
-        check("user css not applied", js("getComputedStyle(document.documentElement).getPropertyValue('--lab-user-css').trim()") == "")
+        check("user theme: sanitized stylesheet served and applied", js("getComputedStyle(document.documentElement).getPropertyValue('--lab-user-css').trim()") == "loaded")
         check("path outside the package refused", js("fetch('icefin-theme://lab-user/%2e%2e/lab-screens/screens.js').then(r => r.ok, () => false)") is False)
         check("unknown theme refused", js("fetch('icefin-theme://nope/x.png').then(r => r.ok, () => false)") is False)
         check("old screen gone after switch", js("document.getElementById('icefin-theme-root').hidden") is True)

@@ -1,5 +1,7 @@
 #include "ThemePackage.h"
+#include <QCryptographicHash>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -26,6 +28,9 @@ Package loadPackage(const QString& dir, Source source)
   const QJsonObject meta = readObject(dir + "/theme.json", p.errors);
   if (!meta.isEmpty()) {
     if (meta.value("schema").toInt() != 1) p.errors << "theme.json: schema must be 1";
+    // Same rule as docs/themes/schema/theme.schema.json: no unknown top-level keys.
+    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "presets"};
+    for (const QString& k : meta.keys()) if (!known.contains(k)) p.errors << QString("theme.json: unknown key '%1'").arg(k);
     p.id = meta.value("id").toString();
     p.name = meta.value("name").toString();
     p.version = meta.value("version").toString();
@@ -41,6 +46,12 @@ Package loadPackage(const QString& dir, Source source)
     };
     if (meta.contains("styles")) p.styles = asset(meta.value("styles").toString(), "styles");
     for (const QJsonValue& v : meta.value("scripts").toArray()) { const QString s = asset(v.toString(), "script"); if (!s.isEmpty()) p.scripts << s; }
+    const QJsonObject sounds = meta.value("sounds").toObject();
+    for (auto it = sounds.begin(); it != sounds.end(); ++it) {
+      if (!soundEvents().contains(it.key())) { p.errors << QString("theme.json: unknown sound event '%1'").arg(it.key()); continue; }
+      const QString s = asset(it.value().toString(), "sound");
+      if (!s.isEmpty()) p.sounds[it.key()] = s;
+    }
     for (const QJsonValue& v : meta.value("fonts").toArray()) {
       const QJsonObject f = v.toObject();
       const QString file = asset(f.value("file").toString(), "font");
@@ -56,6 +67,7 @@ Package loadPackage(const QString& dir, Source source)
     }
   }
   p.tokens = flatten(readObject(dir + "/tokens.json", p.errors), &p.errors);
+  p.contentHash = hashDirectory(dir);
   if (p.errors.isEmpty()) {
     // The package must stand on its own and with every preset.
     QStringList e;
@@ -83,5 +95,29 @@ TokenMap Package::resolved(const QString& preset, const TokenMap& overrides, QSt
   e << validate(r);
   if (errs) *errs << e;
   return r;
+}
+
+QByteArray hashDirectory(const QString& dir)
+{
+  QStringList files;
+  QDirIterator it(dir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
+  while (it.hasNext()) files << QDir(dir).relativeFilePath(it.next());
+  files.sort();
+  QCryptographicHash h(QCryptographicHash::Sha256);
+  for (const QString& rel : files) {
+    QFile f(dir + '/' + rel);
+    if (!f.open(QIODevice::ReadOnly)) continue;
+    h.addData(rel.toUtf8());
+    h.addData(QByteArray(1, '\0'));
+    h.addData(f.readAll());
+    h.addData(QByteArray(1, '\0'));
+  }
+  return h.result().toHex();
+}
+
+const QStringList& soundEvents()
+{
+  static const QStringList e{"focus", "select", "back", "navigate", "error"};
+  return e;
 }
 }

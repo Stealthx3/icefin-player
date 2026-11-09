@@ -3,7 +3,8 @@
 //   <dir>/theme.json   {"schema": 1, "id": "...", "name": "...", "version": "...", "presets": {"<name>": {<tokens>}}}
 //   <dir>/tokens.json  nested design tokens (Tokens.h)
 //   theme.json may also declare assets the web runtime loads over icefin-theme: (8.3):
-//     "styles": "styles.css", "fonts": [{"family", "file", "weight", "style"}], "scripts": ["screens.js"]
+//     "styles": "styles.css", "fonts": [{"family", "file", "weight", "style"}], "scripts": ["screens.js"],
+//     "sounds": {"focus": "sounds/focus.wav", ...} (8.5)
 #pragma once
 #include "Tokens.h"
 #include <QString>
@@ -24,6 +25,8 @@ struct Package
   QString styles;                   // relative path, or empty
   QList<QVariantMap> fonts;         // {family, file, weight, style}
   QStringList scripts;              // relative paths
+  QMap<QString, QString> sounds;    // UI event (focus, select, back, navigate, error) -> relative path
+  QByteArray contentHash;           // sha256 over every file's path and bytes: trust is bound to it (8.5)
   QStringList errors;               // empty when the package can be used
   bool ok() const { return errors.isEmpty(); }
 
@@ -32,4 +35,8 @@ struct Package
 };
 
 Package loadPackage(const QString& dir, Source source);
+// UI sound events a theme can provide (the web runtime plays them; themes can't add events).
+const QStringList& soundEvents();
+// sha256 hex over the sorted relative paths and contents of every file in dir.
+QByteArray hashDirectory(const QString& dir);
 }

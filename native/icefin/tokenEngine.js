@@ -11,12 +11,15 @@
     const CLASS = 'icefin-themed';
     let css = '';
 
+    // Stand-down (SPEC): when the server already injects the theme plugin's runtime, it owns the page's look.
+    const standDown = () => !!window.icefinPluginRuntime;
+
     // Keep the style element last in <head>, after jellyfin-web's own theme stylesheet links.
     function attach() {
         const root = document.documentElement;
         if (!root) return;
         let el = document.getElementById(STYLE_ID);
-        if (!css) {
+        if (!css || standDown()) {
             if (el) el.remove();
             root.classList.remove(CLASS);
             return;
@@ -40,6 +43,7 @@
     const rootWatch = new MutationObserver(() => { watch(); if (document.head) { rootWatch.disconnect(); attach(); } });
     if (document.documentElement) rootWatch.observe(document.documentElement, { childList: true });
     document.addEventListener('DOMContentLoaded', () => { watch(); attach(); });
+    window.addEventListener('icefin-plugin-runtime', () => attach());
 
     function load(api) {
         api.theme.stylesheet((s) => {
