@@ -21,3 +21,5 @@ jobs:
         run: git fetch --quiet origin upstream/master:refs/remotes/origin/upstream/master
       - name: Count and check hooks
         run: scripts/icefin/hook-count.sh --summary "$GITHUB_STEP_SUMMARY"
+      - name: Theme engine stays theme-agnostic
+        run: scripts/icefin/theme-lint.sh

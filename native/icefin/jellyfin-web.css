@@ -1,0 +1,128 @@
+/* Icefin theme engine: jellyfin-web adapter (PLAN 6.5). Maps the standard tokens (themes/TOKENS.md) onto jellyfin-web.
+ * Theme-agnostic: only var(--icefin-*) references, never a color or a theme name (CI: scripts/icefin/theme-lint.sh).
+ * Applies only while the engine has a theme active (html.icefin-themed); turning the theme off removes it live.
+ *
+ * Part 1 - jellyfin-web 10.12+ draws its dark theme from --jf-palette-* variables: set them from the tokens.
+ * Part 2 - jellyfin-web 10.11 hard-codes colors in themes/dark/theme.css: the same controls, restated. */
+
+/* ---- Part 1: palette variables (10.12+) ---- */
+html.icefin-themed {
+  --jf-palette-background-default: var(--icefin-color-background);
+  --jf-palette-background-paper: var(--icefin-color-surface);
+  --jf-palette-background-paperChannel: var(--icefin-color-surface-channel);
+  --jf-palette-AppBar-defaultBg: var(--icefin-color-surfaceRaised);
+  --jf-palette-text-primary: var(--icefin-color-text);
+  --jf-palette-text-secondary: var(--icefin-color-textSecondary);
+  --jf-palette-primary-main: var(--icefin-color-accent);
+  --jf-palette-primary-mainChannel: var(--icefin-color-accent-channel);
+  --jf-palette-primary-dark: var(--icefin-color-accentStrong);
+  --jf-palette-primary-contrastText: var(--icefin-color-onAccent);
+  --jf-palette-secondary-main: var(--icefin-color-focus);
+  --jf-palette-secondary-contrastText: var(--icefin-color-onFocus);
+  --jf-palette-divider: var(--icefin-color-divider);
+  --jf-palette-error-main: var(--icefin-color-error);
+  --jf-palette-error-light: var(--icefin-color-error);
+  --jf-palette-error-contrastText: var(--icefin-color-onError);
+  --jf-palette-FilledInput-bg: var(--icefin-color-inputBackground);
+  --jf-palette-FilledInput-borderColor: var(--icefin-color-divider);
+  --jf-palette-action-hover: var(--icefin-color-hover);
+  --jf-palette-action-focus: var(--icefin-color-hover);
+  --jf-palette-Button-inheritContainedBg: var(--icefin-color-surfaceRaised);
+  --jf-palette-Button-inheritContainedHoverBg: var(--icefin-color-hover);
+  --jf-palette-SnackbarContent-bg: var(--icefin-color-surfaceRaised);
+  --jf-palette-SnackbarContent-color: var(--icefin-color-text);
+  --jf-card-borderRadius: var(--icefin-shape-cardRadius);
+}
+html.icefin-themed body { font-family: var(--icefin-font-family, inherit); }
+
+/* ---- Part 2: restated rules (10.11) ---- */
+html.icefin-themed,
+html.icefin-themed .backgroundContainer,
+html.icefin-themed .nowPlayingPlaylist,
+html.icefin-themed .dialog,
+html.icefin-themed .mainDrawer,
+html.icefin-themed .drawer-open { background-color: var(--icefin-color-background); }
+html.icefin-themed,
+html.icefin-themed .skinHeader { color: var(--icefin-color-textSecondary); }
+html.icefin-themed .skinHeader-withBackground,
+html.icefin-themed .detailRibbon { background-color: var(--icefin-color-surfaceRaised); }
+html.icefin-themed .paperList,
+html.icefin-themed .visualCardBox,
+html.icefin-themed .cardBox:not(.visualCardBox) .cardPadder,
+html.icefin-themed .formDialogHeader:not(.formDialogHeader-clear),
+html.icefin-themed .formDialogFooter:not(.formDialogFooter-clear),
+html.icefin-themed .collapseContent,
+html.icefin-themed .appfooter { background-color: var(--icefin-color-surface); }
+html.icefin-themed .layout-tv .formDialogFooter:not(.formDialogFooter-clear) { background-color: transparent; }
+
+html.icefin-themed .cardText-secondary,
+html.icefin-themed .fieldDescription,
+html.icefin-themed .listItem .secondary,
+html.icefin-themed .secondaryText,
+html.icefin-themed .inputLabel,
+html.icefin-themed .inputLabelUnfocused,
+html.icefin-themed .emby-tab-button,
+html.icefin-themed .alphaPickerButton { color: var(--icefin-color-textSecondary); }
+html.icefin-themed .emby-tab-button-active,
+html.icefin-themed .alphaPickerButton-selected { color: var(--icefin-color-text); }
+
+html.icefin-themed .button-submit,
+html.icefin-themed .countIndicator,
+html.icefin-themed .playedIndicator,
+html.icefin-themed .mediaSourceIndicator,
+html.icefin-themed .selectionCommandsPanel { background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); }
+html.icefin-themed .button-submit:hover { background: var(--icefin-color-accentStrong); }
+html.icefin-themed .navMenuOption-selected { background: var(--icefin-color-accent) !important; color: var(--icefin-color-onAccent); }
+html.icefin-themed .buttonActive { color: var(--icefin-color-accent) !important; }
+html.icefin-themed .button-link,
+html.icefin-themed .button-flat:hover,
+html.icefin-themed .metadataSidebarIcon,
+html.icefin-themed .upNextDialog-countdownText { color: var(--icefin-color-accent); }
+html.icefin-themed .itemProgressBarForeground,
+html.icefin-themed .emby-checkbox:checked + span + .checkboxOutline { background-color: var(--icefin-color-accent); border-color: var(--icefin-color-accent); }
+html.icefin-themed .progressring-spiner { border-color: var(--icefin-color-accent); }
+
+html.icefin-themed .raised,
+html.icefin-themed .fab { background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-textSecondary); }
+html.icefin-themed .raised:hover,
+html.icefin-themed .fab:hover { background: var(--icefin-color-hover); }
+
+/* Focus: what a remote or controller user follows. */
+html.icefin-themed .emby-button.show-focus:focus,
+html.icefin-themed .raised:focus,
+html.icefin-themed .fab:focus,
+html.icefin-themed .button-submit:focus,
+html.icefin-themed .alphaPickerButton-tv:focus,
+html.icefin-themed .guide-date-tab-button.show-focus:focus { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+html.icefin-themed .emby-tab-button.show-focus:focus,
+html.icefin-themed .emby-tab-button:hover,
+html.icefin-themed .paper-icon-button-light.show-focus:focus,
+html.icefin-themed .inputLabelFocused,
+html.icefin-themed .selectLabelFocused { color: var(--icefin-color-focus); }
+html.icefin-themed .card:focus .cardBox.visualCardBox,
+html.icefin-themed .card:focus .cardBox:not(.visualCardBox) .cardScalable { border-color: var(--icefin-color-focus) !important; }
+html.icefin-themed .emby-input:focus,
+html.icefin-themed .emby-textarea:focus,
+html.icefin-themed .emby-select-withcolor:focus { border-color: var(--icefin-color-focus) !important; }
+html.icefin-themed .emby-select-tv-withcolor:focus,
+html.icefin-themed .guide-channelHeaderCell:focus,
+html.icefin-themed .programCell:focus { background-color: var(--icefin-color-focus) !important; color: var(--icefin-color-onFocus) !important; }
+html.icefin-themed .listItem:focus,
+html.icefin-themed .listItem:hover,
+html.icefin-themed .navMenuOption:hover { background-color: var(--icefin-color-hover); }
+
+html.icefin-themed .emby-input,
+html.icefin-themed .emby-textarea { background: var(--icefin-color-inputBackground); border-color: var(--icefin-color-divider); }
+html.icefin-themed .emby-select-withcolor,
+html.icefin-themed .emby-select-withcolor > option { background: var(--icefin-color-surface); border-color: var(--icefin-color-divider); }
+html.icefin-themed .listItem-border,
+html.icefin-themed .emby-collapsible-button { border-color: var(--icefin-color-divider); }
+html.icefin-themed .actionsheetDivider { background: var(--icefin-color-divider); }
+html.icefin-themed .button-delete { background: var(--icefin-color-error); color: var(--icefin-color-onError); }
+html.icefin-themed .toast { background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); }
+html.icefin-themed .paperList,
+html.icefin-themed .visualCardBox,
+html.icefin-themed .cardContent,
+html.icefin-themed .cardImageContainer,
+html.icefin-themed .cardOverlayContainer,
+html.icefin-themed .cardBox:not(.visualCardBox) .cardPadder { border-radius: var(--icefin-shape-cardRadius); }
