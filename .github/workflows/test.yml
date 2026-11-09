@@ -19,6 +19,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install --yes devscripts equivs ninja-build
         sudo mk-build-deps -i -r -t "apt-get --yes" debian/control
+        sudo apt-get install --yes qt6-multimedia-dev  # ICEFIN-HOOK: theme UI sounds (QSoundEffect, PLAN 8.5)
 
     - name: Configure
       run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DUSE_STATIC_MPVQT=ON  # ICEFIN-HOOK: Ubuntu ships no MpvQt package; build the bundled submodule
