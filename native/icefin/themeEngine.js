@@ -40,8 +40,10 @@
         if (on && !document.getElementById('icefin-screen-style')) {
             const st = document.createElement('style');
             st.id = 'icefin-screen-style';
+            // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
             st.textContent = `html.${SCREEN_CLASS} .skinHeader, html.${SCREEN_CLASS} .mainDrawer, html.${SCREEN_CLASS} .mainDrawerHandle,`
-                + ` html.${SCREEN_CLASS} .mainAnimatedPages, html.${SCREEN_CLASS} .backgroundContainer { visibility: hidden !important; }`;
+                + ` html.${SCREEN_CLASS} .mainAnimatedPages, html.${SCREEN_CLASS} .backgroundContainer, html.${SCREEN_CLASS} #reactRoot`
+                + ' { visibility: hidden !important; }';
             (document.head || h).append(st);
         }
     }
@@ -141,13 +143,22 @@
         try { current.screen.unmount && current.screen.unmount(); } catch (e) { console.error('icefinTheme: unmount', e); }
         current = null;
         const r = document.getElementById(ROOT_ID);
-        if (r) { r.hidden = true; r.textContent = ''; r.removeAttribute('style'); r.style.cssText = 'position:fixed;inset:0;z-index:999;overflow:auto'; r.className = ''; }
+        if (r) {
+            r.hidden = true;
+            r.textContent = '';
+            // A fresh root for the next screen: no styles, classes or data attributes left behind.
+            for (const at of [...r.attributes]) if (!['id', 'role', 'hidden'].includes(at.name)) r.removeAttribute(at.name);
+            r.style.cssText = 'position:fixed;inset:0;z-index:999;overflow:auto';
+        }
         screenShown(false);
     }
 
     function route_() {
         const path = route();
-        const screen = pkg ? screens[path] : null;
+        // "?icefin=stock" on any route shows jellyfin-web's own page, so plugin UI a themed screen replaces (home
+        // sections, for example) stays one step away.
+        const stock = /[?&]icefin=stock\b/.test(location.hash);
+        const screen = pkg && !stock ? screens[path] : null;
         if (current && current.route === path && current.screen === screen) return;
         unmountScreen();
         if (!screen) return;  // jellyfin-web's own page
@@ -175,7 +186,8 @@
         sound,
         navigate: (hash) => { location.hash = hash; },
         apiClient: () => window.ApiClient,
-        focus: (el) => focus(el)
+        focus: (el) => focus(el),
+        focused: () => focused()
     };
 
     // ---- focus engine ----
@@ -233,6 +245,10 @@
             try { if (h(action)) return true; } catch (e) { console.error('icefinTheme: action hook', e); }
         }
         if (!current) return false;
+        // A screen may own its navigation (rows, strips): it sees every action first and returns true when it used it.
+        if (current.screen.onAction) {
+            try { if (current.screen.onAction(action, ctx)) return true; } catch (e) { console.error('icefinTheme: screen onAction', e); }
+        }
         switch (action) {
             case 'up': case 'down': case 'left': case 'right':
                 return move(action);

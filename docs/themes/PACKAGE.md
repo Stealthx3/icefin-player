@@ -97,3 +97,9 @@ script while it loads, or from a screen's `mount()`. They all reset when the the
 
 While a themed screen is up, jellyfin-web's header, drawer and page are hidden (`visibility`, so their state and any
 plugin injection survive). Focus moves are beam-first: elements overlapping across the direction of travel win.
+
+## Screens that own navigation, and the stock escape
+- A screen can define `onAction(action, ctx)`: it sees every action before the runtime's spatial focus does, and
+  returns true when it used it. Rows, strips and carousels use this; `ctx.focused()` and `ctx.focus(el)` help.
+- `?icefin=stock` on any route shows jellyfin-web's own page. A theme that replaces home should link to
+  `#/home?icefin=stock` (Media Center's "Classic home"), so plugin home sections stay one step away.
