@@ -10,4 +10,5 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             theme/CssSanitizer.cpp theme/CssSanitizer.h
             gpu/Hwdec.cpp gpu/Hwdec.h gpu/DecoderSelfTest.cpp gpu/DecoderSelfTest.h
             gpu/HardwareComponent.cpp gpu/HardwareComponent.h gpu/WebGpuStatus.cpp gpu/WebGpuStatus.h
-            render/PlaybackRouter.cpp render/PlaybackRouter.h)
+            render/PlaybackRouter.cpp render/PlaybackRouter.h
+            log/Redact.cpp log/Redact.h)

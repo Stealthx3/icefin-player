@@ -96,7 +96,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 11 — Hardening and beta (2 wks)
 - [ ] **11.1** Full hardware-lab matrix [Testing, CI and hardware lab]
-- [ ] **11.2** Log redaction check; security review of theme trust levels
+- [x] **11.2** Log redaction check; security review of theme trust levels (`tests/icefin/web/log_redaction.py`, `docs/security/THEME-TRUST-REVIEW.md`; re-review with 8.4)
 - [ ] **11.3** Beta on the nightly channel; no open P1 bugs
 
 ## Phase 12 — Release 1.0 (1 wk)
