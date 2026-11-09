@@ -12,9 +12,10 @@ struct Package;
 // CSP-ignored (a strict server CSP would block the assets otherwise), fetch() allowed.
 void registerScheme();
 
-// What a package may serve over the scheme, by source (SPEC "Theme trust levels"; the CSS sanitizer for user
-// themes arrives in 8.5, so until then user themes serve fonts, images and sounds only).
-bool mayServe(const Package& p, const QString& relPath);
+// What a package may serve over the scheme (SPEC "Theme trust levels"). Bundled and development packages: all
+// listed types. User-installed: fonts, images, sounds, JSON and CSS (sanitized when served); scripts and SVG only
+// once the user has trusted that exact package content.
+bool mayServe(const Package& p, const QString& relPath, bool trusted);
 // MIME type for an allowed file extension; empty = not served.
 QByteArray mimeFor(const QString& relPath);
 
@@ -22,13 +23,16 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 {
 public:
   using Lookup = std::function<const Package*(const QString& id)>;
-  explicit SchemeHandler(Lookup lookup, QObject* parent = nullptr) : QWebEngineUrlSchemeHandler(parent), m_lookup(std::move(lookup)) {}
+  using Trusted = std::function<bool(const Package& p)>;
+  SchemeHandler(Lookup lookup, Trusted trusted, QObject* parent = nullptr)
+    : QWebEngineUrlSchemeHandler(parent), m_lookup(std::move(lookup)), m_trusted(std::move(trusted)) {}
   void requestStarted(QWebEngineUrlRequestJob* job) override;
 
   // Resolve a request path to a file inside the package; empty if it escapes the package or isn't allowed.
-  static QString fileFor(const Package& p, const QString& urlPath);
+  static QString fileFor(const Package& p, const QString& urlPath, bool trusted);
 
 private:
   Lookup m_lookup;
+  Trusted m_trusted;
 };
 }
