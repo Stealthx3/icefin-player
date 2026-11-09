@@ -64,7 +64,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 7 — Controller layer (2 wks)
 - [x] **7.1** SDL3 `GamepadService` replacing `InputSDL` (build flag), hotplug, multiple pads, battery [Controller support] (`-DENABLE_SDL2=OFF -DICEFIN_SDL3=ON`, on in the Flatpak)
-- [ ] **7.2** Standard action map, per-controller remapping, Nintendo layout option (done: map `src/icefin/inputmaps/icefin-gamepad.json`, Nintendo option, remap by user inputmap file; open: remap editor in Settings)
+- [x] **7.2** Standard action map, per-controller remapping, Nintendo layout option (map `src/icefin/inputmaps/icefin-gamepad.json`; remap editor in Client Settings → Controllers)
 - [x] **7.3** Glyph-family detection and button-prompt tokens (`data-icefin-glyphs`, `icefinTheme.glyph()`)
 - [ ] **7.4** Steam Input handling, recommended Steam layout, duplicate-input guard (Steam desktop layout only); verify Steam Input's virtual pad visibility (from spike 2.7)
 - [x] **7.5** Hide `navigator.getGamepads` from the page; Controllers settings page (Client Settings → Controllers)

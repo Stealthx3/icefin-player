@@ -70,13 +70,67 @@
                     row.className = 'icefin-pad-row';
                     row.setAttribute('data-family', p.family);
                     const battery = p.battery === 'wired' ? 'wired' : p.percent >= 0 ? `${p.battery}, ${p.percent}%` : p.battery;
-                    row.textContent = `${p.name} · ${p.family} · ${p.mapping} · ${battery}`;
+                    row.textContent = `${p.name} · ${p.family} · ${p.mapping} · ${battery} `;
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'raised emby-button icefin-pad-remap';
+                    btn.textContent = 'Remap';
+                    btn.addEventListener('click', () => remapEditor(body, p));
+                    row.append(btn);
                     body.append(row);
                 }
-                note('Remap a controller by adding a file to the inputmaps folder in Icefin\'s data directory (it overrides the built-in map).');
             }
             section.append(body);
         }));
+        // ---- 7.2: remap editor, per controller ----
+        const BUTTONS = [['PAD_SOUTH', 'South (bottom)'], ['PAD_EAST', 'East (right)'], ['PAD_WEST', 'West (left)'], ['PAD_NORTH', 'North (top)'],
+            ['PAD_LEFTSHOULDER', 'Left shoulder'], ['PAD_RIGHTSHOULDER', 'Right shoulder'], ['PAD_LEFTTRIGGER', 'Left trigger'],
+            ['PAD_RIGHTTRIGGER', 'Right trigger'], ['PAD_START', 'Start'], ['PAD_BACK', 'Back / View'], ['PAD_LEFTSTICK', 'Left stick press'],
+            ['PAD_RIGHTSTICK', 'Right stick press']];
+        const ACTIONS = [['', 'Standard'], ['enter', 'Select'], ['back', 'Back'], ['menu', 'Menu'], ['search', 'Search'], ['home', 'Home'],
+            ['play_pause', 'Play / pause'], ['step_backward', 'Previous chapter'], ['step_forward', 'Next chapter'],
+            ['seek_backward', 'Seek back'], ['seek_forward', 'Seek forward'], ['increase_volume', 'Volume up'],
+            ['decrease_volume', 'Volume down'], ['host:toggleDebug', 'Playback info'], ['none', 'Nothing']];
+        function remapEditor(body, pad) {
+            body.querySelectorAll('.icefin-remap').forEach((n) => n.remove());
+            api.gamepads.standardMap((std) => api.gamepads.remaps((all) => {
+                const mine = Object.assign({}, all[pad.name] || {});
+                const box = document.createElement('div');
+                box.className = 'icefin-remap';
+                const h = document.createElement('h3');
+                h.textContent = `Remap ${pad.name}`;
+                box.append(h);
+                for (const [code, label] of BUTTONS) {
+                    const lab = document.createElement('label');
+                    lab.className = 'selectContainer';
+                    lab.style.display = 'block';
+                    lab.textContent = `${label} (standard: ${(ACTIONS.find((a) => a[0] === std[code]) || [0, std[code] || 'nothing'])[1]}) `;
+                    const sel = document.createElement('select');
+                    sel.className = 'emby-select-withcolor icefin-remap-select';
+                    sel.setAttribute('data-code', code);
+                    for (const [v, t] of ACTIONS) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); }
+                    sel.value = mine[code] || '';
+                    sel.addEventListener('change', () => { if (sel.value) mine[code] = sel.value; else delete mine[code]; });
+                    lab.append(sel);
+                    box.append(lab);
+                }
+                const save = document.createElement('button');
+                save.type = 'button';
+                save.className = 'raised button-submit emby-button icefin-remap-save';
+                save.textContent = 'Save';
+                save.addEventListener('click', () => { api.gamepads.setRemap(pad.name, mine); box.remove(); });
+                const reset = document.createElement('button');
+                reset.type = 'button';
+                reset.className = 'raised emby-button icefin-remap-reset';
+                reset.textContent = 'Reset to standard';
+                reset.addEventListener('click', () => { api.gamepads.setRemap(pad.name, {}); box.remove(); });
+                box.append(save, reset);
+                body.append(box);
+                const first = box.querySelector('select');
+                if (first) first.focus();
+            }));
+        }
+
         const attach = (dialog) => {
             const content = dialog && dialog.querySelector('.formDialogContent');
             if (!content || content.querySelector('#' + ID)) return;

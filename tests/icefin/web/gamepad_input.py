@@ -118,7 +118,27 @@ def main():
         js("window.NativeShell.openClientSettings(); true")
         page.wait_for("document.querySelectorAll('#icefin-controllers-section .icefin-pad-row').length === 1", timeout=20)
         check("Client Settings lists the pad", "xbox" in js("document.querySelector('#icefin-controllers-section .icefin-pad-row').textContent"))
+        # 7.2: remap south to Back in the editor, save, and press it.
+        js("document.querySelector('#icefin-controllers-section .icefin-pad-remap').click(); true")
+        page.wait_for("document.querySelectorAll('#icefin-controllers-section .icefin-remap-select').length === 12", timeout=10)
+        check("remap editor lists 12 buttons with their standard actions", "standard: Select" in js("document.querySelector('#icefin-controllers-section .icefin-remap').textContent"))
+        js("(() => { const s = document.querySelector('.icefin-remap-select[data-code=PAD_SOUTH]'); s.value = 'back'; s.dispatchEvent(new Event('change')); "
+           "document.querySelector('.icefin-remap-save').click(); return true; })()")
+        time.sleep(1)
+        name = pads[0]["name"]
+        check("remap saved for this controller", js("new Promise(r => window.api.gamepads.remaps(r))").get(name) == {"PAD_SOUTH": "back"})
         js("document.querySelector('.dialogContainer').remove(); true")
+        backs, clicks0 = js("window.labScreens.backs"), js("window.labScreens.clicks.length")
+        press(ui, e.BTN_SOUTH)
+        check("remapped south now goes Back", js("window.labScreens.backs") == backs + 1 and js("window.labScreens.clicks.length") == clicks0)
+        js("new Promise(r => { window.api.gamepads.setRemap(%s, {PAD_SOUTH: 'none'}); r(true); })" % json.dumps(name))
+        time.sleep(0.5)
+        press(ui, e.BTN_SOUTH)
+        check("remapped to nothing: no action", js("window.labScreens.backs") == backs + 1 and js("window.labScreens.clicks.length") == clicks0)
+        js("new Promise(r => { window.api.gamepads.setRemap(%s, {}); r(true); })" % json.dumps(name))
+        time.sleep(0.5)
+        press(ui, e.BTN_SOUTH)
+        check("reset: south selects again", js("window.labScreens.clicks.length") == clicks0 + 1)
 
         ui.close()
         ui = None
