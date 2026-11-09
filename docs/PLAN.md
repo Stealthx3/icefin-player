@@ -60,7 +60,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 ## Phase 6 — Router, capability prompt and token engine (4 wks)
 - [ ] **6.1** `HdrCapabilityProbe` (Wayland image description; Vulkan color spaces under X11)
 - [x] **6.2** `PlaybackRouter` implementing the routing table (`src/icefin/render/PlaybackRouter`; logs its decision at load until 6.3 acts on it)
-- [ ] **6.3** Capability prompt with per-device "remember" and Settings reset
+- [x] **6.3** Capability prompt with per-device "remember" and Settings reset (`RouterComponent`, `native/icefin/capabilityPrompt.js`; reset in Client Settings → Hardware; "switch to Vulkan" appears with 5.1)
 - [ ] **6.4** Auto device profile replacing static force-transcode toggles
 - [x] **6.5** `ThemeComponent` token loading and the web token engine, so controls and prompt are themed (the prompt reads `ThemeComponent::tokens()` when 6.3 lands; token set: `docs/themes/TOKENS.md`)
 - [ ] **6.6** Verify every routing row; playback reports match upstream; DV5 on OpenGL raises the prompt
