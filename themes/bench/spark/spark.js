@@ -36,10 +36,7 @@
             bar.append(nav);
             const c = window.ApiClient;
             const entries = [{ label: 'Home' }, { label: 'Search', hash: '#/search' }];
-            try {
-                const views = await c.getUserViews({}, c.getCurrentUserId());
-                for (const v of views.Items || []) entries.push({ label: v.Name, view: v });
-            } catch (e) { console.warn('Spark: views', e); }
+            for (const v of await T.ui.userViews()) entries.push({ label: v.Name, view: v });
             entries.push({ label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
             if (!S) return;
             S.top = entries.map((x) => {
@@ -236,13 +233,14 @@
             rowsView.append(S.rowsBox);
             content.append(hero.el, rowsView);
 
+            const views = await T.ui.userViews();  // also waits out a cold start, so uid below is set
+            if (!S || S.root !== root) return;
             const c = S.client, uid = c.getCurrentUserId();
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
-            const [latest, resume, nextUp, views] = await Promise.all([
+            const [latest, resume, nextUp] = await Promise.all([
                 get(c.getItems(uid, { Recursive: true, IncludeItemTypes: 'Movie,Series', SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 5, Fields: FIELDS })),
                 get(c.getResumableItems(uid, { Limit: 40, MediaTypes: 'Video', Fields: FIELDS })),
-                get(c.getNextUpEpisodes({ UserId: uid, Limit: 40, Fields: FIELDS })),
-                get(c.getUserViews({}, uid))
+                get(c.getNextUpEpisodes({ UserId: uid, Limit: 40, Fields: FIELDS }))
             ]);
             if (!S || S.root !== root) return;
             hero.items = latest;

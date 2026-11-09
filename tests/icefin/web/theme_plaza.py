@@ -147,8 +147,12 @@ def main():
         time.sleep(1.5)
         act("enter")
         page.wait_for("document.getElementById('icefin-theme-root').hasAttribute('data-pz-channel')", timeout=10)
+        before = (foc(), root("data-pz-channel"), js("[...document.querySelectorAll('.pz-tile[data-pz-channel]')].map(t => t.getAttribute('data-pz-channel'))"), js("window.ApiClient && window.ApiClient.getCurrentUserId()"))
         act("enter")
-        page.wait_for("location.hash.startsWith('#/movies') || location.hash.startsWith('#/tv') || location.hash.startsWith('#/music') || location.hash.startsWith('#/list')", timeout=15)
+        try:
+            page.wait_for("location.hash.startsWith('#/movies') || location.hash.startsWith('#/tv') || location.hash.startsWith('#/music') || location.hash.startsWith('#/list')", timeout=15)
+        except Exception:
+            raise RuntimeError(f"Start didn't open the library: before {before}, now {foc()} hash {js('location.hash')}")
         time.sleep(3)
         check("Start on a library opens its page, styled by Plaza's tokens",
               js("window.icefinTheme.active().route") is None

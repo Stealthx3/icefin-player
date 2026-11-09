@@ -92,6 +92,7 @@ script while it loads, or from a screen's `mount()`. They all reset when the the
 | `ui.carousel3d(el, items, {render, spacing, depth, tilt})` | A perspective carousel with the focused item in front. Left/right step through it |
 | `ui.liveTile(el, {fetch, render, interval})` | Cycling content, frozen under reduced or low motion |
 | `ui.mutedPreview(el, {itemId \| src})` | A muted SDR preview in the page's own `<video>` (a small VP8 server transcode). Never mpv, never the passthrough device |
+| `ui.userViews()` | The signed-in user's libraries (a promise of view items). Waits for the session on a cold start and retries a failed or empty answer; use it instead of calling `getUserViews` at mount |
 | `ui.overlay.set({mount(el, ctx)})` | A global panel over any screen, themed or stock: a long press on View (`icefin_overlay`) opens it, and Back closes it. It's modal |
 | `ui.pointerFirst(true)` | Hover moves focus, and `html[data-icefin-pointer]` lets the theme enlarge hit targets |
 | `ui.motion.cap('low')`, `ui.motion.duration(ms)` | A theme-level motion cap, separate from the user's reduced-motion setting. `html[data-icefin-motion]` follows it |

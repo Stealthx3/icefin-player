@@ -75,10 +75,7 @@
             rail.append(list);
             const client = window.ApiClient;
             const sections = [{ label: 'Home' }];
-            try {
-                const views = await client.getUserViews({}, client.getCurrentUserId());
-                for (const v of views.Items || []) sections.push({ label: v.Name, view: v });
-            } catch (e) { console.warn('Harbor: views', e); }
+            for (const v of await T.ui.userViews()) sections.push({ label: v.Name, view: v });
             sections.push({ label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
             if (!S) return;
             S.rail = sections.map((s) => { const b = railItem(s.label, s); list.append(b); return b; });
