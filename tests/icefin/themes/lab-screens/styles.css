@@ -1,0 +1,6 @@
+/* Fixture: proves styles.css arrived over icefin-theme: */
+html[data-icefin-theme] { --lab-screens-loaded: yes; }
+#icefin-theme-root { background: var(--icefin-color-background); color: var(--icefin-color-text); display: flex; gap: 2em; padding: 6em 3em; }
+#icefin-theme-root[hidden] { display: none; }
+.lab-tile { width: 12em; height: 8em; background: var(--icefin-color-surface); border: 0.3em solid transparent; border-radius: var(--icefin-shape-cardRadius); }
+.lab-tile.icefin-focused { border-color: var(--icefin-color-focus); }

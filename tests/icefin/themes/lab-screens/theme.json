@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "lab-screens",
+  "name": "Lab Screens (test fixture)",
+  "version": "1.0.0",
+  "description": "Exercises the web runtime: a stylesheet and a script that registers a themed home screen. Not a real theme.",
+  "styles": "styles.css",
+  "scripts": ["screens.js"]
+}

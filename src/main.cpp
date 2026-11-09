@@ -11,6 +11,7 @@
 #include <Qt>
 #include <QtWebEngineQuick>
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
+#include "icefin/theme/ThemeScheme.h"  // ICEFIN-HOOK: icefin-theme: scheme registration (PLAN 8.3)
 #include <qtwebenginecoreglobal.h>
 #include <QtWebEngineCore/QWebEngineProfile>
 #include <QErrorMessage>
@@ -494,6 +495,7 @@ int main(int argc, char *argv[])
     if (parser.isSet("remote-debugging-port"))
       qputenv("QTWEBENGINE_REMOTE_DEBUGGING", parser.value("remote-debugging-port").toUtf8());
 
+    Icefin::Theme::registerScheme();  // ICEFIN-HOOK: icefin-theme: scheme, before WebEngine starts (PLAN 8.3)
     QtWebEngineQuick::initialize();
     QApplication app(newArgc, newArgv);
 
