@@ -58,6 +58,18 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
 - **House rules:** `play`, `probe`, `deploy` and `session` refuse during `HTPC_QUIET_HOURS` or while
   `HTPC_BUSY_PROCS` run (default: a Steam game). `HTPC_FORCE=1` overrides, only on the user's word.
   Switching Plasma ↔ Gamescope logs the TV session out, so it is off unless `HTPC_ALLOW_SESSION_SWITCH=1`.
+  Going back to game mode (`session gamescope`) skips the quiet-hours check so it can always restore the default.
+- **Lab window (user's rule, 2026-11-08):** the lab may use the TV only from 00:00 to 10:00 Pacific
+  (`HTPC_QUIET_HOURS=10-00`). Plasma rows switch to desktop mode only inside that window, then back to game mode.
+  - **Inside the window, unattended tests only.** Anything that needs a person is queued with
+    `htpc.sh defer ROW WHAT` and the run moves on. Examples: reading the receiver's display, confirming the TV's HDR
+    badge, pressing a remote button, plugging in a controller. Never wait for the user and never guess the answer.
+  - Tests don't start with fewer than `HTPC_MIN_LEFT` (15) minutes left in the window.
+  - **At 10:00 the hand-off runs:** `htpc.sh handoff` lists the open steps and marks them handed off. The scheduled
+    task `icefin-htpc-lab-handoff` (daily, just after 10:00) runs it and pushes the list to the user's phone. A lab
+    session still running at 10:00 does the same. The steps then run in the post-lab timeframe with the user present.
+    The TV is off-limits to the lab then, so those runs need `HTPC_FORCE=1` on the user's word.
+  - `htpc.sh window` shows where the clock is; `htpc.sh deferred` lists the queue (`build-htpc/deferred.tsv`).
 - **Ports are shifted** by `HTPC_PORT_SHIFT` (30000) so a Jellyfin server on the HTPC itself is never shadowed. The shifted ports must stay in 32768–60999: Bazzite's SELinux policy lets sshd open reverse-tunnel listeners only in that range.
 - **Lab-server credentials** go VM → HTPC over SSH into `~/.local/share/icefin-lab/jf/creds.json` (0600), never through a log or the console.
 - **Stand-in:** `HTPC_ENV=tests/icefin/htpc/htpc.sim.env scripts/icefin/htpc.sh …` targets `lab-icefin-htpcsim`
