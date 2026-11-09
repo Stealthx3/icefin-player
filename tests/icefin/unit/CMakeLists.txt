@@ -21,3 +21,8 @@ add_executable(test_icefin_router test_router.cpp)
 target_link_libraries(test_icefin_router jmp_core Qt6::Test)
 target_include_directories(test_icefin_router PRIVATE ${CMAKE_SOURCE_DIR}/src)
 add_test(NAME test_icefin_router COMMAND test_icefin_router)
+
+add_executable(test_icefin_log test_log.cpp)
+target_link_libraries(test_icefin_log jmp_core Qt6::Test)
+target_include_directories(test_icefin_log PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME test_icefin_log COMMAND test_icefin_log)
