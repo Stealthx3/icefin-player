@@ -32,7 +32,7 @@ source "$ENVF"
 : "${HTPC_HOST:?set HTPC_HOST in $ENVF}" "${HTPC_USER:?set HTPC_USER in $ENVF}"
 : "${HTPC_SSH_PORT:=22}" "${HTPC_SSH_KEY:=$HOME/.ssh/id_ed25519}" "${HTPC_HOSTKEY:=accept-new}"
 : "${HTPC_DEST:=.local/share/icefin-lab}" "${HTPC_APP_ID:=io.github.stealthx3.IcefinPlayer}"
-: "${HTPC_PORT_SHIFT:=10000}" "${HTPC_REPO_PORT:=8099}" "${HTPC_QUIET_HOURS:=}" "${HTPC_BUSY_PROCS:=reaper}"
+: "${HTPC_PORT_SHIFT:=30000}" "${HTPC_REPO_PORT:=8099}" "${HTPC_QUIET_HOURS:=}" "${HTPC_BUSY_PROCS:=reaper}"
 : "${HTPC_ALLOW_SESSION_SWITCH:=0}" "${HTPC_LAB_ENV:=lab.env}" "${HTPC_FORCE:=0}"
 
 die() { echo "htpc: $*" >&2; exit 1; }
@@ -68,6 +68,17 @@ sess_env() { # take on the environment of the session on screen (Plasma, GNOME o
     case "$k" in WAYLAND_DISPLAY|DISPLAY|XAUTHORITY|XDG_CURRENT_DESKTOP|XDG_SESSION_TYPE|XDG_SESSION_DESKTOP|DESKTOP_SESSION)
       export "$k=$v" ;; esac
   done < <(systemctl --user show-environment 2>/dev/null)
+  # Game mode: gamescope-session doesn't export its displays to systemd. Take them from the Steam client,
+  # whose Xwayland (DISPLAY) is the one Gamescope shows.
+  if [ -z "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ] && pgrep -u "$(id -u)" -x "gamescope|gamescope-wl" >/dev/null 2>&1; then
+    local pid; pid="$(pgrep -u "$(id -u)" -x steam | head -n1 || true)"
+    if [ -n "$pid" ] && [ -r "/proc/$pid/environ" ]; then
+      while IFS='=' read -r k v; do
+        case "$k" in DISPLAY|XAUTHORITY|GAMESCOPE_WAYLAND_DISPLAY|XDG_SESSION_TYPE|XDG_SESSION_DESKTOP) export "$k=$v" ;; esac
+      done < <(tr '\0' '\n' < "/proc/$pid/environ")
+      export XDG_CURRENT_DESKTOP=gamescope
+    fi
+  fi
 }
 EOF
 }

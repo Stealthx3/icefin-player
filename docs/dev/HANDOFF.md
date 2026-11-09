@@ -32,12 +32,13 @@
 
 - **HLG acceptance row (spike 2.3):** KWin 6.3 and Mutter 48 don't accept the HLG transfer function on surfaces, so Icefin outputs HLG sources as PQ (HDR10). Change the acceptance row to "HLG sources play as HDR", or keep "TV reports HLG" as a target for compositors that add HLG later?
 
-## HTPC tier (D16, 2026-11-08): what the user still has to do
-`scripts/icefin/htpc.sh` is built and tested on a stand-in guest. To start on the real HTPC (Bazzite):
-1. Enable SSH on the HTPC (`sudo systemctl enable --now sshd`) and add this workstation's `~/.ssh/id_ed25519.pub` to the TV-session user's `~/.ssh/authorized_keys`.
-2. Copy `tests/icefin/htpc/htpc.env.example` to `htpc.env`: host, user, quiet hours.
-3. Optional, to watch: `ujust setup-sunshine` on the HTPC, Moonlight here.
-4. Tell Claude the GPU, Bazzite image (KDE/GNOME, desktop/deck), TV and receiver models; then `htpc.sh doctor` → `deploy` → PLAN 1.10.
+## HTPC tier (D16): connected 2026-11-08
+- HTPC `192.168.2.131`, user `htpc`, Bazzite 45 `bazzite-deck` (game mode by default; Plasma via desktop mode), kernel 7.2.
+- AMD RX 9070 XT (Navi 48) on `card1-HDMI-A-2` → Hisense 55005N TV; Denon AVR-S660H receiver. The ELD names the TV
+  (HISENSE) and lists AC-3, E-AC-3, DTS, DTS-HD and LPCM, no TrueHD, so the receiver is probably on the TV's (e)ARC
+  rather than in the HDMI chain. Confirm with the user.
+- `htpc.sh doctor` OK, `deploy` OK. The house rules held off the first probe while a game was running.
+- Still open for the user: quiet hours, permission to switch sessions (`HTPC_ALLOW_SESSION_SWITCH`).
 
 ## Hardware the lab will need (Phase 1.7 / 11.1)
 AMD, Intel and NVIDIA GPUs; an HDR10 TV, an HDR monitor and an SDR display; an AV receiver over HDMI (TrueHD, DTS-HD MA, E-AC3); controllers (Xbox Series pad, DualSense, Switch Pro, an 8BitDo pad, Steam Deck); a five-way remote and a Wii Remote with a sensor bar.

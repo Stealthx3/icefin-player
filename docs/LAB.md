@@ -35,8 +35,8 @@ The VM builds; the HTPC runs everything that needs a real GPU, HDR TV, receiver 
 
 ```
 workstation ──ssh──> HTPC (Bazzite, the TV session's user)
-   │                    127.0.0.1:18096/18097  ─┐ reverse tunnels
-   │                    127.0.0.1:18099        ─┤ (ssh -R, opened by the workstation)
+   │                    127.0.0.1:38096/38097  ─┐ reverse tunnels
+   │                    127.0.0.1:38099        ─┤ (ssh -R, opened by the workstation)
    └── libvirt NAT ──> lab-icefin-main: Jellyfin :8096/:8097, Flatpak repo ~/fp-repo served on :8099
 ```
 
@@ -58,7 +58,7 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
 - **House rules:** `play`, `probe`, `deploy` and `session` refuse during `HTPC_QUIET_HOURS` or while
   `HTPC_BUSY_PROCS` run (default: a Steam game). `HTPC_FORCE=1` overrides, only on the user's word.
   Switching Plasma ↔ Gamescope logs the TV session out, so it is off unless `HTPC_ALLOW_SESSION_SWITCH=1`.
-- **Ports are shifted** by `HTPC_PORT_SHIFT` (10000) so a Jellyfin server on the HTPC itself is never shadowed.
+- **Ports are shifted** by `HTPC_PORT_SHIFT` (30000) so a Jellyfin server on the HTPC itself is never shadowed. The shifted ports must stay in 32768–60999: Bazzite's SELinux policy lets sshd open reverse-tunnel listeners only in that range.
 - **Lab-server credentials** go VM → HTPC over SSH into `~/.local/share/icefin-lab/jf/creds.json` (0600), never through a log or the console.
 - **Stand-in:** `HTPC_ENV=tests/icefin/htpc/htpc.sim.env scripts/icefin/htpc.sh …` targets `lab-icefin-htpcsim`
   (headless Weston as the "TV session"; no GPU, so `play … --app-arg=--disable-gpu` there).
