@@ -28,6 +28,7 @@ class inputPlugin {
 
             api.input.hostInput.connect((actions) => {
                 actions.forEach(action => {
+                    if (window.icefinTheme && window.icefinTheme.handleAction(action)) return;  // ICEFIN-HOOK: themed screens take input first (PLAN 8.3)
                     if (action === 'shuffle') {
                         playbackManager.setQueueShuffleMode('Shuffle');
                     } else if (action === 'sorted') {

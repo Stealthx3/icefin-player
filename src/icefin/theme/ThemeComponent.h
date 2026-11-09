@@ -33,6 +33,11 @@ public:
   Q_INVOKABLE QString stylesheet() const;  // CSS for the page; empty when off
   Q_INVOKABLE QStringList lastErrors() const { return m_errors; }
   Q_INVOKABLE void rescan();
+  // For the web runtime (8.3): {id, source, styles, fonts[{family, url, weight, style}], scripts[]} as icefin-theme:
+  // URLs, already filtered by the package's trust level; empty map when the engine is off.
+  Q_INVOKABLE QVariantMap activePackage() const;
+  // Called from webview.qml (ICEFIN-HOOK) with the view's WebEngineProfile: serve icefin-theme: on it.
+  Q_INVOKABLE void installSchemeHandler(QObject* profile);
 
   // Search roots, in priority order (an id found earlier wins).
   static QStringList roots();
@@ -47,5 +52,6 @@ private:
   QString m_active, m_preset;
   TokenMap m_tokens;
   QStringList m_errors;
+  class SchemeHandler* m_scheme = nullptr;
 };
 }
