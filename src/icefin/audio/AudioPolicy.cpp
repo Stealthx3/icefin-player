@@ -3,6 +3,7 @@
 #include "Eld.h"
 #include "Passthrough.h"
 #include "DeviceReservation.h"
+#include "AudioState.h"
 #include <memory>
 #include <MpvController>
 #include <QDebug>
@@ -15,6 +16,12 @@ static EldMonitor& monitor() { static EldMonitor m; return m; }
 static std::unique_ptr<DeviceReservation>& reservation() { static std::unique_ptr<DeviceReservation> r; return r; }
 
 void releaseReservation() { if (reservation()) reservation()->release(); }
+
+void refreshBitstream(MpvController* mpv, bool passthrough, const QString& why)
+{
+  const bool exclusive = (reservation() && reservation()->held()) || mpv->getProperty("audio-exclusive").toBool();
+  state().setBitstream(passthrough || exclusive, passthrough ? why : exclusive ? QString("exclusive output") : why);
+}
 
 // Exclusive ALSA: claim the card from PipeWire/PulseAudio/JACK before mpv opens it (SPEC "Exclusive ALSA").
 static void reserveFor(const Output& out, Backend backend)
@@ -34,7 +41,10 @@ void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCode
     reserveFor(o, o.backend ? *o.backend : chosen.value_or(Backend::PipeWire));  // reservation is independent of passthrough
   }
   const QString codec = mpv->getProperty("current-tracks/audio/codec").toString();
-  if (codec.isEmpty() || passthroughCodecs.isEmpty()) return;  // no audio, or passthrough off: upstream behaviour
+  if (codec.isEmpty() || passthroughCodecs.isEmpty()) {  // no audio, or passthrough off: upstream behaviour
+    refreshBitstream(mpv, false, codec.isEmpty() ? "no audio track" : "passthrough off");
+    return;
+  }
   Track t{codec, mpv->getProperty("current-tracks/audio/codec-profile").toString(),
           mpv->getProperty("current-tracks/audio/demux-channel-count").toInt()};
   if (t.channels <= 0) t.channels = 2;
@@ -56,6 +66,7 @@ void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCode
 
   const Decision d = decide(t, user, eld, backend);
   mpv->setProperty("audio-spdif", d.spdif);
+  refreshBitstream(mpv, d.mode != Decision::Pcm, d.mode != Decision::Pcm ? "passthrough " + d.spdif : d.reason);
   qInfo().noquote() << "Icefin audio:" << codec << t.profile << t.channels << "ch on" << device
                     << "->" << (d.mode == Decision::Pcm ? QString("PCM %1ch").arg(d.pcmChannels) : d.spdif)
                     << "(" + d.reason + ")" << (eld ? "ELD: " + eld->summary() : QString("no ELD"));

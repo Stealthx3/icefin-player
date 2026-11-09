@@ -16,5 +16,11 @@
         ]
       }
     ]
+  },
+  {
+    "section": "state",
+    "values": [
+      { "value": "icefin_audio_delays", "default": "{}", "hidden": true }
+    ]
   }
 ]

@@ -1,10 +1,13 @@
-// Unit tests for Icefin's ELD parser and per-track passthrough decision (PLAN 3.2, 3.3).
+// Unit tests for Icefin's ELD parser, per-track passthrough decision, per-device delay and volume routing (PLAN 3.2, 3.3, 3.7).
 #include <QtTest>
 #include <QFile>
 #include "icefin/audio/Eld.h"
 #include "icefin/audio/Passthrough.h"
 #include "icefin/audio/AudioOutput.h"
 #include "icefin/settings/SettingsMerge.h"
+#include "icefin/audio/AudioState.h"
+#include "icefin/audio/DeviceDelay.h"
+#include <QSignalSpy>
 #include <QJsonArray>
 #include <QJsonObject>
 
@@ -164,6 +167,46 @@ private slots:
     Decision d = Icefin::Audio::decide({"truehd", "", 8}, {Codec::AC3}, fixture("receiver_full.txt"), Backend::PipeWire);
     QCOMPARE(int(d.mode), int(Decision::Pcm));
     QVERIFY(d.reason.contains("not enabled"));
+  }
+  void delaysPerDevice()
+  {
+    QJsonObject store;
+    QVERIFY(!recallDelays(store, "pipewire/hdmi").has_value());  // first time: no stored values
+    store = rememberDelays(store, "pipewire/hdmi", {{"normal", 120}, {"24hz", 80}, {"25hz", 0}, {"50hz", -50}});
+    store = rememberDelays(store, "alsa/headphones", {{"normal", 0}});
+    store = rememberDelays(store, "", {{"normal", 999}});  // no device: ignored
+    QCOMPARE(store.size(), 2);
+    auto hdmi = recallDelays(store, "pipewire/hdmi");
+    QVERIFY(hdmi);
+    QCOMPARE(hdmi->value("normal"), 120.0);
+    QCOMPARE(hdmi->value("24hz"), 80.0);
+    QCOMPARE(hdmi->value("50hz"), -50.0);
+    auto hp = recallDelays(store, "alsa/headphones");
+    QCOMPARE(hp->value("24hz"), 0.0);  // missing keys read as 0
+    QCOMPARE(hp->size(), 4);
+  }
+  void volumeRouting()
+  {
+    AudioState& st = state();
+    QSignalSpy spy(&st, &AudioState::bitstreamChanged);
+    const QStringList in{"increase_volume", "play_pause", "decrease_volume"};
+    QCOMPARE(st.routeVolumeActions(in), in);  // PCM: software volume, unchanged
+    QList<int> sent;
+    st.setReceiverVolume([&](int dir) { sent << dir; });
+    QCOMPARE(st.routeVolumeActions(in), in);  // still PCM
+    st.setBitstream(true, "test");
+    QVERIFY(st.uiSoundsMuted());
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(st.routeVolumeActions(in), QStringList{"play_pause"});
+    QCOMPARE(sent, (QList<int>{1, -1}));
+    st.setReceiverVolume({});  // CEC adapter gone: volume stays with the web client
+    QCOMPARE(st.routeVolumeActions(in), in);
+    st.setBitstream(true, "again");
+    QCOMPARE(spy.count(), 1);  // no change, no signal
+    st.setBitstream(false, "test");
+    QVERIFY(!st.uiSoundsMuted());
+    QCOMPARE(volumeDirection("increase_volume"), 1);
+    QCOMPARE(volumeDirection("seek_forward"), 0);
   }
 };
 

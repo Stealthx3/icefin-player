@@ -34,7 +34,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **3.4** Runtime IEC958 format setting via device-restore; WirePlumber drop-in fallback
 - [x] **3.5** Exclusive ALSA with `org.freedesktop.ReserveDevice1` reservation
 - [x] **3.6** Never-silent fallback replacing `audio-fallback-to-null` (PCM retry → release reservation → default device → notice)
-- [ ] **3.7** Per-device audio delay; CEC volume during passthrough; UI sounds muted during passthrough
+- [x] **3.7** Per-device audio delay; CEC volume during passthrough; UI sounds muted during passthrough (CEC verified with the receiver in 3.8; UI sounds read `AudioState` from 8.5)
 - [ ] **3.8** Audio test page; receiver run of every audio acceptance row
 
 ## Phase 4 — GPU and display (2 wks)
@@ -75,7 +75,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **8.2** Three-way plugin runs in CI: engine off, Baseline, styled themes
 - [ ] **8.3** Web runtime `native/icefin/themeEngine.js` appended to the injected shell script; `icefin-theme:` scheme [Theme-engine layer]
 - [ ] **8.4** Native backdrop layer (QML shaders); measure transparent web-view cost
-- [ ] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds
+- [ ] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`)
 - [ ] **8.6** Media Center reference theme; benchmark checklist passes
 
 ## Phase 9 — Benchmark clone themes (8 wks)

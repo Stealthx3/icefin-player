@@ -1,5 +1,6 @@
 #include <QDebug>
 #include "InputComponent.h"
+#include "icefin/audio/AudioState.h"  // ICEFIN-HOOK: receiver volume over CEC during passthrough (PLAN 3.7)
 #include "settings/SettingsComponent.h"
 #include "system/SystemComponent.h"
 #include "power/PowerComponent.h"
@@ -66,7 +67,8 @@ bool InputComponent::addInput(InputBase* base)
     if (!m_autoRepeatActions.isEmpty())
     {
       qDebug() << "Emit input action (autorepeat):" << m_autoRepeatActions;
-      emit hostInput(m_autoRepeatActions);
+      const QStringList actions = Icefin::Audio::state().routeVolumeActions(m_autoRepeatActions);  // ICEFIN-HOOK: CEC volume (PLAN 3.7)
+      if (!actions.isEmpty()) emit hostInput(actions);  // ICEFIN-HOOK: CEC volume (PLAN 3.7)
     }
 
     m_autoRepeatTimer->setInterval(AUTOREPEAT_MSEC);
@@ -228,6 +230,7 @@ void InputComponent::remapInput(const QString &source, const QString &keycode, I
       && SettingsComponent::Get().value(SETTINGS_SECTION_MAIN, "enableInputRepeat").toBool())
     m_autoRepeatTimer->start(INITAL_AUTOREPEAT_MSEC);
 
+  queuedActions = Icefin::Audio::state().routeVolumeActions(queuedActions);  // ICEFIN-HOOK: CEC volume during passthrough (PLAN 3.7)
   if (!queuedActions.isEmpty())
   {
     if (SystemComponent::Get().isWebClientConnected())
