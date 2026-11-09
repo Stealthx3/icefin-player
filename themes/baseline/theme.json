@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "baseline",
+  "name": "Baseline",
+  "version": "1.0.0",
+  "description": "The stock web client look with every theme-engine layer switched on. It is the control for plugin compatibility runs (DECISIONS D10): a plugin that breaks under Baseline but not with the engine off points to an engine bug.",
+  "styles": "styles.css",
+  "scripts": ["baseline.js"]
+}
