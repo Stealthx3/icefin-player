@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "lab-contrast",
+  "name": "Lab Contrast (test fixture)",
+  "version": "1.0.0",
+  "description": "Loud, unmistakable colors so tests can see the token engine took effect. Not a real theme.",
+  "presets": {
+    "green": { "color": { "accent": "#1fa83a", "focus": "{color.accent}" } }
+  }
+}

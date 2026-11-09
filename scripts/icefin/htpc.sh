@@ -149,6 +149,10 @@ cmd_tunnel() {
 }
 
 cmd_build() {
+  # The HTPC installs whatever is in ~/fp-repo, so only a clean main goes there (feature branches build natively).
+  local br; br="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
+  [ "$br" = main ] || die "build: on '$br'; the HTPC's Flatpak repo takes main only (switch to main, or build natively)"
+  git -C "$ROOT" diff --quiet HEAD -- || die "build: uncommitted changes; the HTPC's Flatpak repo takes a clean main only"
   LAB run 'flatpak-builder --user --install-deps-from=flathub --force-clean --state-dir=$HOME/fp-state --repo=$HOME/fp-repo $HOME/fp-build flatpak/io.github.stealthx3.IcefinPlayer.yml 2>&1 | tail -n 15'
 }
 
