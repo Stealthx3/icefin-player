@@ -76,6 +76,7 @@ set_source_files_properties(resources.qrc PROPERTIES GENERATED TRUE)
 add_custom_command(OUTPUT qrc_resources.cpp
   COMMAND ${Qt6Core_RCC_EXECUTABLE} -name resources -o qrc_resources.cpp resources.qrc
   DEPENDS resources.qrc ${CMAKE_SOURCE_DIR}/src/ui/webview.qml ${RESOURCE_FILES} ${NATIVE_FILES}
+    ${ICEFIN_RESOURCE_FILES}  # ICEFIN-HOOK: recompile resources when an Icefin resource changes
 )
 set_source_files_properties(qrc_resources.cpp PROPERTIES GENERATED TRUE)
 

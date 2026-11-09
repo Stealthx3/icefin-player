@@ -4,6 +4,7 @@
 #include "settings/SettingsComponent.h"
 #include "power/PowerComponent.h"
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
+#include "icefin/audio/AudioState.h"  // ICEFIN-HOOK: receiver volume over CEC during passthrough (PLAN 3.7)
 
 struct KeyAction
 {
@@ -161,6 +162,8 @@ bool InputCECWorker::openAdapter()
     {
       qInfo() << "Device " << devices[0].strComName << "was successfully opened";
       ret = true;
+      // ICEFIN-HOOK: receiver volume over CEC during passthrough (PLAN 3.7); queued to this worker's thread
+      Icefin::Audio::state().setReceiverVolume([this](int dir) { QMetaObject::invokeMethod(this, [this, dir] { if (m_adapter && !m_adapterPort.isEmpty()) { if (dir > 0) m_adapter->VolumeUp(); else m_adapter->VolumeDown(); } }, Qt::QueuedConnection); });
     }
     else
     {
@@ -175,6 +178,7 @@ bool InputCECWorker::openAdapter()
 //////////////////////////////////////////////////////////////////////////////////////////////////
 void InputCECWorker::closeAdapter()
 {
+  Icefin::Audio::state().setReceiverVolume({});  // ICEFIN-HOOK: no adapter, no receiver volume (PLAN 3.7)
   m_adapterPort.clear();
 }
 
