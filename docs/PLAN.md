@@ -20,7 +20,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
 - [x] **2.2** Spike: patched libmpv rendering through libplacebo on Qt's shared Vulkan device
 - [x] **2.3** Spike: HDR swapchain format and Wayland surface tagging on KWin and Mutter
-- [x] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (GO: HDR10 swapchain in game mode with Flathub's gamescope VulkanLayer and `xdg-run/gamescope-0` access, #32)
+- [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (renderer works in game mode; open: HDR, which needs Flathub's gamescope VulkanLayer extension on the HTPC, waiting for the user's OK)
 - [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
 - [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
 - [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
@@ -83,7 +83,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **9.2** Generic capabilities: 3D carousel, paged grid, live tiles, muted previews (`native/icefin/capabilities.js`; 60 fps on the lowest-spec HTPC checked with the clones)
 - [x] **9.3** Generic capabilities: top bar and side rail, pivot headers, pointer-first mode, global overlay, low-motion profile (`icefinTheme.ui`, `docs/themes/PACKAGE.md`)
 - [ ] **9.4** Harbor (Kodi Estuary layout) (built: `themes/bench/harbor` in the opt-in benchmark pack, Client Settings → Benchmark Themes; menu rail, shelves, fanart layer, info dialog, five-way navigation, `tests/icefin/web/theme_harbor.py`; open: layout and timing against the 9.1 reference captures)
-- [ ] **9.5** Spark (Fire TV layout)
+- [ ] **9.5** Spark (Fire TV layout) (built: `themes/bench/spark`; top bar, hero carousel with muted previews after a dwell (series preview their first episode), recycled 16:9 rows (nine tiles in the DOM for a 300-item row), hero shrinks when rows have focus, `tests/icefin/web/theme_spark.py`; open: layout and timing against the 9.1 reference captures)
 - [ ] **9.6** Plum (Roku TV layout)
 - [ ] **9.7** Plaza (Wii Menu layout)
 - [ ] **9.8** Orbit (Xbox 360 NXE layout)
