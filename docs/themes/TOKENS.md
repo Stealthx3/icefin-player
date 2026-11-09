@@ -30,8 +30,13 @@ variables directly, so a jellyfin-web update only changes the engine's adapter (
 | `shape.cardRadius` | card and list corners |
 
 ## Optional
-| Token | Used for |
-|---|---|
-| `font.family` | page font (the font must be bundled with the theme; 8.3 serves it over `icefin-theme:`) |
+| Token | Used for | Falls back to |
+|---|---|---|
+| `font.family` | page font (declare the font file in `theme.json`; served over `icefin-theme:`) | page default |
+| `color.button` / `color.buttonHover` | raised buttons | `color.surfaceRaised` / `color.hover` |
+| `color.focusTint` | focused list rows | `color.hover` |
+| `color.inputBorder` | text field and select borders | `color.divider` |
+| `color.errorSoft` | played and rating icons, recording progress | `color.error` |
+| `color.toast` / `color.toastText` | toast messages | `color.surfaceRaised` / `color.text` |
 
 Themes may define more tokens, such as a private `palette` group, for their own references and later layers.
