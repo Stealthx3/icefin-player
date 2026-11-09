@@ -1,0 +1,45 @@
+/* Plum: slim header, menu column, grid of large tiles. Proportions follow the benchmark target at 16:9; all colours
+   from tokens. Motion is minimal by design: the focus frame jumps and the grid steps a row at a time. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", Roboto, sans-serif; }
+
+[data-pl] { background: var(--icefin-color-background); }
+
+/* Header: brand on the left, item count and clock on the right. */
+[data-pl] .icefin-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 3.4vw 0 2.6vw;
+  background: var(--icefin-color-header); border-bottom: 0.12em solid var(--icefin-color-divider); }
+.pl-brand { font-size: 2.1em; font-weight: 700; letter-spacing: -0.02em; color: var(--icefin-color-text); }
+.pl-header-right { display: flex; align-items: baseline; gap: 2.4vw; }
+.pl-clock { font-size: 1.6em; font-weight: 300; color: var(--icefin-color-text); }
+.pl-count { font-size: 1.05em; color: var(--icefin-color-textSecondary); }
+
+/* Menu column: large left-aligned entries; the focused entry is a solid frame, the current one keeps a marker. */
+[data-pl] .icefin-siderail { background: var(--icefin-color-rail); padding: 4.2vh 0 0 1.6vw; overflow: clip; }
+.pl-menu { display: flex; flex-direction: column; gap: 0.6vh; }
+.pl-menu-item { position: relative; padding: 1.6vh 1.6vw 1.6vh 1.8vw; margin-right: 1.4vw; font-size: 1.55em; outline: none; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; color: var(--icefin-color-textSecondary); border-radius: var(--icefin-shape-cardRadius); }
+.pl-menu-item.current { color: var(--icefin-color-text); }
+.pl-menu-item.current::before { content: ""; position: absolute; left: 0.5vw; top: 30%; bottom: 30%; width: 0.22em; background: var(--icefin-color-highlight); }
+.pl-menu-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.pl-menu-item.icefin-focused::before { background: var(--icefin-color-accent); }
+
+/* Grid: three wide tiles across on Home, four posters across in a library; the grid steps a row at a time. */
+[data-pl] .icefin-content { position: relative; overflow: clip; }
+.pl-grid-view { position: absolute; inset: 4.2vh 3.4vw 0 2.4vw; overflow: clip; }
+.pl-grid { display: grid; column-gap: 1.5vw; row-gap: 3.2vh; padding: 0.4em; }
+.pl-tile { position: relative; outline: none; min-width: 0; }
+.pl-art { position: relative; aspect-ratio: 2 / 3; background: var(--icefin-color-surface) center / cover no-repeat;
+  border-radius: var(--icefin-shape-cardRadius); box-shadow: 0 0 0 0.3em transparent; display: flex; align-items: center; justify-content: center; }
+.pl-grid.pl-wide .pl-art { aspect-ratio: 16 / 9; }
+.pl-tile.library .pl-art { background-color: var(--icefin-color-accent); }
+.pl-art-label { padding: 0 1em; font-size: 1.4em; font-weight: 600; text-align: center; color: var(--icefin-color-text); }
+.pl-tile.icefin-focused .pl-art { box-shadow: 0 0 0 0.3em var(--icefin-color-focus); }
+.pl-label { margin-top: 1vh; font-size: 1.05em; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-sub { font-size: 0.88em; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.2em; }
+.pl-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.32em; background: rgba(0, 0, 0, 0.5); }
+.pl-progress::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p); background: var(--icefin-color-highlight); }
+.pl-empty { grid-column: 1 / -1; font-size: 1.4em; color: var(--icefin-color-textSecondary); padding-top: 4vh; }
+
+/* Under the theme's own cap the grid still moves a short step; with the cap lifted (another theme's normal profile)
+   it would glide. */
+.pl-grid { transition: transform 160ms ease-out; }
+html[data-icefin-motion="low"] .pl-grid { transition-duration: 60ms; }

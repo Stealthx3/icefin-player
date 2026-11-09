@@ -84,7 +84,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **9.3** Generic capabilities: top bar and side rail, pivot headers, pointer-first mode, global overlay, low-motion profile (`icefinTheme.ui`, `docs/themes/PACKAGE.md`)
 - [ ] **9.4** Harbor (Kodi Estuary layout) (built: `themes/bench/harbor` in the opt-in benchmark pack, Client Settings → Benchmark Themes; menu rail, shelves, fanart layer, info dialog, five-way navigation, `tests/icefin/web/theme_harbor.py`; open: layout and timing against the 9.1 reference captures)
 - [ ] **9.5** Spark (Fire TV layout) (built: `themes/bench/spark`; top bar, hero carousel with muted previews after a dwell (series preview their first episode), recycled 16:9 rows (nine tiles in the DOM for a 300-item row), hero shrinks when rows have focus, `tests/icefin/web/theme_spark.py`; open: layout and timing against the 9.1 reference captures)
-- [ ] **9.6** Plum (Roku TV layout)
+- [ ] **9.6** Plum (Roku TV layout) (built: `themes/bench/plum`; header with clock, menu column, grid of large tiles (three wide on Home with the libraries first, four posters in a library), theme-level low-motion cap, row-stepped grid with art loaded near the visible rows, `tests/icefin/web/theme_plum.py`; open: the lab run of that test (lab SSH was down), then layout and timing against the 9.1 reference captures)
 - [ ] **9.7** Plaza (Wii Menu layout)
 - [ ] **9.8** Orbit (Xbox 360 NXE layout)
 - [ ] **9.9** Pivot (Xbox 360 Metro layout)
