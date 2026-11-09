@@ -21,7 +21,8 @@
     "PAD_NORTH": "search",
 
     "PAD_START": "play_pause",
-    "PAD_BACK": "home",
+    // View: short press Home, long press the theme's global overlay panel (SPEC: Guide stays with Steam/the system)
+    "PAD_BACK": { "short": "home", "long": "icefin_overlay" },
 
     "PAD_LEFTSHOULDER": "step_backward",
     "PAD_RIGHTSHOULDER": "step_forward",

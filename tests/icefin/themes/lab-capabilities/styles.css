@@ -1,0 +1,7 @@
+#icefin-theme-root { background: var(--icefin-color-background); color: var(--icefin-color-text); }
+.lab-cell { min-height: 3em; padding: 0.5em; background: var(--icefin-color-surface); border: 0.2em solid transparent; }
+.lab-cell.icefin-focused { border-color: var(--icefin-color-focus); }
+.icefin-carousel3d { height: 20em; }
+.icefin-carousel3d .lab-cell { width: 10em; height: 14em; }
+.icefin-pivot-header.active { font-weight: 700; }
+html[data-icefin-pointer] .lab-cell { min-height: 4em; }

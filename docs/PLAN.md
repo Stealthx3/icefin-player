@@ -80,8 +80,8 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 9 — Benchmark clone themes (8 wks)
 - [ ] **9.1** Reference captures for the six targets
-- [ ] **9.2** Generic capabilities: 3D carousel, paged grid, live tiles, muted previews
-- [ ] **9.3** Generic capabilities: top bar and side rail, pivot headers, pointer-first mode, global overlay, low-motion profile
+- [x] **9.2** Generic capabilities: 3D carousel, paged grid, live tiles, muted previews (`native/icefin/capabilities.js`; 60 fps on the lowest-spec HTPC checked with the clones)
+- [x] **9.3** Generic capabilities: top bar and side rail, pivot headers, pointer-first mode, global overlay, low-motion profile (`icefinTheme.ui`, `docs/themes/PACKAGE.md`)
 - [ ] **9.4** Harbor (Kodi Estuary layout)
 - [ ] **9.5** Spark (Fire TV layout)
 - [ ] **9.6** Plum (Roku TV layout)
