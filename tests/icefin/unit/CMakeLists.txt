@@ -16,3 +16,8 @@ target_link_libraries(test_icefin_gpu jmp_core Qt6::Test)
 target_include_directories(test_icefin_gpu PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(test_icefin_gpu PRIVATE ICEFIN_TESTMEDIA="${CMAKE_SOURCE_DIR}/src/icefin/resources/testmedia")
 add_test(NAME test_icefin_gpu COMMAND test_icefin_gpu)
+
+add_executable(test_icefin_router test_router.cpp)
+target_link_libraries(test_icefin_router jmp_core Qt6::Test)
+target_include_directories(test_icefin_router PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME test_icefin_router COMMAND test_icefin_router)

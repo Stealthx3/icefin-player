@@ -306,6 +306,7 @@
                 console.log('[MPV] Subtitle track index:', this._subtitleTrackIndexToSetOnPlaying);
 
                 const streamdata = {type: 'video', headers: {'User-Agent': jmpInfo.userAgent}, metadata: options.item, media: {}};
+                streamdata.icefinMediaSource = options.mediaSource || null;  // ICEFIN-HOOK: VideoRangeType for the playback router (PLAN 6.2)
                 const fps = this.tryGetFramerate(options);
                 if (fps) {
                     streamdata.frameRate = fps;
