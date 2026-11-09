@@ -27,6 +27,17 @@
     ]
   },
   {
+    "section": "main",
+    "values": [
+      {
+        "value": "icefin_webengine_gbm",
+        "display_name": "Web GPU Buffers (GBM)",
+        "help": "Leave on. Turn off only if the app crashes or shows a black window at start with your graphics driver. Takes effect after a restart.",
+        "default": true
+      }
+    ]
+  },
+  {
     "section": "theme",
     "order": 3,
     "values": [
