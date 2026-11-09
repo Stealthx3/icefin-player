@@ -72,7 +72,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 8 — Theme-engine layer (5 wks)
 - [x] **8.1** Baseline control theme first (stock jellyfin-web look, every engine layer on) [Benchmark clone themes] (bundled `themes/baseline`; pixel-identical to stock on jellyfin-web 10.12+; 10.11's older palette differs slightly, measured in `theme_baseline.py`)
-- [ ] **8.2** Three-way plugin runs in CI: engine off, Baseline, styled themes
+- [x] **8.2** Three-way plugin runs in CI: engine off, Baseline, styled themes (runs in the lab: `tests/icefin/web/theme_plugins.py`; the plugin servers live there, not on GitHub Actions)
 - [x] **8.3** Web runtime `native/icefin/themeEngine.js` appended to the injected shell script; `icefin-theme:` scheme [Theme-engine layer] (package format: `docs/themes/PACKAGE.md`)
 - [ ] **8.4** Native backdrop layer (QML shaders); measure transparent web-view cost
 - [x] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`) (schemas `docs/themes/schema/`; Client Settings → Theme picker; passthrough mute verified with the receiver in 3.8)
