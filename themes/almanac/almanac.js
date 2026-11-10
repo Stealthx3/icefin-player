@@ -6,7 +6,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
-    const E = T._engine;
+    const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const ROWS = 7, SPAN = 90, PREVIEW_DWELL = 900;
     const iso = (ms) => new Date(ms).toISOString();
@@ -72,7 +72,7 @@
             },
             async mount(root) {
                 root.setAttribute('data-al', 'guide');
-                S = { client: window.ApiClient, root, menu: [], ready: false, zone: 'guide', menuIndex: 0 };
+                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0 };
                 const top = el('div', 'al-top');
                 const inf = el('div', 'al-info');
                 S.clock = el('div', 'al-clock');
@@ -95,7 +95,7 @@
 
                 const views = await ui.userViews();
                 if (!S || S.root !== root) return;
-                S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+                S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
                 const c = S.client, uid = c.getCurrentUserId();
                 const entries = [{ label: 'Guide' }];
                 for (const v of views) if (v.CollectionType !== 'livetv') entries.push({ label: v.Name, hash: `#/list?parentId=${v.Id}&serverId=${c.serverId()}` });
@@ -134,8 +134,7 @@
                     emptyLabel: 'No information',
                     onFocus(p, ch) { info(p, ch.ch); },
                     onSelect(p, ch) {
-                        const pm = window.icefinPlaybackManager;
-                        if (p.start <= Date.now() && p.end > Date.now() && pm) { stopPreview(); pm.play({ ids: [ch.id], serverId: c.serverId() }); }
+                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
                 });

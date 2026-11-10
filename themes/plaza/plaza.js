@@ -30,8 +30,7 @@
     // ---- channels: { id, label, fetch?() -> items, start?(item), hash? } ----
     function channels(client, views) {
         const uid = client.getCurrentUserId();
-        const pm = () => window.icefinPlaybackManager;
-        const play = (it, ticks) => { const m = pm(); if (m && it) m.play({ ids: [it.Id], serverId: client.serverId(), startPositionTicks: ticks || 0 }); };
+        const play = (it, ticks) => { if (it) T.ctx.play({ ids: [it.Id], serverId: client.serverId(), startPositionTicks: ticks || 0 }); };
         const list = views.map((v) => ({
             id: 'library-' + v.Id, label: v.Name,
             fetch: () => safe(client.getLatestItems({ userId: uid, parentId: v.Id, Limit: 8, Fields: FIELDS })),
@@ -62,7 +61,7 @@
                 fetch: async () => { const items = await ch.fetch(); ch.items = items; t.classList.toggle('pz-has-items', items.length > 0); return items.length ? items : [null]; },
                 render: (it) => {
                     const f = el('div', 'pz-frame');
-                    const url = it ? wideArt(S ? S.client : window.ApiClient, it) : '';
+                    const url = it ? wideArt(S ? S.client : T.ctx.apiClient(), it) : '';
                     if (url) f.style.backgroundImage = `url("${url}")`;
                     else f.append(el('div', 'pz-frame-title', ch.label));
                     f.plazaItem = it;
@@ -124,7 +123,7 @@
         z.append(panel);
         S.channel = { el: z, tile: t, buttons: [menu, start], item };
         S.root.setAttribute('data-pz-channel', ch.id);
-        T._engine.focus(start.classList.contains('pz-disabled') ? menu : start);
+        T.ctx.focus(start.classList.contains('pz-disabled') ? menu : start);
     }
 
     function closeChannel(leaving) {
@@ -139,7 +138,7 @@
         Object.assign(z.style, { left: `${r.left - root.left}px`, top: `${r.top - root.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: '' });
         S.root.setAttribute('data-pz-zoom', 'out');
         setTimeout(() => { z.remove(); if (S) S.root.removeAttribute('data-pz-zoom'); }, ui.motion.duration(ZOOM_MS) + 30);
-        T._engine.focus(t);
+        T.ctx.focus(t);
         return true;
     }
 
@@ -184,7 +183,7 @@
         mount(root) {
             root.setAttribute('data-pz', 'home');
             ui.pointerFirst(true);
-            S = { client: window.ApiClient, root, channel: null, zooming: false };
+            S = { client: T.ctx.apiClient(), root, channel: null, zooming: false };
             const stage = el('div', 'pz-stage');
             const prev = el('div', 'pz-arrow pz-prev pz-hidden', '‹');
             const next = el('div', 'pz-arrow pz-next pz-hidden', '›');
@@ -215,10 +214,10 @@
 
             ui.userViews().then((views) => {
                 if (!S) return;
-                S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+                S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
                 fill(channels(S.client, views));
                 const first = S.pages.querySelector('.pz-tile');
-                if (first) T._engine.focus(first);
+                if (first) T.ctx.focus(first);
             });
         },
         unmount() {

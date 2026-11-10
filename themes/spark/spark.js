@@ -6,7 +6,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
-    const E = T._engine;
+    const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const tags = (it) => it.ImageTags || {};
     const FIELDS = 'PrimaryImageAspectRatio,Overview,ProductionYear,RunTimeTicks,OfficialRating,UserData,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,ParentThumbItemId,ParentThumbImageTag';
@@ -35,7 +35,7 @@
             const nav = el('div', 'sp-nav');
             bar.append(nav);
             const views = await T.ui.userViews();
-            const c = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            const c = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             const entries = [{ label: 'Home' }, { label: 'Search', hash: '#/search' }];
             for (const v of views) entries.push({ label: v.Name, view: v });
             entries.push({ label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
@@ -207,7 +207,7 @@
         },
         async mount(root, ctx) {
             root.setAttribute('data-sp', 'home');
-            S = { client: window.ApiClient, root, top: [], rows: [], zone: 'top', ready: false, readyParts: 0 };
+            S = { client: T.ctx.apiClient(), root, top: [], rows: [], zone: 'top', ready: false, readyParts: 0 };
             S.maybeReady = () => {
                 if (S.readyParts < 2 || S.ready) return;
                 S.ready = true;
@@ -236,7 +236,7 @@
 
             const views = await T.ui.userViews();  // also waits out a cold start, so uid below is set
             if (!S || S.root !== root) return;
-            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             const c = S.client, uid = c.getCurrentUserId();
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
             const [latest, resume, nextUp] = await Promise.all([

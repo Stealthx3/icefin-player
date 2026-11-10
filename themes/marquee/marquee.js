@@ -7,7 +7,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
-    const E = T._engine;
+    const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const FIELDS = 'PrimaryImageAspectRatio,Overview,ProductionYear,RunTimeTicks,OfficialRating,CommunityRating,UserData,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,ParentThumbItemId,ParentThumbImageTag,LocalTrailerCount,ChildCount';
     const DWELL = 2500;  // ms on the billboard before its trailer starts
@@ -49,7 +49,7 @@
         width: '22vw',
         async mount(rail) {
             const views = await ui.userViews();
-            const c = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            const c = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             const entries = [{ icon: '⌕', label: 'Search', hash: '#/search' }, { icon: '⌂', label: 'Home', home: true }];
             for (const v of views) entries.push({ icon: v.CollectionType === 'tvshows' ? '▭' : v.CollectionType === 'music' ? '♪' : '▤', label: v.Name, view: v });
             entries.push({ icon: '⚙', label: 'Settings', hash: '#/mypreferencesmenu' }, { icon: '↺', label: 'Classic home', hash: '#/home?icefin=stock' });
@@ -226,7 +226,7 @@
         },
         async mount(root, ctx) {
             root.setAttribute('data-mq', 'home');
-            S = { client: window.ApiClient, root, rail: [], rows: [], zone: 'billboard', ready: false, parts: 0 };
+            S = { client: T.ctx.apiClient(), root, rail: [], rows: [], zone: 'billboard', ready: false, parts: 0 };
             S.maybeReady = () => {
                 if (S.parts < 2 || S.ready) return;
                 S.ready = true;
@@ -250,8 +250,7 @@
                 b.addEventListener('click', () => {
                     if (!bill.item) return;
                     stopTrailer();
-                    const pm = window.icefinPlaybackManager;
-                    if (i === 0 && pm && bill.item.MediaType === 'Video') pm.play({ ids: [bill.item.Id], serverId: S.client.serverId(), startPositionTicks: 0 });
+                    if (i === 0 && T.ctx.canPlay() && bill.item.MediaType === 'Video') T.ctx.play({ ids: [bill.item.Id], serverId: S.client.serverId(), startPositionTicks: 0 });
                     else details(S.client, bill.item);
                 });
                 btns.append(b);
@@ -265,7 +264,7 @@
 
             const views = await ui.userViews();
             if (!S || S.root !== root) return;
-            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             const c = S.client, uid = c.getCurrentUserId();
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
             const [featured, resume, nextUp] = await Promise.all([

@@ -187,12 +187,47 @@
     let apiRef = null;
     const sound = (name) => { if (apiRef && pkg) apiRef.theme.playSound(name); };
 
+    // The theme script API (PLAN 8.7, docs/themes/PACKAGE.md "Theme script API"): themes reach Icefin and the server
+    // only through this ctx (also window.icefinTheme.ctx) and window.icefinTheme. Host globals (the API client, the
+    // playback manager, the native shell objects) stay private to the engine, so upstream and jellyfin-web changes are
+    // absorbed here instead of in every theme.
     const ctx = {
         sound,
         navigate: (hash) => { location.hash = hash; },
         apiClient: () => window.ApiClient,
         focus: (el) => focus(el),
-        focused: () => focused()
+        focused: () => focused(),
+        // Spatial move to the nearest focusable in a direction, confined to `within` (default: the screen): for
+        // modal dialogs and panels inside a screen. True when focus moved.
+        move(dir, within) {
+            const box = within || document.getElementById(ROOT_ID);
+            if (!box) return false;
+            const cur = focused();
+            const all = Array.from(box.querySelectorAll(FOCUS)).filter((e) => e !== cur && e.offsetParent !== null);
+            const next = cur && box.contains(cur) ? pick(all, cur, dir) : all[0];
+            if (!next) return false;
+            focus(next);
+            sound('focus');
+            return true;
+        },
+        // Starts playback through jellyfin-web's playback manager, so the capability prompt (6.3, one per play action)
+        // applies as for any play. Resolves with play()'s result, or false when the manager isn't ready.
+        play(options) {
+            const pm = window.icefinPlaybackManager;
+            if (!pm || typeof pm.play !== 'function') return Promise.resolve(false);
+            try { return Promise.resolve(pm.play(options)); } catch (e) { return Promise.reject(e); }
+        },
+        // True when the playback manager is ready for play().
+        canPlay: () => !!(window.icefinPlaybackManager && typeof window.icefinPlaybackManager.play === 'function'),
+        // {item, player} for what is playing (or paused) now, or null.
+        nowPlaying() {
+            const pm = window.icefinPlaybackManager;
+            try {
+                const player = pm && pm.getCurrentPlayer && pm.getCurrentPlayer();
+                const item = player && pm.currentItem && pm.currentItem(player);
+                return item ? { item, player } : null;
+            } catch (e) { return null; }
+        }
     };
 
     // ---- focus engine ----
@@ -290,6 +325,8 @@
 
     window.icefinTheme = {
         version: 1,
+        apiVersion: 1,  // the theme script API; bumped only for a breaking change. `system` is reserved for 6.7.
+        ctx,            // the same object screens get in mount(): for code outside a screen (chrome, overlays, timers)
         // Called by theme scripts while they load. route: '#/home' style, without query.
         registerScreen(path, screen) {
             if (!loadingTheme || !screen || typeof screen.mount !== 'function') {
@@ -302,7 +339,7 @@
         handleAction,
         sound,
         active: () => (pkg ? { id: pkg.id, source: pkg.source, route: current ? current.route : null } : null),
-        // For the engine's own capability library (capabilities.js), not for themes.
+        // For the engine's own capability library (capabilities.js), not for themes (theme-lint rule 4).
         _engine: {
             focus: (el) => focus(el),
             focused: () => focused(),

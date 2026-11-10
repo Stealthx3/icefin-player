@@ -74,7 +74,7 @@
             const list = el('div', 'hb-rail-list');
             rail.append(list);
             const views = await T.ui.userViews();
-            const client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            const client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             const sections = [{ label: 'Home' }];
             for (const v of views) sections.push({ label: v.Name, view: v });
             sections.push({ label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
@@ -161,7 +161,7 @@
         i = Math.max(0, Math.min(S.rail.length - 1, i));
         S.zone = 'rail';
         S.railIndex = i;
-        T._engine.focus(S.rail[i]);
+        T.ctx.focus(S.rail[i]);
         S.rail.forEach((b, k) => b.classList.toggle('current', k === i));
         clearTimeout(S.sectionTimer);
         if (S.section !== S.rail[i].harbor) S.sectionTimer = setTimeout(() => renderSection(S.rail[i].harbor), ui.motion.duration(250));
@@ -174,7 +174,7 @@
         S.shelfIndex = r;
         S.lastCol[r] = c;
         const t = row[c];
-        T._engine.focus(t);
+        T.ctx.focus(t);
         // Keep the focused shelf on the second line and the focused poster in view.
         const box = S.shelfBox, shelf = t.closest('.hb-shelf');
         box.style.transform = `translateY(${-Math.max(0, shelf.offsetTop - box.parentElement.offsetHeight * 0.18)}px)`;
@@ -209,20 +209,19 @@
         text.append(el('div', 'hb-info-meta', meta), el('p', 'hb-info-overview', item.Overview || ''));
         const buttons = el('div', 'hb-info-buttons');
         const btn = (label, go) => { const b = el('div', 'hb-button', label); b.setAttribute('data-icefin-focus', ''); b.tabIndex = -1; b.addEventListener('click', go); buttons.append(b); return b; };
-        const pm = window.icefinPlaybackManager;
         const ticks = item.UserData && item.UserData.PlaybackPositionTicks;
-        if (pm && playable(item)) {
-            if (ticks) btn('Resume', () => { closeInfo(); pm.play({ ids: [item.Id], serverId: c.serverId(), startPositionTicks: ticks }); });
-            btn(ticks ? 'Play from start' : 'Play', () => { closeInfo(); pm.play({ ids: [item.Id], serverId: c.serverId(), startPositionTicks: 0 }); });
+        if (T.ctx.canPlay() && playable(item)) {
+            if (ticks) btn('Resume', () => { closeInfo(); T.ctx.play({ ids: [item.Id], serverId: c.serverId(), startPositionTicks: ticks }); });
+            btn(ticks ? 'Play from start' : 'Play', () => { closeInfo(); T.ctx.play({ ids: [item.Id], serverId: c.serverId(), startPositionTicks: 0 }); });
         }
         btn('More info', () => { closeInfo(); location.hash = `#/details?id=${item.Id}&serverId=${c.serverId()}`; });
         text.append(buttons);
         box.append(art, text);
         d.append(box);
         S.root.append(d);
-        S.dialog = { el: d, buttons: [...buttons.children], from: T._engine.focused() };
+        S.dialog = { el: d, buttons: [...buttons.children], from: T.ctx.focused() };
         S.root.setAttribute('data-hb-dialog', 'info');
-        T._engine.focus(S.dialog.buttons[0]);
+        T.ctx.focus(S.dialog.buttons[0]);
     }
 
     function closeInfo() {
@@ -231,7 +230,7 @@
         S.dialog.el.remove();
         S.dialog = null;
         S.root.removeAttribute('data-hb-dialog');
-        if (from && from.isConnected) T._engine.focus(from);
+        if (from && from.isConnected) T.ctx.focus(from);
         return true;
     }
 
@@ -281,7 +280,7 @@
             const clock = el('div', 'hb-clock');
             const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
             tick();
-            S = { client: window.ApiClient, root, fanart: fan, rail: null, shelves: [], lastCol: [], railIndex: 0, shelfIndex: 0, zone: 'rail',
+            S = { client: T.ctx.apiClient(), root, fanart: fan, rail: null, shelves: [], lastCol: [], railIndex: 0, shelfIndex: 0, zone: 'rail',
                 clockTimer: setInterval(tick, 15000) };
             const content = ui.chrome.frame(root, ctx);
             const shelfView = el('div', 'hb-shelves');

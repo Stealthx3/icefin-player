@@ -207,7 +207,7 @@
             overlayEl.setAttribute('role', 'dialog');
             overlayEl.style.cssText = 'position:fixed;inset:0;z-index:1001';
             document.body.append(overlayEl);
-            overlaySpec.mount(overlayEl, { close: overlay.close, sound: E.sound });
+            overlaySpec.mount(overlayEl, Object.assign(Object.create(T.ctx || {}), { close: overlay.close, sound: E.sound }));  // the theme ctx, plus close()
             const f = overlayEl.querySelector(FOCUS);
             if (f) setOverlayFocus(f);
             E.sound('navigate');

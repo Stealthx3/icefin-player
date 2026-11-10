@@ -113,7 +113,7 @@
             sec.tiles = tiles;
             put(tiles);
             const first = grid.querySelector('.pv-tile');
-            if (first) T._engine.focus(first);
+            if (first) T.ctx.focus(first);
         });
     }
 
@@ -145,7 +145,7 @@
             S.host = el('div', 'pv-host');
             root.append(clock, S.host);
             root.mosaicBuild = (sections) => build(sections);
-            const client = window.ApiClient;
+            const client = T.ctx.apiClient();
             ui.userViews().then((views) => { if (S) build(sectionsFor(client, views)); });
         },
         unmount() {

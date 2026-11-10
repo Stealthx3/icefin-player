@@ -7,7 +7,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
-    const E = T._engine;
+    const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const FIELDS = 'PrimaryImageAspectRatio,ProductionYear,RunTimeTicks,UserData,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,SeriesPrimaryImageTag,DateCreated,PremiereDate,CommunityRating,Genres';
     const tags = (it) => it.ImageTags || {};
@@ -47,7 +47,7 @@
 
     // ---- top bar and button hints, shared by both screens ----
     function topBar(root, current, views) {
-        const c = window.ApiClient;
+        const c = T.ctx.apiClient();
         const bar = el('nav', 'ar-top');
         const tabs = [{ label: 'Home', hash: '#/home' }];
         for (const v of views) tabs.push({ label: v.Name, hash: v.CollectionType === 'livetv' ? '#/livetv' : `#/list?parentId=${v.Id}&serverId=${c.serverId()}`, id: v.Id });
@@ -98,9 +98,8 @@
             host.classList.add('ar-qa-host');
             const p = el('div', 'ar-qa');
             p.append(el('h2', null, 'Quick access'));
-            const pm = window.icefinPlaybackManager;
-            let now = null;
-            try { now = pm && pm.isPlaying && pm.isPlaying() && pm.currentItem ? pm.currentItem() : null; } catch (e) { now = null; }  // throws with no player
+            const playing = ctx.nowPlaying();
+            const now = playing && playing.item;
             p.append(el('div', 'ar-qa-now', now ? `Now playing: ${now.Name}` : 'Nothing playing'));
             const item = (text, state, fn) => {
                 const x = el('div', 'ar-qa-item');
@@ -123,9 +122,7 @@
 
     // ---- spatial moves confined to a container (dialogs) ----
     function moveIn(container, dir) {
-        const all = [...container.querySelectorAll('[data-icefin-focus]')].filter((e) => e !== E.focused());
-        const n = E.focused() ? E.pick(all, E.focused(), dir) : all[0];
-        if (n) { E.focus(n); E.sound('focus'); }
+        E.move(dir, container);  // a modal dialog keeps the arrows even at its edge
         return true;
     }
 
@@ -153,10 +150,10 @@
         },
         async mount(root) {
             root.setAttribute('data-ar', 'home');
-            S = { client: window.ApiClient, root, shelves: [], ready: false };
+            S = { client: T.ctx.apiClient(), root, shelves: [], ready: false };
             const views = await ui.userViews();
             if (!S || S.root !== root) return;
-            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             S.top = topBar(root, 'Home', views);
             const body = el('div', 'ar-body');
             S.scroll = el('div', 'ar-scroll');
@@ -239,10 +236,10 @@
             const params = new URLSearchParams((location.hash.split('?')[1] || ''));
             const parentId = params.get('parentId');
             root.setAttribute('data-ar', 'library');
-            L = { client: window.ApiClient, root, parentId, sort: 0, filters: new Set(), caps: [], ready: false, dialog: null };
+            L = { client: T.ctx.apiClient(), root, parentId, sort: 0, filters: new Set(), caps: [], ready: false, dialog: null };
             const views = await ui.userViews();
             if (!L || L.root !== root) return;
-            L.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            L.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             L.top = topBar(root, parentId, views);
             const bar = el('div', 'ar-lib-bar');
             L.sortBtn = el('div', 'ar-btn', '');

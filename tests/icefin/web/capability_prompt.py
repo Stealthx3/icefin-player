@@ -12,7 +12,9 @@ The lab has no Dolby Vision media, so the test loads an SDR file through api.pla
   6. an SDR load and an HDR10 load never prompt;
   7. a play action (playbackManager.play) asks before anything plays, from the feature's range; the answer holds for
      every load in that play action (a cinema-mode intro, then the feature: no second prompt); the next play action
-     asks again unless the answer was remembered on this device; a new play action clears a transcode limit.
+     asks again unless the answer was remembered on this device; a new play action clears a transcode limit;
+  8. a theme's ctx.play() (the theme script API, 8.7) is such a play action: the prompt comes first, the answer
+     starts it through the playback manager.
 Usage: python3 capability_prompt.py --app ~/build/src/icefin-player --server jf12
 """
 import argparse, json, os, signal, sys, tempfile, time
@@ -181,6 +183,17 @@ def main():
         page.wait_for("window.labOrig.length === 4", timeout=10)
         check("an SDR play action: no prompt, the transcode limit is gone",
               js(prompt_open) is False and "EqualsAny" not in js("JSON.stringify(window.NativeShell.AppHost.getDeviceProfile().CodecProfiles)"))
+
+        # 8. The theme script API (8.7): a theme's ctx.play() is a play action like any other.
+        js("window.api.router.forgetChoices(); true")
+        check("theme script API: apiVersion 1, ctx on icefinTheme, the player ready, nothing playing",
+              js("window.icefinTheme.apiVersion") == 1 and js("window.icefinTheme.ctx.canPlay()") is True and js("window.icefinTheme.ctx.nowPlaying()") is None)
+        js(feature("DOVI").replace("window.icefinPlaybackManager.play(", "window.labCtxPlay = window.icefinTheme.ctx.play("))
+        page.wait_for(prompt_open, timeout=10)
+        check("ctx.play: the capability prompt comes before anything plays", orig_calls() == 4, str(orig_calls()))
+        click("play")
+        page.wait_for("window.labOrig.length === 5", timeout=10)
+        check("ctx.play: the answer starts it through the playback manager", js("window.labOrig[4].items[0].Name") == "Lab feature")
         js("window.icefinPlaybackManager.play.icefinOriginal = window.labSavedOrig; true")
 
         for vrt in ("SDR", "HDR10"):

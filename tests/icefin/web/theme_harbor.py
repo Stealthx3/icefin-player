@@ -68,6 +68,9 @@ def main():
 
         h = themes().get("harbor", {})
         check("Harbor offered as a built-in theme, usable", h.get("ok") is True and h.get("source") == "bundled", json.dumps(h)[:160])
+        # The lab user's theme choice syncs to the server (8.5): an earlier run's theme may play sounds before Harbor's
+        # is applied, so Harbor's sounds are counted from here.
+        played0 = (js("new Promise(r => window.api.theme.soundState(r))") or {}).get("played", 0)
         js("new Promise(r => window.api.theme.setActiveTheme('harbor', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-hb]'); return !!r && +r.getAttribute('data-hb-rail') > 0; })()", timeout=30)
         page.wait_for("!!document.querySelector('.icefin-content[data-hb-ready]')", timeout=30)
@@ -173,7 +176,7 @@ def main():
         js("window.icefinTheme.ui.motion.cap('normal'); true")
 
         sounds = js("new Promise(r => window.api.theme.soundState(r))")
-        check("Harbor ships no sounds (target default is silent)", sounds.get("played", 0) == 0, json.dumps(sounds)[:120])
+        check("Harbor ships no sounds (target default is silent)", sounds.get("played", 0) == played0, json.dumps(sounds)[:120])
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
         check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)

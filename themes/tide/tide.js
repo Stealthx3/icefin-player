@@ -7,7 +7,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
-    const E = T._engine;
+    const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const FIELDS = 'PrimaryImageAspectRatio,ProductionYear,ChildCount,AlbumArtist';
     const WINDOW = 9;  // items above and below the focused one kept in the DOM
@@ -155,7 +155,7 @@
         },
         async mount(root) {
             root.setAttribute('data-td', 'home');
-            S = { client: window.ApiClient, root, cats: [], lists: {}, index: {}, cat: 0, ready: false };
+            S = { client: T.ctx.apiClient(), root, cats: [], lists: {}, index: {}, cat: 0, ready: false };
             const canvas = el('canvas', 'td-wave');
             root.append(canvas, el('div', 'td-shade'));
             S.catsEl = el('div', 'td-cats');
@@ -168,7 +168,7 @@
             S.timer = setInterval(tick, 15000);
             const views = await ui.userViews();
             if (!S || S.root !== root) return;
-            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             S.cats = await categories(S.client, views);
             S.catEls = S.cats.map((cat, i) => {
                 const e = el('div', 'td-cat');

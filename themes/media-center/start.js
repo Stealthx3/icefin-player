@@ -75,7 +75,7 @@
             return false;
         },
         async mount(root) {
-            const client = window.ApiClient;
+            const client = T.ctx.apiClient();
             const field = el('div', 'mc-field');
             field.append(el('div', 'mc-ribbon one'), el('div', 'mc-ribbon two'));
             const start = el('div', 'mc-start');
@@ -119,14 +119,13 @@
             grid = rows.map((x) => [...x.row.querySelectorAll('[data-icefin-focus]')]).filter((row) => row.length);
             lastCol = grid.map(() => 0);
             const first = strip.querySelector('[data-icefin-focus]');
-            if (first) T._engine.focus(first);
+            if (first) T.ctx.focus(first);
             root.setAttribute('data-mc-ready', String(rows.length));
 
             // Now playing inset
-            const pm = window.icefinPlaybackManager;
             const refresh = () => {
-                const player = pm && pm.getCurrentPlayer && pm.getCurrentPlayer();
-                const item = player && pm.currentItem && pm.currentItem(player);
+                const playing = T.ctx.nowPlaying();
+                const item = playing && playing.item;
                 now.hidden = !item;
                 if (item) {
                     now.textContent = '';

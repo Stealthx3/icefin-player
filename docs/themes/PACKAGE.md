@@ -52,10 +52,40 @@ window.icefinTheme.registerScreen('#/home', {
   onBack() { return false; /* optional: true if the screen used Back */ }
 });
 ```
-- `ctx.navigate('#/route')`, `ctx.apiClient()` (jellyfin-web's ApiClient) and `ctx.focus(el)` are available.
+- `ctx` is the theme script API below; it's also `window.icefinTheme.ctx` for code outside a screen.
 - Focus: arrows move between `[data-icefin-focus]` elements by position; Enter clicks; the focused element gets
   the class `icefin-focused`. Themes can't remap input (SPEC "One input pipeline").
 - Routes are written as jellyfin-web uses them, without query or `.html`: `#/home`, `#/details`.
+
+## Theme script API (`icefinTheme.apiVersion` 1, PLAN 8.7)
+Theme scripts reach Icefin and the server **only** through `ctx` and `window.icefinTheme`. The host globals behind them
+(`window.ApiClient`, the playback manager, `window.api`, `jmpInfo`, `apiPromise`, `NativeShell`) and
+`icefinTheme._engine` are private to the engine: upstream, jellyfin-web and the post-1.0 decoupling can change them,
+and the engine absorbs that here instead of in every theme. `scripts/icefin/theme-lint.sh` rule 4 rejects them in
+`themes/`. A breaking change to this table bumps `apiVersion`.
+
+| Name | What it does |
+|---|---|
+| `icefinTheme.registerScreen(route, screen)` | While the theme's scripts load: a screen for a route (`#/home`, `#/details`, ...). Every other route is jellyfin-web's |
+| `screen.mount(root, ctx)` | Build the screen in `root`; mark focusable elements `data-icefin-focus` |
+| `screen.unmount()` | Optional: stop timers and previews |
+| `screen.onAction(action, ctx)` | Optional: sees every action (`up`, `down`, `left`, `right`, `enter`, `back`, ...) first; true when it used it |
+| `screen.onBack()` | Optional: true when the screen used Back |
+| `ctx.apiClient()` | The server client (jellyfin-web's ApiClient): items, images, user. Ask for it when you use it; on a cold start it appears after `ui.userViews()` resolves |
+| `ctx.play(options)` | Starts playback (`{ids, serverId, startPositionTicks}` or `{items}`), through the capability prompt (6.3) like any play. A promise; `false` when the player isn't ready |
+| `ctx.canPlay()` | True when the player is ready for `ctx.play` |
+| `ctx.nowPlaying()` | `{item, player}` for what is playing or paused, or `null` |
+| `ctx.navigate(hash)` | Go to a route (`#/details?id=...&serverId=...`) |
+| `ctx.focus(el)`, `ctx.focused()` | Move focus to an element; the focused one (class `icefin-focused`) |
+| `ctx.move(dir, within)` | Spatial move in a direction, confined to `within` (a dialog, a panel); true when focus moved |
+| `ctx.sound(event)` | A UI sound: `focus`, `select`, `back`, `navigate`, `error` |
+| `icefinTheme.ctx` | The same `ctx`, for chrome, overlays and timers outside a screen. Overlay panels get it with `close()` added |
+| `icefinTheme.ui.*` | The engine capabilities: chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop, pointerFirst, motion; details in *Engine capabilities for screens* below |
+| `icefinTheme.glyph(button)` | An original SVG for a controller button (`south`, `east`, `west`, `north`, `view`, ...) in the family of the pad used last (7.3) |
+| `icefinTheme.active()` | `{id, source, route}` of the active theme and screen, or `null` |
+| `icefinTheme.sound(event)` | Same as `ctx.sound` |
+| `icefinTheme.apiVersion` | `1` |
+| `icefinTheme.system` | Reserved for the client-side capability model (6.7): undefined until then |
 
 ## Trust (user-installed themes)
 - Stylesheets are sanitized as they're served (`src/icefin/theme/CssSanitizer`):
