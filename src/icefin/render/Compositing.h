@@ -9,7 +9,7 @@
 //    the compositor's SDR transfer, extended above 1.0), as the same page over a <video> looks in a browser;
 //  - UiBlend::Linear: the UI is blended in linear light, with alpha compensated so that a black scrim darkens the
 //    video as much as it would in a browser (a' = 1 - (1 - a)^gamma); translucent colours read lighter.
-// D24 picks the default. Output: SDR (the compositor's SDR transfer, peak = reference white), HDR10 (PQ, BT.2020,
+// D24 (the user, 2026-11-10): Srgb, like a browser; Linear stays as a diagnostic (ICEFIN_UI_BLEND). Output: SDR (the compositor's SDR transfer, peak = reference white), HDR10 (PQ, BT.2020,
 // SDR white at the compositor's reference white) or scRGB (linear BT.709, 1.0 = 80 nits), from the swapchain format.
 // The C++ functions below mirror the shader for unit tests and the D24 comparison.
 #pragma once
