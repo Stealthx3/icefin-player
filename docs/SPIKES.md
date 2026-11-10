@@ -229,5 +229,18 @@ layer) from the Flatpak, on a 10-bit format, as on AMD. Design consequences for 
    Mutter and Gamescope.
 4. The panel switching to HDR output is checked once 5.5 tags the surface (5.8).
 
+**Steam game mode, nested (same machine, 2026-11-09).** Steam's game-mode UI (`gamescope -e --hdr-enabled -- steam
+-gamepadui`) in a nested Gamescope, Icefin added as a non-Steam game (launch: `flatpak run --socket=x11
+--nosocket=wayland --env=ENABLE_GAMESCOPE_WSI=1 …`) and started from Steam:
+- Gamescope exposed HDR to clients, and Gamescope's WSI layer loaded into Icefin (`[Gamescope WSI] Executable name:
+  icefin-player`), so the HDR10 swapchain path above is the one game mode uses.
+- A 4K HDR10 HEVC film direct-played on NVDEC (copy mode, `p010`) in real time, tone-mapped to SDR on the OpenGL
+  fallback; the picture showed (the user checked).
+- Controllers (Xbox 360 pad, Steam Input on): the app saw only **Steam Virtual Gamepad**; Steam hides the physical
+  pad, so there is no duplicate input in game mode. Its glyph family read "generic": SDL3 learns a virtual pad's real
+  type from the file Steam names in `SteamVirtualGamepadInfo`, under `/tmp`, which the Flatpak's private `/tmp`
+  hides. 7.4 should pass that file through or treat Steam's virtual pad as Xbox-style.
+- Navigation inside jellyfin-web with the pad is limited; that is theme-layer work (Phase 8/9), not a game-mode issue.
+
 Also found on this machine (not part of the spike): NVDEC's zero-copy CUDA frames show a blank picture on the
 OpenGL fallback, so Auto uses copy mode on NVIDIA until the Vulkan renderer (4.5, #39).
