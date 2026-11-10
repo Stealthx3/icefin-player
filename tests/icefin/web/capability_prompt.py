@@ -8,8 +8,11 @@ The lab has no Dolby Vision media, so the test loads an SDR file through api.pla
   2. cancel ends the player without loading;
   3. play anyway (remember) loads the file; a second load plays with no prompt (remembered);
   4. Client Settings -> Hardware shows the remembered choice and forgets it; the next load asks again;
-  5. transcode: the next device profile asks the server to convert Dolby Vision (one-shot);
-  6. an SDR load and an HDR10 load never prompt.
+  5. transcode: the device profile asks the server to convert Dolby Vision until the next play action;
+  6. an SDR load and an HDR10 load never prompt;
+  7. a play action (playbackManager.play) asks before anything plays, from the feature's range; the answer holds for
+     every load in that play action (a cinema-mode intro, then the feature: no second prompt); the next play action
+     asks again unless the answer was remembered on this device; a new play action clears a transcode limit.
 Usage: python3 capability_prompt.py --app ~/build/src/icefin-player --server jf12
 """
 import argparse, json, os, signal, sys, tempfile, time
@@ -121,12 +124,64 @@ def main():
         click("transcodeHdr10")
         page.wait_for("window.labPlayCalls.length === 1", timeout=10)
         call = js("JSON.stringify(window.labPlayCalls[0])")
-        check("transcode: playback restarted for the item", item in call, call)
+        check("transcode: playback restarted for the item, past any intros", item in call and '"startPositionTicks":' in call and '"startPositionTicks":0' not in call, call)
         prof = js("JSON.stringify(window.NativeShell.AppHost.getDeviceProfile().CodecProfiles)")
         check("transcode: next device profile limits the range", "EqualsAny" in prof and "SDR|HDR10|HDR10Plus|HLG" in prof, prof[:200])
         prof2 = js("JSON.stringify(window.NativeShell.AppHost.getDeviceProfile().CodecProfiles)")
-        check("transcode: the profile change is one-shot", "EqualsAny" not in prof2)
+        check("transcode: the range limit holds for the rest of the play action", "EqualsAny" in prof2)
         js("window.icefinPlaybackManager.play = window.labRealPlay; true")
+        js("window.api.player.stop(); true")
+        time.sleep(2)
+
+        # 7. Play actions: the hook asks first; jellyfin-web's own play is replaced by a recorder.
+        js("window.api.router.forgetChoices(); window.labOrig = []; const w = window.icefinPlaybackManager.play; "
+           "window.labSavedOrig = w.icefinOriginal; w.icefinOriginal = (o) => { window.labOrig.push(o); return Promise.resolve(); }; true")
+        check("play hook installed", js("!!window.icefinPlaybackManager.play.icefinWrapped") is True)
+        feature = lambda vrt: ("window.icefinPlaybackManager.play({items: [{Id: %s, Name: 'Lab feature', ServerId: 'lab', MediaType: 'Video', "
+                               "MediaStreams: [{Type: 'Video', VideoRangeType: %s}]}]}); true") % (json.dumps(item), json.dumps(vrt))
+        orig_calls = lambda: js("window.labOrig.length")
+        js(feature("DOVI"))
+        page.wait_for(prompt_open, timeout=10)
+        check("play action: the prompt comes before anything plays", orig_calls() == 0)
+        click("play")
+        page.wait_for("window.labOrig.length === 1", timeout=10)
+        check("play action: the answer starts it", True)
+        reset_events()
+        load("SDR")  # a cinema-mode intro
+        page.wait_for("(window.labEvents || []).includes('playing')", timeout=20)
+        js("window.api.player.stop(); true")
+        time.sleep(2)
+        reset_events()
+        load("DOVI")  # then the feature
+        page.wait_for("(window.labEvents || []).includes('playing')", timeout=20)
+        check("play action: intro then feature, no second prompt", js(prompt_open) is False)
+        js("window.api.player.stop(); true")
+        time.sleep(2)
+
+        js(feature("DOVI"))
+        page.wait_for(prompt_open, timeout=10)
+        check("next play action asks again", orig_calls() == 1)
+        click("transcodeHdr10", remember=True)
+        page.wait_for("window.labOrig.length === 2", timeout=10)
+        prof3 = js("JSON.stringify(window.NativeShell.AppHost.getDeviceProfile().CodecProfiles)")
+        check("play action transcode: the profile limits the range from the start", "SDR|HDR10|HDR10Plus|HLG" in prof3, prof3[:200])
+        reset_events()
+        load("DOVI")
+        page.wait_for("(window.labEvents || []).includes('playing')", timeout=20)
+        check("play action transcode: the feature's load plays, no prompt", js(prompt_open) is False)
+        js("window.api.player.stop(); true")
+        time.sleep(2)
+
+        js(feature("DOVI"))
+        page.wait_for("window.labOrig.length === 3", timeout=10)
+        check("remembered on this device: the next play action starts with no prompt", js(prompt_open) is False)
+        check("remembered transcode: the profile limits the range", "EqualsAny" in js("JSON.stringify(window.NativeShell.AppHost.getDeviceProfile().CodecProfiles)"))
+        js("window.api.router.forgetChoices(); true")
+        js(feature("SDR"))
+        page.wait_for("window.labOrig.length === 4", timeout=10)
+        check("an SDR play action: no prompt, the transcode limit is gone",
+              js(prompt_open) is False and "EqualsAny" not in js("JSON.stringify(window.NativeShell.AppHost.getDeviceProfile().CodecProfiles)"))
+        js("window.icefinPlaybackManager.play.icefinOriginal = window.labSavedOrig; true")
 
         for vrt in ("SDR", "HDR10"):
             reset_events()

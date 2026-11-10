@@ -197,7 +197,7 @@ Video takes the Vulkan renderer whenever it is available. The OpenGL fallback ex
 - Switch to the Vulkan renderer and retry (offered when Vulkan was turned off by a setting, not missing).
 - Cancel.
 
-A *Remember on this device* option stores the choice per profile and device; Settings can reset it. The prompt is themed and fully remote- and controller-navigable. The same mechanism covers any other case found later where a path would knowingly show a wrong picture, so the user is never surprised.
+It asks once, when the user presses play, from the feature's own video range and before any cinema-mode intro plays; the answer holds for the whole play action (intros and the feature) and the next play action asks again (D21). A *Remember on this device* option stores the choice per profile and device for every later play action; Settings can reset it. The prompt is themed and fully remote- and controller-navigable. The same mechanism covers any other case found later where a path would knowingly show a wrong picture, so the user is never surprised.
 
 **Playback lifecycle.** jellyfin-web calls `mpvVideoPlayer.js` exactly as upstream, and `PlayerComponent::load` consults the router. There is still one mpv core, as upstream has, so playback events and reporting are unchanged, and Up Next needs no special handling.
 
