@@ -40,12 +40,22 @@
       {
         "value": "icefin_renderer",
         "display_name": "Renderer",
-        "help": "How the app draws its window. Auto picks the best that works here. Vulkan (experimental) runs the interface on Vulkan; until the Vulkan video path is finished, video doesn't show with it. OpenGL is the fallback for systems without working Vulkan. Takes effect after a restart.",
+        "help": "How the app draws its window. Auto picks the best that works here. Vulkan (experimental) draws the interface and video together on Vulkan, with zero-copy hardware decoding and HDR output on HDR displays. OpenGL is the fallback for systems without working Vulkan. Takes effect after a restart.",
         "default": "auto",
         "possible_values": [
           [ "auto", "Auto" ],
           [ "vulkan", "Vulkan (experimental)" ],
           [ "opengl", "OpenGL" ]
+        ]
+      },
+      {
+        "value": "icefin_hdr_output",
+        "display_name": "HDR Output",
+        "help": "With the Vulkan renderer on an HDR display, the window is sent in HDR: HDR video plays in HDR, and the interface stays at your desktop's SDR brightness. Off sends SDR and tone-maps HDR video. Turning HDR on or off in your display settings applies after a restart. Takes effect after a restart.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "off", "Off" ]
         ]
       },
       {

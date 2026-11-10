@@ -119,6 +119,8 @@ def main():
                 im = Image.open(grab).convert("RGB")
                 mean = ImageStat.Stat(im).mean
                 check("the window shows a composited picture (Xvfb grab)", sum(mean) > 15, f"mean {[round(x) for x in mean]} ({grab})")
+        hdr = re.search(r"Icefin renderer: HDR output (on|off) \((.*)\)", t)
+        check("HDR output decided and logged (5.5)", bool(hdr), hdr.group(0) if hdr else "")
         page.eval("window.api.router.setUiBlend('linear'); true")
         time.sleep(1)
         comp2 = page.eval("new Promise(r => window.api.router.compositor(m => r(m)))")

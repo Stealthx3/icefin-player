@@ -20,6 +20,8 @@
 #include "Compositing.h"
 #include "RouterComponent.h"
 #include <QSGTexture>
+#include <QTimer>
+#include <cmath>
 #if __has_include(<rhi/qrhi.h>)
 #include <rhi/qrhi.h>
 #define ICEFIN_VIDEO_RHI 1
@@ -83,6 +85,11 @@ VulkanVideo::VulkanVideo(QQuickItem* item, mpv_handle* mpv) : QObject(item), m_v
   attachWindow(item->window());
   connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
   connect(&RouterComponent::Get(), &RouterComponent::compositorChanged, this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
+  // HDR output (5.5): the playing video's HDR10 static metadata goes into the surface description.
+  auto* meta = new QTimer(this);
+  meta->setInterval(1000);
+  connect(meta, &QTimer::timeout, this, &VulkanVideo::readHdrMetadata);
+  meta->start();
   qInfo() << "Icefin video: Vulkan path (patched libmpv, gpu-next on the shared device)";
 }
 
@@ -164,6 +171,33 @@ bool VulkanVideo::createContext()
   QMetaObject::invokeMethod(this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
   Q_EMIT ready();
   return true;
+}
+
+void VulkanVideo::readHdrMetadata()
+{
+  CompositorState& cs = compositorState();
+  if (!m_mpv || !cs.active || cs.output != OutputEncoding::Hdr10) return;
+  auto num = [this](const char* name) {
+    double v = 0;
+    return mpv_get_property(m_mpv, name, MPV_FORMAT_DOUBLE, &v) >= 0 && std::isfinite(v) ? v : 0.0;
+  };
+  VideoHdrMetadata m;
+  m.minLuminance = num("video-params/min-luma");
+  m.maxLuminance = qRound(num("video-params/max-luma"));
+  m.maxCll = qRound(num("video-params/max-cll"));
+  m.maxFall = qRound(num("video-params/max-fall"));
+  static const char* prim[8] = {"video-params/prim-red-x", "video-params/prim-red-y", "video-params/prim-green-x",
+                                "video-params/prim-green-y", "video-params/prim-blue-x", "video-params/prim-blue-y",
+                                "video-params/prim-white-x", "video-params/prim-white-y"};
+  m.hasPrimaries = true;
+  for (int i = 0; i < 8; ++i) {
+    m.primaries[i] = num(prim[i]);
+    if (m.primaries[i] <= 0) m.hasPrimaries = false;
+  }
+  if (!m.hasPrimaries) for (double& p : m.primaries) p = 0;
+  if (m == cs.video) return;
+  cs.video = m;
+  RouterComponent::Get().refreshCompositor();
 }
 
 void VulkanVideo::applyTarget()
@@ -315,5 +349,6 @@ void VulkanVideo::destroyImage() {}
 QSGNode* VulkanVideo::updatePaintNode(QSGNode* old) { return old; }
 void VulkanVideo::render() {}
 void VulkanVideo::applyTarget() {}
+void VulkanVideo::readHdrMetadata() {}
 #endif
 }

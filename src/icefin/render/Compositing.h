@@ -25,6 +25,17 @@ QString uiBlendName(UiBlend b);
 UiBlend uiBlendFromName(const QString& name, UiBlend fallback = UiBlend::Srgb);
 QString outputEncodingName(OutputEncoding o);
 
+// The playing video's HDR10 static metadata from mpv (video-params); zero / false where unknown.
+struct VideoHdrMetadata
+{
+  double minLuminance = 0;
+  int maxLuminance = 0, maxCll = 0, maxFall = 0;
+  bool hasPrimaries = false;
+  double primaries[8] = {};  // mastering display red, green, blue, white (CIE 1931 x, y)
+  bool operator==(const VideoHdrMetadata& o) const;
+  bool operator!=(const VideoHdrMetadata& o) const { return !(*this == o); }
+};
+
 struct CompositorState
 {
   bool active = false;
@@ -35,6 +46,11 @@ struct CompositorState
   double peak = 203;              // the output's peak in nits (SDR: reference white)
   bool gamma22 = true;            // the compositor's SDR transfer: gamma 2.2 (KWin) or the sRGB curve
   QString shaderUrl;
+  // HDR output (5.5): an HDR10 swapchain was asked for, and the surface carries the matching description.
+  bool hdrRequested = false;
+  QString hdrReason;
+  bool tagged = false;
+  VideoHdrMetadata video;
   QVariantMap toMap() const;
 };
 
