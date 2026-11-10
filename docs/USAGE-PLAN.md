@@ -1,6 +1,8 @@
 # Usage Plan — Icefin Player
 _Standard: TOKEN-USAGE-OPTIMIZATION-STANDARD v1 · Created 2026-11-07_
 
+> **Retired 2026-11-09 (D20):** the user dropped the usage-plan requirement. Kept as history; not updated any more.
+
 The main thread runs on whatever model the user picks (Opus today). It makes the design calls and
 does the hard debugging. Mechanical and well-specified work is handed to pinned agents.
 
