@@ -20,10 +20,11 @@ QVariantMap DisplayInfo::toMap() const
           {"maxLuminance", maxLuminance}, {"referenceLuminance", referenceLuminance}, {"source", source}, {"error", error}};
 }
 
-DisplayInfo::Hdr hdrForTransfer(const QString& tf)
+DisplayInfo::Hdr hdrForTransfer(const QString& tf, int maxLuminance, int referenceLuminance)
 {
   if (tf == "st2084_pq" || tf == "hlg") return DisplayInfo::Hdr::Yes;
   if (tf.isEmpty()) return DisplayInfo::Hdr::Unknown;
+  if (maxLuminance > 0 && referenceLuminance > 0 && maxLuminance * 2 >= referenceLuminance * 3) return DisplayInfo::Hdr::Yes;
   return DisplayInfo::Hdr::No;
 }
 
@@ -145,7 +146,7 @@ void HdrCapabilityProbe::probe()
         info.maxLuminance = w->info.maxLuminance;
         info.referenceLuminance = w->info.referenceLuminance;
         info.error = w->state == 1 ? QString() : w->info.error.isEmpty() ? QString("no image description") : w->info.error;
-        info.hdr = hdrForTransfer(info.transfer);
+        info.hdr = hdrForTransfer(info.transfer, info.maxLuminance, info.referenceLuminance);
       }
     }
   } else
