@@ -1,5 +1,6 @@
 #include "VulkanVideo.h"
 #include <QDebug>
+#include <QGuiApplication>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
@@ -134,9 +135,19 @@ bool VulkanVideo::createContext()
   vp.features = d.features();
   vp.extensions = m_vk->extensions.data();
   vp.num_extensions = int(m_vk->extensions.size());
+  // The display connection, for mpv's VAAPI interop to open a VA display on (Icefin's mpv 0006 maps hardware frames
+  // into Vulkan without a copy). CUDA needs nothing.
+  mpv_render_param display{MPV_RENDER_PARAM_INVALID, nullptr};
+  if (auto* wl = qGuiApp->nativeInterface<QNativeInterface::QWaylandApplication>(); wl && wl->display())
+    display = {MPV_RENDER_PARAM_WL_DISPLAY, wl->display()};
+#if QT_CONFIG(xcb)
+  else if (auto* x11 = qGuiApp->nativeInterface<QNativeInterface::QX11Application>(); x11 && x11->display())
+    display = {MPV_RENDER_PARAM_X11_DISPLAY, x11->display()};
+#endif
   mpv_render_param params[] = {{MPV_RENDER_PARAM_API_TYPE, const_cast<char*>(MPV_RENDER_API_TYPE_VULKAN)},
                                {MPV_RENDER_PARAM_BACKEND, const_cast<char*>("gpu-next")},
                                {MPV_RENDER_PARAM_VULKAN_INIT_PARAMS, &vp},
+                               display,
                                {MPV_RENDER_PARAM_INVALID, nullptr}};
   const int rc = mpv_render_context_create(&m_ctx, m_mpv, params);
   if (rc < 0) {
