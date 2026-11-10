@@ -53,13 +53,17 @@
     const isDir = (a) => a === 'up' || a === 'down' || a === 'left' || a === 'right';
 
     // ---- pointer-first (9.3) ----
-    let pointer = false;
-    function onHover(e) {
-        if (!pointer) return;
+    let pointer = false, px = null, py = null;
+    // Only a pointer that moved takes focus: when content changes under a still cursor (a page turns, a row scrolls) the
+    // browser sends mouse events at the same coordinates, and those must not pull focus off what the remote just chose.
+    function onMove(e) {
+        const still = e.clientX === px && e.clientY === py;
+        px = e.clientX; py = e.clientY;
+        if (!pointer || still) return;
         const t = e.target.closest && e.target.closest(FOCUS);
         if (t && t !== E.focused() && E.root() && E.root().contains(t)) E.focus(t);
     }
-    document.addEventListener('mouseover', onHover, true);
+    document.addEventListener('mousemove', onMove, true);
     const pointerFirst = (on) => {
         pointer = !!on;
         attr('data-icefin-pointer', pointer);
@@ -366,7 +370,16 @@
                     if (ms && ms.LiveStreamId) liveStreamId = ms.LiveStreamId;
                     if (stopped) { closeLive(); return; }
                     if (!ms || !ms.TranscodingUrl) { v.dispatchEvent(new Event('error')); return; }
-                    v.src = c.getUrl(ms.TranscodingUrl.replace(/^\//, ''));
+                    // The live transcode URL leaves the container to the server (MPEG-TS for live streams), which a <video>
+                    // can't play: ask for the same live stream as a muted VP8 WebM.
+                    const [path, query] = ms.TranscodingUrl.replace(/^\//, '').split('?');
+                    const p = new URLSearchParams(query || '');
+                    p.set('VideoCodec', 'vp8');
+                    p.set('AudioStreamIndex', '-1');
+                    p.set('MaxWidth', String(opts.maxWidth || 640));
+                    p.delete('AudioCodec');
+                    p.delete('SegmentContainer');
+                    v.src = c.getUrl(path.replace(/\/stream$/, '/stream.webm')) + '?' + p.toString();
                     start();
                 }, () => v.dispatchEvent(new Event('error')));
         } else {
@@ -748,7 +761,7 @@
         letters: ['1234567890', 'qwertyuiop', 'asdfghjkl\'', 'zxcvbnm,.-'],
         symbols: ['!@#$%^&*()', '-_=+[]{};:', '"/\\|?<>`~\'', ',.€£¥§°…·']
     };
-    let oskOn = false, osk = null, lastSource = 'pointer';
+    let oskOn = false, osk = null, lastSource = 'pointer', inAction = false;
     const isText = (e) => e && ((e.tagName === 'INPUT' && /^(text|search|password|email|url|tel|number|)$/i.test(e.type || '')) || e.tagName === 'TEXTAREA') && !e.disabled && !e.readOnly;
     function setValue(input, v) {
         const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -835,7 +848,7 @@
         E.sound('back');
     }
     const oskHook = (a) => {
-        if (a === 'up' || a === 'down' || a === 'left' || a === 'right' || a === 'enter' || a === 'select' || a === 'back') lastSource = 'action';
+        if (a === 'up' || a === 'down' || a === 'left' || a === 'right' || a === 'enter' || a === 'select' || a === 'back') { lastSource = 'action'; inAction = true; setTimeout(() => { inAction = false; }, 0); }
         if (!osk) {
             if (oskOn && (a === 'enter' || a === 'select') && isText(document.activeElement)) return oskOpen(document.activeElement);
             return false;
@@ -851,7 +864,9 @@
         if (a === 'back') { oskClose(); return true; }
         return true;  // modal while open
     };
-    document.addEventListener('focusin', (e) => { if (oskOn && lastSource === 'action' && isText(e.target)) setTimeout(() => { if (document.activeElement === e.target) oskOpen(e.target); }, 0); }, true);
+    // Only a field the remote moves to (focus arriving while the action is handled): a screen focusing its first field as
+    // it mounts, a separate task, doesn't open the keyboard.
+    document.addEventListener('focusin', (e) => { if (oskOn && inAction && isText(e.target)) setTimeout(() => { if (document.activeElement === e.target) oskOpen(e.target); }, 0); }, true);
     document.addEventListener('mousedown', (e) => { lastSource = 'pointer'; if (osk && !osk.panel.contains(e.target)) oskClose(); }, true);
     document.addEventListener('mousedown', (e) => {
         const k = osk && e.target.closest && e.target.closest('[data-icefin-key]');
@@ -922,6 +937,9 @@
     }
     function paletteApply(fade) {
         if (!palette) return;
+        // The token stylesheet can arrive after the theme's script runs (a theme switch): re-read it when it changes.
+        const css = (window.icefinTokenEngine && window.icefinTokenEngine.current()) || '';
+        if (css !== palette.css) { palette.css = css; palette.dirty = true; }
         const target = paletteTarget(palette.pinned || new Date());
         const key = target.names.join('+');
         if (key === palette.key && !palette.dirty) return;
@@ -950,8 +968,9 @@
     function timePalette(opts) {
         timePalette.stop();
         palette = { schedule: opts.schedule || [], months: opts.months && opts.months.length === 12 ? opts.months : null, fadeMs: opts.fadeMs || 4000,
-            pinned: null, key: null, applied: new Set(), raf: 0, timer: setInterval(() => paletteApply(true), 60000) };
+            pinned: null, key: null, css: null, applied: new Set(), raf: 0, timer: setInterval(() => paletteApply(true), 60000) };
         paletteApply(false);
+        palette.early = [300, 1000, 3000].map((ms) => setTimeout(() => paletteApply(false), ms));
         return timePalette;
     }
     timePalette.at = (date) => { if (!palette) return; palette.pinned = date ? new Date(date) : null; paletteApply(true); };
@@ -960,6 +979,7 @@
     timePalette.stop = () => {
         if (!palette) return;
         clearInterval(palette.timer);
+        palette.early.forEach(clearTimeout);
         cancelAnimationFrame(palette.raf);
         const h = document.documentElement;
         for (const v of palette.applied) { h.style.removeProperty(v); h.style.removeProperty(v + '-channel'); }
@@ -980,7 +1000,15 @@
             if (delay) await wait(delay);
             const c = ready();
             if (!c) continue;
-            try { views = ((await c.getUserViews({}, c.getCurrentUserId())) || {}).Items || []; } catch (e) { views = []; }
+            // jellyfin-web's call can hang while the page restores its session (10.11 after a reload): each try has a
+            // deadline, and then asks the server directly with the same token.
+            const deadline = (ms) => new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms));
+            try { views = ((await Promise.race([c.getUserViews({}, c.getCurrentUserId()), deadline(4000)])) || {}).Items || []; } catch (e) {
+                try {
+                    const r = await Promise.race([fetch(c.getUrl('UserViews', { userId: c.getCurrentUserId() }), { headers: { Authorization: `MediaBrowser Token="${c.accessToken()}"` } }), deadline(4000)]);
+                    views = r.ok ? ((await r.json()) || {}).Items || [] : [];
+                } catch (e2) { views = []; }
+            }
             if (views.length) break;
         }
         return views;

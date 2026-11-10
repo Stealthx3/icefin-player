@@ -95,6 +95,7 @@
 
                 const views = await ui.userViews();
                 if (!S || S.root !== root) return;
+                S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
                 const c = S.client, uid = c.getCurrentUserId();
                 const entries = [{ label: 'Guide' }];
                 for (const v of views) if (v.CollectionType !== 'livetv') entries.push({ label: v.Name, hash: `#/list?parentId=${v.Id}&serverId=${c.serverId()}` });

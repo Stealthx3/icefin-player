@@ -262,7 +262,9 @@ def main():
             act("down")
         check("guide: past the last visible row it scrolls by channel", json.loads(js("JSON.stringify(window.labGuide.window())"))["top"] >= 2 and json.loads(gf())["row"] == 7,
               f"{js('JSON.stringify(window.labGuide.window())')} {gf()}")
-        check("guide: newly visible channels fetched once", js("window.labGuideFetches.every(f => f[0] >= 1)") and js("window.labGuideFetches.length") <= 6, js("JSON.stringify(window.labGuideFetches.map(f => f[0]))"))
+        fetches = json.loads(js("JSON.stringify(window.labGuideFetches)"))
+        check("guide: scrolling fetches only the newly visible channel; no window asked twice", [f[0] for f in fetches[-2:]] == [1, 1]
+              and len({(f[1], f[2]) for f in fetches if f[0] == 6}) == len([f for f in fetches if f[0] == 6]), json.dumps([f[0] for f in fetches]))
         for _ in range(30):
             act("left")
         w3 = json.loads(js("JSON.stringify(window.labGuide.window())"))
@@ -309,7 +311,8 @@ def main():
         js("location.hash = '#/search?icefin=stock'; true")
         time.sleep(4)
         sinput = "document.querySelector('.searchfields-txtSearch, input[type=search], #searchTextInput')"
-        js(f"window.icefinTheme.handleAction('down'); {sinput} && {sinput}.focus(); true")
+        # jellyfin-web may already have focused the field: blur it, then move to it as the remote does
+        js(f"{sinput} && {sinput}.blur(); window.icefinTheme.handleAction('down'); {sinput} && {sinput}.focus(); true")
         time.sleep(0.4)
         opened = js("!!document.getElementById('icefin-osk')")
         if opened:
@@ -329,19 +332,19 @@ def main():
         time.sleep(2)
         bg = lambda: js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim()")
         acc = lambda: js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim()")
-        check("palette: the time's set (dawn) and the month's set (winter) apply", bg() == "rgba(32, 64, 96, 1)" and acc() == "rgba(48, 128, 255, 1)"
+        check("palette: the time's set (dawn) and the month's set (winter) apply", bg() == "#204060" and acc() == "#3080ff"
               and js("document.documentElement.dataset.icefinPalette") == "winter+dawn", f"bg={bg()} accent={acc()} {js('document.documentElement.dataset.icefinPalette')}")
         check("palette: the -channel form follows", js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background-channel').trim()") == "32 64 96")
         js("window.icefinTheme.ui.timePalette.at('2026-07-15T23:00:00'); true")
         time.sleep(0.6)
         mid = bg()
         time.sleep(1.5)
-        check("palette: cross-fades to the new set (night, summer)", mid not in ("rgba(32, 64, 96, 1)", "rgba(0, 0, 16, 1)") and bg() == "rgba(0, 0, 16, 1)" and acc() == "rgba(255, 128, 0, 1)",
+        check("palette: cross-fades to the new set (night, summer)", mid.startswith("rgba(") and mid not in ("#204060", "#000010") and bg() == "#000010" and acc() == "#ff8000",
               f"mid={mid} end={bg()} accent={acc()}")
-        check("palette: before the first stop the last set holds (overnight)", True if js("(window.icefinTheme.ui.timePalette.at('2026-07-15T02:00:00'), true)") and time.sleep(1.8) is None and bg() == "rgba(0, 0, 16, 1)" else False, bg())
+        check("palette: before the first stop the last set holds (overnight)", True if js("(window.icefinTheme.ui.timePalette.at('2026-07-15T02:00:00'), true)") and time.sleep(1.8) is None and bg() == "#000010" else False, bg())
         js("window.icefinTheme.ui.motion.cap('low'); window.icefinTheme.ui.timePalette.at('2026-07-15T07:00:00'); true")
         time.sleep(0.1)
-        check("palette: instant under low motion", bg() == "rgba(32, 64, 96, 1)", bg())
+        check("palette: instant under low motion", bg() == "#204060", bg())
         js("window.icefinTheme.ui.motion.cap('normal'); window.icefinTheme.ui.timePalette.stop(); true")
         check("palette: stop restores the theme's own tokens", bg().lower() in ("#160b2e",), bg())
 

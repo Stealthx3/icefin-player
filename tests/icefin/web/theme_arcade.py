@@ -109,12 +109,12 @@ def main():
         act("back")
         check("Back closes quick access", js("!document.getElementById('icefin-theme-overlay')") and js("window.icefinTheme.ui.motion.level()") == "normal")
         # library
-        lib = tabs[1]
-        js("location.hash = '#/home'; true")
-        act("left")
+        lib = "Movies" if "Movies" in tabs else tabs[1]
         for _ in range(len(tabs)):
             act("left")
-        act("right")
+        for _ in range(tabs.index(lib)):
+            act("right")
+        check(f"the top bar reaches {lib}", foc() == f"ui/{lib}", foc())
         act("enter")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-ar=library]') && document.querySelector('#icefin-theme-root').dataset.arCount !== undefined", timeout=30)
         time.sleep(1)
@@ -156,7 +156,7 @@ def main():
         js("location.hash = '#/search'; true")
         time.sleep(4)
         sinput = "document.querySelector('.searchfields-txtSearch, input[type=search], #searchTextInput')"
-        js(f"window.icefinTheme.handleAction('down'); {sinput} && {sinput}.focus(); true")
+        js(f"{sinput} && {sinput}.blur(); window.icefinTheme.handleAction('down'); {sinput} && {sinput}.focus(); true")
         time.sleep(0.4)
         opened = js("!!document.getElementById('icefin-osk')")
         if opened:

@@ -151,9 +151,10 @@
 
             const views = await ui.userViews();  // also waits out a cold start
             if (!S || S.root !== root) return;
+            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             const c = S.client, uid = c.getCurrentUserId();
             const tabs = [{ label: 'Home' }];
-            for (const v of views) tabs.push({ label: v.Name, hash: `#/list?parentId=${v.Id}&serverId=${c.serverId()}` });
+            for (const v of views) tabs.push({ label: v.Name, hash: v.CollectionType === 'livetv' ? '#/livetv' : `#/list?parentId=${v.Id}&serverId=${c.serverId()}` });
             tabs.push({ label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
             S.tabs = tabs.map((x, i) => {
                 const t = el('div', 'lm-tab' + (i === 0 ? ' current' : ''), x.label);
@@ -172,7 +173,7 @@
             const rows = [];
             const upNext = resume.concat(nextUp.filter((n) => !resume.some((r) => r.Id === n.Id)));
             if (upNext.length) rows.push(['Up Next', upNext, true]);
-            for (const v of views) {
+            for (const v of views.filter((x) => x.CollectionType !== 'livetv')) {  // Live TV has channels, not new items
                 const items = await get(c.getLatestItems({ userId: uid, parentId: v.Id, Limit: 30, Fields: FIELDS }));
                 if (items.length) rows.push([`New in ${v.Name}`, items, false]);
             }

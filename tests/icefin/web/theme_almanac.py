@@ -115,6 +115,7 @@ def main():
             act("right")
         w = js("+document.querySelector('.al-guide .icefin-guide-times').dataset.start")
         check("past the window's end the guide pages forward by time", w > now, f"start={w} now={now}")
+        page.wait_for("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); return !!f && !!f.guideProgramme && !f.guideProgramme.gap; })()", timeout=15)  # the new window's programmes arrived
         fut = json.loads(gf())
         act("enter")
         try:
@@ -135,7 +136,7 @@ def main():
         act("down")
         check("down returns to the guide where it was", json.loads(gf()).get("row") == 0, gf())
         act("back")
-        check("Back goes to the menu row", json.loads(gf()).get("menu") == "Guide", gf())
+        check("Back goes to the menu row, where it was left", json.loads(gf()).get("menu") == js("document.querySelectorAll('.al-menu-item')[1].textContent"), gf())
         setv("benchPack", False)
         time.sleep(1.5)
         check("pack turned off while active: engine off, Almanac gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "almanac" not in themes())

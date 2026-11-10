@@ -226,6 +226,9 @@
                 if (along < beamDist) { beamDist = along; beamBest = e; }
                 continue;
             }
+            // Off the beam a candidate must lie mostly in the direction of travel: a neighbour below doesn't count as
+            // "left" just because a scaled-up focused item moved its centre.
+            if (along < -Math.min(horiz ? a.width : a.height, horiz ? b.width : b.height) / 2) continue;
             const score = centre + (horiz ? Math.abs(by - ay) : Math.abs(bx - ax)) * 2;
             if (score < bestScore) { bestScore = score; best = e; }
         }

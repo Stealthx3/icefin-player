@@ -50,7 +50,7 @@
         const c = window.ApiClient;
         const bar = el('nav', 'ar-top');
         const tabs = [{ label: 'Home', hash: '#/home' }];
-        for (const v of views) tabs.push({ label: v.Name, hash: `#/list?parentId=${v.Id}&serverId=${c.serverId()}`, id: v.Id });
+        for (const v of views) tabs.push({ label: v.Name, hash: v.CollectionType === 'livetv' ? '#/livetv' : `#/list?parentId=${v.Id}&serverId=${c.serverId()}`, id: v.Id });
         const els = tabs.map((x) => {
             const t = el('div', 'ar-tab' + (x.label === current || x.id === current ? ' current' : ''), x.label);
             t.setAttribute('data-icefin-focus', '');
@@ -99,7 +99,8 @@
             const p = el('div', 'ar-qa');
             p.append(el('h2', null, 'Quick access'));
             const pm = window.icefinPlaybackManager;
-            const now = pm && pm.currentItem ? pm.currentItem() : null;
+            let now = null;
+            try { now = pm && pm.isPlaying && pm.isPlaying() && pm.currentItem ? pm.currentItem() : null; } catch (e) { now = null; }  // throws with no player
             p.append(el('div', 'ar-qa-now', now ? `Now playing: ${now.Name}` : 'Nothing playing'));
             const item = (text, state, fn) => {
                 const x = el('div', 'ar-qa-item');
@@ -155,6 +156,7 @@
             S = { client: window.ApiClient, root, shelves: [], ready: false };
             const views = await ui.userViews();
             if (!S || S.root !== root) return;
+            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             S.top = topBar(root, 'Home', views);
             const body = el('div', 'ar-body');
             S.scroll = el('div', 'ar-scroll');
@@ -169,7 +171,7 @@
             ]);
             const recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id)));
             const shelves = [];
-            for (const v of views) {
+            for (const v of views.filter((x) => x.CollectionType !== 'livetv')) {  // Live TV has channels, not new items
                 const items = await get(c.getLatestItems({ userId: uid, parentId: v.Id, Limit: 24, Fields: FIELDS }));
                 if (items.length) shelves.push([`New in ${v.Name}`, items]);
             }
@@ -240,6 +242,7 @@
             L = { client: window.ApiClient, root, parentId, sort: 0, filters: new Set(), caps: [], ready: false, dialog: null };
             const views = await ui.userViews();
             if (!L || L.root !== root) return;
+            L.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             L.top = topBar(root, parentId, views);
             const bar = el('div', 'ar-lib-bar');
             L.sortBtn = el('div', 'ar-btn', '');

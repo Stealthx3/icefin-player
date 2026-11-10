@@ -48,9 +48,10 @@
         collapsedWidth: '6vw',
         width: '22vw',
         async mount(rail) {
-            const c = window.ApiClient;
+            const views = await ui.userViews();
+            const c = window.ApiClient;  // a cold start creates the client late: read it after userViews
             const entries = [{ icon: '⌕', label: 'Search', hash: '#/search' }, { icon: '⌂', label: 'Home', home: true }];
-            for (const v of await ui.userViews()) entries.push({ icon: v.CollectionType === 'tvshows' ? '▭' : v.CollectionType === 'music' ? '♪' : '▤', label: v.Name, view: v });
+            for (const v of views) entries.push({ icon: v.CollectionType === 'tvshows' ? '▭' : v.CollectionType === 'music' ? '♪' : '▤', label: v.Name, view: v });
             entries.push({ icon: '⚙', label: 'Settings', hash: '#/mypreferencesmenu' }, { icon: '↺', label: 'Classic home', hash: '#/home?icefin=stock' });
             if (!S) return;
             S.rail = entries.map((x) => {
@@ -60,7 +61,7 @@
                 b.append(el('span', 'mq-icon', x.icon), el('span', 'icefin-rail-label', x.label));
                 b.addEventListener('click', () => {
                     if (x.hash) location.hash = x.hash;
-                    else if (x.view) location.hash = `#/list?parentId=${x.view.Id}&serverId=${c.serverId()}`;
+                    else if (x.view) location.hash = x.view.CollectionType === 'livetv' ? '#/livetv' : `#/list?parentId=${x.view.Id}&serverId=${c.serverId()}`;
                     else focusBillboard(0);
                 });
                 rail.append(b);
@@ -264,6 +265,7 @@
 
             const views = await ui.userViews();
             if (!S || S.root !== root) return;
+            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             const c = S.client, uid = c.getCurrentUserId();
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
             const [featured, resume, nextUp] = await Promise.all([
@@ -285,7 +287,7 @@
             const rows = [];
             if (resume.length) rows.push(['Continue Watching', resume]);
             if (nextUp.length) rows.push(['Next Up', nextUp]);
-            for (const v of views) {
+            for (const v of views.filter((x) => x.CollectionType !== 'livetv')) {  // Live TV has channels, not new items
                 const items = await get(c.getLatestItems({ userId: uid, parentId: v.Id, Limit: 40, Fields: FIELDS }));
                 if (items.length) rows.push([`New in ${v.Name}`, items]);
             }
