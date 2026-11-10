@@ -1,9 +1,0 @@
-{
-  "schema": 1,
-  "id": "tide",
-  "name": "Tide",
-  "version": "0.1.0",
-  "description": "Benchmark theme: a horizontal row of category icons crossing a vertical list of items at a fixed focus point, over an animated wave on a gradient whose colour follows the month and the time of day; original line icons.",
-  "styles": "styles.css",
-  "scripts": ["tide.js"]
-}

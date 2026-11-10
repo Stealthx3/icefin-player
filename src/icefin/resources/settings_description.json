@@ -72,12 +72,6 @@
         "display_name": "Theme Sounds",
         "help": "Play the theme's interface sounds. They are always silent while a movie's audio goes straight to your receiver (passthrough).",
         "default": true
-      },
-      {
-        "value": "benchPack",
-        "display_name": "Benchmark Themes",
-        "help": "Also offer the benchmark pack: themes that reproduce the layout of other TV interfaces, used to test the theme engine. They use Icefin's own art, names and sounds.",
-        "default": false
       }
     ]
   },

@@ -28,7 +28,7 @@
 - Is refresh-rate matching on KDE required for 1.0?
 - When does the post-1.0 decoupling start?
 - Minimum HTPC hardware for the performance budget?
-- Confirm the bundled themes: Media Center and Baseline by default, the six others in the optional benchmark pack.
+- ~~Confirm the bundled themes~~ settled: D22 (every theme is built in).
 
 - **HLG acceptance row (spike 2.3):** KWin 6.3 and Mutter 48 don't accept the HLG transfer function on surfaces, so Icefin outputs HLG sources as PQ (HDR10). Change the acceptance row to "HLG sources play as HDR", or keep "TV reports HLG" as a target for compositors that add HLG later?
 
