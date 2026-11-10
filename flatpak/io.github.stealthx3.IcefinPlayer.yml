@@ -95,6 +95,7 @@ modules:
               - ../external/mpv/patches/0003-vo_libmpv-gpu-next-target-colorspace-and-reference-white.patch
               - ../external/mpv/patches/0004-vo_libmpv-gpu-next-vulkan-hand-the-target-back-in-target_layout.patch
               - ../external/mpv/patches/0005-vo_libmpv-gpu-next-scale-with-libplacebo-s-default-filters.patch
+              - ../external/mpv/patches/0006-vo_libmpv-gpu-next-map-hardware-frames-through-mpv-s-hwdec-interops.patch
 
         modules:
           - name: luajit

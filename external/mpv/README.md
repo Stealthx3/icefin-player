@@ -1,6 +1,6 @@
 # Patched libmpv (PLAN 5.2)
 
-Icefin bundles its own libmpv: **mpv `v0.42.0`** plus two patches that add a gpu-next libmpv render backend and a
+Icefin bundles its own libmpv: **mpv `v0.42.0`** plus patches that add a gpu-next libmpv render backend and a
 **Vulkan render API on a host-supplied device** (`MPV_RENDER_API_TYPE_VULKAN`, `include/mpv/render_vk.h`). Qt Quick
 and libplacebo share one `VkDevice` (`src/icefin/render/VulkanDevice`, PLAN 5.1); this API lets mpv render into an
 image on that device (5.3). Proven in spike 2.2 (`docs/SPIKES.md`).
@@ -19,6 +19,7 @@ Both pins match the Flatpak manifest (`flatpak/io.github.stealthx3.IcefinPlayer.
 | `patches/0003` vo_libmpv: gpu-next target colorspace and reference white | Icefin Player | Icefin's own (PLAN 5.2, D23) |
 | `patches/0004` vo_libmpv: gpu-next Vulkan: hand the target back in target_layout | Icefin Player | Icefin's own (PLAN 5.3) |
 | `patches/0005` vo_libmpv: gpu-next: scale with libplacebo's default filters | Icefin Player | Icefin's own (PLAN 5.3) |
+| `patches/0006` vo_libmpv: gpu-next: map hardware frames through mpv's hwdec interops | Icefin Player | Icefin's own (PLAN 5.3) |
 
 **Icefin's change to the carried diff (`0003`).** Rabert's commit builds the target colorspace only when `target-prim` or
 `target-trc` is set, ignores `target-contrast` and `hdr-reference-white`, and logs the target once through a function
@@ -36,6 +37,14 @@ sampled it in the wrong layout (Khronos validation `VUID-vkCmdDraw-None-09600`).
 holds the image in `target_layout` with `pl_vulkan_hold_ex`, signalling the host's semaphore if given, or else its
 own timeline semaphore, which it waits for (5 s limit, logged). It also forwards libplacebo's messages at their own
 levels; before, they reached mpv's log only at trace, so libplacebo errors were dropped.
+
+**Icefin's change to the carried diff (`0006`).** The carried backend created hwdec devices but loaded no interop, so
+hardware decoding on the Vulkan render API always fell back to copy mode. `0006` gives the Vulkan context mpv's own
+`ra` on the same `pl_gpu` (`ra_create_pl`), loads the hwdec interops on it (all of them, or the one
+`--gpu-hwdec-interop` names), passes `MPV_RENDER_PARAM_X11_DISPLAY` / `WL_DISPLAY` on for VAAPI as `libmpv_gpu.c` does,
+and maps hardware frames through `ra_hwdec_mapper` the way `vo_gpu_next` does. Icefin passes its display
+(`src/icefin/render/VulkanVideo`). Not covered: `hwdec=vulkan` (FFmpeg's Vulkan decoder needs a decode queue the
+shared device doesn't create) and the Dolby Vision enhancement layer.
 
 Rebase note: mpv 0.42 added `MPV_RENDER_PARAM_D3D11_INIT_PARAMS = 21` and `…_D3D11_FBO = 22`, so the new params are
 renumbered: `BACKEND = 23`, `VULKAN_INIT_PARAMS = 24`, `VULKAN_FBO = 25`, `VULKAN_SYNC = 26` (Icefin bundles its own

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Icefin Player <noreply@github.com>
 Date: Tue, 10 Nov 2026 15:40:00 +0000
-Subject: [PATCH 4/5] vo_libmpv: gpu-next Vulkan: hand the target back in
+Subject: [PATCH 4/6] vo_libmpv: gpu-next Vulkan: hand the target back in
  target_layout
 
 The Vulkan backend released the user's image to libplacebo, rendered, destroyed the wrapper and called
