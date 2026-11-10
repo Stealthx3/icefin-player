@@ -8,6 +8,17 @@
 #include <QVersionNumber>
 #include <vector>
 #include "settings/SettingsComponent.h"
+#include "shared/Paths.h"
+#include <QCoreApplication>
+#include <QDateTime>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QProcess>
+#include <QTimer>
+#include <atomic>
+#include <cstdlib>
+#include <unistd.h>
 #include "VulkanVideo.h"
 #include "Compositing.h"
 #include "HdrCapabilityProbe.h"
@@ -112,13 +123,76 @@ static bool probeVulkan(QString* why)
   return false;
 }
 
+static QString s_setting;          // the Renderer setting this start was chosen from
+static QString s_fallbackReason;   // this start uses OpenGL because Vulkan failed before
+static QString fallbackPath() { return Paths::dataDir("vulkan-fallback.json"); }
+
+QString vulkanFallbackReason() { return s_fallbackReason; }
+
+void fallBackToOpenGl(const QString& reason)
+{
+  static std::atomic<bool> once{false};
+  if (once.exchange(true)) return;
+  qCritical().noquote() << "Icefin renderer: Vulkan failed (" + reason + "); restarting on OpenGL";
+  QFile f(fallbackPath());
+  if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    f.write(QJsonDocument(QJsonObject{{"reason", reason}, {"setting", s_setting}, {"version", QCoreApplication::applicationVersion()},
+                                      {"when", QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}}).toJson());
+  // The new process must start after this one has let go of the single-instance socket, or it hands over and quits.
+  QMetaObject::invokeMethod(qApp, [] {
+    // Its Qt WebEngine helper processes let go of their sockets (the DevTools port) a moment after it exits.
+    // A zombie (exited, its parent not yet told) counts as gone: kill -0 still succeeds on it.
+    const QString wait = QString("p=%1; while [ -e /proc/$p ] && [ \"$(sed 's/.*) //' /proc/$p/stat 2>/dev/null | cut -c1)\" != Z ]; "
+                                 "do sleep 0.2; done; sleep 2; exec \"$0\" \"$@\"").arg(::getpid());
+    // The command line it was started with: QCoreApplication::arguments() also holds the Chromium flags main() adds.
+    QStringList args;
+    QFile cmd("/proc/self/cmdline");
+    if (cmd.open(QIODevice::ReadOnly))
+      for (const QByteArray& a : cmd.readAll().split('\0')) args << QString::fromLocal8Bit(a);
+    while (!args.isEmpty() && args.last().isEmpty()) args.removeLast();
+    if (args.isEmpty()) args = QCoreApplication::arguments();
+    // Without closing inherited descriptors the new process would hold this one's listening sockets (the DevTools
+    // port) and fail to open its own.
+    QProcess p;
+    if (QFile::exists("/.flatpak-info")) {
+      // In the Flatpak every process ends with the sandbox when this one exits, so the new instance starts in a sandbox
+      // of its own through the Flatpak portal (flatpak-spawn), once this one has had time to go (its DevTools port).
+      p.setProgram("flatpak-spawn");
+      p.setArguments(QStringList{"/bin/sh", "-c", "sleep 4; exec \"$0\" \"$@\"", QCoreApplication::applicationFilePath()} + args.mid(1));
+    } else {
+      p.setProgram("/bin/sh");
+      p.setArguments(QStringList{"-c", wait, QCoreApplication::applicationFilePath()} + args.mid(1));
+    }
+    p.setUnixProcessParameters(QProcess::UnixProcessFlag::CloseFileDescriptors | QProcess::UnixProcessFlag::ResetSignalHandlers);
+    p.startDetached();
+    QTimer::singleShot(8000, [] { std::_Exit(0); });  // a wedged Vulkan teardown mustn't keep the old process alive
+    QCoreApplication::exit(0);
+  }, Qt::QueuedConnection);
+}
+
 void chooseGraphicsApi()
 {
   const QVariant v = SettingsComponent::readPreinitValue(SETTINGS_SECTION_MAIN, "icefin_renderer");
   // ICEFIN_RENDERER (auto/vulkan/opengl) overrides the setting, for test suites that start from a fresh config.
   const QString env = qEnvironmentVariable("ICEFIN_RENDERER");
   const QString setting = !env.isEmpty() ? env : v.isValid() && !v.isNull() ? v.toString() : QString("auto");
-  const RendererChoice choice = rendererChoiceFrom(setting);
+  RendererChoice choice = rendererChoiceFrom(setting);
+  s_setting = setting;
+  // 5.7: Vulkan failed on an earlier start with this setting and version: stay on OpenGL.
+  QFile ff(fallbackPath());
+  if (ff.open(QIODevice::ReadOnly)) {
+    const QJsonObject o = QJsonDocument::fromJson(ff.readAll()).object();
+    ff.close();
+    if (o.value("setting").toString() == setting && o.value("version").toString() == QCoreApplication::applicationVersion()
+        && choice != RendererChoice::OpenGl) {
+      s_fallbackReason = o.value("reason").toString();
+      choice = RendererChoice::OpenGl;
+      qWarning().noquote() << "Icefin renderer: OpenGL, because Vulkan failed on" << o.value("when").toString()
+                           << "(" + s_fallbackReason + "). Change the Renderer setting to try Vulkan again.";
+    } else {
+      QFile::remove(fallbackPath());  // the setting or the app changed: Vulkan gets another try
+    }
+  }
   bool usable = false;
   QString why;
   const bool autoVulkan = vulkanVideoPath() && autoPicksVulkan();
@@ -160,15 +234,22 @@ bool VulkanDevice::attach(QQuickWindow* window)
       if (m_ownInstance->supportedExtensions().contains(QByteArray(e))) ext << e;
     m_ownInstance->setExtensions(ext);
     if (!m_ownInstance->create()) {
-      qWarning() << "Icefin renderer: couldn't create the Vulkan instance (" << int(m_ownInstance->errorCode()) << "); Qt creates its own";
+      qWarning() << "Icefin renderer: couldn't create the Vulkan instance (" << int(m_ownInstance->errorCode()) << ")";
       delete m_ownInstance;
       m_ownInstance = nullptr;
+      fallBackToOpenGl("couldn't create the Vulkan instance");
       return false;
     }
     window->setVulkanInstance(m_ownInstance);
     inst = m_ownInstance;
   }
-  if (!create(inst)) return false;
+  if (qEnvironmentVariable("ICEFIN_VULKAN_FAIL") == "device" || !create(inst)) {
+    fallBackToOpenGl("couldn't create the shared Vulkan device");
+    return false;
+  }
+  QObject::connect(window, &QQuickWindow::sceneGraphError, window, [](QQuickWindow::SceneGraphError, const QString& msg) {
+    fallBackToOpenGl("Qt Quick's Vulkan scene graph failed: " + msg);
+  });
   window->setGraphicsDevice(QQuickGraphicsDevice::fromDeviceObjects(m_physical, m_device, int(m_family), 0));
   // The single-surface compositor (5.4): on with the Vulkan video path unless switched off or not built.
   CompositorState& cs = compositorState();
@@ -239,7 +320,7 @@ bool VulkanDevice::attach(QQuickWindow* window)
     }
 #endif
     if (shared) qInfo() << "Icefin renderer: Qt Quick renders on the shared Vulkan device";
-    else qWarning() << "Icefin renderer: Qt Quick is not on the shared Vulkan device";
+    else fallBackToOpenGl("Qt Quick isn't on Icefin's shared Vulkan device, so video can't play on Vulkan");
   }, Qt::DirectConnection);
   // HDR10 static metadata on X11 / Gamescope (5.6): VK_EXT_hdr_metadata on Qt's swapchain, which Gamescope passes to
   // the display. Set again when the swapchain is recreated (resize) or the video's metadata changes. Wayland carries
