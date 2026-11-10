@@ -42,8 +42,32 @@ page (for example attribute selectors with background images). So the boundary i
 7. **Upstream's pre-init settings reader returns JSON null for a missing key**, which a plain `toBool()` reads as
    false (seen in `allowBrowserZoom`, fixed for Icefin's own GBM switch in 4.3). *Low, upstream; candidate for 10.2.*
 
+## 8.4 re-review: native backdrop shaders (2026-11-09)
+What a theme can now reach natively: one fragment shader drawn under the page (`qml/icefin/Backdrop.qml`), with
+uniforms the engine owns.
+- **Source code (GLSL).** Built-in themes and `ICEFIN_THEME_PATH` only; a user-installed package declaring a `.frag` is
+  refused at load. The engine writes the header and uniform block; a body that declares `#version` or a uniform is
+  refused. Baked with Qt's shader baker into a `.qsb` in the cache, keyed by a hash of the full source.
+- **Precompiled `.qsb` (user themes).** The SPEC trust table lists precompiled shaders as declarative. They aren't
+  harmless: a `.qsb` carries GLSL/SPIR-V/HLSL/MSL that goes to the GPU driver's own compiler without translation (unlike
+  WebGL, which ANGLE sanitizes), so a crafted one can hit driver compiler bugs or hang the GPU. **Changed:** a
+  user-installed theme's backdrop now loads only after the user trusts the theme (the same content-hash-bound trust as
+  scripts); until then the theme works without it. *SPEC's trust table carries the change.*
+- **Checks on every `.qsb`:** at most 256 KiB; `QShader::fromSerialized` must give a fragment shader with exactly one
+  uniform block whose members are the declared params (types from the tokens) plus `qt_Matrix`, `qt_Opacity`, `time`,
+  `resolution`; no samplers, so a shader can't read the video, the page or anything else. The deserializer is Qt's
+  (QDataStream); it sees only trusted packages' files now.
+- **Values from the page.** `setBackdropState` (on the WebChannel, so any page script, plugins included) can change only
+  visibility, the motion state and the values of tokens the params already name; each value must parse as a colour or
+  a number. Worst case: the backdrop changes colour or hides. *Accepted.*
+- **Test hooks.** `grabWindow()`/`grabPixel()` render the whole window (video included) for tests. They answer only
+  when the app runs with `--remote-debugging-port`, which already gives full control of the page; otherwise they
+  return nothing. The grab path is fixed in the cache, never from the page.
+- **Hidden during video.** The layer hides while the player is busy or its window is up, so a theme can't draw over
+  playback on the OpenGL path (where the video item is opaque).
+
 ## Re-review when
 - a new asset type is served over the scheme, or the CSS sanitizer changes;
 - the stand-down handshake gains a service beyond tokens and sounds;
-- themes get any native capability (8.4 backdrop shaders: SPEC allows precompiled shaders with declared parameters
-  for user themes; review that path before it ships).
+- themes get another native capability, the backdrop gets textures or a second shader stage, or user-theme shaders
+  stop needing trust.

@@ -29,7 +29,7 @@ Package loadPackage(const QString& dir, Source source)
   if (!meta.isEmpty()) {
     if (meta.value("schema").toInt() != 1) p.errors << "theme.json: schema must be 1";
     // Same rule as docs/themes/schema/theme.schema.json: no unknown top-level keys.
-    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "presets"};
+    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "presets", "backdrop"};
     for (const QString& k : meta.keys()) if (!known.contains(k)) p.errors << QString("theme.json: unknown key '%1'").arg(k);
     p.id = meta.value("id").toString();
     p.name = meta.value("name").toString();
@@ -59,6 +59,12 @@ Package loadPackage(const QString& dir, Source source)
       if (!fam.match(f.value("family").toString()).hasMatch()) { p.errors << "theme.json: font family must be 1-64 letters, digits, spaces, _ or -"; continue; }
       if (!file.isEmpty()) p.fonts << QVariantMap{{"family", f.value("family").toString()}, {"file", file},
                                                   {"weight", f.value("weight").toVariant().toString().isEmpty() ? QString("400") : f.value("weight").toVariant().toString()}, {"style", f.value("style").toString("normal")}};
+    }
+    if (meta.contains("backdrop")) {
+      p.backdrop = parseBackdrop(meta.value("backdrop").toVariant(), &p.errors);
+      if (!p.backdrop.shader.isEmpty()) p.backdrop.shader = asset(p.backdrop.shader, "backdrop shader");
+      if (p.backdrop.declared() && !p.backdrop.precompiled() && source == Source::User)
+        p.errors << "theme.json: a user-installed theme's backdrop must be a precompiled .qsb (GLSL is for built-in themes)";
     }
     const QJsonObject presets = meta.value("presets").toObject();
     for (auto it = presets.begin(); it != presets.end(); ++it) {

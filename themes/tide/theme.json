@@ -5,5 +5,18 @@
   "version": "0.1.0",
   "description": "A horizontal row of category icons crossing a vertical list of items at a fixed focus point, over an animated wave on a gradient whose colour follows the month and the time of day; original line icons.",
   "styles": "styles.css",
-  "scripts": ["tide.js"]
+  "scripts": [
+    "tide.js"
+  ],
+  "backdrop": {
+    "shader": "backdrop/wave.frag",
+    "params": {
+      "colorTop": "color.waveTop",
+      "colorBottom": "color.waveBottom",
+      "lineColor": "color.waveLine",
+      "shade": "color.shade",
+      "speed": 0.35
+    },
+    "fps": 30
+  }
 }

@@ -204,6 +204,8 @@ Window
     onHeightChanged: console.log("MpvVideoItem height changed:", height)
   }
 
+  Loader { source: "qrc:/icefin-qml/Backdrop.qml"; anchors.fill: parent; z: 50 }  // ICEFIN-HOOK: native theme backdrop between video and web (PLAN 8.4)
+
   WebEngineView
   {
     id: web

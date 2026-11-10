@@ -116,6 +116,9 @@
         resetHooks.forEach((f) => { try { f(); } catch (e) { console.error('icefinTheme: reset hook', e); } });
         pkg = next && next.id && !(api && standDown(api)) ? next : null;
         document.documentElement.toggleAttribute('data-icefin-theme', !!pkg);
+        // The native backdrop (8.4) draws under the page: html[data-icefin-backdrop] lets the adapter and the theme
+        // make page backgrounds transparent.
+        document.documentElement.toggleAttribute('data-icefin-backdrop', !!(pkg && pkg.backdrop));
         if (!pkg) { route_(); return; }
         if (pkg.styles) {
             const l = document.createElement('link');

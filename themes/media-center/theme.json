@@ -5,9 +5,33 @@
   "version": "0.1.0",
   "description": "Icefin's reference theme: a ten-foot start strip of your libraries on a deep blue field with drifting ribbons, a soft focus glow and gentle sounds. Original art, sounds and type; no third-party assets.",
   "styles": "styles.css",
-  "scripts": ["start.js"],
-  "sounds": { "focus": "sounds/focus.wav", "select": "sounds/select.wav", "back": "sounds/back.wav", "navigate": "sounds/navigate.wav" },
+  "scripts": [
+    "start.js"
+  ],
+  "sounds": {
+    "focus": "sounds/focus.wav",
+    "select": "sounds/select.wav",
+    "back": "sounds/back.wav",
+    "navigate": "sounds/navigate.wav"
+  },
   "presets": {
-    "teal": { "color": { "accent": "#2fb7a8", "focus": "#7ff0e2", "focusGlow": "rgba(127, 240, 226, 0.55)" } }
+    "teal": {
+      "color": {
+        "accent": "#2fb7a8",
+        "focus": "#7ff0e2",
+        "focusGlow": "rgba(127, 240, 226, 0.55)"
+      }
+    }
+  },
+  "backdrop": {
+    "shader": "backdrop/ribbons.frag",
+    "params": {
+      "surface": "color.surface",
+      "background": "color.background",
+      "ribbon": "color.ribbon",
+      "ribbonAlt": "color.ribbonAlt",
+      "speed": 0.12
+    },
+    "fps": 24
   }
 }

@@ -129,3 +129,16 @@ html.icefin-themed .cardContent,
 html.icefin-themed .cardImageContainer,
 html.icefin-themed .cardOverlayContainer,
 html.icefin-themed .cardBox:not(.visualCardBox) .cardPadder { border-radius: var(--icefin-shape-cardRadius); }
+
+/* Native backdrop (PLAN 8.4): when the active theme draws one under the web view, jellyfin-web's page backgrounds
+   step aside so it shows through. Panels, cards and dialogs keep their surfaces. */
+html[data-icefin-backdrop],
+html[data-icefin-backdrop] body,
+html[data-icefin-backdrop] .skinBody,
+html[data-icefin-backdrop] .backgroundContainer,
+html[data-icefin-backdrop] .mainAnimatedPage,
+html[data-icefin-backdrop] .page,
+html[data-icefin-backdrop] #reactRoot { background: transparent !important; }
+/* With color-scheme: dark (jellyfin-web's) and a transparent root, Chromium paints the canvas its own dark grey
+   instead of leaving it see-through. */
+html[data-icefin-backdrop] { color-scheme: normal !important; }

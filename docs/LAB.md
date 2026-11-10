@@ -45,6 +45,7 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
   README, probe, this workstation's public key). The user runs `bash icefin-htpc-setup.sh` on the HTPC as the TV
   user: it authorizes the key as `restrict,port-forwarding,pty` (tag `icefin-lab-workstation`), offers to enable sshd,
   and writes `~/icefin-htpc-info.txt`; `--check` changes nothing, `--remove` undoes it.
+- **Web tests on the HTPC:** `htpc.sh web <script>.py [args]` runs any `tests/icefin/web` test in the on-screen session against the installed Flatpak (same tunnels, credentials and house rules as `play`); its `--out` folder comes back to `build-htpc/results/`. Used for what Xvfb can't show, such as the 8.4 backdrop through the page (`theme_backdrop.py`).
 - **Flow:** `htpc.sh build` (Flatpak into the VM's repo) → `deploy` (Flatpak `--user` from remote `icefin-lab`)
   → `play` / `probe` → results in `build-htpc/results/`. `doctor` first; `watch` opens Moonlight (Sunshine on the HTPC).
 - **Runs inside the session on screen.** Remote commands take on the environment of the user's Plasma, GNOME or

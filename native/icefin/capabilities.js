@@ -20,6 +20,7 @@
 //   ui.guideGrid     a two-axis virtualized grid: rows of channels, cells on a time axis, paging by time and channel (9.14)
 //   ui.keyboard      an on-screen keyboard for text fields, in themed screens and jellyfin-web's own pages (9.14)
 //   ui.timePalette   token sets chosen by the local time (and month), cross-faded (9.14)
+//   ui.backdrop      the native backdrop under the page (8.4): show/hide; motion and palette changes follow it
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -36,6 +37,7 @@
         cap(level) {
             cap = level === 'low' ? 'low' : 'normal';
             attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
+            backdropPush({ motion: motion.reduced() ? 'low' : 'normal' });
         },
         level: () => cap,
         // Low motion when the theme caps it or the user asked the system for reduced motion.
@@ -43,6 +45,21 @@
         // A theme's duration under the current profile: low motion keeps transitions short but not zero.
         duration: (ms) => (motion.reduced() ? Math.min(ms, 80) : ms)
     };
+
+    // ---- native backdrop (8.4): ThemeComponent draws it under the page (qml/icefin/Backdrop.qml) ----
+    function backdropPush(state) {
+        const t = window.api && window.api.theme;
+        if (t && t.setBackdropState && document.documentElement && document.documentElement.hasAttribute('data-icefin-backdrop')) t.setBackdropState(state);
+    }
+    const backdrop = {
+        available: () => !!(document.documentElement && document.documentElement.hasAttribute('data-icefin-backdrop')),
+        show: () => backdropPush({ visible: true }),
+        hide: () => backdropPush({ visible: false })
+    };
+    if (window.matchMedia) {
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (mq.addEventListener) mq.addEventListener('change', () => backdropPush({ motion: motion.reduced() ? 'low' : 'normal' }));
+    }
 
     // ---- spatial focus inside any container (for the overlay and components) ----
     function nearest(container, from, dir) {
@@ -951,6 +968,10 @@
         for (const v of Object.keys(target.vars)) from[v] = h.style.getPropertyValue(v) || getComputedStyle(h).getPropertyValue(v).trim() || target.vars[v];
         for (const v of palette.applied) if (!(v in target.vars)) h.style.removeProperty(v);
         palette.applied = new Set(Object.keys(target.vars));
+        // The native backdrop reads tokens in C++: send it the palette's values (it cross-fades its colours itself).
+        const tokens = {};
+        for (const [v, val] of Object.entries(target.vars)) tokens[v.slice('--icefin-'.length).replace(/-/g, '.')] = val;
+        backdropPush({ tokens });
         cancelAnimationFrame(palette.raf);
         const ms = fade && !motion.reduced() ? palette.fadeMs : 0;
         const set = (k) => {
@@ -1029,6 +1050,8 @@
         materialForced = null;
         if (materialWatch) { cancelAnimationFrame(materialWatch); materialWatch = null; }
         attr('data-icefin-materials', false);
+        // the next theme's runtime starts from its own state: send the current motion once it has mounted
+        setTimeout(() => backdropPush({ motion: motion.reduced() ? 'low' : 'normal' }), 0);
         attr('data-icefin-rail', false);
         keyboard.disable();
         timePalette.stop();
@@ -1039,5 +1062,5 @@
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette };
+    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
 })();

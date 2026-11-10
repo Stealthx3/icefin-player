@@ -9,6 +9,8 @@
 #   build                build the Flatpak into the lab VM's repo (same command as docs/LAB.md)
 #   deploy               install or update Icefin on the HTPC from the lab repo (Flatpak --user)
 #   play [harness args]  run tests/icefin/web/session_play.py in the on-screen session; results to build-htpc/results
+#   web SCRIPT [args]    run another tests/icefin/web/SCRIPT (e.g. theme_backdrop.py) in the on-screen session against the
+#                        installed Flatpak; its --out folder comes back to build-htpc/results/<run>/
 #   probe [section...]   what the HTPC sends to the TV/receiver right now (host gpu drm audio); saved to results
 #   session [status|plasma|gamescope]  show or switch the on-screen session (switching logs the TV session out)
 #   exec CMD             run CMD on the HTPC in the on-screen session's environment
@@ -200,6 +202,23 @@ cmd_play() {
   return $rc
 }
 
+cmd_web() {
+  local script="${1:?web SCRIPT (a tests/icefin/web/*.py)}"; shift
+  [[ "$script" =~ ^[a-z0-9_]+\.py$ ]] && [ -f "$ROOT/tests/icefin/web/$script" ] || die "web: no tests/icefin/web/$script"
+  house; cmd_tunnel up; cmd_push; creds
+  local name="web-${script%.py}-$(date +%Y%m%d-%H%M%S)" envs="" p n rc=0
+  for n in $(python3 -c 'import json,sys; print(" ".join(s["name"] + ":" + str(s["port"]) for s in json.load(open(sys.argv[1]))["servers"]))' \
+             "$ROOT/tests/icefin/servers/servers.json"); do
+    p="${n#*:}"; envs+=" ICEFIN_PORT_$(tr '[:lower:]' '[:upper:]' <<<"${n%%:*}")=$((p + HTPC_PORT_SHIFT))"
+  done
+  rexec "sess_env; cd \"\$D/src\"; mkdir -p \"\$D/results/$name\"
+    env ICEFIN_JF_DIR=\"\$D/jf\"$envs python3 tests/icefin/web/$script --app flatpak:\$APP --qpa session \
+      --out \"\$D/results/$name\"$(q "$@")" || rc=$?
+  cmd_pull "results/$name" || true
+  echo "htpc: results in build-htpc/results/$name"
+  return $rc
+}
+
 cmd_probe() {
   house; cmd_push
   mkdir -p "$RESULTS"
@@ -300,6 +319,6 @@ cmd_doctor() {
 
 c="${1:-}"; shift || true
 case "$c" in
-  doctor|tunnel|build|deploy|play|probe|session|exec|push|pull|clean|uninstall|watch|ssh|window|defer|deferred|handoff) "cmd_$c" "$@" ;;
-  *) sed -n '2,23p' "$0"; exit 2 ;;
+  doctor|tunnel|build|deploy|play|web|probe|session|exec|push|pull|clean|uninstall|watch|ssh|window|defer|deferred|handoff) "cmd_$c" "$@" ;;
+  *) sed -n '2,25p' "$0"; exit 2 ;;
 esac

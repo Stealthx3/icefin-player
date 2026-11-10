@@ -112,3 +112,27 @@ plugin injection survive). Focus moves are beam-first: elements overlapping acro
   returns true when it used it. Rows, strips and carousels use this; `ctx.focused()` and `ctx.focus(el)` help.
 - `?icefin=stock` on any route shows jellyfin-web's own page. A theme that replaces home should link to
   `#/home?icefin=stock` (Media Center's "Classic home"), so plugin home sections stay one step away.
+
+## Native backdrop (`backdrop`, PLAN 8.4)
+One shader drawn under the page by the engine (`qml/icefin/Backdrop.qml`, between the video and the web view):
+```json
+"backdrop": {
+  "shader": "backdrop/wave.frag",
+  "params": { "colorTop": "color.waveTop", "speed": 0.35 },
+  "fps": 30
+}
+```
+- `shader`: a GLSL fragment **body** (`.frag`, built-in themes and `ICEFIN_THEME_PATH`) or a precompiled `.qsb` (the only
+  kind a user-installed theme may ship, and it loads only once the user trusts the theme).
+- The engine writes the header for a `.frag`: `#version 440`, `in vec2 qt_TexCoord0`, `out vec4 fragColor`, and the
+  uniform block `{mat4 qt_Matrix; float qt_Opacity; float time; vec2 resolution; <params>}`. Write `void main()` (and
+  helper functions); multiply the result by `qt_Opacity`. A `.qsb` must declare exactly that block; no samplers.
+- `params`: up to 16. A string names a token: a colour becomes a `vec4` (premultiply yourself with `.a`), a number a
+  `float`. A number is a `float` as written. Names: a lower-case letter, then letters and digits (not `time` or
+  `resolution`).
+- `fps`: 10–60 (default 30). `time` (seconds) advances at that rate and stands still under reduced or low motion.
+- The page: `html[data-icefin-backdrop]` is set when the backdrop is active; the engine makes jellyfin-web's page
+  backgrounds transparent then, and the theme does the same for its own screens (and can keep a web-layer fallback for
+  when there's no backdrop, keyed off that attribute).
+- `ui.backdrop.hide()` / `show()` from a screen; `ui.timePalette` sends its token values, and colour params cross-fade.
+- The layer hides while video is up. Baking needs Qt ShaderTools in the build; without it only `.qsb` backdrops load.

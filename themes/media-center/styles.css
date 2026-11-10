@@ -1,7 +1,8 @@
 /* Media Center: the start strip and the field it sits on. All colours come from tokens. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); }
 
-/* Ribbon field: two slow gradient bands drifting across (a CSS stand-in until the native backdrop, PLAN 8.4). */
+/* Ribbon field: two slow gradient bands drifting across. The native backdrop (8.4, backdrop/ribbons.frag) draws them
+   under the page when the engine has it; this CSS field is the fallback. */
 .mc-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
   background: radial-gradient(120% 90% at 20% 10%, var(--icefin-color-surface) 0%, var(--icefin-color-background) 60%); }
 .mc-ribbon { position: absolute; left: -30%; width: 160%; height: 38%; border-radius: 50%; filter: blur(28px); opacity: 0.9;
@@ -36,3 +37,5 @@ html[data-icefin-motion="low"] .mc-ribbon { animation: none; }
   border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised); box-shadow: 0 0 1.5em var(--icefin-color-focusGlow); }
 .mc-now[hidden] { display: none; }
 .mc-now small { display: block; opacity: 0.7; }
+
+html[data-icefin-backdrop] .mc-field { display: none; }

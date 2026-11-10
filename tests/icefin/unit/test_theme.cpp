@@ -1,15 +1,33 @@
-// Unit tests for the theme engine's tokens and packages (PLAN 6.5).
+// Unit tests for the theme engine's tokens and packages (PLAN 6.5) and the native backdrop's shaders (8.4).
 #include <QtTest>
 #include <QJsonDocument>
 #include "icefin/theme/Tokens.h"
 #include "icefin/theme/ThemePackage.h"
 #include "icefin/theme/CssSanitizer.h"
 #include "icefin/theme/ThemeScheme.h"
+#include "icefin/theme/Backdrop.h"
 #include <QTemporaryDir>
 
 using namespace Icefin::Theme;
 
 static QJsonObject json(const char* s) { return QJsonDocument::fromJson(s).object(); }
+
+// ---- native backdrop fixtures (8.4) ----
+static void writeFile(const QString& path, const QByteArray& bytes)
+{
+  QDir().mkpath(QFileInfo(path).path());
+  QFile f(path);
+  QVERIFY(f.open(QIODevice::WriteOnly));
+  f.write(bytes);
+}
+static QString backdropPackage(const QString& dir, const char* shaderFile, const QByteArray& shader)
+{
+  writeFile(dir + "/theme.json", QByteArray("{\"schema\": 1, \"id\": \"bd-theme\", \"name\": \"B\", \"version\": \"1\", \"backdrop\": "
+                                           "{\"shader\": \"") + shaderFile + "\", \"params\": {\"tint\": \"color.accent\", \"speed\": 0.5}, \"fps\": 24}}");
+  QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", dir + "/tokens.json");
+  writeFile(dir + "/" + shaderFile, shader);
+  return dir;
+}
 
 class TestTheme : public QObject
 {
@@ -153,6 +171,83 @@ private slots:
     QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", d.path() + "/tokens.json");
     Package p = loadPackage(d.path(), Source::User);
     QVERIFY(p.errors.join(" ").contains("unknown key 'scrpits'"));
+  }
+  // ---- native backdrop (8.4) ----
+  void backdropSpecParsing()
+  {
+    QStringList e;
+    BackdropSpec b = parseBackdrop(QVariantMap{{"shader", "a.frag"}, {"params", QVariantMap{{"tint", "color.accent"}, {"speed", 0.5}}}, {"fps", 24}}, &e);
+    QVERIFY2(e.isEmpty(), qPrintable(e.join("; ")));
+    QCOMPARE(b.fps, 24);
+    QCOMPARE(b.params.value("tint").toString(), QString("color.accent"));
+    QVERIFY(!b.precompiled());
+    e.clear();
+    parseBackdrop(QVariantMap{{"shader", "a.glsl"}, {"params", QVariantMap{{"time", 1}, {"Bad", 1}, {"x", "notatoken"}}}, {"fps", 200}, {"extra", 1}}, &e);
+    const QString all = e.join(" | ");
+    QVERIFY(all.contains(".frag (GLSL body) or a precompiled .qsb"));
+    QVERIFY(all.contains("'time' is not allowed") && all.contains("'Bad' is not allowed"));
+    QVERIFY(all.contains("'x' must name a token"));
+    QVERIFY(all.contains("fps must be 10-60") && all.contains("unknown key 'extra'"));
+  }
+  void cssColors()
+  {
+    QCOMPARE(cssColor("#ff8000"), QColor(255, 128, 0));
+    QCOMPARE(cssColor("#ff800080").alpha(), 128);  // CSS order: alpha last
+    QCOMPARE(cssColor("#f80"), QColor(255, 136, 0));
+    QVERIFY(qAbs(cssColor("rgba(0, 0, 0, 0.5)").alphaF() - 0.5f) < 0.01f);
+    QCOMPARE(cssColor("rgb(10 20 30)"), QColor(10, 20, 30));
+    QVERIFY(!cssColor("red").isValid());
+    QVERIFY(!cssColor("rgb(300, 0, 0)").isValid());
+  }
+  void backdropTypesFromTokens()
+  {
+    BackdropSpec b;
+    b.shader = "a.frag";
+    b.params = {{"tint", "color.accent"}, {"speed", 0.5}, {"radius", "shape.cardRadius"}, {"missing", "color.nope"}};
+    QStringList e;
+    const auto t = backdropTypes(b, TokenMap{{"color.accent", "#ff0000"}, {"shape.cardRadius", "0.8em"}}, &e);
+    QCOMPARE(t.value("tint"), QString("color"));
+    QCOMPARE(t.value("speed"), QString("number"));
+    QVERIFY(e.join(" ").contains("'radius': token 'shape.cardRadius' is neither a colour nor a number"));
+    QVERIFY(e.join(" ").contains("no token 'color.nope'"));
+  }
+  void backdropBakesAndChecks()
+  {
+    if (!backdropBakingAvailable()) QSKIP("built without Qt ShaderTools");
+    const QMap<QString, QString> types{{"tint", "color"}, {"speed", "number"}};
+    QString err;
+    const QByteArray qsb = bakeBackdrop("void main() { fragColor = tint * (0.5 + 0.5 * sin(time * speed)) * qt_Opacity; }", types, &err);
+    QVERIFY2(!qsb.isEmpty(), qPrintable(err));
+    QVERIFY2(checkBackdropQsb(qsb, types, &err), qPrintable(err));
+    // The same shader against a declaration it doesn't match is refused.
+    QVERIFY(!checkBackdropQsb(qsb, {{"tint", "number"}, {"speed", "number"}}, &err));
+    QVERIFY(err.contains("wrong type"));
+    QVERIFY(!checkBackdropQsb(qsb, {{"speed", "number"}}, &err));
+    QVERIFY(err.contains("isn't a declared param"));
+    QVERIFY(!checkBackdropQsb("not a shader", types, &err));
+    // A body can't bring its own header, and a syntax error is reported.
+    QVERIFY(bakeBackdrop("#version 440\nvoid main() {}", types, &err).isEmpty());
+    QVERIFY(bakeBackdrop("uniform float x;\nvoid main() { fragColor = tint; }", types, &err).isEmpty());
+    QVERIFY2(!bakeBackdrop("// the uniform block is the engine's\nvoid main() { fragColor = tint; }", types, &err).isEmpty(), qPrintable(err));
+    QVERIFY(bakeBackdrop("void main() { fragColor = nope; }", types, &err).isEmpty());
+    QVERIFY(!err.isEmpty());
+  }
+  void backdropTrust()
+  {
+    // GLSL is for built-in themes; a user-installed theme must ship a precompiled .qsb.
+    QTemporaryDir d1, d2;
+    const QByteArray body = "void main() { fragColor = tint * qt_Opacity; }";
+    QVERIFY(loadPackage(backdropPackage(d1.path(), "bd/a.frag", body), Source::Bundled).ok());
+    Package user = loadPackage(backdropPackage(d2.path(), "bd/a.frag", body), Source::User);
+    QVERIFY(user.errors.join(" ").contains("must be a precompiled .qsb"));
+    // A shader outside the package is refused like any asset.
+    QTemporaryDir d3;
+    backdropPackage(d3.path(), "bd/a.frag", body);
+    QFile m(d3.path() + "/theme.json"); QVERIFY(m.open(QIODevice::ReadOnly));
+    QByteArray meta = m.readAll(); m.close();
+    meta.replace("bd/a.frag", "../a.frag");
+    writeFile(d3.path() + "/theme.json", meta);
+    QVERIFY(loadPackage(d3.path(), Source::Bundled).errors.join(" ").contains("is not a file in the package"));
   }
 };
 

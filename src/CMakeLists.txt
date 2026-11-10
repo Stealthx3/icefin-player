@@ -67,6 +67,7 @@ add_custom_command(OUTPUT resources.qrc
           /icefin=${CMAKE_SOURCE_DIR}/src/icefin/resources/  # ICEFIN-HOOK: Icefin qrc files
           /icefin-themes=${CMAKE_SOURCE_DIR}/themes/  # ICEFIN-HOOK: bundled theme packages (PLAN 8.1)
           /inputmaps=${CMAKE_SOURCE_DIR}/src/icefin/inputmaps/  # ICEFIN-HOOK: Icefin gamepad map (PLAN 7.2)
+          /icefin-qml=${CMAKE_SOURCE_DIR}/qml/icefin/  # ICEFIN-HOOK: native backdrop QML (PLAN 8.4)
   COMMENT "Creating resources.qrc"
   DEPENDS ${CMAKE_SOURCE_DIR}/scripts/build-qt-resources.py
     ${RESOURCE_FILES}
