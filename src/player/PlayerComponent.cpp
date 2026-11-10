@@ -319,6 +319,7 @@ void PlayerComponent::queueMedia(const QString& url, const QVariantMap& options,
   if (Icefin::Render::RouterComponent::Get().hold(metadata, [=, this] { queueMedia(url, options, metadata, audioStream, subtitleStream); }, [this] { emit finished(); }))  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
     return;  // ICEFIN-HOOK: the prompt answers later
 
+  Icefin::Gpu::HwdecLoadScope hwdecLoad;  // ICEFIN-HOOK: a load applies the hwdec setting now (PLAN 4.2)
   updateVideoConfiguration();
 
   QUrl qurl = url;
@@ -1474,6 +1475,7 @@ void PlayerComponent::setVideoConfiguration()
     hwdecMode = "auto-copy";
   }
   hwdecMode = Icefin::Gpu::hwdecFor(hardwareDecodingMode);  // ICEFIN-HOOK: Icefin's choices replace the mapping above (PLAN 4.2)
+  if (!Icefin::Gpu::deferHwdecChange(!m_mpv->getProperty("idle-active").toBool(), m_mpv->getProperty("hwdec").toString(), hwdecMode))  // ICEFIN-HOOK: not mid-playback (PLAN 4.2)
   m_mpv->setProperty( "hwdec", hwdecMode);
   m_mpv->setProperty( "hwdec-image-format", hwdecVTFormat);
 

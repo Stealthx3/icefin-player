@@ -13,6 +13,17 @@ namespace Icefin::Gpu
 // renderer as a blank picture there (RTX 4090, Plasma Wayland, Flatpak, 2026-11-09). An explicit NVDEC choice is kept.
 QString hwdecFor(const QString& setting);
 QString hwdecFor(const QString& setting, bool nvidiaOnOpenGl);
+// A hardwareDecoding change made while a video plays waits for the next load: switching mpv's decoder under the
+// running render path left the picture white (RTX 4090, OpenGL, 2026-11-09). PlayerComponent::queueMedia opens a
+// HwdecLoadScope around its settings refresh, so a load always applies the setting.
+struct HwdecLoadScope
+{
+  HwdecLoadScope();
+  ~HwdecLoadScope();
+};
+// True if the hwdec property should not change now: not during a load, a video is playing, and the value differs.
+bool deferHwdecChange(bool playing, const QString& current, const QString& next);
+
 // True if a DRM card under sysRoot has PCI vendor 0x10de (NVIDIA).
 bool hasNvidiaGpu(const QString& sysRoot = "/sys");
 // Icefin value for an upstream value saved before Icefin's choices (enabled -> auto, disabled -> off, osx_compat -> auto);

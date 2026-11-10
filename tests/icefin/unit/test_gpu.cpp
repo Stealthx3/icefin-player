@@ -36,6 +36,17 @@ private slots:
     QCOMPARE(hwdecFor("vaapi", true), QString("vaapi"));
     QCOMPARE(hwdecFor("off", true), QString("no"));
   }
+  void hwdecChangeMidPlayback()
+  {
+    QVERIFY(deferHwdecChange(true, "auto-safe", "auto-copy-safe"));    // playing, a different value: wait
+    QVERIFY(!deferHwdecChange(true, "auto-safe", "auto-safe"));        // no change
+    QVERIFY(!deferHwdecChange(false, "auto-safe", "auto-copy-safe"));  // idle: apply now
+    {
+      HwdecLoadScope load;
+      QVERIFY(!deferHwdecChange(true, "auto-safe", "auto-copy-safe"));  // a load always applies
+    }
+    QVERIFY(deferHwdecChange(true, "auto-safe", "no"));
+  }
   void nvidiaDetection()
   {
     QTemporaryDir root;
