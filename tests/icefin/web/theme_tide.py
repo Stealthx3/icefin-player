@@ -112,14 +112,20 @@ def main():
         check("the gradient follows the month and the time of day dims it", dec == ("#c0392b", "rgba(0, 0, 0, 0)") and jul == ("#2fa3a0", "rgba(0, 0, 0, 0.5)")
               and js("document.documentElement.dataset.icefinPalette") == "m7+night", f"dec={dec} jul={jul}")
         shot("night.png")
-        f0 = js("document.querySelector('.td-wave').dataset.tdFrame")
-        time.sleep(1)
-        check("the wave stops under the low-motion cap", js("document.querySelector('.td-wave').dataset.tdFrame") == f0)
+        # The wave is the native backdrop when the engine has it (8.4: its time stands still under low motion), else the
+        # web canvas (its frame counter stands still).
+        native = js("document.documentElement.hasAttribute('data-icefin-backdrop')") is True
+        frame = (lambda: (js("new Promise(r => window.api.theme.backdropStats(r))") or {}).get("time")) if native else (lambda: js("document.querySelector('.td-wave').dataset.tdFrame"))
+        wait = 2.5 if native else 1  # backdrop stats come every two seconds
+        time.sleep(wait)
+        f0 = frame()
+        time.sleep(wait)
+        check(f"the wave stops under the low-motion cap ({'native backdrop' if native else 'canvas'})", frame() == f0, f"{f0}")
         js("window.icefinTheme.ui.motion.cap('normal'); true")
-        time.sleep(1)
-        f1 = js("document.querySelector('.td-wave').dataset.tdFrame")
-        time.sleep(1)
-        check("the wave moves again when the cap lifts", js("document.querySelector('.td-wave').dataset.tdFrame") != f1)
+        time.sleep(wait)
+        f1 = frame()
+        time.sleep(wait)
+        check("the wave moves again when the cap lifts", frame() != f1, f"{f1}")
         js("window.icefinTheme.ui.timePalette.at(null); true")
         for _ in range(len(cats)):
             act("left")

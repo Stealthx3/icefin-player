@@ -162,7 +162,7 @@
             S.itemsEl = el('div', 'td-items');
             S.clock = el('div', 'td-clock');
             root.append(S.itemsEl, S.catsEl, S.clock);
-            S.wave = wave(canvas);
+            S.wave = ui.backdrop.available() ? { stop() {} } : wave(canvas);  // the native backdrop draws the wave
             const tick = () => { if (S && S.root === root) S.clock.textContent = new Date().toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
             tick();
             S.timer = setInterval(tick, 15000);

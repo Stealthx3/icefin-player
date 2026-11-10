@@ -8,13 +8,32 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             settings/SettingsMerge.cpp settings/SettingsMerge.h
             theme/Tokens.cpp theme/Tokens.h theme/ThemePackage.cpp theme/ThemePackage.h
             theme/ThemeComponent.cpp theme/ThemeComponent.h theme/ThemeScheme.cpp theme/ThemeScheme.h
-            theme/CssSanitizer.cpp theme/CssSanitizer.h
+            theme/CssSanitizer.cpp theme/CssSanitizer.h theme/Backdrop.cpp theme/Backdrop.h
             gpu/Hwdec.cpp gpu/Hwdec.h gpu/DecoderSelfTest.cpp gpu/DecoderSelfTest.h
             gpu/HardwareComponent.cpp gpu/HardwareComponent.h gpu/WebGpuStatus.cpp gpu/WebGpuStatus.h
             render/PlaybackRouter.cpp render/PlaybackRouter.h render/RouterComponent.cpp render/RouterComponent.h
             render/HdrCapabilityProbe.cpp render/HdrCapabilityProbe.h render/VulkanDevice.cpp render/VulkanDevice.h render/VulkanVideo.cpp render/VulkanVideo.h
             log/Redact.cpp log/Redact.h
             input/GamepadNames.cpp input/GamepadNames.h input/GamepadComponent.cpp input/GamepadComponent.h)
+
+# Native backdrop (PLAN 8.4): Qt ShaderTools bakes built-in themes' GLSL backdrops at load. Optional: without it
+# only precompiled .qsb backdrops load, and themes fall back to their web-layer effects.
+# QShader and QShaderBaker are Qt's semi-public RHI API: their headers sit in the private include trees. Since Qt 6.10
+# the private modules are separate packages (Qt6GuiPrivate, Qt6ShaderToolsPrivate); before that they come with the
+# public ones. One find_package per component, so a missing one doesn't hide the others.
+foreach(comp ShaderTools GuiPrivate ShaderToolsPrivate)
+  find_package(Qt6 COMPONENTS ${comp} QUIET GLOBAL)
+endforeach()
+if(TARGET Qt6::ShaderTools AND TARGET Qt6::ShaderToolsPrivate AND TARGET Qt6::GuiPrivate)
+  cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_link_libraries jmp_core Qt6::ShaderTools Qt6::ShaderToolsPrivate Qt6::GuiPrivate)
+  cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_compile_definitions jmp_core PRIVATE ICEFIN_SHADERTOOLS)
+  message(STATUS "Icefin: backdrop shader baking with Qt ShaderTools")
+else()
+  message(STATUS "Icefin: no Qt ShaderTools; backdrops need precompiled .qsb shaders")
+  if(TARGET Qt6::GuiPrivate)
+    cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_link_libraries jmp_core Qt6::GuiPrivate)  # QShader (.qsb checks)
+  endif()
+endif()
 
 # libpulse for the IEC958 format setting (PLAN 3.4; pipewire-pulse implements the same protocol).
 find_package(PkgConfig REQUIRED)

@@ -93,6 +93,49 @@
       "additionalProperties": {
         "$ref": "#/$defs/relPath"
       }
+    },
+    "backdrop": {
+      "type": "object",
+      "required": [
+        "shader"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "shader": {
+          "$ref": "#/$defs/relPath",
+          "description": "A GLSL fragment body (.frag, built-in themes) or a precompiled .qsb"
+        },
+        "params": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "pattern": "^[a-z][A-Za-z0-9]{0,23}$",
+            "not": {
+              "enum": [
+                "time",
+                "resolution",
+                "main"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9]*(\\.[A-Za-z][A-Za-z0-9]*)+$"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "fps": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 60
+        }
+      }
     }
   },
   "additionalProperties": false,
