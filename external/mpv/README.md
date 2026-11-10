@@ -16,6 +16,15 @@ Both pins match the Flatpak manifest (`flatpak/io.github.stealthx3.IcefinPlayer.
 |---|---|---|
 | `patches/0001` vo_libmpv: introduce 'gpu-next' render backend | sparks | mpv PR #16818 (open), via github.com/andrewrabert/mpv |
 | `patches/0002` vo_libmpv: add Vulkan support to gpu-next backend | Andrew Rabert | github.com/andrewrabert/mpv `c9fd9b8` |
+| `patches/0003` vo_libmpv: gpu-next target colorspace and reference white | Icefin Player | Icefin's own (PLAN 5.2, D23) |
+
+**Icefin's change to the carried diff (`0003`).** Rabert's commit builds the target colorspace only when `target-prim` or
+`target-trc` is set, ignores `target-contrast` and `hdr-reference-white`, and logs the target once through a function
+`static`. `0003` builds the target the way stock `vo_gpu_next` applies those options (each on its own, minimum
+luminance from `target-contrast`), places SDR video at `hdr-reference-white`, and logs target changes at verbose
+level. Icefin sets these options from the compositor's description (`src/icefin/render/MpvTarget`), so libplacebo
+maps to the real display instead of a guess. Known gap for 5.8: the carried backend renders with `pl_filter_nearest`
+and none of mpv's scaler, tone-mapping or deband options, so it isn't at parity with stock gpu-next yet.
 
 Rebase note: mpv 0.42 added `MPV_RENDER_PARAM_D3D11_INIT_PARAMS = 21` and `…_D3D11_FBO = 22`, so the new params are
 renumbered: `BACKEND = 23`, `VULKAN_INIT_PARAMS = 24`, `VULKAN_FBO = 25`, `VULKAN_SYNC = 26` (Icefin bundles its own

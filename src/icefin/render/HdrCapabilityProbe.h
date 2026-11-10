@@ -20,6 +20,7 @@ struct DisplayInfo
   enum class Hdr { Yes, No, Unknown } hdr = Hdr::Unknown;
   QString transfer, primaries, source, error;  // source: "wayland" / "x11"
   int maxLuminance = -1, referenceLuminance = -1;
+  double minLuminance = -1;  // nits (the protocol sends 0.0001 cd/m² units)
   QVariantMap toMap() const;
 };
 

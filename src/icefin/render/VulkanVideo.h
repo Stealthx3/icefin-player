@@ -45,6 +45,7 @@ Q_SIGNALS:
 
 private:
   void attachWindow(QQuickWindow* w);
+  void applyTarget();  // the compositor's description as mpv's target-* options (5.2, D23)
   void render();  // Qt's beforeRendering, render thread
   bool createContext();
   bool ensureImage(const QSize& size);
@@ -56,6 +57,7 @@ private:
   mpv_render_context* m_ctx = nullptr;
   QQuickWindow* m_window = nullptr;
   QSize m_size;
+  QByteArray m_lastTarget;
   bool m_imageChanged = false;
   std::atomic<bool> m_dirty{true};
   std::atomic<int> m_frames{0};

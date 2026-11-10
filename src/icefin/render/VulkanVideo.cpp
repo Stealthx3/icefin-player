@@ -14,6 +14,8 @@
 #include <mpv/render.h>
 #include <mpv/render_vk.h>
 #include "VulkanDevice.h"
+#include "MpvTarget.h"
+#include "HdrCapabilityProbe.h"
 #endif
 
 namespace Icefin::Render
@@ -47,6 +49,7 @@ VulkanVideo::VulkanVideo(QQuickItem* item, mpv_handle* mpv) : QObject(item), m_v
 {
   connect(item, &QQuickItem::windowChanged, this, &VulkanVideo::attachWindow);
   attachWindow(item->window());
+  connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
   qInfo() << "Icefin video: Vulkan path (patched libmpv, gpu-next on the shared device)";
 }
 
@@ -112,8 +115,23 @@ bool VulkanVideo::createContext()
     QMetaObject::invokeMethod(v->m_item, "update", Qt::QueuedConnection);
   }, this);
   qInfo() << "Icefin video: mpv renders through gpu-next on the shared Vulkan device";
+  QMetaObject::invokeMethod(this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
   Q_EMIT ready();
   return true;
+}
+
+void VulkanVideo::applyTarget()
+{
+  if (!m_mpv) return;
+  const MpvOptions opts = mpvTargetOptions(HdrCapabilityProbe::instance().current(), vulkanHdrOutput());
+  QByteArray summary;
+  for (const auto& o : opts) {
+    const int rc = mpv_set_property_string(m_mpv, o.first.constData(), o.second.constData());
+    if (rc < 0) qWarning().noquote() << "Icefin video: mpv rejected" << o.first + "=" + o.second << mpv_error_string(rc);
+    summary += o.first + "=" + o.second + " ";
+  }
+  if (summary != m_lastTarget) qInfo().noquote() << "Icefin video: mpv target" << summary.trimmed();
+  m_lastTarget = summary;
 }
 
 bool VulkanVideo::ensureImage(const QSize& size)
@@ -222,5 +240,6 @@ bool VulkanVideo::ensureImage(const QSize&) { return false; }
 void VulkanVideo::destroyImage() {}
 QSGNode* VulkanVideo::updatePaintNode(QSGNode* old) { return old; }
 void VulkanVideo::render() {}
+void VulkanVideo::applyTarget() {}
 #endif
 }

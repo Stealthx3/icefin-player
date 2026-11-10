@@ -17,7 +17,7 @@ namespace Icefin::Render
 QVariantMap DisplayInfo::toMap() const
 {
   return {{"hdr", hdr == Hdr::Yes ? "yes" : hdr == Hdr::No ? "no" : "unknown"}, {"transfer", transfer}, {"primaries", primaries},
-          {"maxLuminance", maxLuminance}, {"referenceLuminance", referenceLuminance}, {"source", source}, {"error", error}};
+          {"maxLuminance", maxLuminance}, {"referenceLuminance", referenceLuminance}, {"minLuminance", minLuminance}, {"source", source}, {"error", error}};
 }
 
 DisplayInfo::Hdr hdrForTransfer(const QString& tf, int maxLuminance, int referenceLuminance)
@@ -78,8 +78,8 @@ static const wp_image_description_info_v1_listener kInfo = {
   [](void* data, wp_image_description_info_v1*, uint32_t p) { static_cast<HdrCapabilityProbe::Wl*>(data)->info.primaries = p < 11 ? kPrim[p] : "other"; },
   [](void*, wp_image_description_info_v1*, uint32_t) {},
   [](void* data, wp_image_description_info_v1*, uint32_t tf) { static_cast<HdrCapabilityProbe::Wl*>(data)->info.transfer = tf < 14 ? kTf[tf] : "other"; },
-  [](void* data, wp_image_description_info_v1*, uint32_t, uint32_t mx, uint32_t ref) {
-    auto* w = static_cast<HdrCapabilityProbe::Wl*>(data); w->info.maxLuminance = int(mx); w->info.referenceLuminance = int(ref); },
+  [](void* data, wp_image_description_info_v1*, uint32_t mn, uint32_t mx, uint32_t ref) {
+    auto* w = static_cast<HdrCapabilityProbe::Wl*>(data); w->info.minLuminance = mn / 10000.0; w->info.maxLuminance = int(mx); w->info.referenceLuminance = int(ref); },
   [](void*, wp_image_description_info_v1*, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t) {},
   [](void*, wp_image_description_info_v1*, uint32_t, uint32_t) {},
   [](void* data, wp_image_description_info_v1*, uint32_t mx) { auto* w = static_cast<HdrCapabilityProbe::Wl*>(data); if (w->info.maxLuminance < 0) w->info.maxLuminance = int(mx); },
@@ -145,6 +145,7 @@ void HdrCapabilityProbe::probe()
         info.primaries = w->info.primaries;
         info.maxLuminance = w->info.maxLuminance;
         info.referenceLuminance = w->info.referenceLuminance;
+        info.minLuminance = w->info.minLuminance;
         info.error = w->state == 1 ? QString() : w->info.error.isEmpty() ? QString("no image description") : w->info.error;
         info.hdr = hdrForTransfer(info.transfer, info.maxLuminance, info.referenceLuminance);
       }

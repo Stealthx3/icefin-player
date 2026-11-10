@@ -6,7 +6,8 @@ With Renderer = Vulkan (needs the patched libmpv, external/mpv), checks:
   2. an SDR clip plays: the player reports playing and mpv's frames reach the scene graph on the Vulkan path
      (the picture on screen is checked on real hardware: the lab's Xvfb doesn't composite the transparent web view
      over video, on either renderer, so a screen grab there proves nothing);
-  3. the router routes as Vulkan, with the display treated as SDR until HDR output exists (5.4/5.5);
+  3. the router routes as Vulkan, with the display treated as SDR until HDR output exists (5.4/5.5), and the
+     compositor's description reaches mpv as its target-* options with none rejected (5.2, D23);
   4. a second load plays on the Vulkan path again;
   5. Renderer = OpenGL plays the same clip on MpvQt's path, as upstream (5.7 stays upstream's).
 Lab: lavapipe via ICEFIN_RENDERER_ALLOW_SOFTWARE=1. Real GPU: --qpa session and a flatpak:<id> app.
@@ -93,6 +94,9 @@ def main():
         check("mpv renders through gpu-next on the shared device", "Icefin video: mpv renders through gpu-next on the shared Vulkan device" in t)
         m = re.search(r"Icefin video: first frame on the Vulkan path QSize\((\d+), (\d+)\)", t)
         check("frames reach the scene graph", bool(m), m.group(0) if m else "")
+        tgt = re.search(r"Icefin video: mpv target (.*)", t)
+        check("the compositor's description reaches mpv's target (5.2, D23)", bool(tgt) and "target-prim=" in tgt.group(1)
+              and "mpv rejected" not in t, tgt.group(1) if tgt else "")
         route = re.findall(r"Icefin router: SDR -> .*", t)
         check("router routes it on the Vulkan path", any("SDR" in r for r in route), route[-1] if route else "")
         before = len(re.findall(r"Icefin router: SDR -> ", text(path)))
