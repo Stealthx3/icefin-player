@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QTimer>
 #include <QWindow>
 #ifdef ICEFIN_WAYLAND_CM
 #include <QtGui/qguiapplication_platform.h>
@@ -19,10 +20,11 @@ QVariantMap DisplayInfo::toMap() const
           {"maxLuminance", maxLuminance}, {"referenceLuminance", referenceLuminance}, {"source", source}, {"error", error}};
 }
 
-DisplayInfo::Hdr hdrForTransfer(const QString& tf)
+DisplayInfo::Hdr hdrForTransfer(const QString& tf, int maxLuminance, int referenceLuminance)
 {
   if (tf == "st2084_pq" || tf == "hlg") return DisplayInfo::Hdr::Yes;
   if (tf.isEmpty()) return DisplayInfo::Hdr::Unknown;
+  if (maxLuminance > 0 && referenceLuminance > 0 && maxLuminance * 2 >= referenceLuminance * 3) return DisplayInfo::Hdr::Yes;
   return DisplayInfo::Hdr::No;
 }
 
@@ -112,6 +114,13 @@ void HdrCapabilityProbe::probe()
         wl_registry_add_listener(reg, &kRegistry, m_wl);
         wl_display_roundtrip_queue(m_wl->display, m_wl->queue);
         if (m_wl->cm) wp_color_manager_v1_add_listener(m_wl->cm, &kCm, m_wl);
+        // Qt reads the socket and files our objects' events on our queue, but only we dispatch it. Without this, the
+        // output's "description changed" event (HDR turned on or off in the display settings) waits until the next
+        // probe and the toggle goes unnoticed.
+        auto* pump = new QTimer(this);
+        pump->setInterval(1000);
+        connect(pump, &QTimer::timeout, this, [this] { if (m_wl) wl_display_dispatch_queue_pending(m_wl->display, m_wl->queue); });
+        pump->start();
       }
       Wl* w = m_wl;
       if (!w->cm) info.error = "the compositor has no wp_color_manager_v1";
@@ -137,7 +146,7 @@ void HdrCapabilityProbe::probe()
         info.maxLuminance = w->info.maxLuminance;
         info.referenceLuminance = w->info.referenceLuminance;
         info.error = w->state == 1 ? QString() : w->info.error.isEmpty() ? QString("no image description") : w->info.error;
-        info.hdr = hdrForTransfer(info.transfer);
+        info.hdr = hdrForTransfer(info.transfer, info.maxLuminance, info.referenceLuminance);
       }
     }
   } else

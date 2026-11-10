@@ -83,6 +83,13 @@ private slots:
     QCOMPARE(hdrForTransfer("srgb"), DisplayInfo::Hdr::No);
     QCOMPARE(hdrForTransfer("gamma22"), DisplayInfo::Hdr::No);
     QCOMPARE(hdrForTransfer(""), DisplayInfo::Hdr::Unknown);
+    // KWin: HDR on is gamma22 with headroom (max 800, reference 200); HDR off is max = reference.
+    QCOMPARE(hdrForTransfer("gamma22", 800, 200), DisplayInfo::Hdr::Yes);
+    QCOMPARE(hdrForTransfer("gamma22", 300, 200), DisplayInfo::Hdr::Yes);
+    QCOMPARE(hdrForTransfer("gamma22", 200, 200), DisplayInfo::Hdr::No);
+    QCOMPARE(hdrForTransfer("gamma22", 250, 200), DisplayInfo::Hdr::No);
+    QCOMPARE(hdrForTransfer("srgb", -1, -1), DisplayInfo::Hdr::No);
+    QCOMPARE(hdrForTransfer("", 800, 200), DisplayInfo::Hdr::Unknown);
   }
   void rangeFromItem()
   {

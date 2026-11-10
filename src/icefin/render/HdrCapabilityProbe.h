@@ -23,8 +23,10 @@ struct DisplayInfo
   QVariantMap toMap() const;
 };
 
-// Classify a named transfer function from wp_color_manager_v1 ("st2084_pq", "srgb", ...).
-DisplayInfo::Hdr hdrForTransfer(const QString& tf);
+// Classify an output description from wp_color_manager_v1. HDR when the transfer function is PQ or HLG, or when the
+// output has luminance headroom over its reference white (max at least 1.5x reference): KWin describes an HDR output
+// as gamma22 / bt2020 with max 800, reference 200 (RTX 4090 ultrawide, 2026-11-09), and an SDR one as max = reference.
+DisplayInfo::Hdr hdrForTransfer(const QString& tf, int maxLuminance = -1, int referenceLuminance = -1);
 
 class HdrCapabilityProbe : public QObject
 {
