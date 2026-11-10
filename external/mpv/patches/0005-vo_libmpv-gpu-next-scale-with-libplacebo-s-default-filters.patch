@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Icefin Player <noreply@github.com>
+Date: Tue, 10 Nov 2026 16:25:00 +0000
+Subject: [PATCH 5/5] vo_libmpv: gpu-next: scale with libplacebo's default
+ filters
+
+The carried backend rendered with pl_filter_nearest for both up- and downscaling (video and screenshots), so
+scaled video was visibly jagged, for example a 1280x720 episode at 1600x900 on a 125% display. Start from
+pl_render_default_params instead (Lanczos up, Hermite down, sigmoid, dither, the frame mixer and peak detection),
+the defaults stock vo_gpu_next starts from. mpv's own scale/dscale/cscale options are still not applied.
+
+Icefin Player (PLAN 5.3; the full option mapping is 5.8 parity).
+---
+diff --git a/video/out/gpu_next/video.c b/video/out/gpu_next/video.c
+index b02fe50..4152fc5 100644
+--- a/video/out/gpu_next/video.c
++++ b/video/out/gpu_next/video.c
+@@ -6,7 +6,7 @@
+ #include "common/common.h"                 // for mp_rect, MPMAX, MP_ARRAY_SIZE
+ #include "common/msg.h"                    // for mp_msg, MSGL_ERR, MSGL_WARN
+ #include "libplacebo/colorspace.h"         // for pl_color_adjustment, pl_co...
+-#include "libplacebo/filters.h"            // for pl_filter_nearest
++#include "libplacebo/renderer.h"           // for pl_render_default_params
+ #include "libplacebo/gpu.h"                // for pl_tex_params, pl_tex_t
+ #include "libplacebo/renderer.h"           // for pl_frame_mix, pl_frame
+ #include "options/m_config.h"              // for m_config_cache
+@@ -428,11 +428,9 @@ void pl_video_render(struct pl_video *p, struct vo_frame *frame, pl_tex target_t
+     // frame's duration is equivalent to one source frame (1.0 in normalized time).
+     mix.vsync_duration = 1.0f;
+ 
+-    // Prepare the rendering parameters for libplacebo
+-    struct pl_render_params params = {
+-        .upscaler = &pl_filter_nearest,
+-        .downscaler = &pl_filter_nearest,
+-    };
++    // Prepare the rendering parameters for libplacebo: its defaults (the same
++    // scalers stock vo_gpu_next starts from), not nearest-neighbour.
++    struct pl_render_params params = pl_render_default_params;
+ 
+     // Declare a local struct to hold the color adjustment values.
+     struct pl_color_adjustment color_adj;
+@@ -526,10 +524,7 @@ struct mp_image *pl_video_screenshot(struct pl_video *p, struct vo_frame *frame)
+     update_overlays(p, osd_res, 0, PL_OVERLAY_COORDS_DST_FRAME,
+                     &p->osd_state_storage, &target_frame, frame->current);
+ 
+-    const struct pl_render_params params = {
+-        .upscaler = &pl_filter_nearest,
+-        .downscaler = &pl_filter_nearest,
+-    };
++    const struct pl_render_params params = pl_render_default_params;
+ 
+     if (!ra_next_render_image(p->ra, &source_frame, &target_frame, &params)) {
+         mp_msg(p->log, MSGL_ERR, "pl_video_screenshot: rendering failed\n");
+-- 
+2.51.0

@@ -42,7 +42,9 @@ System currentSystem()
   s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan && vulkanVideoPath() ? Renderer::Vulkan : Renderer::OpenGlFallback;
   s.vulkanAvailable = false;     // until the Vulkan renderer exists (5.1): no "switch to Vulkan" option
   switch (HdrCapabilityProbe::instance().current().hdr) {  // 6.1
-    case DisplayInfo::Hdr::Yes: s.display = DisplayState::Hdr; break;
+    // On the Vulkan path the display counts as HDR only once that path can output HDR (5.4/5.5); until then
+    // libplacebo tone-maps there.
+    case DisplayInfo::Hdr::Yes: s.display = s.renderer != Renderer::Vulkan || vulkanHdrOutput() ? DisplayState::Hdr : DisplayState::Sdr; break;
     case DisplayInfo::Hdr::No: s.display = DisplayState::Sdr; break;
     default: s.display = DisplayState::Unknown;
   }

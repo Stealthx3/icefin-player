@@ -1,0 +1,86 @@
+From f6322077a3ec497ed7ed9d8f8d3da2f470f49715 Mon Sep 17 00:00:00 2001
+From: Icefin Player <noreply@github.com>
+Date: Tue, 10 Nov 2026 07:40:59 +0000
+Subject: [PATCH 3/5] vo_libmpv: gpu-next target colorspace and reference white
+ from the target options
+
+Build the target colorspace from target-prim, target-trc and target-peak independently, and the minimum
+luminance from target-contrast, as vo_gpu_next applies them, so a host can describe its compositor output.
+Place SDR video at hdr-reference-white when set. Log target changes at verbose level instead of once.
+
+Icefin Player (PLAN 5.2, D23).
+---
+ video/out/gpu_next/video.c | 42 +++++++++++++++++++++++---------------
+ 1 file changed, 25 insertions(+), 17 deletions(-)
+
+diff --git a/video/out/gpu_next/video.c b/video/out/gpu_next/video.c
+index 80f43a98d8..b02fe5038d 100644
+--- a/video/out/gpu_next/video.c
++++ b/video/out/gpu_next/video.c
+@@ -65,6 +65,7 @@ struct pl_video {
+ 
+     // Options cache for target colorspace settings
+     struct m_config_cache *opts_cache;
++    struct pl_color_space last_target; // The target colorspace last logged.
+ 
+     // Render State
+     struct mp_image_params current_params; // Current video parameters (resolution, colorspace, etc.).
+@@ -115,6 +116,12 @@ static bool map_frame(pl_gpu gpu, pl_tex *tex, const struct pl_source_frame *src
+         return false;
+     }
+ 
++    // SDR video sits at the reference white (hdr-reference-white), as vo_gpu_next places it, so it matches SDR
++    // UI on an HDR output.
++    const struct gl_video_opts *opts = p->opts_cache->opts;
++    if (opts->hdr_reference_white > 0 && !pl_color_transfer_is_hdr(frame->color.transfer))
++        frame->color.hdr.max_luma = opts->hdr_reference_white;
++
+     // Store a pointer back to the original mp_image. This is used to get a unique
+     // signature for the frame and to access metadata (like colorspace) later.
+     frame->user_data = mpi;
+@@ -332,24 +339,25 @@ void pl_video_render(struct pl_video *p, struct vo_frame *frame, pl_tex target_t
+     m_config_cache_update(p->opts_cache);
+     const struct gl_video_opts *opts = p->opts_cache->opts;
+ 
+-    // Determine target colorspace from options
++    // Determine the target colorspace from the target-* options, each on its own as vo_gpu_next applies them,
++    // so a host can describe its compositor's output: primaries, transfer, peak luminance and (through
++    // target-contrast) minimum luminance.
+     struct pl_color_space target_color = pl_color_space_srgb;
+-    if (opts->target_trc || opts->target_prim) {
+-        target_color = (struct pl_color_space){
+-            .primaries = opts->target_prim ? opts->target_prim : PL_COLOR_PRIM_BT_709,
+-            .transfer = opts->target_trc ? opts->target_trc : PL_COLOR_TRC_SRGB,
+-        };
+-        // For HDR outputs, set peak luminance to allow extended range
+-        if (opts->target_peak > 0) {
+-            target_color.hdr.max_luma = opts->target_peak;
+-        }
+-    }
+-
+-    static int debug_once = 0;
+-    if (!debug_once) {
+-        debug_once = 1;
+-        MP_INFO(p, "target colorspace: trc=%d prim=%d peak=%.0f\n",
+-                target_color.transfer, target_color.primaries, target_color.hdr.max_luma);
++    if (opts->target_prim)
++        target_color.primaries = opts->target_prim;
++    if (opts->target_trc)
++        target_color.transfer = opts->target_trc;
++    if (opts->target_peak > 0)
++        target_color.hdr.max_luma = opts->target_peak;
++    if (opts->target_contrast == -1)
++        target_color.hdr.min_luma = 1e-7;
++    else if (opts->target_contrast > 0 && target_color.hdr.max_luma > 0)
++        target_color.hdr.min_luma = target_color.hdr.max_luma / opts->target_contrast;
++
++    if (memcmp(&target_color, &p->last_target, sizeof(target_color))) {
++        p->last_target = target_color;
++        MP_VERBOSE(p, "target colorspace: trc=%d prim=%d peak=%.0f min=%.4f\n", target_color.transfer,
++                   target_color.primaries, target_color.hdr.max_luma, target_color.hdr.min_luma);
+     }
+ 
+     // Describe the target surface for libplacebo.
+-- 
+2.47.3
+

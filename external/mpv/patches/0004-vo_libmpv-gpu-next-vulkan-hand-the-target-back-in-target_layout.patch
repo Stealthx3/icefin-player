@@ -1,0 +1,251 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Icefin Player <noreply@github.com>
+Date: Tue, 10 Nov 2026 15:40:00 +0000
+Subject: [PATCH 4/5] vo_libmpv: gpu-next Vulkan: hand the target back in
+ target_layout
+
+The Vulkan backend released the user's image to libplacebo, rendered, destroyed the wrapper and called
+pl_gpu_finish(), so the image was left in whatever layout libplacebo last used (TRANSFER_DST) instead of
+mpv_vulkan_fbo.target_layout, and MPV_RENDER_PARAM_VULKAN_SYNC was documented but never read. The user then
+sampled an image in the wrong layout (Khronos validation: VUID-vkCmdDraw-None-09600).
+
+Add an unwrap_fbo hook, called after rendering and before the wrapper is destroyed. The Vulkan backend holds
+the image in target_layout (or leaves it where it is when target_layout is UNDEFINED) with pl_vulkan_hold_ex:
+with the user's signal semaphore, libplacebo signals it; without one, mpv signals its own timeline semaphore
+and waits for it on the host (5 s limit, logged), replacing pl_gpu_finish(). The user's wait semaphore is
+passed to pl_vulkan_release_ex. libplacebo's messages are now forwarded at their own levels instead of only
+at trace, where its errors were dropped.
+
+Icefin Player (PLAN 5.3).
+---
+diff --git a/video/out/gpu_next/context.c b/video/out/gpu_next/context.c
+index 3dad7d8..11eece2 100644
+--- a/video/out/gpu_next/context.c
++++ b/video/out/gpu_next/context.c
+@@ -445,6 +445,13 @@ struct priv_vk {
+     pl_vulkan vulkan;
+     pl_gpu gpu;
+     struct ra_next *ra;
++    // Hands the target back when the user gives no MPV_RENDER_PARAM_VULKAN_SYNC:
++    // libplacebo signals it as it holds the image, and mpv waits for it on the host.
++    VkSemaphore hold_sem;
++    uint64_t hold_value;
++    PFN_vkCreateSemaphore CreateSemaphore;
++    PFN_vkDestroySemaphore DestroySemaphore;
++    PFN_vkWaitSemaphores WaitSemaphores;
+ };
+ 
+ /**
+@@ -453,7 +460,16 @@ struct priv_vk {
+ static void pl_log_cb_vk(void *log_priv, enum pl_log_level level, const char *msg)
+ {
+     struct mp_log *log = log_priv;
+-    mp_msg(log, MSGL_WARN, "[gpu-next:pl] %s\n", msg);
++    static const int map[] = {
++        [PL_LOG_NONE]  = MSGL_STATUS,
++        [PL_LOG_FATAL] = MSGL_FATAL,
++        [PL_LOG_ERR]   = MSGL_ERR,
++        [PL_LOG_WARN]  = MSGL_WARN,
++        [PL_LOG_INFO]  = MSGL_V,
++        [PL_LOG_DEBUG] = MSGL_DEBUG,
++        [PL_LOG_TRACE] = MSGL_TRACE,
++    };
++    mp_msg(log, map[level], "[gpu-next:pl] %s\n", msg);
+ }
+ 
+ /**
+@@ -479,16 +495,15 @@ static int libmpv_gpu_next_init_vk(struct libmpv_gpu_next_context *ctx, mpv_rend
+     }
+ 
+     // Setup libplacebo logging
++    // Forward libplacebo's messages at their own levels (errors and warnings
++    // were dropped unless mpv logged at trace).
+     struct pl_log_params log_params = {
+-        .log_level = PL_LOG_DEBUG
++        .log_cb = pl_log_cb_vk,
++        .log_priv = ctx->log,
++        .log_level = mp_msg_test(ctx->log, MSGL_TRACE) ? PL_LOG_TRACE :
++                     mp_msg_test(ctx->log, MSGL_DEBUG) ? PL_LOG_DEBUG : PL_LOG_INFO,
+     };
+ 
+-    // Enable verbose logging if trace is enabled
+-    if (mp_msg_test(ctx->log, MSGL_TRACE)) {
+-        log_params.log_cb = pl_log_cb_vk;
+-        log_params.log_priv = ctx->log;
+-    }
+-
+     p->pl_log = pl_log_create(PL_API_VER, &log_params);
+     if (!p->pl_log) {
+         MP_ERR(ctx, "Failed to create libplacebo log\n");
+@@ -523,10 +538,35 @@ static int libmpv_gpu_next_init_vk(struct libmpv_gpu_next_context *ctx, mpv_rend
+ 
+     p->gpu = p->vulkan->gpu;
+ 
++    PFN_vkGetDeviceProcAddr get_dev_proc =
++        (PFN_vkGetDeviceProcAddr) get_proc(vk_params->instance, "vkGetDeviceProcAddr");
++    if (get_dev_proc) {
++        p->CreateSemaphore = (PFN_vkCreateSemaphore) get_dev_proc(vk_params->device, "vkCreateSemaphore");
++        p->DestroySemaphore = (PFN_vkDestroySemaphore) get_dev_proc(vk_params->device, "vkDestroySemaphore");
++        p->WaitSemaphores = (PFN_vkWaitSemaphores) get_dev_proc(vk_params->device, "vkWaitSemaphores");
++    }
++    VkSemaphoreTypeCreateInfo timeline = {
++        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
++        .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
++    };
++    VkSemaphoreCreateInfo sem_info = {
++        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
++        .pNext = &timeline,
++    };
++    if (!p->CreateSemaphore || !p->DestroySemaphore || !p->WaitSemaphores ||
++        p->CreateSemaphore(vk_params->device, &sem_info, NULL, &p->hold_sem) != VK_SUCCESS)
++    {
++        MP_ERR(ctx, "Failed to create the target hand-back semaphore\n");
++        pl_vulkan_destroy(&p->vulkan);
++        pl_log_destroy(&p->pl_log);
++        return MPV_ERROR_VO_INIT_FAILED;
++    }
++
+     // Create the RA abstraction
+     p->ra = ra_pl_create(p->gpu, ctx->log, p->pl_log);
+     if (!p->ra) {
+         MP_ERR(ctx, "Failed to create RA from pl_gpu\n");
++        p->DestroySemaphore(vk_params->device, p->hold_sem, NULL);
+         pl_vulkan_destroy(&p->vulkan);
+         pl_log_destroy(&p->pl_log);
+         return MPV_ERROR_VO_INIT_FAILED;
+@@ -578,17 +618,67 @@ static int libmpv_gpu_next_wrap_fbo_vk(struct libmpv_gpu_next_context *ctx,
+ 
+     // Release the texture to libplacebo - it starts out "held" by user
+     // We need to tell libplacebo it can now use the texture
++    mpv_vulkan_sync *sync =
++        get_mpv_render_param(params, MPV_RENDER_PARAM_VULKAN_SYNC, NULL);
+     struct pl_vulkan_release_params release_params = {
+         .tex = tex,
+         .layout = fbo->current_layout,
+         .qf = VK_QUEUE_FAMILY_IGNORED,
+     };
++    if (sync && sync->wait_semaphore)
++        release_params.semaphore = (pl_vulkan_sem) { sync->wait_semaphore, sync->wait_value };
+     pl_vulkan_release_ex(p->gpu, &release_params);
+ 
+     *out_tex = tex;
+     return 0;
+ }
+ 
++/**
++ * @brief Hands the rendered target back to the user (Vulkan): holds the image
++ * in the user's target_layout. With the user's signal semaphore, libplacebo
++ * signals it; without one, mpv signals its own and waits for it, so the image
++ * is in target_layout and finished when mpv_render_context_render() returns.
++ */
++static void libmpv_gpu_next_unwrap_fbo_vk(struct libmpv_gpu_next_context *ctx,
++                    mpv_render_param *params, pl_tex tex)
++{
++    struct priv_vk *p = ctx->priv;
++    mpv_vulkan_fbo *fbo =
++        get_mpv_render_param(params, MPV_RENDER_PARAM_VULKAN_FBO, NULL);
++    mpv_vulkan_sync *sync =
++        get_mpv_render_param(params, MPV_RENDER_PARAM_VULKAN_SYNC, NULL);
++    VkImageLayout current;
++    struct pl_vulkan_hold_params hold = {
++        .tex = tex,
++        .layout = fbo->target_layout,
++        .qf = VK_QUEUE_FAMILY_IGNORED,
++    };
++    if (fbo->target_layout == VK_IMAGE_LAYOUT_UNDEFINED)
++        hold.out_layout = &current;  // no target layout: leave it where it is
++    bool own = !(sync && sync->signal_semaphore);
++    if (own)
++        hold.semaphore = (pl_vulkan_sem) { p->hold_sem, ++p->hold_value };
++    else
++        hold.semaphore = (pl_vulkan_sem) { sync->signal_semaphore, sync->signal_value };
++    if (!pl_vulkan_hold_ex(p->gpu, &hold)) {
++        MP_ERR(ctx, "Failed to hand the target image back\n");
++        pl_gpu_finish(p->gpu);
++        return;
++    }
++    pl_gpu_flush(p->gpu);
++    if (own) {
++        VkSemaphoreWaitInfo wait = {
++            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
++            .semaphoreCount = 1,
++            .pSemaphores = &p->hold_sem,
++            .pValues = &p->hold_value,
++        };
++        VkResult res = p->WaitSemaphores(p->vulkan->device, &wait, UINT64_C(5000000000));
++        if (res != VK_SUCCESS)
++            MP_ERR(ctx, "Target image not handed back after 5 s (VkResult %d)\n", (int) res);
++    }
++}
++
+ /**
+  * @brief Callback to mark the end of a frame rendering (Vulkan).
+  * @param ctx The libmpv_gpu_next_context.
+@@ -597,8 +687,8 @@ static void libmpv_gpu_next_done_frame_vk(struct libmpv_gpu_next_context *ctx)
+ {
+     struct priv_vk *p = ctx->priv;
+ 
+-    // Ensure GPU work is complete
+-    pl_gpu_finish(p->gpu);
++    // The target was handed back in unwrap_fbo; just submit anything left.
++    pl_gpu_flush(p->gpu);
+ }
+ 
+ /**
+@@ -616,6 +706,9 @@ static void libmpv_gpu_next_destroy_vk(struct libmpv_gpu_next_context *ctx)
+     }
+ 
+     if (p->vulkan) {
++        pl_gpu_finish(p->gpu);
++        if (p->hold_sem)
++            p->DestroySemaphore(p->vulkan->device, p->hold_sem, NULL);
+         pl_vulkan_destroy(&p->vulkan);
+     }
+ 
+@@ -629,6 +722,7 @@ const struct libmpv_gpu_next_context_fns libmpv_gpu_next_context_vk = {
+     .api_name = MPV_RENDER_API_TYPE_VULKAN,
+     .init = libmpv_gpu_next_init_vk,
+     .wrap_fbo = libmpv_gpu_next_wrap_fbo_vk,
++    .unwrap_fbo = libmpv_gpu_next_unwrap_fbo_vk,
+     .done_frame = libmpv_gpu_next_done_frame_vk,
+     .destroy = libmpv_gpu_next_destroy_vk,
+ };
+diff --git a/video/out/gpu_next/libmpv_gpu_next.c b/video/out/gpu_next/libmpv_gpu_next.c
+index bea2a38..a8ba83e 100644
+--- a/video/out/gpu_next/libmpv_gpu_next.c
++++ b/video/out/gpu_next/libmpv_gpu_next.c
+@@ -141,6 +141,10 @@ static int render(struct render_backend *ctx, mpv_render_param *params,
+     // Render the video frame.
+     pl_video_render(p->video_engine, frame, target_tex);
+ 
++    // Hand the target back to the user before the wrapper goes away.
++    if (p->context->fns->unwrap_fbo)
++        p->context->fns->unwrap_fbo(p->context, params, target_tex);
++
+     // Destroy the temporary wrapper texture via the RA.
+     ra_next_tex_destroy(p->context->ra, &target_tex);
+ 
+diff --git a/video/out/gpu_next/libmpv_gpu_next.h b/video/out/gpu_next/libmpv_gpu_next.h
+index e07557e..aac72cf 100644
+--- a/video/out/gpu_next/libmpv_gpu_next.h
++++ b/video/out/gpu_next/libmpv_gpu_next.h
+@@ -57,6 +57,17 @@ struct libmpv_gpu_next_context_fns {
+     int (*wrap_fbo)(struct libmpv_gpu_next_context *ctx,
+                     mpv_render_param *params, pl_tex *out_tex);
+ 
++    /**
++     * Called after rendering into the texture from wrap_fbo, before it is
++     * destroyed: hand the target back to the user (layout, synchronization).
++     * This function can be NULL if no action is needed.
++     * @param ctx The context instance.
++     * @param params The same parameters given to wrap_fbo.
++     * @param tex The texture from wrap_fbo.
++     */
++    void (*unwrap_fbo)(struct libmpv_gpu_next_context *ctx,
++                       mpv_render_param *params, pl_tex tex);
++
+     /**
+      * Called by the Host after a frame has been rendered to the user's target.
+      * This can be used for presentation timing or swapchain management.
+-- 
+2.51.0

@@ -64,7 +64,7 @@ def main():
         opts = [o.get("value") for o in (r or {}).get("options") or []]
         check("Renderer setting: Auto, Vulkan, OpenGL", opts == ["auto", "vulkan", "opengl"], f"options={opts}")
         check("default is Auto", page.eval("new Promise(r => window.api.settings.value('main', 'icefin_renderer', r))") == "auto")
-        check("Auto starts on OpenGL until the Vulkan video path (5.3)", "Icefin renderer: OpenGL (setting auto, Auto keeps OpenGL until 5.3)" in text(path))
+        check("Auto starts on OpenGL until the parity checks (5.8)", "Icefin renderer: OpenGL (setting auto, Auto keeps OpenGL until the parity checks, 5.8)" in text(path))
         page.eval("new Promise(r => window.api.settings.setValue('main', 'icefin_renderer', 'vulkan', () => r(true)))")
         time.sleep(1)
         stop()

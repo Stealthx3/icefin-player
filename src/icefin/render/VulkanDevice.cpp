@@ -8,6 +8,7 @@
 #include <QVersionNumber>
 #include <vector>
 #include "settings/SettingsComponent.h"
+#include "VulkanVideo.h"
 
 namespace Icefin::Render
 {
@@ -28,7 +29,9 @@ bool useVulkan(RendererChoice choice, bool vulkanUsable, bool videoPath)
   return false;
 }
 
-bool vulkanVideoPath() { return false; }  // VulkanVideoItem: 5.3
+bool vulkanVideoPath() { return vulkanVideoCompiled(); }
+bool autoPicksVulkan() { return false; }   // 5.8 parity, D23
+bool vulkanHdrOutput() { return false; }   // 5.4 / 5.5
 
 QList<WantedExtension> wantedDeviceExtensions()
 {
@@ -98,16 +101,18 @@ void chooseGraphicsApi()
   const RendererChoice choice = rendererChoiceFrom(setting);
   bool usable = false;
   QString why;
-  if (choice == RendererChoice::Vulkan || (choice == RendererChoice::Auto && vulkanVideoPath())) usable = probeVulkan(&why);
-  const bool vulkan = useVulkan(choice, usable, vulkanVideoPath());
+  const bool autoVulkan = vulkanVideoPath() && autoPicksVulkan();
+  if (choice == RendererChoice::Vulkan || (choice == RendererChoice::Auto && autoVulkan)) usable = probeVulkan(&why);
+  const bool vulkan = useVulkan(choice, usable, autoVulkan);
   QQuickWindow::setGraphicsApi(vulkan ? QSGRendererInterface::Vulkan : QSGRendererInterface::OpenGL);
   if (vulkan)
     qInfo().noquote() << "Icefin renderer: Vulkan (setting" << setting + ")"
-                      << (vulkanVideoPath() ? QString() : QString("- video plays only on OpenGL until the Vulkan video item (5.3)"));
+                      << (vulkanVideoPath() ? QString("- video on the Vulkan path (gpu-next, SDR output until 5.4/5.5)")
+                                            : QString("- this build has no Vulkan video path (patched libmpv missing): video doesn't show"));
   else if (choice == RendererChoice::Vulkan)
     qWarning().noquote() << "Icefin renderer: Vulkan chosen but not usable (" + why + "), using OpenGL";
   else
-    qInfo().noquote() << "Icefin renderer: OpenGL (setting" << setting + (choice == RendererChoice::Auto ? ", Auto keeps OpenGL until 5.3)" : ")");
+    qInfo().noquote() << "Icefin renderer: OpenGL (setting" << setting + (choice == RendererChoice::Auto ? ", Auto keeps OpenGL until the parity checks, 5.8)" : ")");
 }
 
 VulkanDevice& VulkanDevice::instance()
@@ -154,6 +159,22 @@ bool VulkanDevice::attach(QQuickWindow* window)
     if (shared) qInfo() << "Icefin renderer: Qt Quick renders on the shared Vulkan device";
     else qWarning() << "Icefin renderer: Qt Quick is not on the shared Vulkan device";
   }, Qt::DirectConnection);
+  // Qt WebEngine 6.11 workaround: during the scene-graph sync its NativeSkiaOutputDevice::swapFrame() frees the
+  // previous web frame's imported VkImage at once (vkDestroyImage + vkFreeMemory), while Qt Quick may still have a
+  // frame in flight that samples it. Validation: VUID-vkDestroyImage-image-01000 from libQt6WebEngineCore; on NVIDIA
+  // it hangs the GPU (Xid 109). It also frees them from render jobs Qt runs between frames. Waiting for Qt's queue
+  // to go idle at the end of each frame means nothing in flight still uses that image when either runs (no GPU work
+  // is submitted between a frame's end and the next sync). Costs the CPU/GPU overlap of one frame; Vulkan path only.
+  // ICEFIN_VULKAN_NO_SYNC_WAIT=1 skips it.
+  if (!qEnvironmentVariableIsSet("ICEFIN_VULKAN_NO_SYNC_WAIT")) {
+    QVulkanDeviceFunctions* df = inst->deviceFunctions(m_device);
+    QObject::connect(window, &QQuickWindow::afterFrameEnd, window, [window, df] {
+      auto* ri = window->rendererInterface();
+      auto* queue = ri ? static_cast<VkQueue*>(ri->getResource(window, QSGRendererInterface::CommandQueueResource)) : nullptr;
+      if (queue && *queue) df->vkQueueWaitIdle(*queue);
+    }, Qt::DirectConnection);
+    qInfo() << "Icefin renderer: waiting for the GPU after each frame (Qt WebEngine frees web frames early)";
+  }
   qInfo().noquote() << "Icefin renderer: shared Vulkan device on" << m_info.value("device").toString()
                     << "(" + m_info.value("driver").toString() + ", Vulkan " + m_info.value("api").toString() + ")"
                     << m_extensions.size() << "device extensions:" << m_info.value("extensions").toStringList().join(' ');
