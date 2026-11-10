@@ -51,3 +51,14 @@ if(ICEFIN_SDL3)
   cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_link_libraries jmp_core SDL3::SDL3)
   cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_compile_definitions jmp_core PUBLIC ICEFIN_SDL3)
 endif()
+
+# Patched libmpv with the Vulkan render API (PLAN 5.2, external/mpv/README.md). The Vulkan video item (5.3) builds
+# only with it; the Flatpak always bundles it, so a Flatpak build without it is an error.
+if(MPV_INCLUDE_DIR AND EXISTS "${MPV_INCLUDE_DIR}/mpv/render_vk.h")
+  cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_compile_definitions jmp_core PUBLIC ICEFIN_MPV_VULKAN)
+  message(STATUS "Icefin: libmpv has the Vulkan render API (${MPV_INCLUDE_DIR})")
+elseif(ICEFIN_FLATPAK)
+  message(FATAL_ERROR "Icefin: the Flatpak's libmpv lacks the Vulkan render API (mpv/render_vk.h): apply external/mpv/patches")
+else()
+  message(STATUS "Icefin: libmpv without the Vulkan render API; build external/mpv (build-lab.sh) for the Vulkan video path")
+endif()
