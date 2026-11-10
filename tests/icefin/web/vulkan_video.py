@@ -8,12 +8,15 @@ With Renderer = Vulkan (needs the patched libmpv, external/mpv), checks:
      over video, on either renderer, so a screen grab there proves nothing);
   3. the router routes as Vulkan, with the display treated as SDR until HDR output exists (5.4/5.5), and the
      compositor's description reaches mpv as its target-* options with none rejected (5.2, D23);
-  4. a second load plays on the Vulkan path again;
-  5. Renderer = OpenGL plays the same clip on MpvQt's path, as upstream (5.7 stays upstream's).
+  4. the single-surface compositor is on (5.4): mpv renders linear light into RGBA16F, the UI items sit in the
+     compositor's layer, the window shows a composited picture (the compositor draws every pixel itself, so the
+     Xvfb grab works here), and the UI blend switches at run time;
+  5. a second load plays on the Vulkan path again;
+  6. Renderer = OpenGL plays the same clip on MpvQt's path, as upstream (5.7 stays upstream's).
 Lab: lavapipe via ICEFIN_RENDERER_ALLOW_SOFTWARE=1. Real GPU: --qpa session and a flatpak:<id> app.
 Usage: python3 vulkan_video.py --app ~/build/src/icefin-player --server jf12 [--qpa xcb|session]
 """
-import argparse, json, os, re, signal, sys, tempfile, time
+import argparse, json, os, re, signal, subprocess, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -101,6 +104,27 @@ def main():
               and "mpv rejected" not in t, tgt.group(1) if tgt else "")
         route = re.findall(r"Icefin router: SDR -> .*", t)
         check("router routes it on the Vulkan path", any("SDR" in r for r in route), route[-1] if route else "")
+        # The single-surface compositor (5.4): mpv renders linear light, the UI layer goes over it in one pass.
+        comp = page.eval("new Promise(r => window.api.router.compositor(m => r(m)))")
+        check("compositor on (5.4)", bool(comp and comp.get("active")), json.dumps(comp))
+        check("UI items moved into the compositor's layer", "Icefin compositor: UI layer holds" in t)
+        check("mpv renders linear light for the compositor", "Icefin video: linear RGBA16F for the compositor" in t
+              and bool(tgt) and "target-trc=linear" in tgt.group(1))
+        if xv is not None or a.qpa != "session":
+            grab = os.path.join(cfgdir, "grab-srgb.png")
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", "1280x720", "-i", ":99",
+                            "-frames:v", "1", grab], check=False)
+            if os.path.exists(grab):
+                from PIL import Image, ImageStat
+                im = Image.open(grab).convert("RGB")
+                mean = ImageStat.Stat(im).mean
+                check("the window shows a composited picture (Xvfb grab)", sum(mean) > 15, f"mean {[round(x) for x in mean]} ({grab})")
+        page.eval("window.api.router.setUiBlend('linear'); true")
+        time.sleep(1)
+        comp2 = page.eval("new Promise(r => window.api.router.compositor(m => r(m)))")
+        check("UI blend switches at run time (D24 comparison)", comp2.get("blend") == "linear"
+              and "Icefin compositor: on" in text(path) and "blend linear" in text(path), comp2.get("blend"))
+        page.eval("window.api.router.setUiBlend('srgb'); true")
         before = len(re.findall(r"Icefin router: SDR -> ", text(path)))
         page.eval("window.api.player.stop(); true")
         time.sleep(1)

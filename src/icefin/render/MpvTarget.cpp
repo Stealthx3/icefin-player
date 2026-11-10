@@ -39,4 +39,14 @@ MpvOptions mpvTargetOptions(const DisplayInfo& d, bool hdrOutput)
           {"hdr-reference-white", d.referenceLuminance > 0 ? QByteArray::number(d.referenceLuminance) : autoValue},
           {"target-contrast", contrast}};
 }
+
+MpvOptions mpvLinearTargetOptions(const CompositorState& s, const DisplayInfo& d)
+{
+  const bool sdr = s.output == OutputEncoding::Sdr;
+  QByteArray contrast("auto");
+  if (!sdr && d.minLuminance > 0 && d.maxLuminance > 0) contrast = QByteArray::number(qRound(d.maxLuminance / d.minLuminance));
+  return {{"target-prim", sdr ? "bt.709" : "bt.2020"}, {"target-trc", "linear"},
+          {"target-peak", QByteArray::number(qRound(sdr ? s.referenceWhite : s.peak))},
+          {"hdr-reference-white", QByteArray::number(qRound(s.referenceWhite))}, {"target-contrast", contrast}};
+}
 }

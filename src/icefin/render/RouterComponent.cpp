@@ -1,4 +1,7 @@
 #include "RouterComponent.h"
+#include "Compositing.h"
+#include "VulkanVideo.h"
+#include <QtQml/qqml.h>
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -151,9 +154,44 @@ void RouterComponent::forgetChoices()
 
 QVariantMap RouterComponent::display() const { return HdrCapabilityProbe::instance().current().toMap(); }
 
+bool RouterComponent::componentInitialize()
+{
+  qmlRegisterType<VideoTexture>("Icefin.Render", 1, 0, "VideoTexture");
+  return true;
+}
+
+QVariantMap RouterComponent::compositor() const { return compositorState().toMap(); }
+
+void RouterComponent::setUiBlend(const QString& name)
+{
+  CompositorState& cs = compositorState();
+  const UiBlend b = uiBlendFromName(name, cs.blend);
+  if (b == cs.blend) return;
+  cs.blend = b;
+  refreshCompositor();
+}
+
+void RouterComponent::refreshCompositor()
+{
+  CompositorState& cs = compositorState();
+  const DisplayInfo d = HdrCapabilityProbe::instance().current();
+  cs.gamma22 = d.transfer != "srgb";  // KWin shows untagged SDR with gamma 2.2
+  cs.referenceWhite = d.referenceLuminance > 0 ? d.referenceLuminance : kVideoLinearWhite;
+  cs.peak = cs.output == OutputEncoding::Sdr ? cs.referenceWhite : (d.maxLuminance > 0 ? d.maxLuminance : 1000);
+  if (cs.toMap() != m_compositorSent) {
+    m_compositorSent = cs.toMap();
+    qInfo().noquote() << "Icefin compositor:" << (cs.active ? "on" : "off") << "(" + cs.reason + ")"
+                      << "blend" << uiBlendName(cs.blend) << "output" << outputEncodingName(cs.output)
+                      << "reference white" << cs.referenceWhite << "peak" << cs.peak << (cs.gamma22 ? "gamma 2.2" : "sRGB curve");
+    Q_EMIT compositorChanged(cs.toMap());
+  }
+}
+
 void RouterComponent::componentPostInitialize()
 {
   connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &RouterComponent::displayChanged);
+  connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &RouterComponent::refreshCompositor);
+  refreshCompositor();
   // The main window exists once QML has loaded; attach the probe to the first visible top-level window.
   auto* t = new QTimer(this);
   t->setInterval(1000);
