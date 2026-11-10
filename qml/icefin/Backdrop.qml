@@ -28,6 +28,46 @@ Item
 
   visible: shown
 
+  // The web view is a sibling under the window's content item (webview.qml, objectName "web").
+  function webView()
+  {
+    var p = root.parent && root.parent.parent
+    if (!p) return null
+    for (var i = 0; i < p.children.length; i++)
+      if (p.children[i].objectName === "web") return p.children[i]
+    return null
+  }
+
+  // Tests (ThemeComponent::repaintWeb): one change to the web view now, undone 300 ms later.
+  Timer
+  {
+    id: repaintUndo
+    interval: 300
+    property var undo: null
+    onTriggered: { if (undo) undo(); undo = null }
+  }
+
+  function repaintWeb(mode)
+  {
+    var w = webView()
+    if (!w) return
+    if (mode === "bgAlpha") {
+      var c = w.backgroundColor
+      w.backgroundColor = Qt.rgba(c.r, c.g, c.b, 1 / 255)
+      repaintUndo.undo = function() { w.backgroundColor = "transparent" }
+    } else if (mode === "layer") {
+      w.layer.enabled = false
+      repaintUndo.undo = function() { w.layer.enabled = true }
+    } else if (mode === "visible") {
+      w.visible = false
+      repaintUndo.undo = function() { w.visible = true }
+    } else if (mode === "resize") {
+      w.height = w.height - 1
+      repaintUndo.undo = function() { w.height = Qt.binding(function() { return w.parent ? w.parent.height : w.height + 1 }) }
+    }
+    repaintUndo.restart()
+  }
+
   function paramDecl(name, p)
   {
     if (p.type === "color")
@@ -77,6 +117,7 @@ Item
     target: components.theme
     function onBackdropChanged() { root.apply(true) }
     // The whole window as Qt renders it (this layer, the video item, the web view), for tests and diagnostics.
+    function onWebRepaintRequested(mode) { root.repaintWeb(mode) }
     function onGrabRequested(path)
     {
       var item = root.Window.window ? root.Window.window.contentItem : null

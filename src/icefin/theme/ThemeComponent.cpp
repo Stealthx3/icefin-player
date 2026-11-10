@@ -300,6 +300,14 @@ QString ThemeComponent::grabWindow()
   return path;
 }
 
+bool ThemeComponent::repaintWeb(const QString& mode)
+{
+  static const QStringList modes{"bgAlpha", "layer", "visible", "resize"};
+  if (!testHooks() || !modes.contains(mode)) return false;
+  emit webRepaintRequested(mode);
+  return true;
+}
+
 QVariantList ThemeComponent::grabPixel(double fx, double fy) const
 {
   if (!testHooks()) return {};
