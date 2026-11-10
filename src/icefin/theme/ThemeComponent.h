@@ -76,6 +76,10 @@ public:
   Q_INVOKABLE QString grabWindow();
   // [r, g, b] of the last grab at a point given as fractions of its size ([] before a grab).
   Q_INVOKABLE QVariantList grabPixel(double fx, double fy) const;
+  // Tests only (as grabWindow): asks Backdrop.qml to try one way of making the web view repaint its transparent areas
+  // (8.4: a page that loaded opaque keeps stale pixels under Chromium). Modes: bgAlpha, layer, visible, resize.
+  // Returns false for an unknown mode or outside tests.
+  Q_INVOKABLE bool repaintWeb(const QString& mode);
 
   // Search roots, in priority order (an id found earlier wins).
   static QStringList roots();
@@ -84,6 +88,7 @@ Q_SIGNALS:
   void changed(const QString& id, const QString& preset);
   void backdropChanged();
   void grabRequested(const QString& path);
+  void webRepaintRequested(const QString& mode);
 
 private:
   ThemeComponent() = default;
