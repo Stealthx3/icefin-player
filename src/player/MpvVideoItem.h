@@ -17,7 +17,7 @@ public:
 
     MpvController* controller() { return mpvController(); }
 
-protected:
+protected:  // ICEFIN-HOOK: the Vulkan path override below (PLAN 5.3)
     QSGNode* updatePaintNode(QSGNode* old, UpdatePaintNodeData* data) override;  // ICEFIN-HOOK: Vulkan path draws its own node (PLAN 5.3)
 
 private:
