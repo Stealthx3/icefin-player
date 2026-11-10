@@ -87,8 +87,8 @@ def main():
         check("UI on the shared Vulkan device", "Icefin renderer: Qt Quick renders on the shared Vulkan device" in text(path) or
               (time.sleep(3) or "Icefin renderer: Qt Quick renders on the shared Vulkan device" in text(path)))
         check("MpvVideoItem uses the Vulkan path", "Icefin video: Vulkan path" in text(path))
-        check("GPU wait before each scene-graph sync (Qt WebEngine frees web frames early)",
-              "Icefin renderer: waiting for the GPU before each scene-graph sync" in text(path))
+        check("GPU wait after each frame (Qt WebEngine frees web frames early)",
+              "Icefin renderer: waiting for the GPU after each frame" in text(path))
         page.eval(LOAD % json.dumps(url))
         page.wait_for("window.labPlaying === true", timeout=60)
         time.sleep(4)

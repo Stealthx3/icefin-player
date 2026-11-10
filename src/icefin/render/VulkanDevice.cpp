@@ -162,16 +162,18 @@ bool VulkanDevice::attach(QQuickWindow* window)
   // Qt WebEngine 6.11 workaround: during the scene-graph sync its NativeSkiaOutputDevice::swapFrame() frees the
   // previous web frame's imported VkImage at once (vkDestroyImage + vkFreeMemory), while Qt Quick may still have a
   // frame in flight that samples it. Validation: VUID-vkDestroyImage-image-01000 from libQt6WebEngineCore; on NVIDIA
-  // it hangs the GPU (Xid 109). Waiting for Qt's queue to go idle before each sync means nothing in flight still
-  // uses that image. Costs the CPU/GPU overlap of one frame; Vulkan path only. ICEFIN_VULKAN_NO_SYNC_WAIT=1 skips it.
+  // it hangs the GPU (Xid 109). It also frees them from render jobs Qt runs between frames. Waiting for Qt's queue
+  // to go idle at the end of each frame means nothing in flight still uses that image when either runs (no GPU work
+  // is submitted between a frame's end and the next sync). Costs the CPU/GPU overlap of one frame; Vulkan path only.
+  // ICEFIN_VULKAN_NO_SYNC_WAIT=1 skips it.
   if (!qEnvironmentVariableIsSet("ICEFIN_VULKAN_NO_SYNC_WAIT")) {
     QVulkanDeviceFunctions* df = inst->deviceFunctions(m_device);
-    QObject::connect(window, &QQuickWindow::beforeSynchronizing, window, [window, df] {
+    QObject::connect(window, &QQuickWindow::afterFrameEnd, window, [window, df] {
       auto* ri = window->rendererInterface();
       auto* queue = ri ? static_cast<VkQueue*>(ri->getResource(window, QSGRendererInterface::CommandQueueResource)) : nullptr;
       if (queue && *queue) df->vkQueueWaitIdle(*queue);
     }, Qt::DirectConnection);
-    qInfo() << "Icefin renderer: waiting for the GPU before each scene-graph sync (Qt WebEngine frees web frames early)";
+    qInfo() << "Icefin renderer: waiting for the GPU after each frame (Qt WebEngine frees web frames early)";
   }
   qInfo().noquote() << "Icefin renderer: shared Vulkan device on" << m_info.value("device").toString()
                     << "(" + m_info.value("driver").toString() + ", Vulkan " + m_info.value("api").toString() + ")"
