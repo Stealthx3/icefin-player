@@ -61,7 +61,6 @@ public:
 
   // Search roots, in priority order (an id found earlier wins).
   static QStringList roots();
-  static bool benchPackEnabled();
 
 Q_SIGNALS:
   void changed(const QString& id, const QString& preset);

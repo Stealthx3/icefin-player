@@ -38,6 +38,17 @@
         "default": true
       },
       {
+        "value": "icefin_renderer",
+        "display_name": "Renderer",
+        "help": "How the app draws its window. Auto picks the best that works here. Vulkan (experimental) runs the interface on Vulkan; until the Vulkan video path is finished, video doesn't show with it. OpenGL is the fallback for systems without working Vulkan. Takes effect after a restart.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "vulkan", "Vulkan (experimental)" ],
+          [ "opengl", "OpenGL" ]
+        ]
+      },
+      {
         "value": "icefin_nintendo_layout",
         "display_name": "Nintendo Button Layout",
         "help": "On Nintendo controllers, the button marked A confirms and B goes back, as printed. Other controllers are unchanged.",
@@ -61,12 +72,6 @@
         "display_name": "Theme Sounds",
         "help": "Play the theme's interface sounds. They are always silent while a movie's audio goes straight to your receiver (passthrough).",
         "default": true
-      },
-      {
-        "value": "benchPack",
-        "display_name": "Benchmark Themes",
-        "help": "Also offer the benchmark pack: themes that reproduce the layout of other TV interfaces, used to test the theme engine. They use Icefin's own art, names and sounds.",
-        "default": false
       }
     ]
   },

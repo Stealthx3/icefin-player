@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_plaza.py — the Plaza benchmark theme in the running app (PLAN 9.7; target the Wii Menu). Lab guests only.
 
-  - Plaza is in the opt-in benchmark pack: offered only with Client Settings → Benchmark Themes on;
+  - Plaza is a built-in theme, offered in Client Settings → Theme;
   - a paged 4×3 grid of rounded channel tiles (each library, Continue watching, Next up, Search, Classic home, then
     empty slots), page arrows at the sides, and a bottom bar with the clock, the date and two round buttons;
   - library and media channels cycle previews of their content (live tiles);
@@ -72,11 +72,8 @@ def main():
                          "if (f.classList.contains('pz-tile')) return 'tile/' + [...f.parentElement.children].indexOf(f); "
                          "return f.className.split(' ').find(c => c.startsWith('pz-')) + '/' + f.textContent; })()")
 
-        check("benchmark pack off by default", "plaza" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         p = themes().get("plaza", {})
-        check("Benchmark Themes on: Plaza offered, bundled, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
+        check("Plaza offered as a built-in theme, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pz]'); return !!r && r.hasAttribute('data-pz-ready'); })()", timeout=30)
         time.sleep(2)
@@ -165,9 +162,9 @@ def main():
         check("leaving the screen turns pointer-first off", js("document.documentElement.hasAttribute('data-icefin-pointer')") is False)
         shot("library.png")
 
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Plaza gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "plaza" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
