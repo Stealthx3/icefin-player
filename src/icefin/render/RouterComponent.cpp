@@ -179,7 +179,9 @@ void RouterComponent::refreshCompositor()
   cs.referenceWhite = d.referenceLuminance > 0 ? d.referenceLuminance : kVideoLinearWhite;
   cs.peak = cs.output == OutputEncoding::Sdr ? cs.referenceWhite : (d.maxLuminance > 0 ? d.maxLuminance : 1000);
   // HDR output (5.5): the surface says what the HDR10 swapchain holds, with the playing video's metadata.
-  if (cs.active && cs.output == OutputEncoding::Hdr10) {
+  if (cs.active && cs.output == OutputEncoding::Hdr10 && !QGuiApplication::platformName().startsWith("wayland")) {
+    cs.tagged = true;  // X11 / Gamescope: the swapchain's HDR10_ST2084 colour space is the tag; metadata via VK_EXT_hdr_metadata
+  } else if (cs.active && cs.output == OutputEncoding::Hdr10) {
     SurfaceDescription want;
     want.kind = SurfaceDescription::Kind::Hdr10;
     want.referenceWhite = qRound(cs.referenceWhite);

@@ -6,7 +6,7 @@ With Renderer = Vulkan (needs the patched libmpv, external/mpv), checks:
   2. an SDR clip plays: the player reports playing and mpv's frames reach the scene graph on the Vulkan path
      (the picture on screen is checked on real hardware: the lab's Xvfb doesn't composite the transparent web view
      over video, on either renderer, so a screen grab there proves nothing);
-  3. the router routes as Vulkan, with the display treated as SDR until HDR output exists (5.4/5.5), and the
+  3. the router routes as Vulkan (the lab's display is SDR), and the
      compositor's description reaches mpv as its target-* options with none rejected (5.2, D23);
   4. the single-surface compositor is on (5.4): mpv renders linear light into RGBA16F, the UI items sit in the
      compositor's layer, the window shows a composited picture (the compositor draws every pixel itself, so the
@@ -119,8 +119,8 @@ def main():
                 im = Image.open(grab).convert("RGB")
                 mean = ImageStat.Stat(im).mean
                 check("the window shows a composited picture (Xvfb grab)", sum(mean) > 15, f"mean {[round(x) for x in mean]} ({grab})")
-        hdr = re.search(r"Icefin renderer: HDR output (on|off) \((.*)\)", t)
-        check("HDR output decided and logged (5.5)", bool(hdr), hdr.group(0) if hdr else "")
+        hdr = re.search(r"Icefin renderer: HDR output (requested|off) \((.*)\)", t)
+        check("HDR output decided and logged (5.5, 5.6)", bool(hdr), hdr.group(0) if hdr else "")
         page.eval("window.api.router.setUiBlend('linear'); true")
         time.sleep(1)
         comp2 = page.eval("new Promise(r => window.api.router.compositor(m => r(m)))")
