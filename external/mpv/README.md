@@ -17,6 +17,7 @@ Both pins match the Flatpak manifest (`flatpak/io.github.stealthx3.IcefinPlayer.
 | `patches/0001` vo_libmpv: introduce 'gpu-next' render backend | sparks | mpv PR #16818 (open), via github.com/andrewrabert/mpv |
 | `patches/0002` vo_libmpv: add Vulkan support to gpu-next backend | Andrew Rabert | github.com/andrewrabert/mpv `c9fd9b8` |
 | `patches/0003` vo_libmpv: gpu-next target colorspace and reference white | Icefin Player | Icefin's own (PLAN 5.2, D23) |
+| `patches/0004` vo_libmpv: gpu-next Vulkan: hand the target back in target_layout | Icefin Player | Icefin's own (PLAN 5.3) |
 
 **Icefin's change to the carried diff (`0003`).** Rabert's commit builds the target colorspace only when `target-prim` or
 `target-trc` is set, ignores `target-contrast` and `hdr-reference-white`, and logs the target once through a function
@@ -25,6 +26,14 @@ luminance from `target-contrast`), places SDR video at `hdr-reference-white`, an
 level. Icefin sets these options from the compositor's description (`src/icefin/render/MpvTarget`), so libplacebo
 maps to the real display instead of a guess. Known gap for 5.8: the carried backend renders with `pl_filter_nearest`
 and none of mpv's scaler, tone-mapping or deband options, so it isn't at parity with stock gpu-next yet.
+
+**Icefin's change to the carried diff (`0004`).** Rabert's Vulkan backend released the host's image to libplacebo,
+rendered, destroyed the wrapper and called `pl_gpu_finish()`: the image stayed in libplacebo's last layout
+(`TRANSFER_DST`) rather than `mpv_vulkan_fbo.target_layout`, and `MPV_RENDER_PARAM_VULKAN_SYNC` was never read. Qt then
+sampled it in the wrong layout (Khronos validation `VUID-vkCmdDraw-None-09600`). `0004` adds an `unwrap_fbo` step that
+holds the image in `target_layout` with `pl_vulkan_hold_ex`, signalling the host's semaphore if given, or else its
+own timeline semaphore, which it waits for (5 s limit, logged). It also forwards libplacebo's messages at their own
+levels; before, they reached mpv's log only at trace, so libplacebo errors were dropped.
 
 Rebase note: mpv 0.42 added `MPV_RENDER_PARAM_D3D11_INIT_PARAMS = 21` and `…_D3D11_FBO = 22`, so the new params are
 renumbered: `BACKEND = 23`, `VULKAN_INIT_PARAMS = 24`, `VULKAN_FBO = 25`, `VULKAN_SYNC = 26` (Icefin bundles its own

@@ -92,6 +92,7 @@ modules:
               - ../external/mpv/patches/0001-vo_libmpv-introduce-gpu-next-render-backend.patch
               - ../external/mpv/patches/0002-vo_libmpv-add-Vulkan-support-to-gpu-next-backend.patch
               - ../external/mpv/patches/0003-vo_libmpv-gpu-next-target-colorspace-and-reference-white.patch
+              - ../external/mpv/patches/0004-vo_libmpv-gpu-next-vulkan-hand-the-target-back-in-target_layout.patch
 
         modules:
           - name: luajit
