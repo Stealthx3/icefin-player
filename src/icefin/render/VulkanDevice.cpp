@@ -189,7 +189,7 @@ bool VulkanDevice::attach(QQuickWindow* window)
   else {
     HdrCapabilityProbe& probe = HdrCapabilityProbe::instance();
     probe.attach(window);  // probes the window's screen now, before the swapchain exists
-    if (probe.current().hdr != DisplayInfo::Hdr::Yes) cs.hdrReason = "the display is in SDR";
+    if (!probe.anyScreenHdr()) cs.hdrReason = "no display is in HDR";
     else if (!probe.canTagHdr10()) cs.hdrReason = "the compositor can't take an HDR10 surface description";
     else {
       window->setProperty("_qt_sg_hdr_format", QByteArray("hdr10"));

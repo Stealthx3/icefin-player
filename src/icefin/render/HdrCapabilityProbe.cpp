@@ -63,10 +63,12 @@ HdrCapabilityProbe& HdrCapabilityProbe::instance() { static HdrCapabilityProbe p
 
 void HdrCapabilityProbe::attach(QWindow* window)
 {
-  if (!window || m_window == window) return;
-  m_window = window;
-  connect(window, &QWindow::screenChanged, this, [this] { qInfo() << "Icefin display: window moved to another screen, probing again"; probe(); });
-  probe();
+  if (!window) return;
+  if (m_window != window) {
+    m_window = window;
+    connect(window, &QWindow::screenChanged, this, [this] { qInfo() << "Icefin display: window moved to another screen, probing again"; probe(); });
+  }
+  probe();  // again for the same window too: once it is shown, its screen is the one it opened on
 }
 
 #ifdef ICEFIN_WAYLAND_CM
@@ -138,6 +140,19 @@ static const wp_color_management_output_v1_listener kOut = {
     QMetaObject::invokeMethod(&HdrCapabilityProbe::instance(), [] { HdrCapabilityProbe::instance().probe(); }, Qt::QueuedConnection);
     (void)data;
   }};
+static void readOutputDescription(HdrCapabilityProbe::Wl* w, wp_color_management_output_v1* out)
+{
+  w->state = 0; w->info = DisplayInfo(); w->infoDone = false;
+  wp_image_description_v1* desc = wp_color_management_output_v1_get_image_description(out);
+  wp_image_description_v1_add_listener(desc, &kDesc, w);
+  for (int i = 0; i < 5 && w->state == 0; ++i) wl_display_roundtrip_queue(w->display, w->queue);
+  if (w->state == 1) {
+    wp_image_description_info_v1* inf = wp_image_description_v1_get_information(desc);
+    wp_image_description_info_v1_add_listener(inf, &kInfo, w);
+    for (int i = 0; i < 5 && !w->infoDone; ++i) wl_display_roundtrip_queue(w->display, w->queue);
+  }
+  wp_image_description_v1_destroy(desc);
+}
 #endif
 
 void HdrCapabilityProbe::probe()
@@ -178,16 +193,7 @@ void HdrCapabilityProbe::probe()
         w->out = wp_color_manager_v1_get_output(w->cm, output);
         wl_proxy_set_queue(reinterpret_cast<wl_proxy*>(w->out), w->queue);
         wp_color_management_output_v1_add_listener(w->out, &kOut, w);
-        w->state = 0; w->info = DisplayInfo(); w->infoDone = false;
-        wp_image_description_v1* desc = wp_color_management_output_v1_get_image_description(w->out);
-        wp_image_description_v1_add_listener(desc, &kDesc, w);
-        for (int i = 0; i < 5 && w->state == 0; ++i) wl_display_roundtrip_queue(w->display, w->queue);
-        if (w->state == 1) {
-          wp_image_description_info_v1* inf = wp_image_description_v1_get_information(desc);
-          wp_image_description_info_v1_add_listener(inf, &kInfo, w);
-          for (int i = 0; i < 5 && !w->infoDone; ++i) wl_display_roundtrip_queue(w->display, w->queue);
-        }
-        wp_image_description_v1_destroy(desc);
+        readOutputDescription(w, w->out);
         info.transfer = w->info.transfer;
         info.primaries = w->info.primaries;
         info.maxLuminance = w->info.maxLuminance;
@@ -299,6 +305,31 @@ QString HdrCapabilityProbe::tagSurface(QWindow* window, const SurfaceDescription
 #else
   Q_UNUSED(window); Q_UNUSED(d);
   return "built without the color-management protocol or Qt's platform headers";
+#endif
+}
+
+bool HdrCapabilityProbe::anyScreenHdr()
+{
+#ifdef ICEFIN_WAYLAND_CM
+  if (!m_wl || !m_wl->cm) return m_info.hdr == DisplayInfo::Hdr::Yes;
+  Wl* w = m_wl;
+  for (QScreen* screen : QGuiApplication::screens()) {
+    auto* scr = screen->nativeInterface<QNativeInterface::QWaylandScreen>();
+    if (!scr || !scr->output()) continue;
+    auto* out = wp_color_manager_v1_get_output(w->cm, scr->output());
+    wl_proxy_set_queue(reinterpret_cast<wl_proxy*>(out), w->queue);
+    const DisplayInfo keep = w->info;
+    readOutputDescription(w, out);
+    const bool hdr = w->state == 1 && hdrForTransfer(w->info.transfer, w->info.maxLuminance, w->info.referenceLuminance) == DisplayInfo::Hdr::Yes;
+    qInfo().noquote() << "Icefin display: screen" << screen->name() << (hdr ? "HDR" : "SDR") << w->info.transfer
+                      << QString("max %1 nits, reference %2").arg(w->info.maxLuminance).arg(w->info.referenceLuminance);
+    w->info = keep;
+    wp_color_management_output_v1_destroy(out);
+    if (hdr) return true;
+  }
+  return false;
+#else
+  return m_info.hdr == DisplayInfo::Hdr::Yes;
 #endif
 }
 }

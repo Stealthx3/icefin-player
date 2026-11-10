@@ -61,6 +61,10 @@ public:
   void probe();
   // The compositor accepts an HDR10 surface description: parametric, PQ, BT.2020, its own luminances, perceptual intent.
   bool canTagHdr10() const;
+  // Any connected screen is in HDR (Wayland). The swapchain format is fixed before the window is placed, and the window
+  // can move between screens, so HDR output is chosen when any screen can show it; an SDR screen shows the tagged PQ
+  // surface through the compositor's own conversion.
+  bool anyScreenHdr();
   // Tags `window`'s surface (Wayland only). Kind::None removes the tag. Returns an error, or an empty string.
   QString tagSurface(QWindow* window, const SurfaceDescription& d);
   SurfaceDescription currentTag() const { return m_tag; }
