@@ -116,6 +116,11 @@ def main():
         js("location.hash = '#/home'; true")
         page.wait_for("[...document.querySelectorAll('.cardImageContainer')].filter(e => { const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.width > 0; }).every(e => getComputedStyle(e).opacity === '1')", timeout=30)
         st_on = styles()
+        for _ in range(10):  # jellyfin-web re-renders cards after the switch: read again until they settle like stock
+            if all(st_on.get(k) == v for k, v in st_off.items() if v):
+                break
+            time.sleep(1)
+            st_on = styles()
         # A card's placeholder colour under a loaded image is loading state, not theme: compare it only when neither run has
         # an image on that element (the pixel comparison below covers what shows).
         covered = lambda sel: "url(" in (st_off[sel]["backgroundImage"] + st_on[sel]["backgroundImage"])
