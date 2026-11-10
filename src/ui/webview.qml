@@ -403,4 +403,5 @@ Window
   }
 
   property QtObject webChannel: web.webChannel
+  Loader { source: "qrc:/icefin-qml/Compositor.qml"; anchors.fill: parent; z: 1000 }  // ICEFIN-HOOK: single-surface compositor, UI over linear video (PLAN 5.4)
 }

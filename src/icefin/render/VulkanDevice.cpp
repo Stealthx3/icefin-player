@@ -9,6 +9,12 @@
 #include <vector>
 #include "settings/SettingsComponent.h"
 #include "VulkanVideo.h"
+#include "Compositing.h"
+#include "RouterComponent.h"
+#if __has_include(<rhi/qrhi.h>)
+#include <rhi/qrhi.h>
+#define ICEFIN_DEVICE_RHI 1
+#endif
 
 namespace Icefin::Render
 {
@@ -97,7 +103,9 @@ static bool probeVulkan(QString* why)
 void chooseGraphicsApi()
 {
   const QVariant v = SettingsComponent::readPreinitValue(SETTINGS_SECTION_MAIN, "icefin_renderer");
-  const QString setting = v.isValid() && !v.isNull() ? v.toString() : QString("auto");
+  // ICEFIN_RENDERER (auto/vulkan/opengl) overrides the setting, for test suites that start from a fresh config.
+  const QString env = qEnvironmentVariable("ICEFIN_RENDERER");
+  const QString setting = !env.isEmpty() ? env : v.isValid() && !v.isNull() ? v.toString() : QString("auto");
   const RendererChoice choice = rendererChoiceFrom(setting);
   bool usable = false;
   QString why;
@@ -150,12 +158,34 @@ bool VulkanDevice::attach(QQuickWindow* window)
   }
   if (!create(inst)) return false;
   window->setGraphicsDevice(QQuickGraphicsDevice::fromDeviceObjects(m_physical, m_device, int(m_family), 0));
+  // The single-surface compositor (5.4): on with the Vulkan video path unless switched off or not built.
+  CompositorState& cs = compositorState();
+  cs.blend = uiBlendFromName(qEnvironmentVariable("ICEFIN_UI_BLEND"), UiBlend::Srgb);
+  if (qEnvironmentVariable("ICEFIN_COMPOSITOR") == "0") cs.reason = "ICEFIN_COMPOSITOR=0";
+  else if (!vulkanVideoPath()) cs.reason = "no Vulkan video path in this build";
+  else if (!compositorCompiled()) cs.reason = "built without Qt ShaderTools or the RHI headers";
+  else {
+    QString err;
+    cs.shaderUrl = compositorShaderUrl(&err);
+    cs.active = !cs.shaderUrl.isEmpty();
+    cs.reason = cs.active ? "Vulkan video path" : err;
+  }
+  QMetaObject::invokeMethod(&RouterComponent::Get(), "refreshCompositor", Qt::QueuedConnection);
   // Once the scene graph is up, confirm Qt renders with this device rather than one of its own.
   QObject::connect(window, &QQuickWindow::sceneGraphInitialized, window, [this, window] {
     auto* ri = window->rendererInterface();
     auto* dev = ri ? static_cast<VkDevice*>(ri->getResource(window, QSGRendererInterface::DeviceResource)) : nullptr;
     const bool shared = dev && *dev == m_device;
     m_info["qtUsesSharedDevice"] = shared;
+#ifdef ICEFIN_DEVICE_RHI
+    // The compositor encodes for the swapchain Qt made (QSG_RHI_HDR picks HDR10 or scRGB; SDR otherwise).
+    if (QRhiSwapChain* sc = window->swapChain()) {
+      const QRhiSwapChain::Format f = sc->format();
+      compositorState().output = f == QRhiSwapChain::HDR10 ? OutputEncoding::Hdr10
+                                 : f == QRhiSwapChain::HDRExtendedSrgbLinear ? OutputEncoding::ScRgb : OutputEncoding::Sdr;
+      QMetaObject::invokeMethod(&RouterComponent::Get(), "refreshCompositor", Qt::QueuedConnection);
+    }
+#endif
     if (shared) qInfo() << "Icefin renderer: Qt Quick renders on the shared Vulkan device";
     else qWarning() << "Icefin renderer: Qt Quick is not on the shared Vulkan device";
   }, Qt::DirectConnection);
