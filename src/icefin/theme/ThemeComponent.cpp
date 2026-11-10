@@ -12,8 +12,11 @@
 #include "settings/SettingsSection.h"
 #include "icefin/audio/AudioState.h"
 #include <QDateTime>
-#include <QSoundEffect>
+#include <QCryptographicHash>
+#include <QImage>
+#include <QCoreApplication>
 #include <QUrl>
+#include <QSoundEffect>
 
 namespace Icefin::Theme
 {
@@ -202,8 +205,130 @@ bool ThemeComponent::apply(const QString& id, const QString& preset, qint64 save
   m_sounds.clear();
   mirrorSetting();
   qInfo().noquote() << "Icefin theme:" << (m_active.isEmpty() ? QString("engine off (stock UI)") : QString("%1%2, %3 tokens").arg(m_active, m_preset.isEmpty() ? QString() : " / " + m_preset).arg(m_tokens.size()));
+  prepareBackdrop();
   emit changed(m_active, m_preset);
+  emit backdropChanged();
   return true;
+}
+
+void ThemeComponent::prepareBackdrop()
+{
+  m_backdropUrl.clear();
+  m_backdropTypes.clear();
+  m_backdropLive.clear();
+  m_backdropVisible = true;
+  m_backdropMotion = "normal";
+  m_backdropStats.clear();
+  if (m_active.isEmpty() || !m_packages.contains(m_active)) return;
+  const Package& p = m_packages[m_active];
+  if (!p.backdrop.declared()) return;
+  QStringList e;
+  // A shader is code for the GPU driver's compiler: a user-installed theme's needs the user's trust, like its scripts
+  // (docs/security/THEME-TRUST-REVIEW.md, 8.4).
+  if (p.source == Source::User && !trusted(p)) e << "backdrop: trust this theme to run its backdrop shader";
+  const QMap<QString, QString> types = backdropTypes(p.backdrop, m_tokens, &e);
+  QFile f(p.dir + '/' + p.backdrop.shader);
+  QByteArray bytes;
+  if (e.isEmpty()) {
+    if (!f.open(QIODevice::ReadOnly) || f.size() > 256 * 1024) e << "backdrop shader missing or over 256 KiB";
+    else bytes = f.readAll();
+  }
+  QString err;
+  if (e.isEmpty() && p.backdrop.precompiled()) {
+    if (!checkBackdropQsb(bytes, types, &err)) e << "backdrop: " + err;
+    else m_backdropUrl = p.dir.startsWith(":/") ? "qrc" + f.fileName() : QUrl::fromLocalFile(f.fileName()).toString();
+  } else if (e.isEmpty()) {
+    // Baked once per source and param types; cached as a .qsb file Backdrop.qml loads.
+    const QString src = backdropSource(QString::fromUtf8(bytes), types);
+    const QString name = QString("%1-%2.qsb").arg(p.id, QString(QCryptographicHash::hash(src.toUtf8(), QCryptographicHash::Sha1).toHex().left(16)));
+    const QString path = Paths::cacheDir("backdrop/" + name);
+    if (!QFileInfo::exists(path)) {
+      const QByteArray qsb = bakeBackdrop(QString::fromUtf8(bytes), types, &err);
+      if (qsb.isEmpty()) e << "backdrop: " + err;
+      else {
+        QDir().mkpath(QFileInfo(path).path());
+        QFile out(path);
+        if (!out.open(QIODevice::WriteOnly) || out.write(qsb) != qsb.size()) e << "backdrop: can't write " + path;
+      }
+    }
+    if (e.isEmpty()) m_backdropUrl = QUrl::fromLocalFile(path).toString();
+  }
+  if (!e.isEmpty()) {
+    m_errors << e;
+    qWarning().noquote() << "Icefin theme:" << p.id << "backdrop off:" << e.join("; ");
+    return;
+  }
+  m_backdropTypes = types;
+  qInfo().noquote() << "Icefin theme:" << p.id << "backdrop" << p.backdrop.shader << "ready";
+}
+
+QVariantMap ThemeComponent::backdrop() const
+{
+  if (m_backdropUrl.isEmpty()) return {};
+  const Package& p = m_packages[m_active];
+  QVariantMap params;
+  for (auto it = m_backdropTypes.begin(); it != m_backdropTypes.end(); ++it) {
+    const QVariant decl = p.backdrop.params.value(it.key());
+    QVariant value;
+    if (decl.typeId() == QMetaType::QString) {
+      const QString ref = decl.toString();
+      const QString v = m_backdropLive.contains(ref) ? m_backdropLive.value(ref) : m_tokens.value(ref);
+      value = it.value() == "color" ? QVariant::fromValue(cssColor(v)) : QVariant(v.toDouble());
+    } else {
+      value = decl.toDouble();
+    }
+    params.insert(it.key(), QVariantMap{{"type", it.value()}, {"value", value}});
+  }
+  return {{"shader", m_backdropUrl}, {"fps", p.backdrop.fps}, {"visible", m_backdropVisible}, {"motion", m_backdropMotion}, {"params", params}};
+}
+
+// Test hooks: only when the app was started for remote debugging, which already gives full control of the page.
+static bool testHooks()
+{
+  for (const QString& a : QCoreApplication::arguments()) if (a.startsWith("--remote-debugging-port")) return true;
+  return false;
+}
+
+QString ThemeComponent::grabWindow()
+{
+  if (!testHooks()) return QString();
+  const QString path = Paths::cacheDir("backdrop/window-grab.png");
+  QDir().mkpath(QFileInfo(path).path());
+  QFile::remove(path);
+  m_grab.clear();
+  emit grabRequested(path);
+  return path;
+}
+
+QVariantList ThemeComponent::grabPixel(double fx, double fy) const
+{
+  if (!testHooks()) return {};
+  const QImage img(Paths::cacheDir("backdrop/window-grab.png"));
+  if (img.isNull()) return {};
+  const QColor c = img.pixelColor(qBound(0, int(fx * img.width()), img.width() - 1), qBound(0, int(fy * img.height()), img.height() - 1));
+  return {c.red(), c.green(), c.blue()};
+}
+
+void ThemeComponent::setBackdropState(const QVariantMap& state)
+{
+  if (m_backdropUrl.isEmpty()) return;
+  const Package& p = m_packages[m_active];
+  if (state.contains("visible")) m_backdropVisible = state.value("visible").toBool();
+  if (state.contains("motion")) m_backdropMotion = state.value("motion").toString() == "low" ? "low" : "normal";
+  if (state.contains("tokens")) {
+    m_backdropLive.clear();
+    QStringList refs;
+    for (const QVariant& v : p.backdrop.params) if (v.typeId() == QMetaType::QString) refs << v.toString();
+    const QVariantMap t = state.value("tokens").toMap();
+    for (auto it = t.begin(); it != t.end(); ++it) {
+      if (!refs.contains(it.key())) continue;
+      const QString v = it.value().toString().trimmed();
+      bool num = false;
+      v.toDouble(&num);
+      if (num || cssColor(v).isValid()) m_backdropLive.insert(it.key(), v);
+    }
+  }
+  emit backdropChanged();
 }
 
 bool ThemeComponent::setActiveTheme(const QString& id, const QString& preset)
@@ -251,6 +376,7 @@ QVariantMap ThemeComponent::activePackage() const
   QStringList scripts;
   for (const QString& s : p.scripts) if (mayServe(p, s, t)) scripts << base + s;
   out["scripts"] = scripts;
+  out["backdrop"] = !m_backdropUrl.isEmpty();  // the native backdrop draws under the page: themes make it transparent
   return out;
 }
 

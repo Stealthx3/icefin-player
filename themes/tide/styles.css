@@ -29,3 +29,7 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .td-item.icefin-focused .td-thumb { box-shadow: 0 0 1.2em var(--icefin-color-waveLine); transform: scale(1.18); }
 .td-item.icefin-focused .td-name { font-weight: 700; text-shadow: 0 0 0.6em var(--icefin-color-waveLine); }
 .td-item.above { opacity: 0.45; }
+
+/* With the native backdrop (8.4) the gradient, wave and shade are drawn under the page: the web layer steps aside. */
+html[data-icefin-backdrop] [data-td] { background: transparent; }
+html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { display: none; }
