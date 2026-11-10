@@ -142,7 +142,7 @@
             S.clockTimer = setInterval(tick, 15000);
             root.append(S.backdrop, view, clock, el('div', 'ob-hint', 'Hold View for the guide'));
             root.orbitFill = (channels) => fill(channels);
-            channelsFor(window.ApiClient).then((ch) => { if (S) fill(ch); }, (e) => { console.warn('Orbit: channels', e); if (S) fill([]); });
+            channelsFor(T.ctx.apiClient()).then((ch) => { if (S) fill(ch); }, (e) => { console.warn('Orbit: channels', e); if (S) fill([]); });
         },
         unmount() {
             if (!S) return;

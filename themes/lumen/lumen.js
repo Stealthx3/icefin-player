@@ -7,7 +7,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
-    const E = T._engine;
+    const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const FIELDS = 'PrimaryImageAspectRatio,Overview,ProductionYear,RunTimeTicks,OfficialRating,UserData,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,ParentThumbItemId,ParentThumbImageTag,SeriesPrimaryImageTag';
     const ROW_TOP = 0.62, ROW_FOCUS_TOP = 0.16;  // rows start under the shelf; a lower row slides up to here (fractions of the height)
@@ -137,7 +137,7 @@
         },
         async mount(root) {
             root.setAttribute('data-lm', 'home');
-            S = { client: window.ApiClient, root, tabs: [], rows: [], zone: 'tabs', tabIndex: 0, rowIndex: 0, ready: false };
+            S = { client: T.ctx.apiClient(), root, tabs: [], rows: [], zone: 'tabs', tabIndex: 0, rowIndex: 0, ready: false };
             S.shelf = el('div', 'lm-shelf');
             const text = el('div', 'lm-shelf-text');
             S.shelfTitle = el('div', 'lm-shelf-title');
@@ -151,7 +151,7 @@
 
             const views = await ui.userViews();  // also waits out a cold start
             if (!S || S.root !== root) return;
-            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             const c = S.client, uid = c.getCurrentUserId();
             const tabs = [{ label: 'Home' }];
             for (const v of views) tabs.push({ label: v.Name, hash: v.CollectionType === 'livetv' ? '#/livetv' : `#/list?parentId=${v.Id}&serverId=${c.serverId()}` });
