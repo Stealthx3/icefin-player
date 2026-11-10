@@ -86,6 +86,11 @@ modules:
               project-id: 5348
               stable-only: true
               url-template: https://github.com/mpv-player/mpv/archive/refs/tags/v$version.tar.gz
+          # Icefin: the Vulkan render API on a host-supplied device (PLAN 5.2, external/mpv/README.md); bump together
+          - type: patch
+            paths:
+              - ../external/mpv/patches/0001-vo_libmpv-introduce-gpu-next-render-backend.patch
+              - ../external/mpv/patches/0002-vo_libmpv-add-Vulkan-support-to-gpu-next-backend.patch
 
         modules:
           - name: luajit

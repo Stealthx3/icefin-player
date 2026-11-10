@@ -54,7 +54,7 @@ so video becomes a scene-graph texture with no copies?
 **Patch.** mpv has no Vulkan render API (mpv PRs #16818, #17828 and #18607 are open). Two commits from
 github.com/andrewrabert/mpv (a jellyfin-desktop developer's fork, used by upstream's experimental
 `libmpv-vulkan-gpu-next-wayland-hdr` branch) apply onto mpv 0.42.0 with one trivial conflict (enum numbering). They're
-kept in `patches/` with authorship and form the starting point for 5.2. They need libplacebo ≥ 7.387 (Debian 13
+kept with authorship and are now Icefin's bundled libmpv patches (`external/mpv/`, 5.2). They need libplacebo ≥ 7.387 (Debian 13
 has 7.349; the Flatpak already builds 7.387).
 
 **Test.** The spike creates the Vulkan 1.3 device itself, with every supported feature on (timeline semaphores and
