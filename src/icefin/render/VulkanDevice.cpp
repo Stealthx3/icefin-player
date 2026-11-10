@@ -103,7 +103,9 @@ static bool probeVulkan(QString* why)
 void chooseGraphicsApi()
 {
   const QVariant v = SettingsComponent::readPreinitValue(SETTINGS_SECTION_MAIN, "icefin_renderer");
-  const QString setting = v.isValid() && !v.isNull() ? v.toString() : QString("auto");
+  // ICEFIN_RENDERER (auto/vulkan/opengl) overrides the setting, for test suites that start from a fresh config.
+  const QString env = qEnvironmentVariable("ICEFIN_RENDERER");
+  const QString setting = !env.isEmpty() ? env : v.isValid() && !v.isNull() ? v.toString() : QString("auto");
   const RendererChoice choice = rendererChoiceFrom(setting);
   bool usable = false;
   QString why;
