@@ -46,7 +46,8 @@ Item
     onTriggered: {
       var w = root.webView()
       if (!w) return
-      if (!restore) { w.backgroundColor = "#01000000"; restore = true; restart() }
+      var c = w.backgroundColor  // transparent: the same colour with the least alpha is a change Chromium sees
+      if (!restore) { w.backgroundColor = Qt.rgba(c.r, c.g, c.b, 1 / 255); restore = true; restart() }
       else { w.backgroundColor = "transparent"; restore = false }
     }
   }
