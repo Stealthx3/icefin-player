@@ -105,12 +105,18 @@ def main():
                 return js("new Promise(r => { const t = setTimeout(() => r(false), 3000); "
                           "requestAnimationFrame(() => { clearTimeout(t); r(true); }); })")
 
-            print(f"theme_backdrop: probe before {sample()} frames {alive()}", flush=True)
+            # each mode from a fresh stale page: theme off (opaque page), Tide again (transparent page, stale pixels)
             # least invasive first: bgAlpha froze the page on the HTPC once (#57)
             for mode in ["resize", "layer", "visible", "bgAlpha"]:
+                js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+                time.sleep(3)
+                js("new Promise(r => window.api.theme.setActiveTheme('tide', '', r))")
+                page.wait_for("!!document.querySelector('#icefin-theme-root[data-td-ready]')", timeout=40)
+                time.sleep(4)
+                before = sample()
                 ok = js(f"new Promise(r => window.api.theme.repaintWeb('{mode}', r))")
                 time.sleep(1.5)
-                print(f"theme_backdrop: probe {mode} {ok} {sample()} frames {alive()}", flush=True)
+                print(f"theme_backdrop: probe {mode} {ok} before {before} after {sample()} frames {alive()}", flush=True)
             js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")  # the choice syncs to the server user
             time.sleep(1.5)
             return 0
