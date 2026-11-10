@@ -205,10 +205,12 @@ void HdrCapabilityProbe::probe()
     }
   } else
 #endif
-  {
+  if (!platform.startsWith("wayland") && m_haveSwapchainInfo) {
+    info = m_swapchainInfo;
+  } else {
     info.source = platform.startsWith("wayland") ? "wayland" : "x11";
     info.error = platform.startsWith("wayland") ? "built without the color-management protocol"
-                                               : "X11/Gamescope: read from the Vulkan surface once the Vulkan renderer exists (5.6)";
+                                               : "X11/Gamescope: read from the Vulkan swapchain (Vulkan renderer only)";
   }
   m_info = info;
   qInfo().noquote() << "Icefin display:" << (info.hdr == DisplayInfo::Hdr::Yes ? "HDR" : info.hdr == DisplayInfo::Hdr::No ? "SDR" : "unknown")
@@ -331,5 +333,25 @@ bool HdrCapabilityProbe::anyScreenHdr()
 #else
   return m_info.hdr == DisplayInfo::Hdr::Yes;
 #endif
+}
+
+void HdrCapabilityProbe::setFromSwapchain(bool hdr10, int maxLuminance, int referenceLuminance)
+{
+  DisplayInfo d;
+  d.source = "x11";
+  if (hdr10) {
+    d.hdr = DisplayInfo::Hdr::Yes;
+    d.transfer = "st2084_pq";
+    d.primaries = "bt2020";
+    d.maxLuminance = maxLuminance;
+    d.referenceLuminance = referenceLuminance;
+    d.error = "from the Vulkan swapchain (HDR10_ST2084); luminances are Qt's defaults";
+  } else {
+    d.hdr = DisplayInfo::Hdr::No;
+    d.error = "the Vulkan surface offers no HDR10 colour space";
+  }
+  m_swapchainInfo = d;
+  m_haveSwapchainInfo = true;
+  probe();
 }
 }

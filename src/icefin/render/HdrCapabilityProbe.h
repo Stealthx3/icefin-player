@@ -4,8 +4,10 @@
 // event queue, so Qt's isn't touched): transfer function, primaries, luminances. The display counts as HDR when the
 // output's transfer function is PQ or HLG. It probes again when the window moves to another screen or the compositor
 // says the output's description changed (4.4).
-// X11 and Gamescope: the answer comes from the Vulkan surface's colour spaces, which needs the Vulkan renderer (5.6);
-// until then the state is Unknown, which the router treats as SDR (safe: tone-mapped).
+// X11 and Gamescope (5.6): the answer comes from the Vulkan surface's colour spaces: Icefin asks Qt for an HDR10
+// swapchain and Qt makes one only when the surface offers HDR10_ST2084 (Gamescope's WSI layer with HDR on), so the
+// swapchain Qt made is the answer (setFromSwapchain). Before it exists, or on the OpenGL fallback, the state is
+// Unknown, which the router treats as SDR (safe: tone-mapped).
 //
 // Surface tagging (5.5): on the same connection it tags the window's wl_surface with an image description, so the
 // compositor reads the HDR10 swapchain the compositor pass (Compositing.h) writes as PQ / BT.2020 with SDR white at
@@ -65,6 +67,8 @@ public:
   // can move between screens, so HDR output is chosen when any screen can show it; an SDR screen shows the tagged PQ
   // surface through the compositor's own conversion.
   bool anyScreenHdr();
+  // X11 (5.6): what the Vulkan swapchain Qt made says about the display. HDR10 means the surface offered it.
+  void setFromSwapchain(bool hdr10, int maxLuminance, int referenceLuminance);
   // Tags `window`'s surface (Wayland only). Kind::None removes the tag. Returns an error, or an empty string.
   QString tagSurface(QWindow* window, const SurfaceDescription& d);
   SurfaceDescription currentTag() const { return m_tag; }
@@ -77,6 +81,8 @@ private:
   QPointer<QWindow> m_window;
   DisplayInfo m_info;
   SurfaceDescription m_tag;
+  bool m_haveSwapchainInfo = false;
+  DisplayInfo m_swapchainInfo;
   Wl* m_wl = nullptr;
 };
 }

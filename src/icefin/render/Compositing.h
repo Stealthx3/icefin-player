@@ -56,6 +56,9 @@ struct CompositorState
 
 // The process-wide state (GUI thread), set by VulkanDevice and RouterComponent.
 CompositorState& compositorState();
+// The video's HDR10 metadata for the render thread (VK_EXT_hdr_metadata on X11, 5.6), published by the GUI thread.
+void publishVideoMetadata(const VideoHdrMetadata& m);
+VideoHdrMetadata videoMetadataSnapshot();
 
 // libplacebo's linear light: 1.0 is PL_COLOR_SDR_WHITE.
 constexpr double kVideoLinearWhite = 203.0;
