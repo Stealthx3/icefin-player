@@ -59,11 +59,31 @@ public:
   // Called from webview.qml (ICEFIN-HOOK) with the view's WebEngineProfile: serve icefin-theme: on it.
   Q_INVOKABLE void installSchemeHandler(QObject* profile);
 
+  // Native backdrop (8.4, Backdrop.h) for Backdrop.qml: {} when the active theme has none (or it failed: lastErrors()),
+  // else {shader: url, fps, visible, motion, params: {name: {type: "color"|"number", value}}}. backdropChanged() follows
+  // theme changes and setBackdropState().
+  Q_INVOKABLE QVariantMap backdrop() const;
+  // From the web runtime: {visible: bool, motion: "low"|"normal", tokens: {"color.x": value}} (tokens: live values from
+  // ui.timePalette, only those the backdrop's params name, checked like tokens.json values).
+  Q_INVOKABLE void setBackdropState(const QVariantMap& state);
+  // Backdrop.qml reports what it drew ({frames, fps, windowFps, shown}); tests and the debug overlay read it.
+  Q_INVOKABLE void reportBackdropStats(const QVariantMap& stats) { m_backdropStats = stats; }
+  Q_INVOKABLE QVariantMap backdropStats() const { QVariantMap s = m_backdropStats; if (!m_grab.isEmpty()) s["grab"] = m_grab; return s; }
+  Q_INVOKABLE void grabDone(const QString& path) { m_grab = path; }  // from Backdrop.qml
+  // Tests and diagnostics: Backdrop.qml renders the whole window (Qt's own scene: backdrop, video item, web view) into
+  // a PNG in the cache; returns its path. backdropStats().grab names it once written. No path comes from the page.
+  // Only with --remote-debugging-port (tests): otherwise it returns "" and grabPixel() [].
+  Q_INVOKABLE QString grabWindow();
+  // [r, g, b] of the last grab at a point given as fractions of its size ([] before a grab).
+  Q_INVOKABLE QVariantList grabPixel(double fx, double fy) const;
+
   // Search roots, in priority order (an id found earlier wins).
   static QStringList roots();
 
 Q_SIGNALS:
   void changed(const QString& id, const QString& preset);
+  void backdropChanged();
+  void grabRequested(const QString& path);
 
 private:
   ThemeComponent() = default;
@@ -81,5 +101,13 @@ private:
   QHash<QString, QSoundEffect*> m_sounds;
   QVariantMap m_soundState{{"played", 0}, {"suppressed", 0}};
   void soundNote(bool played, const QString& event, const QString& reason);
+  void prepareBackdrop();
+  QString m_backdropUrl;                  // baked or checked shader for the active theme, or empty
+  QMap<QString, QString> m_backdropTypes;  // param -> color | number
+  TokenMap m_backdropLive;                // live token values from the web runtime
+  bool m_backdropVisible = true;
+  QString m_backdropMotion = "normal";
+  QVariantMap m_backdropStats;
+  QString m_grab;
 };
 }

@@ -418,7 +418,7 @@ The theme engine is theme-agnostic and lives in three places: a web runtime over
 | --- | --- |
 | Bundled with Icefin | Everything, including JS effects and QML shader effects |
 | Served by the server-plugin plan's plugin (admin-installed) | Everything except native QML beyond declared shader effects; JS is trusted like the server's own web code |
-| Installed by the user from a file | Declarative only: tokens, screens, motion, sounds, fonts, precompiled shaders with declared parameters, and CSS stripped of remote `@import` and external `url()`. Scripts run only if the user marks the theme trusted, after a warning about token access |
+| Installed by the user from a file | Declarative only: tokens, screens, motion, sounds, fonts, and CSS stripped of remote `@import` and external `url()`. Scripts and precompiled backdrop shaders (with declared parameters) run only if the user marks the theme trusted, after a warning about token access (shaders: 8.4 trust review) |
 
 Every package is checked against the shared JSON schemas before it loads; an invalid one is refused with a readable error.
 
