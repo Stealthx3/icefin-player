@@ -3,10 +3,14 @@
 // theme's backdrop shader (ThemeComponent::backdrop(), baked or checked in C++) as a ShaderEffect whose uniforms are
 // the theme's declared params, plus time and resolution. Theme-agnostic: it knows params only by the names and types
 // the theme declared.
-// - Hidden while video is up (the player's window is visible, or it is playing, paused or buffering): on the OpenGL
-//   path the video item is opaque and this layer would sit above it.
+// - Hidden while video is up (the player is playing, paused or buffering): on the OpenGL path the video item is opaque
+//   and this layer would sit above it. Not the player's window (vo-configured): with force-window, mpv opens it idle at
+//   startup on a real GPU, with nothing playing.
 // - time advances at the theme's fps; under reduced or low motion (from the web runtime) it stands still.
 // - Colour params cross-fade when the web runtime sends new token values (time-of-day palettes).
+// - Known gap (PLAN 8.4): Chromium keeps a page that loaded opaque as an opaque layer, so the backdrop only shows
+//   through the page after a reload. Nudging the web view's background colour fixed it under Xvfb but froze the page
+//   on the HTPC's GPU (Gamescope), so it was taken out again.
 // - Reports what it drew to ThemeComponent::reportBackdropStats() every two seconds for tests and diagnostics.
 import QtQuick
 
@@ -66,9 +70,7 @@ Item
   }
 
   property bool playerBusy: false
-  property bool playerWindow: false
-  onPlayerBusyChanged: videoUp = playerBusy || playerWindow
-  onPlayerWindowChanged: videoUp = playerBusy || playerWindow
+  onPlayerBusyChanged: videoUp = playerBusy
 
   Connections
   {
@@ -92,12 +94,10 @@ Item
     function onPlaying() { root.playerBusy = true }
     function onPaused() { root.playerBusy = true }
     function onBuffering(percent) { root.playerBusy = true }
-    // windowVisible(false) doesn't always follow a stop: the end of playback ends both
-    function onFinished() { root.playerBusy = false; root.playerWindow = false }
-    function onCanceled() { root.playerBusy = false; root.playerWindow = false }
-    function onError(msg) { root.playerBusy = false; root.playerWindow = false }
-    function onStopped() { root.playerBusy = false; root.playerWindow = false }
-    function onWindowVisible(v) { root.playerWindow = v }
+    function onFinished() { root.playerBusy = false }
+    function onCanceled() { root.playerBusy = false }
+    function onError(msg) { root.playerBusy = false }
+    function onStopped() { root.playerBusy = false }
   }
 
   Timer
