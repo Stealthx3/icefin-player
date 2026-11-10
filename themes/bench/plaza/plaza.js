@@ -213,10 +213,10 @@
             root.append(stage, bar);
             root.plazaFill = (list) => fill(list);
 
-            const client = S.client;
             ui.userViews().then((views) => {
                 if (!S) return;
-                fill(channels(client, views));
+                S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+                fill(channels(S.client, views));
                 const first = S.pages.querySelector('.pz-tile');
                 if (first) T._engine.focus(first);
             });

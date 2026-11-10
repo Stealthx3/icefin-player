@@ -43,7 +43,9 @@
             // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
             st.textContent = `html.${SCREEN_CLASS} .skinHeader, html.${SCREEN_CLASS} .mainDrawer, html.${SCREEN_CLASS} .mainDrawerHandle,`
                 + ` html.${SCREEN_CLASS} .mainAnimatedPages, html.${SCREEN_CLASS} .backgroundContainer, html.${SCREEN_CLASS} #reactRoot`
-                + ' { visibility: hidden !important; }';
+                + ' { visibility: hidden !important; }'
+                // the hidden page's height would still show the document's scrollbar beside the screen
+                + ` html.${SCREEN_CLASS}, html.${SCREEN_CLASS} body { overflow: hidden !important; }`;
             (document.head || h).append(st);
         }
     }
@@ -224,6 +226,9 @@
                 if (along < beamDist) { beamDist = along; beamBest = e; }
                 continue;
             }
+            // Off the beam a candidate must lie mostly in the direction of travel: a neighbour below doesn't count as
+            // "left" just because a scaled-up focused item moved its centre.
+            if (along < -Math.min(horiz ? a.width : a.height, horiz ? b.width : b.height) / 2) continue;
             const score = centre + (horiz ? Math.abs(by - ay) : Math.abs(bx - ax)) * 2;
             if (score < bestScore) { bestScore = score; best = e; }
         }

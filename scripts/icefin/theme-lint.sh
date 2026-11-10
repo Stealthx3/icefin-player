@@ -18,7 +18,7 @@ done
 if hits="$(grep -rnE -- '#[0-9a-fA-F]{3,8}\b|(rgba?|hsla?)\(\s*[0-9]' "${ENGINE[@]}" | grep -vE '^[^:]+:[0-9]+:\s*(//|\*|/\*|#)' || true)" && [ -n "$hits" ]; then
   echo "theme-lint: color literals in engine code (themes hold values; the engine uses tokens):"; echo "$hits"; bad=1
 fi
-PRODUCTS='xbox|wii|nintendo|microsoft|roku|fire ?tv|amazon|kodi|estuary|apple ?tv|tvos|plex|emby|playstation|android tv|google tv|webos|tizen'
+PRODUCTS='xbox|wii|nintendo|microsoft|roku|fire ?tv|amazon|kodi|estuary|apple|tvos|plex|emby|playstation|ps3|xmb|sony|android tv|google tv|webos|tizen|netflix|tivo|valve|steam ?big ?picture|steam ?deck'
 if hits="$(grep -rniE -- "\\b($PRODUCTS)\\b" themes/ || true)" && [ -n "$hits" ]; then
   echo "theme-lint: product names in shipped theme files (name targets in docs/PLAN.md, not in themes/):"; echo "$hits"; bad=1
 fi

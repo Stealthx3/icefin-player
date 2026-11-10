@@ -73,11 +73,13 @@
             rail.append(el('div', 'hb-brand', 'Icefin'));
             const list = el('div', 'hb-rail-list');
             rail.append(list);
-            const client = window.ApiClient;
+            const views = await T.ui.userViews();
+            const client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             const sections = [{ label: 'Home' }];
-            for (const v of await T.ui.userViews()) sections.push({ label: v.Name, view: v });
+            for (const v of views) sections.push({ label: v.Name, view: v });
             sections.push({ label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
             if (!S) return;
+            S.client = client;
             S.rail = sections.map((s) => { const b = railItem(s.label, s); list.append(b); return b; });
             S.ready();
         }

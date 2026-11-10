@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "arcade",
+  "name": "Arcade",
+  "version": "0.1.0",
+  "description": "Benchmark theme: a controller-first library with a home of large capsules, a filterable and sortable grid, a quick-access panel that slides in from the right, button hints, and an on-screen keyboard for search and sign-in; dark slate with blue focus.",
+  "styles": "styles.css",
+  "scripts": ["arcade.js"]
+}

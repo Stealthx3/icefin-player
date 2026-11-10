@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "almanac",
+  "name": "Almanac",
+  "version": "0.1.0",
+  "description": "Benchmark theme: a Live TV guide with channels down the side, a time axis across the top, programme cells sized by duration, a now line, and a small live preview of the focused channel in a corner; deep blue with a yellow-green focus.",
+  "styles": "styles.css",
+  "scripts": ["almanac.js"]
+}

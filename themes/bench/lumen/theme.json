@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "lumen",
+  "name": "Lumen",
+  "version": "0.1.0",
+  "description": "Benchmark theme: a translucent tab bar that hides once focus leaves it, a full-bleed top shelf for the focused item, and rows of posters that lift and tilt with a moving highlight, on a dark field with white type.",
+  "styles": "styles.css",
+  "scripts": ["lumen.js"]
+}

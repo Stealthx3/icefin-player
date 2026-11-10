@@ -108,7 +108,9 @@ def main():
         check("up from the bar returns to the grid", foc().startswith("tile/"), foc())
 
         # Hover focuses under pointer-first.
-        js("document.querySelectorAll('.pz-tile')[2].dispatchEvent(new MouseEvent('mouseover', {bubbles: true})); true")
+        r = json.loads(js("JSON.stringify((() => { const c = document.querySelectorAll('.pz-tile')[2].getBoundingClientRect(); return [c.left + c.width / 2, c.top + c.height / 2]; })())"))
+        page.send("Input.dispatchMouseEvent", type="mouseMoved", x=r[0], y=r[1])  # a real pointer move (a still cursor doesn't take focus)
+        time.sleep(0.3)
         check("hovering a tile focuses it", foc() == "tile/2", foc())
 
         # Zoom into the first library channel and back out.
@@ -136,14 +138,17 @@ def main():
         act("right")
         check("right past the last column turns the page", root("data-pz-page") == "2/3" and foc() == "tile/0", f"{root('data-pz-page')} {foc()}")
         act("left")
-        check("left past the first column turns back", root("data-pz-page") == "1/3", str(root("data-pz-page")))
+        check("left past the first column turns back", root("data-pz-page") == "1/3", f"{root('data-pz-page')} {foc()}")
         shot("pages.png")
 
         # Start on a library channel.
         js("location.reload(); true")
         time.sleep(6)
         page.reconnect()
-        page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pz]'); return !!r && r.hasAttribute('data-pz-ready'); })()", timeout=60)
+        try:
+            page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pz]'); return !!r && r.hasAttribute('data-pz-ready'); })()", timeout=60)
+        except Exception:
+            raise RuntimeError("no Plaza home after the reload: " + js("JSON.stringify({hash: location.hash, active: window.icefinTheme && window.icefinTheme.active(), root: (document.getElementById('icefin-theme-root') || {}).outerHTML ? document.getElementById('icefin-theme-root').outerHTML.slice(0, 300) : null, user: window.ApiClient && window.ApiClient.getCurrentUserId()})"))
         time.sleep(1.5)
         act("enter")
         page.wait_for("document.getElementById('icefin-theme-root').hasAttribute('data-pz-channel')", timeout=10)

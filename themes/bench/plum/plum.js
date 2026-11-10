@@ -78,9 +78,10 @@
         async mount(rail) {
             const list = el('div', 'pl-menu');
             rail.append(list);
-            const client = window.ApiClient;
             const views = await T.ui.userViews();
+            const client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             if (!S) return;
+            S.client = client;
             S.views = views;
             const sections = [{ label: 'Home' }, ...views.map((v) => ({ label: v.Name, view: v })),
                 { label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' }];
