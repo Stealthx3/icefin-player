@@ -42,4 +42,22 @@
             render(item, p) { p.textContent = `expanded-${item}`; const v = document.createElement('div'); v.className = 'icefin-expand-video'; v.style.cssText = 'width:100%;height:60%'; p.append(v); } });
         ui.material.force(window.labMaterialForce || 'auto');
     } });
+    // 9.14: 40 channels, programmes of 30, 60 or 90 minutes from 12 hours ago (deterministic per channel)
+    window.icefinTheme.registerScreen('#/livetv', { mount(root) {
+        const chans = Array.from({ length: 40 }, (_, i) => ({ id: `ch${i + 1}`, name: `Channel ${i + 1}` }));
+        window.labGuideFetches = [];
+        const base = Math.floor((Date.now() - 12 * 3600e3) / 1800e3) * 1800e3;
+        const progs = (id) => { const n = +id.slice(2), out = []; let t = base; for (let k = 0; t < base + 48 * 3600e3; k++) { const len = [30, 60, 90][(n + k) % 3] * 60e3; out.push({ id: `${id}-p${k}`, channelId: id, start: t, end: t + len, title: `${id} show ${k}` }); t += len; } return out; };
+        const guide = document.createElement('div'); root.append(guide);
+        window.labGuide = ui.guideGrid(guide, { channels: chans, rows: 6, span: 120,
+            fetch: (ids, a, b) => { window.labGuideFetches.push([ids.length, a, b]); return ids.flatMap((id) => progs(id).filter((p) => p.end > a && p.start < b)); },
+            onSelect: (p) => { window.labGuideSelected = p.id; } });
+    } });
+    window.icefinTheme.registerScreen('#/favorites', { mount(root) {
+        ui.keyboard.enable();
+        const input = document.createElement('input'); input.className = 'lab-input'; input.type = 'text'; input.dataset.icefinFocus = '';
+        input.addEventListener('input', () => { window.labInputEvents = (window.labInputEvents || 0) + 1; });
+        const after = cell('after-input'); after.dataset.icefinFocus = '';
+        root.append(input, after);
+    } });
 })();

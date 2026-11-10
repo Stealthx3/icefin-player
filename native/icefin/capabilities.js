@@ -17,6 +17,9 @@
 //   ui.material      translucent blurred panels from material.* tokens, opaque when the GPU can't hold 60 fps (9.11)
 //   ui.chrome        (9.11) a side rail with collapsedWidth collapses to icons and expands, labelled, while it has focus
 //   ui.cardExpand    the focused card grows into a larger preview over its neighbours without reflowing the row (9.11)
+//   ui.guideGrid     a two-axis virtualized grid: rows of channels, cells on a time axis, paging by time and channel (9.14)
+//   ui.keyboard      an on-screen keyboard for text fields, in themed screens and jellyfin-web's own pages (9.14)
+//   ui.timePalette   token sets chosen by the local time (and month), cross-faded (9.14)
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -337,6 +340,8 @@
     }
 
     // ---- muted previews (9.2): the page's own <video>, SDR and muted; never mpv, never the passthrough device ----
+    // {itemId} previews a library item; {itemId, live: true} a Live TV channel (opened through PlaybackInfo the way
+    // jellyfin-web does, as a small VP8 transcode; stop() closes the live stream again); {src} any URL.
     function mutedPreview(el, opts) {
         const c = window.ApiClient;
         const v = document.createElement('video');
@@ -344,16 +349,38 @@
         v.muted = true;
         v.defaultMuted = true;
         v.playsInline = true;
-        v.loop = opts.loop !== false;
+        v.loop = opts.loop !== false && !opts.live;
         v.setAttribute('muted', '');
         v.style.cssText = 'width:100%;height:100%;object-fit:cover';
-        // A small server transcode the browser can always decode: VP8 in WebM, no audio stream, SDR (tone-mapped).
-        const q = new URLSearchParams({ Container: 'webm', VideoCodec: 'vp8', AudioStreamIndex: '-1', MaxWidth: String(opts.maxWidth || 640),
-            MaxFramerate: '30', EnableTonemapping: 'true', StartTimeTicks: String((opts.startSeconds || 0) * 10000000), api_key: c ? c.accessToken() : '' });
-        v.src = opts.src || (c ? c.getUrl(`Videos/${opts.itemId}/stream.webm`) + '?' + q.toString() : '');
         el.append(v);
-        if (!motion.reduced() || opts.autoplayUnderLowMotion) v.play().catch(() => {});
-        return { video: v, stop: () => { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); } };
+        let liveStreamId = null, stopped = false;
+        const start = () => { if (!stopped && (!motion.reduced() || opts.autoplayUnderLowMotion)) v.play().catch(() => {}); };
+        if (opts.live && c) {
+            // A profile that only allows a muted VP8/WebM transcode, so the server never hands back a direct stream.
+            const profile = { MaxStreamingBitrate: 3000000, DirectPlayProfiles: [], CodecProfiles: [], SubtitleProfiles: [],
+                TranscodingProfiles: [{ Container: 'webm', Type: 'Video', VideoCodec: 'vp8', AudioCodec: 'vorbis', Protocol: 'http', Context: 'Streaming', MaxAudioChannels: '2' }] };
+            const q = `UserId=${c.getCurrentUserId()}&StartTimeTicks=0&IsPlayback=true&AutoOpenLiveStream=true&MaxStreamingBitrate=3000000`;
+            c.ajax({ type: 'POST', url: c.getUrl(`Items/${opts.itemId}/PlaybackInfo?${q}`), data: JSON.stringify({ DeviceProfile: profile }), contentType: 'application/json', dataType: 'json' })
+                .then((info) => {
+                    const ms = info && info.MediaSources && info.MediaSources[0];
+                    if (ms && ms.LiveStreamId) liveStreamId = ms.LiveStreamId;
+                    if (stopped) { closeLive(); return; }
+                    if (!ms || !ms.TranscodingUrl) { v.dispatchEvent(new Event('error')); return; }
+                    v.src = c.getUrl(ms.TranscodingUrl.replace(/^\//, ''));
+                    start();
+                }, () => v.dispatchEvent(new Event('error')));
+        } else {
+            // A small server transcode the browser can always decode: VP8 in WebM, no audio stream, SDR (tone-mapped).
+            const q = new URLSearchParams({ Container: 'webm', VideoCodec: 'vp8', AudioStreamIndex: '-1', MaxWidth: String(opts.maxWidth || 640),
+                MaxFramerate: '30', EnableTonemapping: 'true', StartTimeTicks: String((opts.startSeconds || 0) * 10000000), api_key: c ? c.accessToken() : '' });
+            v.src = opts.src || (c ? c.getUrl(`Videos/${opts.itemId}/stream.webm`) + '?' + q.toString() : '');
+            start();
+        }
+        function closeLive() {
+            if (liveStreamId && c) c.ajax({ type: 'POST', url: c.getUrl(`LiveStreams/Close?liveStreamId=${encodeURIComponent(liveStreamId)}`) }).catch(() => {});
+            liveStreamId = null;
+        }
+        return { video: v, live: () => liveStreamId, stop: () => { stopped = true; v.pause(); v.removeAttribute('src'); v.load(); v.remove(); closeLive(); } };
     }
 
     // ---- engine stylesheet for 9.11 capabilities: values come from tokens or the theme's own CSS ----
@@ -559,6 +586,387 @@
         return { collapse, expanded: () => card, panel: () => panel };
     }
 
+    // ---- guide grid (9.14) ----
+    // el shows `rows` channels at a time against `span` minutes. Only the visible rows and the programmes overlapping the
+    // visible window are in the DOM; fetch(channelIds, startMs, endMs) supplies programmes ({id, channelId, start, end}
+    // in ms, plus anything render needs) and is asked once per channel and window. Gaps become empty cells. Arrows:
+    // left/right step through a row's programmes, paging the window by time at its edges; up/down keep the focus time and
+    // scroll by channel at the edges. Returns false (lets the theme move focus) past the first channel and before `now`.
+    function guideGrid(el, opts) {
+        const MIN = 60000, slot = (opts.slot || 30) * MIN, span = (opts.span || 120) * MIN, rows = opts.rows || 6;
+        const now = opts.now || (() => Date.now());
+        const chans = opts.channels;
+        const floorSlot = (t) => Math.floor(t / slot) * slot;
+        const earliest = () => floorSlot(now());
+        let t0 = floorSlot(opts.start || now()), top = 0, cur = { row: 0, time: now() }, focusId = null;
+        const cache = new Map(), asked = new Set();
+        el.classList.add('icefin-guide');
+        el.style.position = el.style.position || 'relative';
+        const head = document.createElement('div');
+        head.className = 'icefin-guide-times';
+        const body = document.createElement('div');
+        body.className = 'icefin-guide-rows';
+        const line = document.createElement('div');
+        line.className = 'icefin-guide-now';
+        el.append(head, body);
+        const pct = (t) => ((t - t0) / span) * 100;
+        function programmes(ch) {
+            const list = (cache.get(ch.id) || []).filter((p) => p.end > t0 && p.start < t0 + span).sort((a, b) => a.start - b.start);
+            const out = [];
+            let t = t0;
+            for (const p of list) {
+                if (p.start > t) out.push({ id: `gap-${ch.id}-${t}`, channelId: ch.id, start: t, end: p.start, gap: true });
+                out.push(p);
+                t = Math.max(t, p.end);
+            }
+            if (t < t0 + span) out.push({ id: `gap-${ch.id}-${t}`, channelId: ch.id, start: t, end: t0 + span, gap: true });
+            return out;
+        }
+        async function load() {
+            const want = chans.slice(top, top + rows).filter((c) => !asked.has(`${c.id}:${t0}`));
+            if (!want.length) return;
+            want.forEach((c) => asked.add(`${c.id}:${t0}`));
+            let got = [];
+            try { got = (await opts.fetch(want.map((c) => c.id), t0, t0 + span)) || []; } catch (e) { console.error('icefinTheme: guide fetch', e); }
+            for (const p of got) {
+                const list = cache.get(p.channelId) || [];
+                if (!list.some((q) => q.id === p.id)) list.push(p);
+                cache.set(p.channelId, list);
+            }
+            if (el.isConnected) draw();
+        }
+        function draw() {
+            head.textContent = '';
+            for (let t = t0; t < t0 + span; t += slot) {
+                const h = document.createElement('div');
+                h.className = 'icefin-guide-time';
+                h.style.cssText = `position:absolute;left:${pct(t)}%;width:${(slot / span) * 100}%`;
+                h.textContent = new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                head.append(h);
+            }
+            head.setAttribute('data-start', String(t0));
+            body.textContent = '';
+            let focusEl = null;
+            chans.slice(top, top + rows).forEach((ch, k) => {
+                const row = document.createElement('div');
+                row.className = 'icefin-guide-row';
+                row.setAttribute('data-channel', ch.id);
+                const label = document.createElement('div');
+                label.className = 'icefin-guide-channel';
+                if (opts.renderChannel) opts.renderChannel(ch, label); else label.textContent = ch.name || ch.id;
+                const lane = document.createElement('div');
+                lane.className = 'icefin-guide-lane';
+                lane.style.position = 'relative';
+                for (const p of programmes(ch)) {
+                    const cell = document.createElement('div');
+                    cell.className = 'icefin-guide-cell' + (p.gap ? ' icefin-guide-gap' : '') + (p.start <= now() && p.end > now() ? ' icefin-guide-live' : '');
+                    cell.setAttribute('data-icefin-focus', '');
+                    cell.tabIndex = -1;
+                    const a = Math.max(p.start, t0), b = Math.min(p.end, t0 + span);
+                    cell.style.cssText = `position:absolute;top:0;bottom:0;left:${pct(a)}%;width:${((b - a) / span) * 100}%`;
+                    cell.guideProgramme = p;
+                    cell.guideChannel = ch;
+                    cell.guideRow = top + k;
+                    if (p.start < t0) cell.classList.add('icefin-guide-cut-start');
+                    if (p.end > t0 + span) cell.classList.add('icefin-guide-cut-end');
+                    if (opts.renderProgram && !p.gap) opts.renderProgram(p, cell, ch); else if (!p.gap) cell.textContent = p.title || p.name || '';
+                    else if (opts.emptyLabel) cell.textContent = opts.emptyLabel;
+                    cell.addEventListener('click', () => { if (!p.gap && opts.onSelect) opts.onSelect(p, ch); });
+                    cell.addEventListener('icefin-focus', () => { focusId = p.id; if (opts.onFocus) opts.onFocus(p, ch); });
+                    lane.append(cell);
+                    if (top + k === cur.row && p.start <= cur.time && p.end > cur.time) focusEl = cell;
+                }
+                row.append(label, lane);
+                body.append(row);
+            });
+            const n = now();
+            const lane0 = body.querySelector('.icefin-guide-lane');
+            if (lane0 && n >= t0 && n < t0 + span) { line.style.left = `calc(${lane0.offsetLeft}px + ${pct(n) / 100} * ${lane0.offsetWidth}px)`; body.append(line); }
+            el.setAttribute('data-top', String(top));
+            if (focusEl && (E.focused() == null || el.contains(E.focused()) || opts.takeFocus)) E.focus(focusEl);
+            opts.takeFocus = false;
+        }
+        const clampTime = (t) => Math.max(t0, Math.min(t0 + span - 1, t));
+        function go(row, time) { cur = { row, time }; draw(); load(); }
+        const off = E.addActionHook((a) => {
+            if (!el.isConnected) { off(); clearInterval(tick); return false; }
+            const f = E.focused();
+            if (!f || !el.contains(f) || !f.guideProgramme) return false;
+            const p = f.guideProgramme, list = programmes(f.guideChannel), i = list.findIndex((q) => q.id === p.id);
+            if (a === 'right') {
+                const nx = list[i + 1];
+                if (nx) { cur = { row: f.guideRow, time: nx.start }; draw(); }
+                else { t0 += span / 2; go(f.guideRow, t0 + span / 2); }  // past the window: page forward by half
+                E.sound('focus');
+                return true;
+            }
+            if (a === 'left') {
+                const pv = list[i - 1];
+                if (pv) { cur = { row: f.guideRow, time: Math.max(pv.start, t0) }; draw(); E.sound('focus'); return true; }
+                if (t0 <= earliest()) return false;
+                t0 = Math.max(earliest(), t0 - span / 2);
+                go(f.guideRow, Math.min(p.start - 1, t0 + span - 1));
+                E.sound('focus');
+                return true;
+            }
+            if (a === 'down' || a === 'up') {
+                const r = f.guideRow + (a === 'down' ? 1 : -1);
+                if (r < 0 || r >= chans.length) return false;
+                if (r < top) top = r;
+                if (r >= top + rows) top = r - rows + 1;
+                go(r, clampTime(cur.time));
+                E.sound('focus');
+                return true;
+            }
+            return false;  // Enter: the engine clicks the cell
+        });
+        const tick = setInterval(() => { if (!el.isConnected) { clearInterval(tick); return; } draw(); }, 30000);
+        cur = { row: 0, time: clampTime(now()) };
+        opts.takeFocus = opts.focus !== false;
+        draw();
+        load();
+        return {
+            window: () => ({ start: t0, end: t0 + span, top, rows }),
+            focused: () => { const f = E.focused(); return f && el.contains(f) ? { programme: f.guideProgramme, channel: f.guideChannel, row: f.guideRow } : null; },
+            focus(row, time) { opts.takeFocus = true; top = Math.max(0, Math.min(chans.length - rows, row - Math.floor(rows / 2))); t0 = Math.max(earliest(), floorSlot(time || now())); go(row, clampTime(time || now())); },
+            pageTime(dir) { t0 = Math.max(earliest(), t0 + dir * span); opts.takeFocus = true; go(cur.row, t0); },
+            pageChannels(dir) { const r = Math.max(0, Math.min(chans.length - 1, cur.row + dir * rows)); top = Math.max(0, Math.min(Math.max(0, chans.length - rows), top + dir * rows)); opts.takeFocus = true; go(r, clampTime(cur.time)); },
+            refocus() { opts.takeFocus = true; draw(); },  // back into the grid where focus left it
+            refresh() { cache.clear(); asked.clear(); load(); },
+            stop() { off(); clearInterval(tick); }
+        };
+    }
+
+    // ---- on-screen keyboard (9.14) ----
+    // ui.keyboard.enable() turns it on for the active theme: a text field focused from the remote or a controller (the
+    // last input came through the action pipeline, not a physical key or the mouse) opens a keyboard docked at the
+    // bottom, on themed screens and jellyfin-web's own pages alike. Enter on a focused field opens it too. While it is
+    // open it takes every action: arrows move between keys, Enter types, Back closes. Typing sets the field's value
+    // through the native setter and fires input events, so React and jellyfin-web see it. A printable key on a physical
+    // keyboard closes it. html[data-icefin-osk] is set while it is open.
+    const OSK_LAYOUTS = {
+        letters: ['1234567890', 'qwertyuiop', 'asdfghjkl\'', 'zxcvbnm,.-'],
+        symbols: ['!@#$%^&*()', '-_=+[]{};:', '"/\\|?<>`~\'', ',.€£¥§°…·']
+    };
+    let oskOn = false, osk = null, lastSource = 'pointer';
+    const isText = (e) => e && ((e.tagName === 'INPUT' && /^(text|search|password|email|url|tel|number|)$/i.test(e.type || '')) || e.tagName === 'TEXTAREA') && !e.disabled && !e.readOnly;
+    function setValue(input, v) {
+        const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+        Object.getOwnPropertyDescriptor(proto, 'value').set.call(input, v);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    function oskOpen(input) {
+        if (!oskOn || !isText(input)) return false;
+        if (osk) { if (osk.input === input) return true; oskClose(); }
+        const panel = document.createElement('div');
+        panel.id = 'icefin-osk';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'keyboard');
+        panel.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:1002';
+        const preview = document.createElement('div');
+        preview.className = 'icefin-osk-preview';
+        const keys = document.createElement('div');
+        keys.className = 'icefin-osk-keys';
+        panel.append(preview, keys);
+        document.body.append(panel);
+        osk = { input, panel, keys, preview, layout: 'letters', shift: false, focused: null };
+        attr('data-icefin-osk', true);
+        oskDraw(null);
+        E.sound('navigate');
+        return true;
+    }
+    function oskDraw(keepLabel) {
+        const { keys, layout, shift } = osk;
+        keys.textContent = '';
+        const key = (label, value, cls) => {
+            const k = document.createElement('div');
+            k.className = 'icefin-osk-key' + (cls ? ' ' + cls : '');
+            k.textContent = label;
+            k.setAttribute('data-icefin-key', value);
+            keys.append(k);
+            return k;
+        };
+        for (const row of OSK_LAYOUTS[layout]) {
+            const r = document.createElement('div');
+            r.className = 'icefin-osk-row';
+            keys.append(r);
+            for (const ch of row) { const c = shift ? ch.toUpperCase() : ch; r.append(key(c, c)); }
+        }
+        const bottom = document.createElement('div');
+        bottom.className = 'icefin-osk-row icefin-osk-actions';
+        keys.append(bottom);
+        bottom.append(key(shift ? '⇧ Shift (on)' : '⇧ Shift', 'shift', 'icefin-osk-wide'), key(layout === 'letters' ? '&123' : 'abc', 'layout', 'icefin-osk-wide'),
+            key('Space', ' ', 'icefin-osk-space'), key('⌫', 'backspace', 'icefin-osk-wide'), key('Done', 'done', 'icefin-osk-wide icefin-osk-done'));
+        const all = [...keys.querySelectorAll('[data-icefin-key]')];
+        oskFocus(all.find((k) => k.getAttribute('data-icefin-key') === keepLabel) || all[10] || all[0]);
+        oskPreview();
+    }
+    function oskPreview() {
+        const v = osk.input.value || '';
+        osk.preview.textContent = osk.input.type === 'password' ? '•'.repeat(v.length) : v;
+        osk.preview.setAttribute('data-placeholder', osk.input.placeholder || (osk.input.labels && osk.input.labels[0] ? osk.input.labels[0].textContent : '') || '');
+    }
+    function oskFocus(k) {
+        if (osk.focused) osk.focused.classList.remove('icefin-focused');
+        osk.focused = k;
+        k.classList.add('icefin-focused');
+    }
+    function oskPress(k) {
+        const v = k.getAttribute('data-icefin-key'), input = osk.input;
+        E.sound('select');
+        if (v === 'done') { input.dispatchEvent(new Event('change', { bubbles: true })); oskClose(); return; }
+        if (v === 'shift') { osk.shift = !osk.shift; oskDraw('shift'); return; }
+        if (v === 'layout') { osk.layout = osk.layout === 'letters' ? 'symbols' : 'letters'; oskDraw('layout'); return; }
+        if (v === 'backspace') setValue(input, input.value.slice(0, -1));
+        else {
+            const max = input.maxLength > 0 ? input.maxLength : Infinity;
+            if (input.value.length < max) setValue(input, input.value + v);
+            if (osk.shift && v !== ' ') { osk.shift = false; oskDraw(v.toLowerCase()); }
+        }
+        oskPreview();
+    }
+    function oskClose() {
+        if (!osk) return;
+        const input = osk.input;
+        osk.panel.remove();
+        osk = null;
+        attr('data-icefin-osk', false);
+        if (input.isConnected && input.focus) input.focus();
+        E.sound('back');
+    }
+    const oskHook = (a) => {
+        if (a === 'up' || a === 'down' || a === 'left' || a === 'right' || a === 'enter' || a === 'select' || a === 'back') lastSource = 'action';
+        if (!osk) {
+            if (oskOn && (a === 'enter' || a === 'select') && isText(document.activeElement)) return oskOpen(document.activeElement);
+            return false;
+        }
+        if (!osk.input.isConnected) { oskClose(); return false; }
+        if (isDir(a)) {
+            const all = [...osk.keys.querySelectorAll('[data-icefin-key]')].filter((k) => k !== osk.focused);
+            const n = E.pick(all, osk.focused, a);
+            if (n) { oskFocus(n); E.sound('focus'); }
+            return true;
+        }
+        if (a === 'enter' || a === 'select') { oskPress(osk.focused); return true; }
+        if (a === 'back') { oskClose(); return true; }
+        return true;  // modal while open
+    };
+    document.addEventListener('focusin', (e) => { if (oskOn && lastSource === 'action' && isText(e.target)) setTimeout(() => { if (document.activeElement === e.target) oskOpen(e.target); }, 0); }, true);
+    document.addEventListener('mousedown', (e) => { lastSource = 'pointer'; if (osk && !osk.panel.contains(e.target)) oskClose(); }, true);
+    document.addEventListener('mousedown', (e) => {
+        const k = osk && e.target.closest && e.target.closest('[data-icefin-key]');
+        if (k) { e.preventDefault(); oskFocus(k); oskPress(k); }  // pointer users can type on it too; keeps the field's focus
+    }, true);
+    window.addEventListener('keydown', (e) => {
+        if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey) { lastSource = 'keyboard'; if (osk) oskClose(); }
+    }, true);
+    const keyboard = {
+        enable() { oskOn = true; attr('data-icefin-osk-enabled', true); },
+        disable() { oskClose(); oskOn = false; attr('data-icefin-osk-enabled', false); },
+        open: (input) => { oskOn = true; return oskOpen(input || document.activeElement); },
+        close: () => oskClose(),
+        isOpen: () => !!osk
+    };
+
+    // ---- time-of-day palettes (9.14) ----
+    // Palettes are token sets in the theme's tokens.json under palettes.<name> (any token paths, for example
+    // palettes.dusk.color.background). ui.timePalette({schedule: [['05:00', 'dawn'], ['09:00', 'day'], ...],
+    // months: [12 names] | undefined, fadeMs}) applies the month's set, then the time's set over it, as the matching
+    // --icefin-* properties on <html>, and cross-fades colours and numbers over fadeMs when the set changes (checked every
+    // minute). Under reduced or low motion the change is instant. ui.timePalette.at(date) pins the clock (tests,
+    // previews); at(null) follows the real time again. html[data-icefin-palette] names the sets in use.
+    let palette = null;
+    const PREFIX = '--icefin-palettes-';
+    function paletteSets() {
+        const css = (window.icefinTokenEngine && window.icefinTokenEngine.current()) || '';
+        const sets = {};
+        const re = /(--icefin-palettes-[A-Za-z0-9-]+)\s*:\s*([^;]+);/g;
+        let m;
+        while ((m = re.exec(css))) {
+            const rest = m[1].slice(PREFIX.length);
+            const dash = rest.indexOf('-');
+            if (dash < 0) continue;
+            const name = rest.slice(0, dash);
+            (sets[name] = sets[name] || {})['--icefin-' + rest.slice(dash + 1)] = m[2].trim();
+        }
+        return sets;
+    }
+    function rgba(v) {
+        let m = /^#([0-9a-f]{3,8})$/i.exec(v);
+        if (m) {
+            let h = m[1];
+            if (h.length <= 4) h = [...h].map((c) => c + c).join('');
+            const n = (i) => parseInt(h.slice(i, i + 2), 16);
+            return [n(0), n(2), n(4), h.length === 8 ? n(6) / 255 : 1];
+        }
+        m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+)(%?))?\s*\)$/i.exec(v);
+        if (m) return [+m[1], +m[2], +m[3], m[4] == null ? 1 : m[5] ? m[4] / 100 : +m[4]];
+        return null;
+    }
+    const fmt = (c) => `rgba(${c.slice(0, 3).map((x) => Math.round(x)).join(', ')}, ${+c[3].toFixed(3)})`;
+    function mix(a, b, k) {
+        const ca = rgba(a), cb = rgba(b);
+        if (ca && cb) return fmt(ca.map((x, i) => x + (cb[i] - x) * k));
+        const na = parseFloat(a), nb = parseFloat(b), ua = String(a).replace(/^[-\d.]+/, ''), ub = String(b).replace(/^[-\d.]+/, '');
+        if (!isNaN(na) && !isNaN(nb) && ua === ub) return `${+(na + (nb - na) * k).toFixed(3)}${ua}`;
+        return k < 0.5 ? a : b;
+    }
+    function paletteTarget(date) {
+        const sets = paletteSets(), p = palette;
+        const mins = date.getHours() * 60 + date.getMinutes();
+        const stops = p.schedule.map(([t, n]) => { const [h, m] = String(t).split(':').map(Number); return [h * 60 + (m || 0), n]; }).sort((a, b) => a[0] - b[0]);
+        let timeSet = stops.length ? stops[stops.length - 1][1] : null;  // before the first stop: the last one (overnight)
+        for (const [m, n] of stops) if (mins >= m) timeSet = n;
+        const monthSet = p.months ? p.months[date.getMonth()] : null;
+        return { names: [monthSet, timeSet].filter(Boolean), vars: Object.assign({}, sets[monthSet] || {}, sets[timeSet] || {}) };
+    }
+    function paletteApply(fade) {
+        if (!palette) return;
+        const target = paletteTarget(palette.pinned || new Date());
+        const key = target.names.join('+');
+        if (key === palette.key && !palette.dirty) return;
+        palette.key = key;
+        palette.dirty = false;
+        attr('data-icefin-palette', key);
+        const h = document.documentElement;
+        const from = {};
+        for (const v of Object.keys(target.vars)) from[v] = h.style.getPropertyValue(v) || getComputedStyle(h).getPropertyValue(v).trim() || target.vars[v];
+        for (const v of palette.applied) if (!(v in target.vars)) h.style.removeProperty(v);
+        palette.applied = new Set(Object.keys(target.vars));
+        cancelAnimationFrame(palette.raf);
+        const ms = fade && !motion.reduced() ? palette.fadeMs : 0;
+        const set = (k) => {
+            for (const [v, to] of Object.entries(target.vars)) {
+                const val = k >= 1 ? to : mix(from[v], to, k);
+                h.style.setProperty(v, val);
+                if (v.startsWith('--icefin-color-')) { const c = rgba(val); if (c) h.style.setProperty(v + '-channel', c.slice(0, 3).map(Math.round).join(' ')); }
+            }
+        };
+        if (!ms) { set(1); return; }
+        const t0 = performance.now();
+        const step = (t) => { const k = Math.min(1, (t - t0) / ms); set(k); if (k < 1 && palette) palette.raf = requestAnimationFrame(step); };
+        palette.raf = requestAnimationFrame(step);
+    }
+    function timePalette(opts) {
+        timePalette.stop();
+        palette = { schedule: opts.schedule || [], months: opts.months && opts.months.length === 12 ? opts.months : null, fadeMs: opts.fadeMs || 4000,
+            pinned: null, key: null, applied: new Set(), raf: 0, timer: setInterval(() => paletteApply(true), 60000) };
+        paletteApply(false);
+        return timePalette;
+    }
+    timePalette.at = (date) => { if (!palette) return; palette.pinned = date ? new Date(date) : null; paletteApply(true); };
+    timePalette.current = () => (palette ? palette.key : null);
+    timePalette.sets = () => Object.keys(paletteSets());
+    timePalette.stop = () => {
+        if (!palette) return;
+        clearInterval(palette.timer);
+        cancelAnimationFrame(palette.raf);
+        const h = document.documentElement;
+        for (const v of palette.applied) { h.style.removeProperty(v); h.style.removeProperty(v + '-channel'); }
+        palette = null;
+        attr('data-icefin-palette', false);
+    };
+
     // ---- the user's libraries, safe on a cold start ----
     // A screen can mount while jellyfin-web is still restoring the session: the client has no user yet, or the first
     // request fails. Waits for a user and a token, then asks; an error or an empty answer is retried with backoff
@@ -578,6 +986,7 @@
         return views;
     }
 
+    E.addActionHook(oskHook);
     E.addActionHook(overlayHook);
     E.onReset(() => {
         cap = 'normal';
@@ -593,11 +1002,14 @@
         if (materialWatch) { cancelAnimationFrame(materialWatch); materialWatch = null; }
         attr('data-icefin-materials', false);
         attr('data-icefin-rail', false);
-        // mount() cleared the hooks just before this runs: the overlay's goes back first (it is modal)
+        keyboard.disable();
+        timePalette.stop();
+        // mount() cleared the hooks just before this runs: the keyboard's and the overlay's go back first (both are modal)
+        E.addActionHook(oskHook);
         E.addActionHook(overlayHook);
     });
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand };
+    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette };
 })();
