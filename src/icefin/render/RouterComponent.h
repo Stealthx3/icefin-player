@@ -27,7 +27,7 @@ class RouterComponent : public ComponentBase
   DEFINE_SINGLETON(RouterComponent);
 
 public:
-  bool componentInitialize() override { return true; }
+  bool componentInitialize() override;
   const char* componentName() override { return "router"; }
   bool componentExport() override { return true; }
 
@@ -48,10 +48,18 @@ public:
   Q_INVOKABLE QVariantMap display() const;
   void componentPostInitialize() override;
 
+  // The single-surface compositor (5.4, Compositing.h): CompositorState::toMap() for Compositor.qml and tests.
+  Q_INVOKABLE QVariantMap compositor() const;
+  // How the UI is blended over video: "srgb" or "linear" (D24 compares them; tests switch at run time).
+  Q_INVOKABLE void setUiBlend(const QString& name);
+  // Reference white, peak and transfer from the display; called on display and swapchain changes.
+  Q_INVOKABLE void refreshCompositor();
+
 Q_SIGNALS:
   // {key, range, reason, options[{id, label}], remembered, itemId, serverId, startMs}
   void promptRequested(const QVariantMap& info);
   void displayChanged(const QVariantMap& info);
+  void compositorChanged(const QVariantMap& state);
 
 private:
   RouterComponent() = default;
@@ -61,6 +69,7 @@ private:
   QMap<QString, QString> m_session;  // this play action's answers, by key
   QString m_pendingKey;
   std::function<void()> m_proceed, m_end;
+  QVariantMap m_compositorSent;  // the state last logged and sent to QML
 };
 
 QString optionId(Option o);

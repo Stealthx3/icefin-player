@@ -9,6 +9,7 @@
 // 2.2) at its reference white; so the target is that SDR description, not the output's HDR one. Gamescope gets its
 // description from the Vulkan colour space instead (5.6). The OpenGL fallback keeps upstream's behaviour (5.7).
 #pragma once
+#include "Compositing.h"
 #include <QByteArray>
 #include <QList>
 #include <QPair>
@@ -19,6 +20,9 @@ namespace Icefin::Render
 using MpvOptions = QList<QPair<QByteArray, QByteArray>>;
 // mpv option values ("auto" where unknown) for this display; hdrOutput: the Vulkan path outputs HDR (5.4/5.5).
 MpvOptions mpvTargetOptions(const DisplayInfo& display, bool hdrOutput);
+// With the compositor (5.4): linear light in the output's working primaries (BT.709 for SDR, BT.2020 for HDR10 and
+// scRGB), peak and reference white as the compositor encodes them; the compositor does the transfer.
+MpvOptions mpvLinearTargetOptions(const CompositorState& state, const DisplayInfo& display);
 // The protocol's names in mpv's terms ("" when mpv has no match).
 QByteArray mpvPrimaries(const QString& probe);
 QByteArray mpvTransfer(const QString& probe);
