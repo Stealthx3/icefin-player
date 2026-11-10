@@ -8,6 +8,8 @@
 //   startup on a real GPU, with nothing playing.
 // - time advances at the theme's fps; under reduced or low motion (from the web runtime) it stands still.
 // - Colour params cross-fade when the web runtime sends new token values (time-of-day palettes).
+// - When it appears, it nudges the web view's background colour: Chromium keeps a page that loaded opaque as an opaque
+//   layer (stale pixels where the page has since turned transparent) until the view's background colour changes.
 // - Reports what it drew to ThemeComponent::reportBackdropStats() every two seconds for tests and diagnostics.
 import QtQuick
 
@@ -24,6 +26,30 @@ Item
   readonly property bool moving: shown && spec.motion !== "low"
 
   visible: shown
+  onShownChanged: if (shown) repaintWeb.restart()
+
+  // The web view is a sibling under the window's content item (webview.qml, objectName "web").
+  function webView()
+  {
+    var p = root.parent && root.parent.parent
+    if (!p) return null
+    for (var i = 0; i < p.children.length; i++)
+      if (p.children[i].objectName === "web") return p.children[i]
+    return null
+  }
+
+  Timer
+  {
+    id: repaintWeb
+    interval: 300
+    property bool restore: false
+    onTriggered: {
+      var w = root.webView()
+      if (!w) return
+      if (!restore) { w.backgroundColor = "#01000000"; restore = true; restart() }
+      else { w.backgroundColor = "transparent"; restore = false }
+    }
+  }
 
   function paramDecl(name, p)
   {
