@@ -27,6 +27,7 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
   - Synthetic media from `make-media.sh` in `~/jf/media` (SDR H.264, HDR10 and HLG HEVC, AC-3, E-AC-3, TrueHD, DTS, AV1, a two-episode show, music with lyrics, subtitles).
   - `setup.py` runs the wizard with a throwaway admin `icefin` (random password in the guest's `~/jf/creds.json`, never printed), creates libraries, installs the regression plugins and writes `~/jf/status.json`.
   - Plugins: Playback Reporting, Trakt, LDAP, Intro Skipper, File Transformation, Home Screen Sections, Plugin Pages, JavaScript Injector, SSO. jf1011 9/9 active; jf12 8/9 (SSO has no 12.x build yet).
+- Live TV (9.15): `python3 tests/icefin/servers/livetv.py tests/icefin/servers/servers.json` gives both servers 24 M3U channels (the lab clips over HTTP, a lab API key) and an XMLTV guide from 6 h ago to 2 days ahead. Run it again before guide tests: it moves the guide to now.
 - Client harness: `tests/icefin/web/session_play.py` drives a build over DevTools (Xvfb), plays by remote command and records what the server saw; `compare_runs.py` diffs two runs.
 
 ## HTPC tier (D16): the user's Bazzite HTPC runs the hardware tests
