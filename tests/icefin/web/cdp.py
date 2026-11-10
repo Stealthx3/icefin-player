@@ -132,6 +132,24 @@ class Page:
             time.sleep(interval)
         raise TimeoutError(f"timed out waiting for: {expr}")
 
+    def switch_theme_reloading(self, theme, ready, timeout=90):
+        """Switch to a theme that declares a backdrop, from a page without one: Backdrop.qml reloads the page once
+        (8.4). Waits for the new page (the marker set here is gone) and for `ready` on it."""
+        self.eval("window.__icefinBeforeReload = 1; true")
+        self.eval("new Promise(r => window.api.theme.setActiveTheme(%s, '', r))" % json.dumps(theme))
+        end = time.time() + timeout
+        expr = f"typeof window.__icefinBeforeReload === 'undefined' && !!window.api && !!window.icefinTheme && !!({ready})"
+        while time.time() < end:
+            try:
+                if self.eval(expr):
+                    return True
+            except (ConnectionError, OSError):
+                self.reconnect(timeout=max(5, end - time.time()))
+            except Exception:  # noqa: BLE001
+                pass
+            time.sleep(1)
+        raise TimeoutError(f"no reload into {theme} with: {ready}")
+
     def reconnect(self, timeout=60):
         """After a navigation the page target may be replaced; reattach."""
         try:

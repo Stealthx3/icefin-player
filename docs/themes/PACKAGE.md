@@ -67,7 +67,7 @@ and the engine absorbs that here instead of in every theme. `scripts/icefin/them
 | Name | What it does |
 |---|---|
 | `icefinTheme.registerScreen(route, screen)` | While the theme's scripts load: a screen for a route (`#/home`, `#/details`, ...). Every other route is jellyfin-web's |
-| `screen.mount(root, ctx)` | Build the screen in `root`; mark focusable elements `data-icefin-focus` |
+| `screen.mount(root, ctx)` | Build the screen in `root`; mark focusable elements `data-icefin-focus`. Called once the API client is signed in |
 | `screen.unmount()` | Optional: stop timers and previews |
 | `screen.onAction(action, ctx)` | Optional: sees every action (`up`, `down`, `left`, `right`, `enter`, `back`, ...) first; true when it used it |
 | `screen.onBack()` | Optional: true when the screen used Back |
@@ -166,3 +166,6 @@ One shader drawn under the page by the engine (`qml/icefin/Backdrop.qml`, betwee
   when there's no backdrop, keyed off that attribute).
 - `ui.backdrop.hide()` / `show()` from a screen; `ui.timePalette` sends its token values, and colour params cross-fade.
 - The layer hides while video is up. Baking needs Qt ShaderTools in the build; without it only `.qsb` backdrops load.
+- Switching to a backdrop theme from one without a backdrop reloads the page once, on the same route: a page that
+  painted before the backdrop existed keeps stale pixels where it turns transparent (Chromium). Switching between two
+  backdrop themes keeps the page. Screens should keep no state that a reload would lose.
