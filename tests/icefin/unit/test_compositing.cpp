@@ -139,6 +139,27 @@ private Q_SLOTS:
     QCOMPARE(o.value(4).second, QByteArray("16000"));
   }
 
+  void hdrMetadataAndSurfaceDescription()
+  {
+    VideoHdrMetadata a, b;
+    QVERIFY(a == b);
+    b.maxCll = 1000;
+    QVERIFY(a != b);
+    SurfaceDescription d;
+    QCOMPARE(d.summary(), QString("untagged (SDR)"));
+    d.kind = SurfaceDescription::Kind::Hdr10;
+    d.referenceWhite = 200;
+    d.masteringMaxLuminance = 1000;
+    d.masteringMinLuminance = 0.005;
+    d.maxCll = 950;
+    QVERIFY(d.summary().startsWith("HDR10 (PQ, BT.2020, reference white 200)"));
+    QVERIFY(d.summary().contains("MaxCLL 950"));
+    SurfaceDescription e = d;
+    QVERIFY(d == e);
+    e.masteringPrimaries[0] = 0.68;
+    QVERIFY(d != e);
+  }
+
   void names()
   {
     QCOMPARE(uiBlendFromName("linear"), UiBlend::Linear);

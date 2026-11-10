@@ -178,11 +178,30 @@ void RouterComponent::refreshCompositor()
   cs.gamma22 = d.transfer != "srgb";  // KWin shows untagged SDR with gamma 2.2
   cs.referenceWhite = d.referenceLuminance > 0 ? d.referenceLuminance : kVideoLinearWhite;
   cs.peak = cs.output == OutputEncoding::Sdr ? cs.referenceWhite : (d.maxLuminance > 0 ? d.maxLuminance : 1000);
+  // HDR output (5.5): the surface says what the HDR10 swapchain holds, with the playing video's metadata.
+  if (cs.active && cs.output == OutputEncoding::Hdr10) {
+    SurfaceDescription want;
+    want.kind = SurfaceDescription::Kind::Hdr10;
+    want.referenceWhite = qRound(cs.referenceWhite);
+    want.masteringMinLuminance = cs.video.minLuminance;
+    want.masteringMaxLuminance = cs.video.maxLuminance;
+    want.maxCll = cs.video.maxCll;
+    want.maxFall = cs.video.maxFall;
+    want.hasMasteringPrimaries = cs.video.hasPrimaries;
+    for (int i = 0; i < 8; ++i) want.masteringPrimaries[i] = cs.video.primaries[i];
+    HdrCapabilityProbe& probe = HdrCapabilityProbe::instance();
+    if (!cs.tagged || probe.currentTag() != want) {
+      const QString err = probe.tagSurface(probe.window(), want);
+      cs.tagged = err.isEmpty();
+      if (!cs.tagged) cs.hdrReason = "surface not tagged: " + err;
+    }
+  }
   if (cs.toMap() != m_compositorSent) {
     m_compositorSent = cs.toMap();
     qInfo().noquote() << "Icefin compositor:" << (cs.active ? "on" : "off") << "(" + cs.reason + ")"
                       << "blend" << uiBlendName(cs.blend) << "output" << outputEncodingName(cs.output)
-                      << "reference white" << cs.referenceWhite << "peak" << cs.peak << (cs.gamma22 ? "gamma 2.2" : "sRGB curve");
+                      << "reference white" << cs.referenceWhite << "peak" << cs.peak << (cs.gamma22 ? "gamma 2.2" : "sRGB curve")
+                      << "HDR" << (vulkanHdrOutput() ? "on" : "off") << "(" + cs.hdrReason + ")";
     Q_EMIT compositorChanged(cs.toMap());
   }
 }

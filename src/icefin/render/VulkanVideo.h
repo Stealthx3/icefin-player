@@ -72,6 +72,7 @@ Q_SIGNALS:
 private:
   void attachWindow(QQuickWindow* w);
   void applyTarget();  // the compositor's description as mpv's target-* options (5.2, D23)
+  void readHdrMetadata();  // the video's HDR10 static metadata for the surface description (5.5)
   void render();  // Qt's beforeRendering, render thread
   bool createContext();
   bool ensureImage(const QSize& size);
