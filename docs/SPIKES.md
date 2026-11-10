@@ -181,3 +181,30 @@ also stops those events at capture. Only a focused page sees pads (a Chromium ru
 kernel for `/dev/uinput`.
 
 **Steam Input** virtual-pad visibility needs Steam, so it moves to 7.4 (Steam Input handling) on the Deck or HTPC.
+
+## 2.8 NVIDIA Vulkan HDR on Wayland: **GO (swapchain level), with a design note: the HDR10 colour space is FP16-only on NVIDIA**
+
+_2026-11-09 · `src/icefin/spikes/2.8-nvidia-hdr/` (`build.sh` builds 2.3's `vkcolorspaces` and `cmprobe` plus
+`qtswapchain` against the Flatpak SDK in the lab guest; `run.sh` runs them inside Icefin's installed Flatpak) · the
+user's workstation: RTX 4090, NVIDIA 595.99.02 (Flatpak `GL.nvidia-595-99-02`), KWin 6.6.6 Wayland on Ubuntu 26.04,
+HDR on for an ultrawide (BT.2020, 800 nits, reference white 200)_
+
+| Probe | Result |
+|---|---|
+| `vkcolorspaces` (Vulkan WSI, Wayland surface) | `HDR10_ST2084` and `EXTENDED_SRGB_LINEAR` **only on `R16G16B16A16_SFLOAT`** (format 97). The 10-bit formats (`A2B10G10R10`, `A2R10G10B10`) offer `SRGB_NONLINEAR`, `BT2020_LINEAR` and `DOLBYVISION` only. (RADV on the HTPC offered `HDR10_ST2084` on every format.) |
+| `qtswapchain` (Qt 6.11.3, Vulkan, `QSG_RHI_HDR=hdr10`) | HDR10 swapchain created; `hdrInfo` max 1000 nits, SDR white 200 |
+| Surface tagging by the driver (`WAYLAND_DEBUG=client`) | none: no `get_surface` or `set_image_description`, same as Mesa |
+| `cmprobe` (KWin 6.6.6) | parametric, primaries, luminances, mastering metadata, scRGB; PQ/BT.2020 with HDR10 metadata **accepted**; HLG not offered (KWin 6.8 on the HTPC offers it) |
+
+**Verdict.** Go. NVIDIA's driver gives Qt Quick an HDR10 swapchain on Wayland inside the Flatpak. Design consequences
+for Phase 5:
+1. **Allow an FP16 HDR10 swapchain.** On NVIDIA the PQ colour space exists only on `R16G16B16A16_SFLOAT`, so 5.1/5.4
+   must not require a 10-bit format; the encode pass writes PQ into FP16 there (twice the bandwidth of 10-bit; fine
+   on this class of GPU, to be measured on lower-end NVIDIA in 11.1).
+2. **Icefin tags the surface itself (5.5)** on NVIDIA too (2.3 note 1).
+3. **HLG on KWin depends on the version:** 6.8 offers it, 6.6 doesn't; keep the HLG-to-PQ conversion for older KWin,
+   Mutter and Gamescope.
+4. The panel actually switching to HDR output is checked once 5.5 tags the surface (5.8).
+
+Also found on this machine (not part of the spike): NVDEC's zero-copy CUDA frames show a blank picture on the
+OpenGL fallback, so Auto uses copy mode on NVIDIA until the Vulkan renderer (4.5, #39).

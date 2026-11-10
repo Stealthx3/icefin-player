@@ -24,7 +24,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
 - [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
 - [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
-- [ ] **2.8** Spike: NVIDIA Vulkan HDR on Wayland
+- [x] **2.8** Spike: NVIDIA Vulkan HDR on Wayland (GO at swapchain level on an RTX 4090 / KWin 6.6: HDR10 only on an FP16 swapchain; the driver doesn't tag the surface; `docs/SPIKES.md`)
 - [ ] **2.9** Write go/no-go per spike in `docs/SPIKES.md`; a no-go on 2.1–2.3 switches the plan to the two-window contingency
 
 ## Phase 3 — Audio subsystem (4 wks)
