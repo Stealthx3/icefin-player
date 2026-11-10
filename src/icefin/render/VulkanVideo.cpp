@@ -197,6 +197,7 @@ void VulkanVideo::readHdrMetadata()
   if (!m.hasPrimaries) for (double& p : m.primaries) p = 0;
   if (m == cs.video) return;
   cs.video = m;
+  publishVideoMetadata(m);
   RouterComponent::Get().refreshCompositor();
 }
 

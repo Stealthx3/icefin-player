@@ -17,6 +17,12 @@
 #include <rhi/qrhi.h>
 #define ICEFIN_DEVICE_RHI 1
 #endif
+// Qt's swapchain handle for VK_EXT_hdr_metadata (5.6): QRhi has no public accessor, so Qt's private QVkSwapChain.
+#if defined(ICEFIN_DEVICE_RHI) && __has_include(<QtGui/private/qrhivulkan_p.h>)
+#include <QtGui/private/qrhivulkan_p.h>
+#define ICEFIN_QVK_SWAPCHAIN 1
+#endif
+#include <memory>
 
 namespace Icefin::Render
 {
@@ -185,7 +191,13 @@ bool VulkanDevice::attach(QQuickWindow* window)
   if (hdrSetting.isEmpty()) hdrSetting = hv.isValid() && !hv.isNull() ? hv.toString() : QString("auto");
   if (!cs.active) cs.hdrReason = "the compositor is off";
   else if (hdrSetting == "off") cs.hdrReason = "HDR output is off in the settings";
-  else if (!QGuiApplication::platformName().startsWith("wayland")) cs.hdrReason = "not on Wayland (X11 and Gamescope: 5.6)";
+  else if (!QGuiApplication::platformName().startsWith("wayland")) {
+    // X11 / Gamescope (5.6): no protocol to ask; the Vulkan surface decides. Qt makes an HDR10 swapchain only when the
+    // surface offers HDR10_ST2084 (Gamescope's WSI layer, HDR on) and an SDR one otherwise.
+    window->setProperty("_qt_sg_hdr_format", QByteArray("hdr10"));
+    cs.hdrRequested = true;
+    cs.hdrReason = "X11: HDR10 if the Vulkan surface offers it";
+  }
   else {
     HdrCapabilityProbe& probe = HdrCapabilityProbe::instance();
     probe.attach(window);  // probes the window's screen now, before the swapchain exists
@@ -197,7 +209,7 @@ bool VulkanDevice::attach(QQuickWindow* window)
       cs.hdrReason = "HDR display";
     }
   }
-  qInfo().noquote() << "Icefin renderer: HDR output" << (cs.hdrRequested ? "on" : "off") << "(" + cs.hdrReason + ")";
+  qInfo().noquote() << "Icefin renderer: HDR output" << (cs.hdrRequested ? "requested" : "off") << "(" + cs.hdrReason + ")";
   QMetaObject::invokeMethod(&RouterComponent::Get(), "refreshCompositor", Qt::QueuedConnection);
   // Once the scene graph is up, confirm Qt renders with this device rather than one of its own.
   QObject::connect(window, &QQuickWindow::sceneGraphInitialized, window, [this, window] {
@@ -211,12 +223,63 @@ bool VulkanDevice::attach(QQuickWindow* window)
       const QRhiSwapChain::Format f = sc->format();
       compositorState().output = f == QRhiSwapChain::HDR10 ? OutputEncoding::Hdr10
                                  : f == QRhiSwapChain::HDRExtendedSrgbLinear ? OutputEncoding::ScRgb : OutputEncoding::Sdr;
+      if (!QGuiApplication::platformName().startsWith("wayland")) {
+        // X11 / Gamescope (5.6): the swapchain Qt made is the display's answer; Vulkan gives no luminances, so these
+        // are Qt's defaults (1000 nits, SDR white 200).
+        const QRhiSwapChainHdrInfo hi = sc->hdrInfo();
+        const int maxNits = hi.limitsType == QRhiSwapChainHdrInfo::LuminanceInNits ? qRound(hi.limits.luminanceInNits.maxLuminance) : 1000;
+        const int white = hi.sdrWhiteLevel > 0 ? qRound(hi.sdrWhiteLevel) : 200;
+        const bool hdr10 = f == QRhiSwapChain::HDR10;
+        QMetaObject::invokeMethod(&HdrCapabilityProbe::instance(), [hdr10, maxNits, white] {
+          HdrCapabilityProbe::instance().setFromSwapchain(hdr10, maxNits, white);
+          compositorState().hdrReason = hdr10 ? "the Vulkan surface offers HDR10" : "the Vulkan surface offers no HDR10 colour space";
+        }, Qt::QueuedConnection);
+      }
       QMetaObject::invokeMethod(&RouterComponent::Get(), "refreshCompositor", Qt::QueuedConnection);
     }
 #endif
     if (shared) qInfo() << "Icefin renderer: Qt Quick renders on the shared Vulkan device";
     else qWarning() << "Icefin renderer: Qt Quick is not on the shared Vulkan device";
   }, Qt::DirectConnection);
+  // HDR10 static metadata on X11 / Gamescope (5.6): VK_EXT_hdr_metadata on Qt's swapchain, which Gamescope passes to
+  // the display. Set again when the swapchain is recreated (resize) or the video's metadata changes. Wayland carries
+  // it in the surface description instead (5.5).
+#ifdef ICEFIN_QVK_SWAPCHAIN
+  if (m_extensions.contains("VK_EXT_hdr_metadata") && !QGuiApplication::platformName().startsWith("wayland")) {
+    auto gdpa = reinterpret_cast<PFN_vkGetDeviceProcAddr>(inst->getInstanceProcAddr("vkGetDeviceProcAddr"));
+    auto setHdr = gdpa ? reinterpret_cast<PFN_vkSetHdrMetadataEXT>(gdpa(m_device, "vkSetHdrMetadataEXT")) : nullptr;
+    if (setHdr) {
+      struct Last { VkSwapchainKHR sc = VK_NULL_HANDLE; VideoHdrMetadata m; bool sent = false; };
+      auto last = std::make_shared<Last>();
+      const VkDevice dev = m_device;
+      QObject::connect(window, &QQuickWindow::beforeRendering, window, [window, setHdr, dev, last] {
+        if (compositorState().output != OutputEncoding::Hdr10) return;
+        auto* qsc = static_cast<QVkSwapChain*>(window->swapChain());
+        if (!qsc || qsc->sc == VK_NULL_HANDLE) return;
+        const VideoHdrMetadata m = videoMetadataSnapshot();
+        if (last->sent && last->sc == qsc->sc && last->m == m) return;
+        VkHdrMetadataEXT md{VK_STRUCTURE_TYPE_HDR_METADATA_EXT};
+        // Unknown mastering display: the BT.2020 container with D65, and the display's peak.
+        double p[8] = {0.708, 0.292, 0.170, 0.797, 0.131, 0.046, 0.3127, 0.3290};
+        if (m.hasPrimaries) for (int i = 0; i < 8; ++i) p[i] = m.primaries[i];
+        md.displayPrimaryRed = {float(p[0]), float(p[1])};
+        md.displayPrimaryGreen = {float(p[2]), float(p[3])};
+        md.displayPrimaryBlue = {float(p[4]), float(p[5])};
+        md.whitePoint = {float(p[6]), float(p[7])};
+        md.maxLuminance = float(m.maxLuminance > 0 ? m.maxLuminance : 1000);
+        md.minLuminance = float(m.minLuminance > 0 ? m.minLuminance : 0.005);
+        md.maxContentLightLevel = float(m.maxCll);
+        md.maxFrameAverageLightLevel = float(m.maxFall);
+        VkSwapchainKHR sc = qsc->sc;
+        setHdr(dev, 1, &sc, &md);
+        qInfo().noquote() << QString("Icefin renderer: HDR metadata on the swapchain: mastering %1-%2 nits%3, MaxCLL %4, MaxFALL %5")
+                                 .arg(md.minLuminance).arg(md.maxLuminance).arg(m.hasPrimaries ? ", mastering primaries" : ", BT.2020 container")
+                                 .arg(m.maxCll).arg(m.maxFall);
+        *last = {sc, m, true};
+      }, Qt::DirectConnection);
+    }
+  }
+#endif
   // Qt WebEngine 6.11 workaround: during the scene-graph sync its NativeSkiaOutputDevice::swapFrame() frees the
   // previous web frame's imported VkImage at once (vkDestroyImage + vkFreeMemory), while Qt Quick may still have a
   // frame in flight that samples it. Validation: VUID-vkDestroyImage-image-01000 from libQt6WebEngineCore; on NVIDIA

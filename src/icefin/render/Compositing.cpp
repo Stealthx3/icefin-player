@@ -1,6 +1,7 @@
 #include "Compositing.h"
 #include <QCryptographicHash>
 #include <QDir>
+#include <QMutex>
 #include <QFile>
 #include <QStandardPaths>
 #include <QUrl>
@@ -58,6 +59,21 @@ CompositorState& compositorState()
 {
   static CompositorState s;
   return s;
+}
+
+static QMutex s_metaLock;
+static VideoHdrMetadata s_meta;
+
+void publishVideoMetadata(const VideoHdrMetadata& m)
+{
+  QMutexLocker l(&s_metaLock);
+  s_meta = m;
+}
+
+VideoHdrMetadata videoMetadataSnapshot()
+{
+  QMutexLocker l(&s_metaLock);
+  return s_meta;
 }
 
 static double sgn(double x) { return x < 0 ? -1.0 : 1.0; }
