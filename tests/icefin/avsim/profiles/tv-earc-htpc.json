@@ -1,0 +1,13 @@
+{
+  "description": "Like the HTPC's TV with the receiver on eARC (HANDOFF 2026-11-08): AC-3, E-AC-3, DTS, DTS-HD, LPCM; no TrueHD",
+  "monitor_name": "LAB EARC TV",
+  "speakers": "0x7f",
+  "sads": [
+    {"codec": "lpcm", "channels": 8, "rates": [32000, 44100, 48000, 88200, 96000, 176400, 192000]},
+    {"codec": "ac3", "channels": 6, "rates": [32000, 44100, 48000]},
+    {"codec": "eac3", "channels": 8, "rates": [32000, 44100, 48000], "byte3": 1},
+    {"codec": "dts", "channels": 6, "rates": [32000, 44100, 48000, 88200, 96000]},
+    {"codec": "dtshd", "channels": 8, "rates": [32000, 44100, 48000, 88200, 96000, 176400, 192000]}
+  ],
+  "expect": {"ac3": "bitstream", "eac3": "bitstream", "dts": "bitstream", "truehd": "pcm"}
+}

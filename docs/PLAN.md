@@ -15,6 +15,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **1.8** Baseline report: measure every acceptance goal against unmodified upstream v2.0.0 and write `docs/BASELINE-REPORT.md`
 - [x] **1.9** Hardware lab: the HTPC tier (D16): `scripts/icefin/htpc.sh` (deploy from the lab repo, run in the TV session, HDR/passthrough probe, house rules), tested end to end on a stand-in guest
 - [ ] **1.10** Hardware baseline on the HTPC: SSH access from the user, then the hardware rows of `docs/BASELINE-REPORT.md` (unattended rows done 2026-11-09, BASELINE-REPORT *Hardware rows*; open: the TV's HDR badge and the receiver's display, deferred to the user)
+- [x] **1.11** Virtual AV tier (D18): `hda-hdmi-sink` QEMU device, nested client, ELD profiles, `matrix.py` rows for ELD, hotplug, bit-exact bitstreams and PCM [Testing, CI and hardware lab] (12/12 rows; ELD fixtures now the kernel's real text)
 
 ## Phase 2 — Platform spikes (4 wks)
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
@@ -36,6 +37,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **3.6** Never-silent fallback replacing `audio-fallback-to-null` (PCM retry → release reservation → default device → notice)
 - [x] **3.7** Per-device audio delay; CEC volume during passthrough; UI sounds muted during passthrough (CEC verified with the receiver in 3.8; UI sounds read `AudioState` from 8.5)
 - [ ] **3.8** Audio test page; receiver run of every audio acceptance row (page done: Client Settings → Audio test, `tests/icefin/web/audio_test_page.py`; open: the receiver run on the HTPC)
+- [ ] **3.9** Icefin in the avsim client: per-track decision against every sink profile's `expect` map, ELD re-read on hotplug, stale result in standby, never-silent fallback on unplug (`matrix.py --player icefin`). Known: a sink whose ELD stops at 48 kHz can't open E-AC-3's 192 kHz stream and mpv 0.40 stalls instead of failing, so the decision must pick PCM from the ELD
 
 ## Phase 4 — GPU and display (2 wks)
 - [x] **4.1** Decoder self-test on bundled samples and Settings → Hardware page [GPU acceleration and display] (hardware results on real GPUs: 4.5)
@@ -54,6 +56,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **5.7** OpenGL fallback wiring (MpvQt) when Vulkan is unavailable
 - [ ] **5.8** Verify HDR10/HLG signals on KWin, Mutter and Gamescope; jellyfin-web controls readable over video; 60 fps UI on lowest-spec HTPC; parity matrix on the HTPC against stock mpv 0.42 --vo=gpu-next --gpu-api=vulkan with the same files: HDR10, HLG, HDR10+, Dolby Vision 5 and 8, and 7 FEL; includes 2.5's visual reference-white check (D23)
 - [ ] **5.9** Phase 5 exit review (D23): `docs/reviews/PHASE5-EXIT.md` answers: did the shared device hold on AMD, NVIDIA and Intel; did the patched render path reach parity with stock gpu-next; which D23 theme-engine items remain; the proposed scope of 6.7; whether the secondary playback windows (low-power dmabuf-wayland, mpv-native fallback) are worth carrying; upstream and mpv render-API PR status. The user signs off before 6.7 starts
+- [ ] **5.10** Virtual HDR display: headless Weston 15+ with color management (built in the lab; Debian 13 ships 14), protocol log of the image description per routing row, in CI and the Virtual AV tier
 
 ## Phase 6 — Router, capability prompt and token engine (4 wks)
 - [ ] **6.1** `HdrCapabilityProbe` (Wayland image description; Vulkan color spaces under X11) (Wayland done: `src/icefin/render/HdrCapabilityProbe`; open: the X11/Gamescope Vulkan colour-space path, with 5.6)

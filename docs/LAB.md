@@ -84,6 +84,49 @@ https://github.com/Stealthx3/icefin-player/releases/tag/nightly. Its bundle keep
 `flatpak install --user ./icefin-player-x86_64.flatpak`, then `flatpak run io.github.stealthx3.IcefinPlayer`.
 Per-commit bundles stay on each workflow run as artifacts (90 days).
 
+## Virtual AV tier (D18): a virtual TV and AV receiver inside the lab
+Sits between the lab VM and the HTPC. It proves what Icefin **sends** (ELD read, passthrough decision,
+bit-exact bitstream, HBR, non-audio bit) on every change, without the TV. Whether the real TV and receiver
+**do** the right thing (HDR badge, the receiver's display, lip sync, CEC) is still the HTPC's job.
+
+```
+host ── libvirt ──> lab-icefin-main (L1, nested KVM)
+                      ~/avsim/qemu: QEMU 10.0.6 + hda-hdmi-sink (tests/icefin/avsim/qemu/)
+                      └── avsim client (L2, Debian 13 "generic" kernel, ALSA, mpv; SSH 127.0.0.1:2222)
+                            ich9-intel-hda ── hda-hdmi-sink: ELD from a profile, captures to ~/avsim/capture
+```
+
+- **`hda-hdmi-sink`** (`tests/icefin/avsim/qemu/hda-hdmi-sink.c`): an HDA codec with one digital converter
+  and one HDMI pin. It reports vendor id `0x00000101`, so Linux binds its stock *Generic HDMI* driver and reads
+  the ELD through the standard verbs into `/proc/asound/card*/eld#*`, as with a real GPU. Every stream is
+  written to `seg-NNNN.raw`, with `seg-NNNN.json` holding the format, the IEC958 non-audio bit, HBR pin mode,
+  channel slots and the audio infoframe. `events.jsonl` logs hotplug, infoframes and stream start/stop.
+  `eld` and `connected` can be changed at run time (QMP `qom-set`), which sends the hotplug event a new
+  receiver would.
+- **Profiles** (`tests/icefin/avsim/profiles/*.json`, built by `eld.py`): `avr-full`, `soundbar-eac3`,
+  `tv-basic` and `standby` mirror the unit-test ELD fixtures; `tv-earc-htpc` is the HTPC's real chain (no TrueHD).
+  Each profile's `expect` map holds the per-codec result Icefin's decision should reach (rows for PLAN 3.9).
+- **`iec61937.py`** finds IEC 61937 bursts by their preamble and checks the capture against
+  `ffmpeg -c:a copy -f spdif` of the same track, burst by burst.
+- **`avsim.sh`** (`build`, `image`, `up [PROFILE]`, `profile P`, `plug`/`unplug`, `ssh`, `down`, `matrix`).
+  Each `up` starts from a fresh overlay of the provisioned base disk, the nested equivalent of a snapshot revert.
+- **`matrix.py`** rows: `eld/<profile>` (the kernel's ELD text contains the fixture line for line),
+  `hotplug`, `transport/<codec>` (AC-3, E-AC-3, DTS, TrueHD bit-exact with the right non-audio/HBR/channel
+  format), `pcm/ac3` (decoded control). Results in `~/avsim/results/`. DTS-HD MA has no free encoder: drop a
+  sample at `~/avsim/samples/dtshd.mka` to add its row.
+- **Run:**
+  ```
+  scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh build'     # once, ~10 min
+  scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh image'     # once: download, verify, provision
+  scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh up && bash tests/icefin/avsim/avsim.sh matrix; bash tests/icefin/avsim/avsim.sh down'
+  ```
+- **Watching:** the client has no display. `avsim.sh console` shows its serial log, and the commands run
+  through `lab-run`, so they show on `lab-icefin-main`'s console in virt-manager.
+- **HDR half (PLAN 5.10):** headless Weston with color management in the client or `lab-icefin-htpcsim`,
+  a protocol log of the image description per routing row. Debian 13's Weston 14 is too old (SPEC: 15.0).
+- **Limits:** no real decoder behind the sink, so no lip sync, no receiver display, no CEC, no HDCP, and no
+  check of how a real receiver treats a borderline stream. Those rows stay on the HTPC.
+
 ## Provisioning
 - scripts/provision.sh: native build deps (Qt 6 + WebEngine dev, libmpv-dev, SDL2, CEC), flatpak + flatpak-builder + Flathub remote, podman.
 
@@ -109,5 +152,11 @@ Per-commit bundles stay on each workflow run as artifacts (90 days).
 - 2026-11-07: Jellyfin servers added (snapshot `servers`); provisioning gains ffmpeg, x11-utils, python3-websocket, passt (podman 5 rootless networking) and user lingering.
 - 2026-11-07: Flatpak runs need `dbus-run-session` (Chromium's sandbox spawns via the Flatpak portal); `--config-dir` does not reset WebEngine storage, so wipe `~/.var/app/<id>` for clean-slate runs.
 - 2026-11-07: provision.sh gains elfutils (eu-strip) and librsvg2-common (flatpak-builder runs appstreamcli compose on the build host and must load the SVG icon).
+- 2026-11-09: Virtual AV tier added (D18): QEMU 10.0.6 with `hda-hdmi-sink` built in `lab-icefin-main`, nested
+  client from the Debian 13 generic image (the generic-cloud kernel has no sound drivers). First run: 12/12 rows.
+  Findings: the hand-written ELD fixtures were wrong (speaker mask 0x7f also means FLC/FRC; the receiver listed
+  no 192 kHz rate, which Linux needs for E-AC-3 and TrueHD because it limits HDMI rates to the ELD's), so the
+  fixtures are now the kernel's own text from these profiles. mpv 0.40 stalls (no failover) when the sink
+  refuses E-AC-3's 192 kHz stream.
 - 2026-11-08: HTPC tier added (D16); stand-in guest `lab-icefin-htpcsim`. `lab.sh exec/run` need `-r <role>` for a
   non-main guest even with `LAB_ENV` set (the stand-in's setup once ran on `main` by mistake; its service was removed).
