@@ -6,7 +6,7 @@ With Renderer = Vulkan (needs the patched libmpv, external/mpv), checks:
   2. an SDR clip plays: the player reports playing and mpv's frames reach the scene graph on the Vulkan path
      (the picture on screen is checked on real hardware: the lab's Xvfb doesn't composite the transparent web view
      over video, on either renderer, so a screen grab there proves nothing);
-  3. the router routes as Vulkan, with the display treated as SDR until HDR output exists (5.4/5.5), and the
+  3. the router routes as Vulkan (the lab's display is SDR), and the
      compositor's description reaches mpv as its target-* options with none rejected (5.2, D23);
   4. the single-surface compositor is on (5.4): mpv renders linear light into RGBA16F, the UI items sit in the
      compositor's layer, the window shows a composited picture (the compositor draws every pixel itself, so the

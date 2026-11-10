@@ -127,7 +127,7 @@ void chooseGraphicsApi()
   QQuickWindow::setGraphicsApi(vulkan ? QSGRendererInterface::Vulkan : QSGRendererInterface::OpenGL);
   if (vulkan)
     qInfo().noquote() << "Icefin renderer: Vulkan (setting" << setting + ")"
-                      << (vulkanVideoPath() ? QString("- video on the Vulkan path (gpu-next, SDR output until 5.4/5.5)")
+                      << (vulkanVideoPath() ? QString("- video on the Vulkan path (gpu-next, HDR output where the display takes it)")
                                             : QString("- this build has no Vulkan video path (patched libmpv missing): video doesn't show"));
   else if (choice == RendererChoice::Vulkan)
     qWarning().noquote() << "Icefin renderer: Vulkan chosen but not usable (" + why + "), using OpenGL";
