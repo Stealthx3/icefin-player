@@ -2,8 +2,7 @@
 
 A theme is a folder. Icefin looks in, in order:
 - `ICEFIN_THEME_PATH`, for development;
-- the bundled themes;
-- the benchmark pack (`themes/bench/`), only when Client Settings → Benchmark Themes is on (or `ICEFIN_BENCH_THEMES=1`). It ships with the app but isn't offered by default (SPEC "Benchmark clone themes", Distribution); turning it off while one of its themes is active switches the engine off;
+- the built-in themes (`themes/` in the source tree, including the benchmark themes: D22);
 - the user's `themes` folder in Icefin's data directory.
 The first package found with a given id wins.
 

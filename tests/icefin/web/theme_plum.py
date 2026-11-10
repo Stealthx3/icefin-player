@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_plum.py — the Plum benchmark theme in the running app (PLAN 9.6; target Roku TV). Lab guests only.
 
-  - Plum is in the opt-in benchmark pack: offered only with Client Settings → Benchmark Themes on;
+  - Plum is a built-in theme, offered in Client Settings → Theme;
   - two panes under a slim header: the menu column (Home, each library, Search, Settings, Classic home) in the
     side-rail chrome slot, about 27% of the width, and the header in the top-bar slot with the clock;
   - Home's grid is three wide tiles across, the libraries first; a library's grid is four posters across;
@@ -72,11 +72,8 @@ def main():
         attr = lambda name: js(f"document.querySelector('.icefin-content').getAttribute({json.dumps(name)})")
         motion = lambda: js("document.documentElement.getAttribute('data-icefin-motion')")
 
-        check("benchmark pack off by default", "plum" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         p = themes().get("plum", {})
-        check("Benchmark Themes on: Plum offered, bundled, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
+        check("Plum offered as a built-in theme, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('plum', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pl]'); return !!r && +r.getAttribute('data-pl-menu') > 0; })()", timeout=30)
         page.wait_for("!!document.querySelector('.icefin-content[data-pl-ready]')", timeout=30)
@@ -198,9 +195,9 @@ def main():
 
         sounds = js("new Promise(r => window.api.theme.soundState(r))")
         check("Plum ships no sounds", sounds.get("played", 0) == 0, json.dumps(sounds)[:120])
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Plum gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "plum" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_marquee.py — the Marquee benchmark theme in the running app (PLAN 9.13; target the Netflix TV app). Lab guests only.
 
-  - Marquee is in the benchmark pack (Client Settings → Benchmark Themes);
+  - Marquee is a built-in theme, offered in Client Settings → Theme;
   - home: a collapsed icon rail (Search, Home, each library, Settings, Classic home) that widens with labels while it
     has focus, without moving the content; a billboard with Play and More info; rows of 16:9 cards;
   - the billboard: after a dwell a muted trailer plays in the page's own <video> (never mpv) and the title shrinks;
@@ -10,8 +10,8 @@
   - the focused card grows into an inline preview (details, muted trailer) over its neighbours, without reflowing the
     row; moving on collapses it;
   - Back from a row returns to the billboard, from the billboard to the rail; right from the rail goes back;
-  - Enter opens jellyfin-web's details page (Marquee's tokens); Classic home shows the stock home; turning the pack
-    off switches the engine off.
+  - Enter opens jellyfin-web's details page (Marquee's tokens); Classic home shows the stock home; turning the theme
+    off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_marquee.py --app ~/build/src/icefin-player --server jf12 --out ~/r913/jf12
 """
@@ -68,11 +68,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("Marquee not offered while the pack is off", "marquee" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         mq = themes().get("marquee", {})
-        check("Benchmark Themes on: Marquee offered, bundled, usable", mq.get("ok") is True and mq.get("source") == "bundled", json.dumps(mq)[:160])
+        check("Marquee offered as a built-in theme, usable", mq.get("ok") is True and mq.get("source") == "bundled", json.dumps(mq)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('marquee', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-mq-ready]')", timeout=40)
         time.sleep(1.5)
@@ -178,9 +175,9 @@ def main():
         time.sleep(4)
         check("no trailer under the low-motion cap", js("!!document.querySelector('.mq-billboard video.icefin-preview')") is False)
         js("window.icefinTheme.ui.motion.cap('normal'); true")
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Marquee gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "marquee" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

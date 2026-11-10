@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """theme_tide.py — the Tide benchmark theme in the running app (PLAN 9.17; target the PS3 XMB). Lab guests only.
 
-  - Tide is in the benchmark pack (Client Settings → Benchmark Themes);
+  - Tide is a built-in theme, offered in Client Settings → Theme;
   - home: a row of category icons (Settings, each library, Search) crossing a column of items at a fixed point;
     left/right change category with the focused icon staying at that point; up/down move through the column with the
     focused item staying just under the row; Enter opens the item; Back returns to the top of the column;
   - the background: a gradient whose colours follow the month (palettes m1-m12) dimmed by the time of day, and an
     animated wave that stops under the low-motion cap;
-  - turning the pack off switches the engine off and drops the palette.
+  - turning the theme off restores the stock UI and drops the palette.
 The native shader backdrop (8.4) is not part of this run.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_tide.py --app ~/build/src/icefin-player --server jf12 --out ~/r917/jf12
@@ -65,11 +65,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("Tide not offered while the pack is off", "tide" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         td = themes().get("tide", {})
-        check("Benchmark Themes on: Tide offered, bundled, usable", td.get("ok") is True and td.get("source") == "bundled", json.dumps(td)[:160])
+        check("Tide offered as a built-in theme, usable", td.get("ok") is True and td.get("source") == "bundled", json.dumps(td)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('tide', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-td-ready]') && !!document.querySelector('.td-item.icefin-focused')", timeout=40)
         time.sleep(1)
@@ -133,9 +130,9 @@ def main():
             page.wait_for("location.hash.startsWith('#/details')", timeout=15)
             time.sleep(2)
             check("Enter opens the item's details, styled by Tide's tokens", js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True)
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, palette dropped, Tide gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "tide" not in themes()
+        check("turning the theme off restores the stock UI, palette dropped", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False
               and js("document.documentElement.style.getPropertyValue('--icefin-color-waveTop')") == "" and js("document.documentElement.hasAttribute('data-icefin-palette')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")

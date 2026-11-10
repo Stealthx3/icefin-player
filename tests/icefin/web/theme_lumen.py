@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_lumen.py — the Lumen benchmark theme in the running app (PLAN 9.12; target Apple TV home). Lab guests only.
 
-  - Lumen is in the benchmark pack (Client Settings → Benchmark Themes);
+  - Lumen is a built-in theme, offered in Client Settings → Theme;
   - home: a frosted tab bar (Home, each library, Search, Settings, Classic home) over a full-bleed top shelf, and rows
     of posters (Up Next as 16:9 thumbs, New in each library);
   - the tab bar hides once focus goes down to the rows and comes back when focus goes up to it;
@@ -9,7 +9,7 @@
   - the focused poster lifts and tilts (ui.parallax); at a row's end an arrow only tilts it;
   - the tab bar is a translucent material (backdrop blur), opaque when forced;
   - Back from a row goes to the first row, then the tab bar; Enter opens jellyfin-web's details page (Lumen's tokens);
-  - Classic home shows the stock home; turning the pack off switches the engine off.
+  - Classic home shows the stock home; turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_lumen.py --app ~/build/src/icefin-player --server jf12 --out ~/r912/jf12
 """
@@ -66,11 +66,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("Lumen not offered while the pack is off", "lumen" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         lm = themes().get("lumen", {})
-        check("Benchmark Themes on: Lumen offered, bundled, usable", lm.get("ok") is True and lm.get("source") == "bundled", json.dumps(lm)[:160])
+        check("Lumen offered as a built-in theme, usable", lm.get("ok") is True and lm.get("source") == "bundled", json.dumps(lm)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('lumen', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-lm-ready]')", timeout=40)
         time.sleep(1.5)
@@ -149,9 +146,9 @@ def main():
         time.sleep(0.5)
         check("flat posters under the low-motion cap", js("document.querySelector('.lm-card.icefin-focused').style.getPropertyValue('--icefin-tilt-x')") in ("0deg", ""))
         js("window.icefinTheme.ui.motion.cap('normal'); true")
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Lumen gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "lumen" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

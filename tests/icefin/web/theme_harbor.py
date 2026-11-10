@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_harbor.py — the Harbor benchmark theme in the running app (PLAN 9.4; target Kodi Estuary). Lab guests only.
 
-  - the benchmark pack is off by default and appears when Client Settings → Benchmark Themes is on;
+  - Harbor is a built-in theme, offered in Client Settings → Theme;
     turning it off while Harbor is active switches the engine off;
   - Harbor's home: the persistent left menu (Home, each library, Search, Settings, Classic home) in the side-rail chrome
     slot, about a fifth of the width; the focused section's shelves over a fanart layer;
@@ -66,11 +66,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("benchmark pack off by default", "harbor" not in themes() and "media-center" in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         h = themes().get("harbor", {})
-        check("Benchmark Themes on: Harbor offered, bundled, usable", h.get("ok") is True and h.get("source") == "bundled", json.dumps(h)[:160])
+        check("Harbor offered as a built-in theme, usable", h.get("ok") is True and h.get("source") == "bundled", json.dumps(h)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('harbor', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-hb]'); return !!r && +r.getAttribute('data-hb-rail') > 0; })()", timeout=30)
         page.wait_for("!!document.querySelector('.icefin-content[data-hb-ready]')", timeout=30)
@@ -177,9 +174,9 @@ def main():
 
         sounds = js("new Promise(r => window.api.theme.soundState(r))")
         check("Harbor ships no sounds (target default is silent)", sounds.get("played", 0) == 0, json.dumps(sounds)[:120])
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Harbor gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "harbor" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

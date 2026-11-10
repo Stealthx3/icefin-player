@@ -105,7 +105,7 @@ The web view and C++ component framework are upstream's. The theme runtime, nati
 | `src/input/` | Hook | Use `GamepadService` in place of `InputSDL` |
 | `src/settings/`, `resources/settings/settings_description.json` | Hook | New audio, HDR, renderer, controller and theme settings |
 | `CMakeLists.txt` | Hook | `ICEFIN_FLATPAK` (drops `updatePlugin.js`), `ICEFIN_X11` and `ICEFIN_OPENGL_FALLBACK` build options |
-| `themes/` | New | media-center/ and baseline/ (bundled), and bench/ with harbor, spark, plum, plaza, orbit, pivot, lumen, marquee, almanac, arcade and tide (optional benchmark pack) |
+| `themes/` | New | Built-in themes: media-center, baseline and the benchmark themes harbor, spark, plum, plaza, orbit, mosaic, lumen, marquee, almanac, arcade and tide (D22) |
 
 ## Fork, branding and upstream sync
 
@@ -513,7 +513,7 @@ Twelve clone themes join Media Center as engine benchmarks, and all twelve are r
 - Every screen works with a five-way remote alone (arrows, OK, Back, Home) and with a controller; Plaza also works with a pointer alone.
 - The theme builds from its package with no engine change made for it.
 
-**Distribution.** Recommended: Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide ship as an optional *benchmark pack*, built and tested in CI but not installed by default. This limits trade-dress exposure, since several of these companies actively protect their interfaces. Baseline carries no such risk, because it reproduces jellyfin-web's own GPL-licensed look, so it is bundled alongside Media Center.
+**Distribution (D22).** Every theme ships built in and is offered in the theme picker. For users a benchmark theme is simply a built-in theme; for development the benchmark themes are the theme engine's smoke test and tech demo: each one exercises a set of generic capabilities, and together they show what the engine can do from packages alone. The clone rules above keep them to layout, navigation, timing and colour, with Icefin's own names, art and sounds; the trade-dress risk below stays the reason for those rules.
 
 ## Server plugin compatibility and client identity
 
@@ -694,7 +694,7 @@ After 1.0, Icefin decouples from upstream completely and then drops X11, in that
 | Qt WebEngine GBM crashes on Wayland | Web layer fails on some drivers | GBM-off switch; pinned runtime |
 | Flathub declines the fork or `--device=all` | No Flathub listing | Self-hosted signed repo is the primary channel |
 | Client rename trips device approval or name-keyed server features | Sign-in blocked or features missing | Install docs; hidden *Report as Jellyfin Desktop* setting |
-| Clone themes draw a trade-dress or trademark complaint | A clone has to be pulled, or the project's distribution is threatened | Clone rules (no logos, icons, sounds, characters or proprietary fonts; trademark-free names); clones ship as an optional benchmark pack, not by default; each theme is removable without engine changes |
+| Clone themes draw a trade-dress or trademark complaint | A clone has to be pulled, or the project's distribution is threatened | Clone rules (no logos, icons, sounds, characters or proprietary fonts; trademark-free names); each theme is a self-contained package, removable without engine changes |
 | Eight weeks of clone work squeezes the schedule | 1.0 slips past 42 weeks | Engine capabilities first, then clones in order of engine dependency; all seven stay in 1.0, so a slip moves the date, not the scope |
 
 ## Open questions
@@ -705,7 +705,7 @@ After 1.0, Icefin decouples from upstream completely and then drops X11, in that
 - [ ] Is refresh-rate matching on KDE required for 1.0? KWin offers no output control to sandboxed apps.
 - [ ] When does decoupling from upstream start: right after 1.0, or after a stable 1.x?
 - [ ] Minimum HTPC hardware for the performance budget?
-- [ ] Confirm the bundled set: Media Center and Baseline installed by default, with Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide in the optional benchmark pack?
+- [x] Confirm the bundled set: settled by D22 (every theme is built in; the benchmark themes are a smoke test and tech demo for development).
 
 ## Sources
 

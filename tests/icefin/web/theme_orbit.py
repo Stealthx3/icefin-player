@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_orbit.py — the Orbit benchmark theme in the running app (PLAN 9.8; target Xbox 360 NXE). Lab guests only.
 
-  - Orbit is in the opt-in benchmark pack: offered only with Client Settings → Benchmark Themes on;
+  - Orbit is a built-in theme, offered in Client Settings → Theme;
   - a vertical stack of channels (spotlight, one per library, system), each a 3D carousel of large tiles: the focused
     tile in front, the others receding in depth and tilt;
   - five-way: left/right step through a channel's carousel and stop at its ends, up/down change channel with the
@@ -72,11 +72,8 @@ def main():
                          "const row = f.closest('.ob-channel'); if (!row) return 'other'; "
                          "return 'tile/' + row.getAttribute('data-ob-channel') + '/' + [...row.querySelectorAll('.ob-tile')].indexOf(f); })()")
 
-        check("benchmark pack off by default", "orbit" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         p = themes().get("orbit", {})
-        check("Benchmark Themes on: Orbit offered, bundled, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
+        check("Orbit offered as a built-in theme, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('orbit', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-ob]'); return !!r && +r.getAttribute('data-ob-ready') > 0; })()", timeout=40)
         time.sleep(1.5)
@@ -133,9 +130,9 @@ def main():
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-ob]')", timeout=15)
         check("Home in the guide returns to Orbit's home", not js("!!document.getElementById('icefin-theme-overlay')"))
 
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Orbit gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "orbit" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

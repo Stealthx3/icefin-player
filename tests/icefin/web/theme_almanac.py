@@ -2,14 +2,14 @@
 """theme_almanac.py — the Almanac benchmark theme in the running app (PLAN 9.15; target a TiVo / cable guide). Lab guests only.
 
   - needs Live TV on the server: run tests/icefin/servers/livetv.py first (it also moves the guide to now);
-  - Almanac is in the benchmark pack (Client Settings → Benchmark Themes); Home and Live TV open the guide;
+  - Almanac is a built-in theme, offered in Client Settings → Theme; Home and Live TV open the guide;
   - the guide: channels by number down the side, a time axis, programme cells sized by duration (ui.guideGrid), a now
     line, the live programme focused first; left/right through a channel's programmes and pages of time, up/down
     keeping the time and scrolling by channel;
   - the info pane follows the focused programme; after a dwell the focused channel plays live and muted in the corner
     (the page's own <video>, never mpv); changing channel stops it and closes its live stream;
   - up from the first channel and Back go to the menu row; down returns to the guide where it was;
-  - Enter on a future programme opens its details; turning the pack off switches the engine off.
+  - Enter on a future programme opens its details; turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_almanac.py --app ~/build/src/icefin-player --server jf12 --out ~/r915/jf12
 """
@@ -66,11 +66,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("Almanac not offered while the pack is off", "almanac" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         al = themes().get("almanac", {})
-        check("Benchmark Themes on: Almanac offered, bundled, usable", al.get("ok") is True and al.get("source") == "bundled", json.dumps(al)[:160])
+        check("Almanac offered as a built-in theme, usable", al.get("ok") is True and al.get("source") == "bundled", json.dumps(al)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('almanac', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-al-ready]')", timeout=40)
         nch = int(js("document.querySelector('#icefin-theme-root').dataset.alReady"))
@@ -137,9 +134,9 @@ def main():
         check("down returns to the guide where it was", json.loads(gf()).get("row") == 0, gf())
         act("back")
         check("Back goes to the menu row, where it was left", json.loads(gf()).get("menu") == js("document.querySelectorAll('.al-menu-item')[1].textContent"), gf())
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Almanac gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "almanac" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

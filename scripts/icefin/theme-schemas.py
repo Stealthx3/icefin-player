@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme-schemas.py: check every theme package in the repo against the shared JSON schemas (PLAN 8.5).
 
-Packages: themes/* (bundled), themes/bench/* (benchmark pack) and tests/icefin/themes/* (fixtures). Exit 1 on a schema error.
+Packages: themes/* (built in) and tests/icefin/themes/* (fixtures). Exit 1 on a schema error.
 Needs python3-jsonschema (CI: icefin-hooks installs it).
 """
 import glob, json, os, sys
@@ -16,7 +16,7 @@ tokens_s = json.load(open(os.path.join(SCHEMAS, "tokens.schema.json")))
 reg = Registry().with_resources([(s["$id"], Resource.from_contents(s)) for s in (theme_s, tokens_s)]) \
     .with_resource("tokens.schema.json", Resource.from_contents(tokens_s))
 bad = 0
-pkgs = sorted(glob.glob(os.path.join(ROOT, "themes", "*", "theme.json")) + glob.glob(os.path.join(ROOT, "themes", "bench", "*", "theme.json")) + glob.glob(os.path.join(ROOT, "tests", "icefin", "themes", "*", "theme.json")))
+pkgs = sorted(glob.glob(os.path.join(ROOT, "themes", "*", "theme.json")) + glob.glob(os.path.join(ROOT, "tests", "icefin", "themes", "*", "theme.json")))
 for meta in pkgs:
     d = os.path.dirname(meta)
     for name, schema in (("theme.json", theme_s), ("tokens.json", tokens_s)):

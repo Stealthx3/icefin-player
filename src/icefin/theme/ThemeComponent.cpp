@@ -18,7 +18,6 @@
 namespace Icefin::Theme
 {
 static const char* kStateKey = "icefin_theme";  // state section: {"users": {"<id>": {theme, preset, timestamp}}, "last": "<id>"}
-static const QString kBenchRoot = QStringLiteral(":/icefin-themes/bench");
 static const char* kSection = "theme";          // Client Settings: active (the picker), sounds
 static const char* kAdapter = ":/web-client/extension/icefin/jellyfin-web.css";
 static const char* kTrustKey = "icefin_theme_trust";  // state section: {"<id>": "<content hash>"}
@@ -35,18 +34,8 @@ QStringList ThemeComponent::roots()
   QStringList r;
   for (const QString& d : QProcessEnvironment::systemEnvironment().value("ICEFIN_THEME_PATH").split(':', Qt::SkipEmptyParts)) r << d;
   r << ":/icefin-themes";
-  if (benchPackEnabled()) r << kBenchRoot;
   r << Paths::globalDataDir("themes");
   return r;
-}
-
-// The optional benchmark pack (SPEC "Benchmark clone themes", Distribution): shipped with the app under its own root,
-// offered only when the user turns it on in Client Settings (or ICEFIN_BENCH_THEMES=1 for the lab and CI).
-bool ThemeComponent::benchPackEnabled()
-{
-  if (QProcessEnvironment::systemEnvironment().value("ICEFIN_BENCH_THEMES") == "1") return true;
-  auto* sec = SettingsComponent::Get().getSection(kSection);
-  return sec && sec->value("benchPack").toBool();
 }
 
 void ThemeComponent::rescan()
@@ -56,7 +45,6 @@ void ThemeComponent::rescan()
   for (const QString& root : roots()) {
     const Source src = root.startsWith(":/") ? Source::Bundled : dev.contains(root) ? Source::Development : Source::User;
     for (const QString& sub : QDir(root).entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
-      if (root + '/' + sub == kBenchRoot) continue;  // the pack's own root, scanned above when enabled
       Package p = loadPackage(root + '/' + sub, src);
       const QString key = p.id.isEmpty() ? sub : p.id;
       if (m_packages.contains(key)) continue;  // earlier root wins
@@ -92,10 +80,6 @@ bool ThemeComponent::componentInitialize()
     qWarning().noquote() << "Icefin theme: saved theme" << id << "can't be used; engine off:" << m_errors.join("; ");
   if (auto* sec = SettingsComponent::Get().getSection(kSection)) {
     connect(sec, &SettingsSection::valuesUpdated, this, [this](const QVariantMap& v) {
-      if (v.contains("benchPack")) {
-        rescan();
-        if (!m_active.isEmpty() && !m_packages.contains(m_active)) setActiveTheme(QString());  // its pack was turned off
-      }
       if (m_mirroring || !v.contains("active")) return;
       const QString picked = v.value("active").toString();
       if (picked != m_active && !setActiveTheme(picked, QString())) mirrorSetting();  // refused: show the real state again

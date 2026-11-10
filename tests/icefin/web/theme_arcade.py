@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_arcade.py — the Arcade benchmark theme in the running app (PLAN 9.16; target Steam Big Picture). Lab guests only.
 
-  - Arcade is in the benchmark pack (Client Settings → Benchmark Themes);
+  - Arcade is a built-in theme, offered in Client Settings → Theme;
   - home: a top bar (Home, each library, Search, quick access, clock), a first shelf led by a large hero capsule, more
     shelves of portrait capsules, and button hints drawn with the engine's glyphs;
   - library (#/list): a grid of capsules, seven wide; a sort dialog and a filter dialog (modal, Back closes) that
@@ -9,7 +9,7 @@
   - quick access: the top bar's button and a long press on View open a panel from the right over any screen, stock
     pages too; its Reduce motion entry caps motion; Back closes it;
   - on-screen keyboard: jellyfin-web's own search field opens it from the remote and types into it;
-  - turning the pack off switches the engine off.
+  - turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_arcade.py --app ~/build/src/icefin-player --server jf12 --out ~/r916/jf12
 """
@@ -66,11 +66,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("Arcade not offered while the pack is off", "arcade" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         ar = themes().get("arcade", {})
-        check("Benchmark Themes on: Arcade offered, bundled, usable", ar.get("ok") is True and ar.get("source") == "bundled", json.dumps(ar)[:160])
+        check("Arcade offered as a built-in theme, usable", ar.get("ok") is True and ar.get("source") == "bundled", json.dumps(ar)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('arcade', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-ar-ready]')", timeout=40)
         time.sleep(1)
@@ -165,9 +162,9 @@ def main():
         check("the on-screen keyboard opens on the search page and types", opened and js(f"{sinput}.value") == "qw", f"opened={opened} value={js(f'({sinput} || {{}}).value')!r}")
         shot("keyboard.png")
         act("back")
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, keyboard off, Arcade gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "arcade" not in themes()
+        check("turning the theme off restores the stock UI, keyboard off", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False
               and js("document.documentElement.hasAttribute('data-icefin-osk-enabled')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")

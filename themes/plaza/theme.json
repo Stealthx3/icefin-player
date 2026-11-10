@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "plaza",
+  "name": "Plaza",
+  "version": "0.1.0",
+  "description": "A paged four-by-three grid of rounded channel tiles that cycle previews of their content, page arrows at the sides, and a bottom bar with the clock, the date and two round buttons; selecting a channel zooms it to fill the screen. Light grey and white with blue accents, pointer-first.",
+  "styles": "styles.css",
+  "scripts": ["plaza.js"]
+}
