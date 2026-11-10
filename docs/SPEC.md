@@ -158,7 +158,7 @@ Video takes the Vulkan renderer whenever it is available. The OpenGL fallback ex
 
 1. **Qt Quick on Vulkan.** `main.cpp` selects Qt's Vulkan backend instead of forcing OpenGL. Icefin creates the Vulkan device with every extension and feature both Qt and libplacebo need, enabled explicitly (libplacebo silently assumes some core features, a pitfall [MfPlayer](https://github.com/abcming/MfPlayer) documents), and hands it to Qt.
 2. **Video.** A patched libmpv renders through libplacebo (gpu-next quality: tone mapping, Dolby Vision reshaping) into a Vulkan image on that shared device. `VulkanVideoItem` draws it as a scene-graph texture, with no copies. Hardware-decoded frames arrive by DMA-BUF.
-3. **Compositing.** The scene (web view, backdrop, video) is rendered in linear light into a 16-bit float target. SDR content (web UI, backdrop, subtitles) sits at the compositor's SDR reference white, 203 nits by default; video keeps its own luminance.
+3. **Compositing.** The scene (web view, backdrop, video) is rendered in linear light into a 16-bit float target. SDR content (web UI, backdrop, subtitles) sits at the compositor's SDR reference white, 203 nits by default; video keeps its own luminance. The colour space the UI is blended in over video is decided in 5.4 (D23): blending in linear light makes translucent UI over video read lighter than the same UI in a browser.
 4. **Output.**
    - A final pass writes the swapchain as HDR10 (PQ, BT.2020) or as extended linear sRGB, whichever the compositor accepts; the Phase 2 spike picks per compositor.
    - It attaches mastering metadata (primaries, MaxCLL, MaxFALL) for the current video.
@@ -409,6 +409,8 @@ The theme engine is theme-agnostic and lives in three places: a web runtime over
 - Themes cannot remap input, which keeps every theme remote-usable.
 
 **Backdrop and transparency.** jellyfin-web paints its own background, so when a theme is active its CSS makes those page backgrounds transparent, letting the native backdrop show through the already-transparent web view. Phase 8 measures the compositing cost of the transparent web view on the Vulkan renderer on the lowest-spec HTPC.
+
+**Theme script API.** Theme scripts use only `ctx` and `window.icefinTheme`. Host globals (`ApiClient`, the playback manager, the native shell objects) are private to the engine, so decoupling from upstream and jellyfin-web updates can't break themes; `icefinTheme.system` is reserved for the client-side capability model (6.7, D23).
 
 **Theme trust levels.** Theme scripts run inside the signed-in web page and can read the user's access token, so script rights depend on where a theme comes from:
 

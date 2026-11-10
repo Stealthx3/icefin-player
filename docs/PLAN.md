@@ -46,13 +46,14 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 5 — Single-surface renderer (7 wks)
 - [x] **5.1** Switch Qt Quick to the Vulkan backend; create the shared Vulkan device with explicit features [Rendering, playback routing and HDR] (`src/icefin/render/VulkanDevice`, setting `main.icefin_renderer`; Auto stays OpenGL until 5.3; on the RTX 4090 Qt Quick renders on the shared device with 13 extensions incl. DMA-BUF, DRM modifiers, HDR metadata and Vulkan Video decode; `renderer_choice.py`)
-- [x] **5.2** Patched libmpv in `external/mpv` with a Vulkan render API; pin version (mpv v0.42.0 + 2 patches, libplacebo v7.387.0; Flatpak applies them, `external/mpv/build-lab.sh` for lab builds; `test_icefin_gpu` checks the API in the Flatpak build)
+- [ ] **5.2** Patched libmpv in `external/mpv` with a Vulkan render API; pin version; pass the compositor's target description (primaries, transfer, peak luminance, reference white from HdrCapabilityProbe) into the render call instead of relying on --target-colorspace-hint (D23) (done: mpv v0.42.0 + 2 patches, libplacebo v7.387.0, the Flatpak applies them, `external/mpv/build-lab.sh` for lab builds, `test_icefin_gpu` checks the API in the Flatpak build (#51); open: the compositor target, added by D23)
 - [ ] **5.3** `VulkanVideoItem` replacing `MpvVideoItem` on the Vulkan path; DMA-BUF import of hwdec frames
-- [ ] **5.4** Linear-light compositing and HDR10 / extended-sRGB encode pass with mastering metadata
+- [ ] **5.4** Linear-light compositing and HDR10 / extended-sRGB encode pass with mastering metadata; decide and record the colour space the web UI is blended in over video and the native backdrop (UI flattened in sRGB, or linear light with alpha compensation); re-run tests/icefin/themes/lab-contrast and the bundled theme suites on the Vulkan path (D23)
 - [ ] **5.5** Wayland surface tagging via `wp_color_manager_v1`
 - [ ] **5.6** X11/Gamescope backend with Vulkan HDR10 color space and `VK_EXT_hdr_metadata`
 - [ ] **5.7** OpenGL fallback wiring (MpvQt) when Vulkan is unavailable
-- [ ] **5.8** Verify HDR10/HLG signals on KWin, Mutter and Gamescope; jellyfin-web controls readable over video; 60 fps UI on lowest-spec HTPC
+- [ ] **5.8** Verify HDR10/HLG signals on KWin, Mutter and Gamescope; jellyfin-web controls readable over video; 60 fps UI on lowest-spec HTPC; parity matrix on the HTPC against stock mpv 0.42 --vo=gpu-next --gpu-api=vulkan with the same files: HDR10, HLG, HDR10+, Dolby Vision 5 and 8, and 7 FEL; includes 2.5's visual reference-white check (D23)
+- [ ] **5.9** Phase 5 exit review (D23): `docs/reviews/PHASE5-EXIT.md` answers: did the shared device hold on AMD, NVIDIA and Intel; did the patched render path reach parity with stock gpu-next; which D23 theme-engine items remain; the proposed scope of 6.7; whether the secondary playback windows (low-power dmabuf-wayland, mpv-native fallback) are worth carrying; upstream and mpv render-API PR status. The user signs off before 6.7 starts
 
 ## Phase 6 — Router, capability prompt and token engine (4 wks)
 - [ ] **6.1** `HdrCapabilityProbe` (Wayland image description; Vulkan color spaces under X11) (Wayland done: `src/icefin/render/HdrCapabilityProbe`; open: the X11/Gamescope Vulkan colour-space path, with 5.6)
@@ -61,6 +62,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **6.4** Auto device profile replacing static force-transcode toggles (`native/icefin/deviceProfile.js`; the toggles stay as overrides; Vulkan HDR direct-play arrives with 5.x)
 - [x] **6.5** `ThemeComponent` token loading and the web token engine, so controls and prompt are themed (the prompt reads `ThemeComponent::tokens()` when 6.3 lands; token set: `docs/themes/TOKENS.md`)
 - [ ] **6.6** Verify every routing row; playback reports match upstream; DV5 on OpenGL raises the prompt
+- [ ] **6.7** Client-side capability model (D23): one model fed by mpv (decoders, hwdec self-test, renderer features, libplacebo version), HdrCapabilityProbe and the ELD reader; drives PlaybackRouter, the Auto device profile and a read-only `icefinTheme.system` for themes. Blocked until 5.9; scope set there
 
 ## Phase 7 — Controller layer (2 wks)
 - [x] **7.1** SDL3 `GamepadService` replacing `InputSDL` (build flag), hotplug, multiple pads, battery [Controller support] (`-DENABLE_SDL2=OFF -DICEFIN_SDL3=ON`, on in the Flatpak)
@@ -77,6 +79,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **8.4** Native backdrop layer (QML shaders); measure transparent web-view cost (built: `qml/icefin/Backdrop.qml` under the web view (ICEFIN-HOOK), `src/icefin/theme/Backdrop` bakes theme GLSL with Qt ShaderTools or checks a `.qsb`, token-driven params with live palettes, hidden during video, user-theme shaders need trust; Tide's wave and Media Center's ribbons moved to it; `theme_backdrop.py`, unit tests; open: the HTPC run (`htpc.sh web theme_backdrop.py`: pixels through the page and the GPU-busy cost), since Xvfb's software compositing can't show the layer through the page)
 - [x] **8.5** Package validation and trust levels; per-user settings in DisplayPreferences; stand-down rule; UI sounds (silent while `Icefin::Audio::AudioState::uiSoundsMuted`) (schemas `docs/themes/schema/`; Client Settings → Theme picker; passthrough mute verified with the receiver in 3.8)
 - [ ] **8.6** Media Center reference theme; benchmark checklist passes (first version bundled: `themes/media-center`, start strip, focus glow, ribbons on the native backdrop (8.4, CSS fallback), sounds, Now Playing inset; open: themed poster wall and details, the full checklist)
+- [ ] **8.7** Stable theme script API (D23): themes reach Icefin only through `ctx` and `window.icefinTheme` (add `ctx.play()` and `ctx.nowPlaying()`, reserve `icefinTheme.system`); bundled and benchmark themes migrated off `window.ApiClient` and `window.icefinPlaybackManager`; theme-lint rejects raw host globals in `themes/`
 
 ## Phase 9 — Benchmark clone themes (15 wks)
 - [ ] **9.1** Reference captures for the eleven targets
