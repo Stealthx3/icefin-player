@@ -20,12 +20,12 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
 - [x] **2.2** Spike: patched libmpv rendering through libplacebo on Qt's shared Vulkan device
 - [x] **2.3** Spike: HDR swapchain format and Wayland surface tagging on KWin and Mutter
-- [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (renderer works in game mode; open: HDR, which needs Flathub's gamescope VulkanLayer extension on the HTPC, waiting for the user's OK)
-- [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
-- [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
+- [x] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (GO: HDR10 swapchain through Flathub's gamescope VulkanLayer in a nested Gamescope and in Steam's game-mode UI on an RTX 4090, 2026-11-09; the HTPC re-run waits for the user's OK to install the extension there)
+- [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white) (not gating; inputs known (reference white 200 on KWin, Qt sdrWhiteLevel 200); the visual check runs with 5.8)
+- [x] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA (GO: built as 3.4 and 3.5; HDMI result in 3.8)
 - [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
 - [x] **2.8** Spike: NVIDIA Vulkan HDR on Wayland (GO at swapchain level on an RTX 4090, KWin 6.6 Wayland and nested Gamescope with the WSI layer: HDR10 on a 10-bit swapchain; the driver doesn't tag the surface; `docs/SPIKES.md`)
-- [ ] **2.9** Write go/no-go per spike in `docs/SPIKES.md`; a no-go on 2.1–2.3 switches the plan to the two-window contingency
+- [x] **2.9** Write go/no-go per spike in `docs/SPIKES.md`; a no-go on 2.1–2.3 switches the plan to the two-window contingency (2.1–2.3 all go: Phase 5 stays single-surface; summary in `docs/SPIKES.md` 2.9)
 
 ## Phase 3 — Audio subsystem (4 wks)
 - [x] **3.1** `audio.backend` setting (Auto, PipeWire, PulseAudio, JACK, ALSA) mapped to mpv `ao`; hide passthrough under JACK [Audio subsystem]
@@ -88,13 +88,13 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **9.7** Plaza (Wii Menu layout) (built: `themes/bench/plaza`; paged 4×3 grid of rounded channel tiles with live previews, page arrows, bottom bar with clock, date and two round buttons, pointer-first, zoom into a channel screen (Menu, Start), light tokens, `tests/icefin/web/theme_plaza.py`; lab run passes 2026-11-09; open: layout and timing against the 9.1 reference captures)
 - [ ] **9.8** Orbit (Xbox 360 NXE layout) (built: `themes/bench/orbit`; vertical channel stack, each a 3D carousel receding in depth, parallax backdrop, guide panel over any screen via the global overlay, `tests/icefin/web/theme_orbit.py`; lab run passes 2026-11-09; open: layout and timing against the 9.1 reference captures)
 - [ ] **9.9** Mosaic (Xbox 360 Metro layout) (built: `themes/bench/mosaic`, id renamed from `pivot` so it can't collide with the engine's `ui.pivot`; large lowercase pivot headers, per-section grids of flat tiles in three sizes, live tiles, `tests/icefin/web/theme_mosaic.py`; lab run passes 2026-11-09; open: layout and timing against the 9.1 reference captures)
-- [ ] **9.11** Generic capabilities for Lumen and Marquee: focus parallax and highlight, translucent materials, expanding side rail, in-row card expansion (D19) [Benchmark clone themes]
-- [ ] **9.12** Lumen (Apple TV layout)
-- [ ] **9.13** Marquee (Netflix layout)
-- [ ] **9.14** Generic capabilities for Almanac, Arcade and Tide: guide grid, on-screen keyboard, time-of-day palettes (D19) [Benchmark clone themes]
-- [ ] **9.15** Almanac (TiVo / cable guide layout)
-- [ ] **9.16** Arcade (Steam Big Picture layout)
-- [ ] **9.17** Tide (PS3 XMB layout; needs the native backdrop, 8.4)
+- [x] **9.11** Generic capabilities for Lumen and Marquee: focus parallax and highlight, translucent materials, expanding side rail, in-row card expansion (D19) [Benchmark clone themes] (`ui.parallax`, `ui.material` with `material.*` tokens and a frame-rate watch that falls back to opaque under 50 fps, side rail `collapsedWidth`, `ui.cardExpand`; `theme_capabilities.py`)
+- [ ] **9.12** Lumen (Apple TV layout) (built: `themes/bench/lumen`; frosted tab bar that hides once focus leaves it, full-bleed top shelf following the focused item, poster rows that lift and tilt with a moving highlight, `tests/icefin/web/theme_lumen.py`; open: layout and timing against the 9.1 reference captures)
+- [ ] **9.13** Marquee (Netflix layout) (built: `themes/bench/marquee`; icon rail that widens with labels on focus, billboard with a muted trailer after a dwell that shrinks the title, rows that jump by a page, cards that grow into an inline preview, `tests/icefin/web/theme_marquee.py`; open: layout and timing against the 9.1 reference captures)
+- [x] **9.14** Generic capabilities for Almanac, Arcade and Tide: guide grid, on-screen keyboard, time-of-day palettes (D19) [Benchmark clone themes] (`ui.guideGrid`, `ui.keyboard`, `ui.timePalette` with `palettes.*` tokens, Live TV channels in `ui.mutedPreview`; `theme_capabilities.py`; lab Live TV data: `tests/icefin/servers/livetv.py`)
+- [ ] **9.15** Almanac (TiVo / cable guide layout) (built: `themes/bench/almanac`; Home and Live TV open a guide grid with channel numbers, a now line, an info pane and the focused channel live and muted in the corner, `tests/icefin/web/theme_almanac.py`; open: layout and timing against the 9.1 reference captures)
+- [ ] **9.16** Arcade (Steam Big Picture layout) (built: `themes/bench/arcade`; capsule shelves led by a hero capsule, a seven-wide library grid with sort and filter dialogs, a quick-access panel from the right over any screen, glyph button hints, the on-screen keyboard, `tests/icefin/web/theme_arcade.py`; open: layout and timing against the 9.1 reference captures)
+- [ ] **9.17** Tide (PS3 XMB layout; needs the native backdrop, 8.4) (built: `themes/bench/tide`; category icons crossing an item column at a fixed point, gradient colours by month and shade by time of day through `ui.timePalette`, an animated wave on a web-layer canvas (still under low motion), original line icons, `tests/icefin/web/theme_tide.py`; open: the wave on the native backdrop (8.4), layout and timing against the 9.1 reference captures)
 - [ ] **9.10** All clone acceptance lists pass (9.4–9.9, 9.12, 9.13, 9.15–9.17); lint finds no theme-specific engine code
 
 ## Phase 10 — Upstream sync (1 wk)

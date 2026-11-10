@@ -34,9 +34,10 @@
             bar.append(el('div', 'sp-brand', 'Icefin'));
             const nav = el('div', 'sp-nav');
             bar.append(nav);
-            const c = window.ApiClient;
+            const views = await T.ui.userViews();
+            const c = window.ApiClient;  // a cold start creates the client late: read it after userViews
             const entries = [{ label: 'Home' }, { label: 'Search', hash: '#/search' }];
-            for (const v of await T.ui.userViews()) entries.push({ label: v.Name, view: v });
+            for (const v of views) entries.push({ label: v.Name, view: v });
             entries.push({ label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
             if (!S) return;
             S.top = entries.map((x) => {
@@ -235,6 +236,7 @@
 
             const views = await T.ui.userViews();  // also waits out a cold start, so uid below is set
             if (!S || S.root !== root) return;
+            S.client = window.ApiClient;  // a cold start creates the client late: read it after userViews
             const c = S.client, uid = c.getCurrentUserId();
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
             const [latest, resume, nextUp] = await Promise.all([

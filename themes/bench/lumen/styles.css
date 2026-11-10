@@ -1,0 +1,43 @@
+/* Lumen: tab bar, top shelf, poster rows. Proportions follow the benchmark target at 16:9; colours from tokens. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Inter", "Noto Sans", "Open Sans", sans-serif; }
+[data-lm] { --lm-gutter: 5.2vw; overflow: hidden !important; color: var(--icefin-color-text); }
+
+/* Top shelf: full-bleed art of the focused item */
+.lm-shelf { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; transition: opacity 400ms ease, filter 400ms ease; }
+.lm-shelf::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(0deg, var(--icefin-color-background) 8%, transparent 55%), linear-gradient(90deg, var(--icefin-color-shelfScrim) 0%, transparent 55%); }
+[data-lm-zone=rows] .lm-shelf { opacity: 0.35; filter: blur(12px); }
+.lm-shelf-text { position: absolute; left: var(--lm-gutter); top: 30vh; width: 40vw; z-index: 1; transition: opacity 250ms ease; }
+[data-lm-zone=rows] .lm-shelf-text { opacity: 0; }
+.lm-shelf-title { font-size: 3em; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; }
+.lm-shelf-meta { margin: 1.1vh 0; color: var(--icefin-color-textSecondary); font-weight: 500; }
+.lm-shelf-overview { line-height: 1.45; max-height: 4.4em; overflow: hidden; color: var(--icefin-color-textSecondary); }
+
+/* Tab bar: a frosted pill, centred, hidden once focus leaves it */
+.lm-tabs { position: absolute; top: 4vh; left: 50%; transform: translateX(-50%); display: flex; gap: 0.3em; padding: 0.35em; border-radius: 2em; z-index: 3;
+  transition: transform 300ms ease, opacity 300ms ease; }
+[data-lm-tabs=hidden] .lm-tabs { transform: translate(-50%, -12vh); opacity: 0; }
+.lm-tab { white-space: nowrap; padding: 0.5em 1.3em; border-radius: 1.6em; font-weight: 600; color: var(--icefin-color-textSecondary); outline: none; transition: background 150ms, color 150ms, transform 150ms; }
+.lm-tab.current { color: var(--icefin-color-text); }
+.lm-tab.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); transform: scale(1.06); }
+
+/* Rows */
+.lm-rows { position: absolute; left: 0; right: 0; top: 62vh; transition: transform 350ms ease; z-index: 2; }
+.lm-row { margin-bottom: 7vh; }
+.lm-row-title { margin: 0 var(--lm-gutter) 1.4vh; font-size: 1.15em; font-weight: 600; color: var(--icefin-color-textSecondary); transition: color 200ms; }
+.lm-row.current .lm-row-title { color: var(--icefin-color-text); }
+.lm-track { display: flex; gap: 2.2vw; padding: 2.5vh var(--lm-gutter); transition: transform 300ms ease; }
+.lm-card { flex: none; width: 11.5vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
+  outline: none; box-shadow: 0 0.6em 1.4em transparent; transition: transform 220ms ease-out, box-shadow 220ms ease-out; }
+.lm-row.wide .lm-card { width: 22vw; aspect-ratio: 16 / 9; }
+.lm-card.icefin-focused { box-shadow: 0 2.2em 3em var(--icefin-color-shelfScrim); z-index: 2; }
+.lm-card-label { position: absolute; left: 0; right: 0; top: 100%; margin-top: 1.4vh; font-size: 0.9em; text-align: center; color: var(--icefin-color-text);
+  opacity: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 200ms; }
+.lm-card.icefin-focused .lm-card-label { opacity: 1; }
+.lm-progress { position: absolute; left: 8%; right: 8%; bottom: 6%; height: 0.3em; border-radius: 0.2em; background: var(--icefin-color-divider); overflow: hidden; }
+.lm-progress > i { display: block; height: 100%; background: var(--icefin-color-text); }
+
+/* Stock pages: frosted header bar */
+html[data-icefin-theme] .skinHeader { -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8);
+  background: var(--icefin-material-bar-tint) !important; }
+html[data-icefin-theme][data-icefin-materials=opaque] .skinHeader { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--icefin-material-bar-opaque) !important; }

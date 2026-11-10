@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "marquee",
+  "name": "Marquee",
+  "version": "0.1.0",
+  "description": "Benchmark theme: a collapsed icon rail that expands with labels on focus, a billboard whose muted trailer starts after a dwell, and rows that jump by a page, the focused card growing into an inline preview; black with a red accent.",
+  "styles": "styles.css",
+  "scripts": ["marquee.js"]
+}
