@@ -1,4 +1,4 @@
-// Orbit (benchmark theme, PLAN 9.8; target: the Xbox 360 NXE dashboard's layout). Built from the engine's generic
+// Orbit (benchmark theme, PLAN 9.8; its target is named in docs/PLAN.md). Built from the engine's generic
 // capabilities only: a vertical stack of category channels, each a horizontal 3D carousel of large tiles receding in
 // depth (ui.carousel3d), with a slow parallax backdrop that follows the focused channel, and a guide panel that opens
 // over any screen, themed or stock (ui.overlay; long press on View). Every other route is jellyfin-web's own page,

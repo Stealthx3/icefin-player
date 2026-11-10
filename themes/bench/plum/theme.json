@@ -3,7 +3,7 @@
   "id": "plum",
   "name": "Plum",
   "version": "0.1.0",
-  "description": "Benchmark theme (Roku TV layout): a left menu column beside a grid of large tiles, three across on Home and four across in a library, under a slim header with the clock. Deep purple, a thick focus frame that jumps rather than glides, and a theme-level low-motion cap. Icefin names and type; no Roku assets.",
+  "description": "Benchmark theme: a left menu column beside a grid of large tiles, three across on Home and four across in a library, under a slim header with the clock. Deep purple, a thick focus frame that jumps rather than glides, and a theme-level low-motion cap.",
   "styles": "styles.css",
   "scripts": ["plum.js"]
 }

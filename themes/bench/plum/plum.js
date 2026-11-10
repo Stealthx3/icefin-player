@@ -1,4 +1,4 @@
-// Plum (benchmark theme, PLAN 9.6; target: Roku TV's home layout). Built from the engine's generic capabilities only:
+// Plum (benchmark theme, PLAN 9.6; its target is named in docs/PLAN.md). Built from the engine's generic capabilities only:
 // the top-bar chrome slot holds a slim header with the clock, the side-rail slot holds the menu column, and the screen
 // fills the content area with a grid of large tiles for the focused menu entry: three across on Home, four across in
 // a library. The theme caps motion low (ui.motion.cap): the focus frame jumps, rows step without gliding. Every other
