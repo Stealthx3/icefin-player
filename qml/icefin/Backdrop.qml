@@ -8,9 +8,12 @@
 //   startup on a real GPU, with nothing playing.
 // - time advances at the theme's fps; under reduced or low motion (from the web runtime) it stands still.
 // - Colour params cross-fade when the web runtime sends new token values (time-of-day palettes).
-// - Known gap (PLAN 8.4): Chromium keeps a page that loaded opaque as an opaque layer, so the backdrop only shows
-//   through the page after a reload. Nudging the web view's background colour fixed it under Xvfb but froze the page
-//   on the HTPC's GPU (Gamescope), so it was taken out again.
+// - A page that painted before the backdrop existed keeps its old pixels where it turns transparent (Chromium, the
+//   HTPC's GPU and Xvfb alike); only a page that loads over the backdrop shows it. So when a backdrop appears over a
+//   page that has already loaded (a theme switch, or the server-synced choice arriving after login), the page reloads
+//   once, on the same route (user's call, 2026-11-10). Not while video is up: it waits until the video ends. Switching
+//   between two backdrop themes keeps the page (it is transparent already). Resizing the view or nudging its
+//   background (tried in 8.4) didn't fix it on the HTPC; the nudge reset the page there.
 // - Reports what it drew to ThemeComponent::reportBackdropStats() every two seconds for tests and diagnostics.
 import QtQuick
 
@@ -75,9 +78,26 @@ Item
     return "property real " + name + ": 0\n"
   }
 
+  // Set when a backdrop appears over a page that has already loaded; cleared when the page reloads.
+  property bool reloadPending: false
+  property int reloads: 0
+
+  function reloadIfPending()
+  {
+    if (!reloadPending || videoUp) return
+    var w = webView()
+    if (!w) return
+    reloadPending = false
+    reloads++
+    w.reload()
+  }
+
+  onVideoUpChanged: reloadIfPending()
+
   function rebuild()
   {
     var s = components.theme.backdrop()
+    var had = !!effect
     if (effect) { effect.destroy(); effect = null }
     spec = s || {}
     if (!s || !s.shader) return
@@ -96,6 +116,8 @@ Item
     }
     apply(false)
     t0 = Date.now()
+    var w = webView()
+    if (!had && w && w.loadProgress === 100) { reloadPending = true; reloadIfPending() }
   }
 
   // Values only (same shader): token changes from the web runtime, visibility and motion.
@@ -166,7 +188,7 @@ Item
       components.theme.reportBackdropStats({
         shown: root.shown, moving: root.moving, videoUp: root.videoUp,
         fps: (root.frames - lastFrames) / 2, windowFps: (root.windowFrames - lastWindow) / 2,
-        frames: root.frames, time: root.effect ? root.effect.time : 0, shader: root.spec.shader || ""
+        frames: root.frames, time: root.effect ? root.effect.time : 0, shader: root.spec.shader || "", reloads: root.reloads
       })
       lastFrames = root.frames
       lastWindow = root.windowFrames
