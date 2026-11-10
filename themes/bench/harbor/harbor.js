@@ -1,4 +1,4 @@
-// Harbor (benchmark theme, PLAN 9.4; target: Kodi Estuary's home layout). Built from the engine's generic capabilities
+// Harbor (benchmark theme, PLAN 9.4; its target is named in docs/PLAN.md). Built from the engine's generic capabilities
 // only: the side-rail chrome slot holds the persistent main menu, the screen fills the content area with the focused
 // section's shelves over a full-screen fanart layer, and an info dialog opens on a poster. Every other route is
 // jellyfin-web's own page, styled by this theme's tokens.

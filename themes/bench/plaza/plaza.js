@@ -1,4 +1,4 @@
-// Plaza (benchmark theme, PLAN 9.7; target: the Wii Menu's layout). Built from the engine's generic capabilities only:
+// Plaza (benchmark theme, PLAN 9.7; its target is named in docs/PLAN.md). Built from the engine's generic capabilities only:
 // a paged 4×3 grid of rounded channel tiles (ui.pagedGrid) whose tiles cycle previews of their content (ui.liveTile),
 // pointer-first navigation (ui.pointerFirst), page arrows at the sides, and a bottom bar with the clock, the date and
 // two round buttons. Selecting a channel zooms the tile up to fill the screen and opens its channel screen (Menu and
