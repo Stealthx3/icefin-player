@@ -1,0 +1,5 @@
+{
+  "description": "Receiver in standby: monitor present, ELD not valid (Icefin keeps the last result and marks it stale)",
+  "fixture": "tests/icefin/unit/fixtures/eld/standby.txt",
+  "eld_valid": false
+}

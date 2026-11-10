@@ -1,0 +1,50 @@
+{
+  "description": "Soundbar: stereo LPCM, AC-3, E-AC-3, AAC, all at 48 kHz or less. Linux limits the HDMI PCM rates to the ELD's, so E-AC-3's 192 kHz IEC 61937 stream cannot open: Icefin must send PCM (or fall back to it)",
+  "fixture": "tests/icefin/unit/fixtures/eld/soundbar_eac3.txt",
+  "monitor_name": "Lab Soundbar",
+  "speakers": "0x7f",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "eac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "aac",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "eac3": "pcm",
+    "dts": "pcm",
+    "truehd": "pcm"
+  }
+}
