@@ -16,6 +16,7 @@
 class QQuickItem;
 class QQuickWindow;
 class QSGNode;
+class MpvController;
 struct mpv_handle;
 struct mpv_render_context;
 
@@ -30,6 +31,9 @@ class VulkanVideo : public QObject
 public:
   // item: the video item (MpvVideoItem); mpv: its handle. The render context is made on the first frame.
   VulkanVideo(QQuickItem* item, mpv_handle* mpv);
+  // For MpvVideoItem: a VulkanVideo when Qt Quick runs on Vulkan and this build has the patched libmpv, else null
+  // (the item keeps MpvQt's OpenGL path). Emits the item's ready() once mpv's render context exists.
+  static VulkanVideo* createFor(QQuickItem* item, MpvController* controller);
   ~VulkanVideo() override;
   // From the item's updatePaintNode (render thread, sync phase).
   QSGNode* updatePaintNode(QSGNode* old);

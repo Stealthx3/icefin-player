@@ -27,8 +27,14 @@ RendererChoice rendererChoiceFrom(const QString& setting);
 // The decision itself: Auto takes Vulkan only once the Vulkan video path exists; an explicit Vulkan choice needs a
 // usable Vulkan GPU; anything else is OpenGL.
 bool useVulkan(RendererChoice choice, bool vulkanUsable, bool videoPath);
-// True once video can play on the Vulkan path (5.3). Until then the router routes as the OpenGL fallback.
+// True when video plays on the Vulkan path: this build has the patched libmpv (5.2) and the Vulkan video item (5.3).
 bool vulkanVideoPath();
+// Whether Auto may pick Vulkan. Off until the parity checks against stock mpv gpu-next pass on the HTPC (5.8, D23);
+// until then the Vulkan path is the explicit "Vulkan (experimental)" choice.
+bool autoPicksVulkan();
+// Whether the Vulkan path can output HDR yet (the HDR encode pass and surface tagging, 5.4/5.5). Until then the
+// router treats the display as SDR there and libplacebo tone-maps.
+bool vulkanHdrOutput();
 // Reads the setting, probes Vulkan when it matters, and calls QQuickWindow::setGraphicsApi. Call after the
 // QGuiApplication exists and before the main window is created.
 void chooseGraphicsApi();

@@ -2,6 +2,7 @@
 #include "PlayerComponent.h"
 #include <MpvController>
 #include <QDebug>
+#include "icefin/render/VulkanVideo.h"  // ICEFIN-HOOK: video on the Vulkan path (PLAN 5.3)
 
 MpvVideoItem::MpvVideoItem(QQuickItem *parent)
     : MpvAbstractItem(parent)
@@ -9,7 +10,14 @@ MpvVideoItem::MpvVideoItem(QQuickItem *parent)
     qDebug() << "MpvVideoItem constructed";
     // Critical: Set vo=libmpv for Qt integration
     Q_EMIT setProperty("vo", "libmpv");
+    m_vulkan = Icefin::Render::VulkanVideo::createFor(this, mpvController());  // ICEFIN-HOOK: null on OpenGL (PLAN 5.3)
 }
+
+// ICEFIN-HOOK: on Vulkan the item draws mpv's frames itself; on OpenGL, MpvQt's framebuffer path as upstream (PLAN 5.3)
+QSGNode* MpvVideoItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData* data)  // ICEFIN-HOOK
+{  // ICEFIN-HOOK
+    return m_vulkan ? m_vulkan->updatePaintNode(old) : MpvAbstractItem::updatePaintNode(old, data);  // ICEFIN-HOOK
+}  // ICEFIN-HOOK
 
 void MpvVideoItem::setPlayerComponent(PlayerComponent* player)
 {

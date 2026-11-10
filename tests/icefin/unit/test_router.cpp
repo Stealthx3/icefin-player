@@ -119,7 +119,8 @@ private slots:
     QVERIFY(useVulkan(RendererChoice::Vulkan, true, false));
     QVERIFY(!useVulkan(RendererChoice::Vulkan, false, false));
     QVERIFY(!useVulkan(RendererChoice::OpenGl, true, true));
-    QVERIFY(!vulkanVideoPath());
+    QVERIFY(!autoPicksVulkan());   // until the 5.8 parity checks
+    QVERIFY(!vulkanHdrOutput());   // until 5.4/5.5
   }
   void deviceExtensions()
   {

@@ -5,6 +5,7 @@
 #include <QSGRendererInterface>
 #include <QSGSimpleTextureNode>
 #include <QSGTexture>
+#include <MpvController>
 #ifdef ICEFIN_MPV_VULKAN
 #include <QVulkanDeviceFunctions>
 #include <QVulkanFunctions>
@@ -17,6 +18,15 @@
 
 namespace Icefin::Render
 {
+VulkanVideo* VulkanVideo::createFor(QQuickItem* item, MpvController* controller)
+{
+  if (!vulkanVideoCompiled() || !controller || QQuickWindow::graphicsApi() != QSGRendererInterface::Vulkan) return nullptr;
+  auto* v = new VulkanVideo(item, controller->mpv());
+  // MpvAbstractItem::ready() tells MpvVideoItem the player can use mpv, as MpvQt's OpenGL renderer does.
+  QObject::connect(v, &VulkanVideo::ready, item, [item] { QMetaObject::invokeMethod(item, "ready", Qt::QueuedConnection); });
+  return v;
+}
+
 #ifdef ICEFIN_MPV_VULKAN
 bool vulkanVideoCompiled() { return true; }
 
@@ -195,7 +205,10 @@ void VulkanVideo::render()
   mpv_render_param params[] = {{MPV_RENDER_PARAM_VULKAN_FBO, &fbo}, {MPV_RENDER_PARAM_INVALID, nullptr}};
   if (mpv_render_context_render(m_ctx, params) >= 0) {
     m_vk->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    if (m_frames++ == 0) QMetaObject::invokeMethod(m_item, "update", Qt::QueuedConnection);  // show it next frame
+    if (m_frames++ == 0) {
+      qInfo() << "Icefin video: first frame on the Vulkan path" << m_size;
+      QMetaObject::invokeMethod(m_item, "update", Qt::QueuedConnection);  // show it next frame
+    }
   }
 }
 #else

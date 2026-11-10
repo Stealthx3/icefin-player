@@ -8,6 +8,7 @@
 #include <QVersionNumber>
 #include <vector>
 #include "settings/SettingsComponent.h"
+#include "VulkanVideo.h"
 
 namespace Icefin::Render
 {
@@ -28,7 +29,9 @@ bool useVulkan(RendererChoice choice, bool vulkanUsable, bool videoPath)
   return false;
 }
 
-bool vulkanVideoPath() { return false; }  // VulkanVideoItem: 5.3
+bool vulkanVideoPath() { return vulkanVideoCompiled(); }
+bool autoPicksVulkan() { return false; }   // 5.8 parity, D23
+bool vulkanHdrOutput() { return false; }   // 5.4 / 5.5
 
 QList<WantedExtension> wantedDeviceExtensions()
 {
@@ -98,16 +101,18 @@ void chooseGraphicsApi()
   const RendererChoice choice = rendererChoiceFrom(setting);
   bool usable = false;
   QString why;
-  if (choice == RendererChoice::Vulkan || (choice == RendererChoice::Auto && vulkanVideoPath())) usable = probeVulkan(&why);
-  const bool vulkan = useVulkan(choice, usable, vulkanVideoPath());
+  const bool autoVulkan = vulkanVideoPath() && autoPicksVulkan();
+  if (choice == RendererChoice::Vulkan || (choice == RendererChoice::Auto && autoVulkan)) usable = probeVulkan(&why);
+  const bool vulkan = useVulkan(choice, usable, autoVulkan);
   QQuickWindow::setGraphicsApi(vulkan ? QSGRendererInterface::Vulkan : QSGRendererInterface::OpenGL);
   if (vulkan)
     qInfo().noquote() << "Icefin renderer: Vulkan (setting" << setting + ")"
-                      << (vulkanVideoPath() ? QString() : QString("- video plays only on OpenGL until the Vulkan video item (5.3)"));
+                      << (vulkanVideoPath() ? QString("- video on the Vulkan path (gpu-next, SDR output until 5.4/5.5)")
+                                            : QString("- this build has no Vulkan video path (patched libmpv missing): video doesn't show"));
   else if (choice == RendererChoice::Vulkan)
     qWarning().noquote() << "Icefin renderer: Vulkan chosen but not usable (" + why + "), using OpenGL";
   else
-    qInfo().noquote() << "Icefin renderer: OpenGL (setting" << setting + (choice == RendererChoice::Auto ? ", Auto keeps OpenGL until 5.3)" : ")");
+    qInfo().noquote() << "Icefin renderer: OpenGL (setting" << setting + (choice == RendererChoice::Auto ? ", Auto keeps OpenGL until the parity checks, 5.8)" : ")");
 }
 
 VulkanDevice& VulkanDevice::instance()
