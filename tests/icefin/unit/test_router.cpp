@@ -3,6 +3,7 @@
 #include "icefin/render/PlaybackRouter.h"
 #include "icefin/render/HdrCapabilityProbe.h"
 #include "icefin/render/VulkanDevice.h"
+#include "icefin/render/MpvTarget.h"
 
 using namespace Icefin::Render;
 
@@ -119,7 +120,8 @@ private slots:
     QVERIFY(useVulkan(RendererChoice::Vulkan, true, false));
     QVERIFY(!useVulkan(RendererChoice::Vulkan, false, false));
     QVERIFY(!useVulkan(RendererChoice::OpenGl, true, true));
-    QVERIFY(!vulkanVideoPath());
+    QVERIFY(!autoPicksVulkan());   // until the 5.8 parity checks
+    QVERIFY(!vulkanHdrOutput());   // until 5.4/5.5
   }
   void deviceExtensions()
   {
@@ -139,6 +141,35 @@ private slots:
     QVERIFY(pickDeviceExtensions({"VK_KHR_video_decode_h264"}, VK_API_VERSION_1_3).isEmpty());  // no swapchain: nothing
     const auto noQueue = pickDeviceExtensions({"VK_KHR_swapchain", "VK_KHR_video_decode_queue"}, VK_API_VERSION_1_3);
     QCOMPARE(noQueue, QList<QByteArray>{"VK_KHR_swapchain"});  // decode needs video_queue
+  }
+  void mpvTarget()
+  {
+    auto value = [](const MpvOptions& o, const char* k) { for (const auto& p : o) if (p.first == k) return p.second; return QByteArray(); };
+    DisplayInfo kwinHdr;  // KWin 6.6 with HDR on (the user's ultrawide)
+    kwinHdr.transfer = "gamma22"; kwinHdr.primaries = "bt2020"; kwinHdr.maxLuminance = 800; kwinHdr.referenceLuminance = 200;
+    kwinHdr.minLuminance = 0.005;
+    // Untagged SDR output (until 5.4/5.5): the compositor's SDR interpretation, not its HDR description.
+    const MpvOptions sdr = mpvTargetOptions(kwinHdr, false);
+    QCOMPARE(value(sdr, "target-prim"), QByteArray("bt.709"));
+    QCOMPARE(value(sdr, "target-trc"), QByteArray("gamma2.2"));
+    QCOMPARE(value(sdr, "target-peak"), QByteArray("auto"));
+    // HDR output: the compositor's description.
+    const MpvOptions hdr = mpvTargetOptions(kwinHdr, true);
+    QCOMPARE(value(hdr, "target-prim"), QByteArray("bt.2020"));
+    QCOMPARE(value(hdr, "target-trc"), QByteArray("gamma2.2"));
+    QCOMPARE(value(hdr, "target-peak"), QByteArray("800"));
+    QCOMPARE(value(hdr, "hdr-reference-white"), QByteArray("200"));
+    QCOMPARE(value(hdr, "target-contrast"), QByteArray("160000"));
+    DisplayInfo pq;  // a PQ output description, no minimum given
+    pq.transfer = "st2084_pq"; pq.primaries = "bt2020"; pq.maxLuminance = 1000; pq.referenceLuminance = 203;
+    QCOMPARE(value(mpvTargetOptions(pq, true), "target-trc"), QByteArray("pq"));
+    QCOMPARE(value(mpvTargetOptions(pq, true), "target-contrast"), QByteArray("auto"));
+    DisplayInfo unknown;  // X11/Gamescope until 5.6
+    QCOMPARE(value(mpvTargetOptions(unknown, true), "target-prim"), QByteArray("auto"));
+    QCOMPARE(value(mpvTargetOptions(unknown, false), "target-trc"), QByteArray("srgb"));
+    QCOMPARE(mpvPrimaries("display_p3"), QByteArray("display-p3"));
+    QCOMPARE(mpvTransfer("hlg"), QByteArray("hlg"));
+    QVERIFY(mpvTransfer("log_100").isEmpty());
   }
 };
 
