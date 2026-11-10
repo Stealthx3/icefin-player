@@ -13,6 +13,7 @@
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include "icefin/theme/ThemeScheme.h"  // ICEFIN-HOOK: icefin-theme: scheme registration (PLAN 8.3)
 #include "icefin/gpu/WebGpuStatus.h"  // ICEFIN-HOOK: web GPU buffers switch (PLAN 4.3)
+#include "icefin/render/VulkanDevice.h"  // ICEFIN-HOOK: renderer choice and the shared Vulkan device (PLAN 5.1)
 #include <qtwebenginecoreglobal.h>
 #include <QtWebEngineCore/QWebEngineProfile>
 #include <QErrorMessage>
@@ -500,6 +501,7 @@ int main(int argc, char *argv[])
     Icefin::Gpu::applyWebEngineEnv();  // ICEFIN-HOOK: QTWEBENGINE_FORCE_USE_GBM=0 when turned off in settings (PLAN 4.3)
     QtWebEngineQuick::initialize();
     QApplication app(newArgc, newArgv);
+    Icefin::Render::chooseGraphicsApi();  // ICEFIN-HOOK: Vulkan or the OpenGL fallback, before the window exists (PLAN 5.1)
 
 #if defined(Q_OS_WIN) 
     // Setting window icon on OSX will break user ability to change it
@@ -576,6 +578,7 @@ int main(int argc, char *argv[])
         throw FatalException(QObject::tr("Failed to parse application engine script."));
 
       QQuickWindow* window = Globals::MainWindow();
+      Icefin::Render::VulkanDevice::instance().attach(window);  // ICEFIN-HOOK: the shared Vulkan device, before the scene graph starts (PLAN 5.1)
 
       // Set window flags for proper popup handling (e.g., WebEngineView dropdowns)
       window->setFlags(window->flags() | Qt::WindowFullscreenButtonHint);
