@@ -45,7 +45,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [ ] **4.5** Confirm zero-copy hardware decode on AMD, Intel and NVIDIA inside the Flatpak (AMD done: zero-copy on Plasma; on Gamescope after the EGL-on-xcb fix; NVIDIA RTX 4090, driver 595.99.02: hardware decode of all four samples in the nightly Flatpak on Plasma Wayland and in Gamescope, but `nvdec-copy`, not zero-copy, 2026-11-09; real playback with Auto picked zero-copy NVDEC (`cuda` frames) and showed a black picture on the OpenGL renderer, so Auto now takes the copy path on NVIDIA until the Vulkan renderer (5.x); open: NVIDIA zero-copy and Intel)
 
 ## Phase 5 — Single-surface renderer (7 wks)
-- [ ] **5.1** Switch Qt Quick to the Vulkan backend; create the shared Vulkan device with explicit features [Rendering, playback routing and HDR]
+- [x] **5.1** Switch Qt Quick to the Vulkan backend; create the shared Vulkan device with explicit features [Rendering, playback routing and HDR] (`src/icefin/render/VulkanDevice`, setting `main.icefin_renderer`; Auto stays OpenGL until 5.3; on the RTX 4090 Qt Quick renders on the shared device with 13 extensions incl. DMA-BUF, DRM modifiers, HDR metadata and Vulkan Video decode; `renderer_choice.py`)
 - [ ] **5.2** Patched libmpv in `external/mpv` with a Vulkan render API; pin version
 - [ ] **5.3** `VulkanVideoItem` replacing `MpvVideoItem` on the Vulkan path; DMA-BUF import of hwdec frames
 - [ ] **5.4** Linear-light compositing and HDR10 / extended-sRGB encode pass with mastering metadata
