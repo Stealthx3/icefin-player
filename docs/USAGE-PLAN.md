@@ -43,6 +43,7 @@ No more than 3 parallel agents per step. Parallel implementers are allowed only 
 | hook-count | scripts/icefin/hook-count.sh | project | counting/auditing `ICEFIN-HOOK` lines by hand |
 | theme-lint | scripts/icefin/theme-lint (Phase 8) | project | checking engine code for theme ids by eye |
 | provision.sh | scripts/provision.sh | project | re-deriving guest packages |
+| avsim.sh / matrix.py | tests/icefin/avsim/ | project | checking passthrough and ELD handling on the HTPC for every change (D18) |
 
 Watch list for future tools: summarizing Flatpak build logs, and diffing jellyfin-web device profiles.
 
@@ -67,6 +68,7 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 ## Log
 - 2026-11-07: plan created.
 - 2026-11-07: restack.sh written (task 1.2); the stack gained an `icefin/infra` bottom layer.
+- 2026-11-09: Virtual AV tier (D18): nested client with the `hda-hdmi-sink` QEMU device; audio rows run there first, the HTPC confirms.
 - 2026-11-08: stacked branches retired for trunk-based `main` (D17); restack.sh removed. Progress script also writes the README bar (`docs/progress/progress-bar.svg`).
 
 ## Handoff
@@ -84,3 +86,4 @@ Long builds (Qt WebEngine Flatpak) run in the background in the lab. When one fi
 - 2026-11-08 (S4e): 8.5 part 1 (box stays open): shared schemas `docs/themes/schema/` + `scripts/icefin/theme-schemas.py` in CI, CssSanitizer for user stylesheets, script/SVG trust bound to a package content hash, stand-down handshake (`window.icefinPluginRuntime`). `tests/icefin/web/theme_trust.py` 20/20 on both servers. Part 2 next: per-user settings in DisplayPreferences, theme picker in Client Settings, UI sounds (needs Qt Multimedia: not in the lab yet).
 - 2026-11-08 (S4f): 8.5 done: per-user choice cached in `state.icefin_theme` and synced via `native/icefin/themeSync.js` to DisplayPreferences (`usersettings`, client `icefin-player`, `icefin.theme`, newest wins), Client Settings → Theme section (picker + Theme Sounds), UI sounds via QSoundEffect (Qt Multimedia hook in QtConfiguration.cmake; `qt6-multimedia-dev` in provision.sh), sounds in the stand-down handshake. `tests/icefin/web/theme_sync.py` 13/13 on both servers; full theme regression green. Theme engine left: 8.2 (plugin runs), 8.4 (after 5.1), 8.6 (Media Center).
 - 2026-11-08 (S4g, evening, quiet hours): built without hardware, one PR each, stacked: 4.2 hwdec choices, 4.1 decoder self-test + Hardware page, 6.2 router, 4.3 web GPU check + GBM switch, 11.2 log redaction + theme trust review, 6.3 capability prompt, 6.4 Auto device profile, 7.1/7.3/7.5 SDL3 gamepads + glyphs + Gamepad API shim + Controllers page, 8.2 three-way plugin runs, 7.2 remap editor, 3.8 audio test page (receiver run open), 3.4 IEC958 formats + WirePlumber fallback, 6.1 HDR probe on Wayland (X11 part open), 9.2/9.3 capabilities, 8.6 Media Center first version, 12.2 INSTALL.md. PRs #10-#24; merge them in order (each after its predecessor, merging main back in first: the stacked-PR routine). Progress page bar now fills per phase (#17). Next: 1.10 results from the overnight HTPC run (build-htpc/1.10-overnight-report.md), then the HTPC rows (2.4-2.6, 2.8, 3.8 receiver run, 4.5), 5.x renderer.
+- 2026-11-09 (S5): on the user's request: Virtual AV tier (D18, PLAN 1.11): `tests/icefin/avsim/` (hda-hdmi-sink QEMU device, nested client, ELD profiles, IEC 61937 verifier, matrix 12/12). ELD fixtures regenerated from the kernel. Added 3.9 (Icefin in the avsim client) and 5.10 (virtual HDR display, needs Weston 15+). Next: unchanged (1.10, then 2.4–2.6, 2.8 on the HTPC); 3.9 once 3.4 lands.

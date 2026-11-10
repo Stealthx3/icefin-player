@@ -1,0 +1,72 @@
+{
+  "description": "AV receiver over HDMI: LPCM 7.1 up to 192 kHz, AC-3, DTS, E-AC-3, DTS-HD, TrueHD (the release-gate receiver row)",
+  "fixture": "tests/icefin/unit/fixtures/eld/receiver_full.txt",
+  "monitor_name": "Lab AVR",
+  "speakers": "0x7f",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "dts",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "eac3",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "dtshd",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "truehd",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "eac3": "bitstream",
+    "dts": "bitstream",
+    "truehd": "bitstream"
+  }
+}

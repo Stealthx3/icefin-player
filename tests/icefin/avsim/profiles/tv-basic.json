@@ -1,0 +1,11 @@
+{
+  "description": "Plain TV: stereo LPCM and AC-3 only",
+  "fixture": "tests/icefin/unit/fixtures/eld/tv_basic.txt",
+  "monitor_name": "LAB TV",
+  "speakers": "0x7f",
+  "sads": [
+    {"codec": "lpcm", "channels": 2, "rates": [32000, 44100, 48000]},
+    {"codec": "ac3", "channels": 6, "rates": [32000, 44100, 48000]}
+  ],
+  "expect": {"ac3": "bitstream", "eac3": "pcm", "dts": "pcm", "truehd": "pcm"}
+}
