@@ -4,6 +4,7 @@
 #   vkcolorspaces  Vulkan swapchain colour spaces offered for a Wayland surface (spike 2.3's probe)
 #   cmprobe        wp_color_manager_v1 features, output description (spike 2.3's probe)
 #   qtswapchain    the swapchain format Qt Quick gets with QSG_RHI_HDR=hdr10 on Vulkan
+#   vkcs_xcb       the same for an X11 window (inside Gamescope: its WSI layer's colour spaces); run-gamescope.sh
 # Usage (guest): build.sh [OUT]   then copy OUT to the target's ~/.var/app/io.github.stealthx3.IcefinPlayer/data/
 # and run: flatpak run --user --command=OUT/run.sh io.github.stealthx3.IcefinPlayer
 set -euo pipefail
@@ -18,10 +19,11 @@ wayland-scanner client-header \$X color-management-v1-client-protocol.h
 wayland-scanner private-code \$X color-management-v1-protocol.c
 cc -O2 -I. '$here/../2.3-hdr-surface/cmprobe.c' color-management-v1-protocol.c -lwayland-client -o cmprobe
 cc -O2 '$here/../2.3-hdr-surface/vkcolorspaces.c' -lvulkan -lwayland-client -o vkcolorspaces
+cc -O2 '$here/vkcs_xcb.c' -lvulkan -lxcb -o vkcs_xcb
 cmake -S '$here' -B build -DCMAKE_BUILD_TYPE=Release >/dev/null
 cmake --build build >/dev/null
 cp build/qtswapchain .
 "
-cp "$here/run.sh" "$out/run.sh"
-chmod +x "$out/run.sh"
-echo "built $out: cmprobe vkcolorspaces qtswapchain run.sh"
+cp "$here/run.sh" "$here/run-gamescope.sh" "$out/"
+chmod +x "$out/run.sh" "$out/run-gamescope.sh"
+echo "built $out: cmprobe vkcolorspaces vkcs_xcb qtswapchain run.sh run-gamescope.sh"
