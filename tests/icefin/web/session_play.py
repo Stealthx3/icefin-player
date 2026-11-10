@@ -46,7 +46,7 @@ def start_x(display=":99"):
     return p
 
 
-def launch(app, port, cfgdir, logf, qpa="xcb", extra=()):
+def launch(app, port, cfgdir, logf, qpa="xcb", extra=(), gpu=False):
     if qpa == "session":
         # Whatever the session gives us (Plasma, GNOME or Gamescope); htpc.sh imports its environment.
         env = dict(os.environ, LC_ALL="C.UTF-8")
@@ -60,7 +60,9 @@ def launch(app, port, cfgdir, logf, qpa="xcb", extra=()):
     if qpa == "wayland":
         env.pop("DISPLAY", None)
         env["WAYLAND_DISPLAY"] = "wl-icefin"
-    args = ["--windowed", "--desktop", "--disable-gpu", f"--remote-debugging-port={port}", "--log-level=info"] + list(extra)
+    # --disable-gpu by default: steady in Xvfb. gpu=True keeps Chromium's GPU compositing (llvmpipe here), which a
+    # transparent page needs to show the native layers under it (the 8.4 backdrop).
+    args = ["--windowed", "--desktop"] + ([] if gpu else ["--disable-gpu"]) + [f"--remote-debugging-port={port}", "--log-level=info"] + list(extra)
     if app.startswith("flatpak:"):
         # Chromium's sandbox inside a Flatpak spawns via the Flatpak portal, which needs a session bus.
         # Fresh state per run: /var/tmp inside the sandbox is the app's private, writable cache.
