@@ -99,10 +99,6 @@ bool VulkanVideo::createContext()
   vp.features = d.features();
   vp.extensions = m_vk->extensions.data();
   vp.num_extensions = int(m_vk->extensions.size());
-  // No direct rendering: with it, mpv's decoder thread allocates libplacebo buffers and submits on the queue Qt's
-  // render thread also submits on, with nothing to serialize them (the import has no lock_queue). On the RTX 4090
-  // that hung the GPU at the first video frame (Xid 109); without it, playback runs. One extra copy per frame.
-  if (mpv_set_property_string(m_mpv, "vd-lavc-dr", "no") < 0) qWarning() << "Icefin video: couldn't turn off vd-lavc-dr";
   mpv_render_param params[] = {{MPV_RENDER_PARAM_API_TYPE, const_cast<char*>(MPV_RENDER_API_TYPE_VULKAN)},
                                {MPV_RENDER_PARAM_BACKEND, const_cast<char*>("gpu-next")},
                                {MPV_RENDER_PARAM_VULKAN_INIT_PARAMS, &vp},
@@ -118,7 +114,7 @@ bool VulkanVideo::createContext()
     v->m_dirty = true;
     QMetaObject::invokeMethod(v->m_item, "update", Qt::QueuedConnection);
   }, this);
-  qInfo() << "Icefin video: mpv renders through gpu-next on the shared Vulkan device (direct rendering off)";
+  qInfo() << "Icefin video: mpv renders through gpu-next on the shared Vulkan device";
   QMetaObject::invokeMethod(this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
   Q_EMIT ready();
   return true;

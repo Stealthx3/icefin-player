@@ -2,8 +2,7 @@
 """vulkan_video.py — video on the Vulkan path in the running app (PLAN 5.3).
 
 With Renderer = Vulkan (needs the patched libmpv, external/mpv), checks:
-  1. the UI runs on Icefin's shared Vulkan device and mpv's render context is created on it (gpu-next), with
-     direct rendering off (its decoder-thread submits raced Qt's on the shared queue: GPU hang on NVIDIA);
+  1. the UI runs on Icefin's shared Vulkan device and mpv's render context is created on it (gpu-next);
   2. an SDR clip plays: the player reports playing and mpv's frames reach the scene graph on the Vulkan path
      (the picture on screen is checked on real hardware: the lab's Xvfb doesn't composite the transparent web view
      over video, on either renderer, so a screen grab there proves nothing);
@@ -93,7 +92,6 @@ def main():
         time.sleep(4)
         t = text(path)
         check("mpv renders through gpu-next on the shared device", "Icefin video: mpv renders through gpu-next on the shared Vulkan device" in t)
-        check("direct rendering off on the Vulkan path (decoder thread off the shared queue)", "(direct rendering off)" in t)
         m = re.search(r"Icefin video: first frame on the Vulkan path QSize\((\d+), (\d+)\)", t)
         check("frames reach the scene graph", bool(m), m.group(0) if m else "")
         tgt = re.search(r"Icefin video: mpv target (.*)", t)
