@@ -3,8 +3,9 @@
 
   - Tide's GLSL wave is baked into a .qsb and drawn by qml/icefin/Backdrop.qml between the video and the web view;
   - html[data-icefin-backdrop] makes the page transparent and Tide's web-layer canvas steps aside;
-  - the backdrop draws: frames advance at the theme's fps (its gradient through the transparent page is reported
-    only: Chromium keeps a page that loaded opaque as an opaque layer until a reload, open in PLAN 8.4);
+  - switching to it reloads the page once over the backdrop (a page that painted before the backdrop keeps stale
+    pixels); switching between backdrop themes doesn't;
+  - the backdrop draws: frames advance at the theme's fps, and its gradient shows through the transparent page;
   - a time-of-day palette from the web runtime reaches the shader's colour params;
   - low motion freezes it; ui.backdrop.hide()/show(); it hides while video plays and comes back after;
   - Media Center's ribbons are a backdrop too; turning the theme off removes it;
@@ -77,8 +78,10 @@ def main():
 
         tide = themes().get("tide", {})
         check("Tide offered as a built-in theme, usable", tide.get("ok") is True)
-        js("new Promise(r => window.api.theme.setActiveTheme('tide', '', r))")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-td-ready]')", timeout=40)
+        reloads0 = stats().get("reloads", 0)
+        page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]')")
+        time.sleep(2.5)
+        check("the page reloads once over the new backdrop", stats().get("reloads", 0) == reloads0 + 1, json.dumps(stats())[:160])
         b = bd()
         check("Tide's backdrop is baked and offered to the QML layer", str(b.get("shader", "")).endswith(".qsb") and b.get("fps") == 30
               and set((b.get("params") or {}).keys()) == {"colorTop", "colorBottom", "lineColor", "shade", "speed"}, json.dumps(b)[:300])
@@ -110,8 +113,7 @@ def main():
             for mode in ["resize", "layer", "visible", "bgAlpha"]:
                 js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
                 time.sleep(3)
-                js("new Promise(r => window.api.theme.setActiveTheme('tide', '', r))")
-                page.wait_for("!!document.querySelector('#icefin-theme-root[data-td-ready]')", timeout=40)
+                page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]')")
                 time.sleep(4)
                 before = sample()
                 ok = js(f"new Promise(r => window.api.theme.repaintWeb('{mode}', r))")
@@ -133,9 +135,8 @@ def main():
             return out; })()""")
         print(f"theme_backdrop: info opaque at the top {json.dumps(opaque)}", flush=True)
         teal = bool(qpx) and abs(qpx[0] - 0x2f) < 40 and abs(qpx[1] - 0xa3) < 40 and abs(qpx[2] - 0xa0) < 40
-        # reported only: Chromium keeps a page that loaded opaque as an opaque layer, so the gradient shows through
-        # only after a reload (open in PLAN 8.4, on every X server, the HTPC's GPU included)
-        print(f"theme_backdrop: info pixel at the top {qpx} ({'teal: the backdrop shows through' if teal else 'not visible through the page: the open 8.4 gap'})", flush=True)
+        # strict everywhere: the page reloaded over the backdrop (a page that painted before it keeps stale pixels)
+        check("the window shows the shader's gradient through the page (teal at the top)", teal, f"{qpx}")
         # motion
         js("window.icefinTheme.ui.motion.cap('low'); true")
         time.sleep(2.5)
@@ -194,9 +195,11 @@ def main():
             back = False
         check("back after the video stops", back, json.dumps(stats()))
         # Media Center's ribbons are a backdrop too; its CSS field steps aside
+        reloads1 = stats().get("reloads", 0)
         js("new Promise(r => window.api.theme.setActiveTheme('media-center', '', r))")
         time.sleep(4.5)
         mb, ms = bd(), stats()
+        check("backdrop to backdrop keeps the page (no reload)", ms.get("reloads", 0) == reloads1, json.dumps(ms)[:160])
         check("Media Center: ribbons baked and drawing, CSS field hidden", str(mb.get("shader", "")).endswith(".qsb") and mb.get("fps") == 24
               and set((mb.get("params") or {}).keys()) == {"surface", "background", "ribbon", "ribbonAlt", "speed"} and ms.get("shown") is True
               and "media-center" in str(ms.get("shader", "")) and js("(e => !e || getComputedStyle(e).display === 'none')(document.querySelector('.mc-field'))") is True,

@@ -158,6 +158,15 @@
         screenShown(false);
     }
 
+    // Theme screens load the user's library as they mount, so they wait for a signed-in API client: right after a
+    // page load (the 8.4 backdrop reload, a cold start with a theme chosen) the theme is known before jellyfin-web has
+    // restored the session.
+    const signedIn = () => {
+        const c = window.ApiClient;
+        try { return !!(c && c.accessToken && c.accessToken() && c.getCurrentUserId && c.getCurrentUserId()); } catch (e) { return false; }
+    };
+    let signInWait = null;
+
     function route_() {
         const path = route();
         // "?icefin=stock" on any route shows jellyfin-web's own page, so plugin UI a themed screen replaces (home
@@ -167,6 +176,10 @@
         if (current && current.route === path && current.screen === screen) return;
         unmountScreen();
         if (!screen) return;  // jellyfin-web's own page
+        if (!signedIn()) {
+            if (!signInWait) signInWait = setTimeout(() => { signInWait = null; route_(); }, 250);
+            return;
+        }
         const r = root();
         if (!r) return;
         current = { route: path, screen };
