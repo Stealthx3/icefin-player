@@ -6,6 +6,12 @@
 // says the output's description changed (4.4).
 // X11 and Gamescope: the answer comes from the Vulkan surface's colour spaces, which needs the Vulkan renderer (5.6);
 // until then the state is Unknown, which the router treats as SDR (safe: tone-mapped).
+//
+// Surface tagging (5.5): on the same connection it tags the window's wl_surface with an image description, so the
+// compositor reads the HDR10 swapchain the compositor pass (Compositing.h) writes as PQ / BT.2020 with SDR white at
+// the reference white, plus the video's HDR10 static metadata (mastering display, MaxCLL, MaxFALL) where the
+// compositor takes it. Neither Mesa nor NVIDIA tags the surface for a Vulkan HDR swapchain (spikes 2.3, 2.8), so
+// without this KWin shows the PQ values as sRGB.
 #pragma once
 #include <QObject>
 #include <QPointer>
@@ -29,6 +35,22 @@ struct DisplayInfo
 // as gamma22 / bt2020 with max 800, reference 200 (RTX 4090 ultrawide, 2026-11-09), and an SDR one as max = reference.
 DisplayInfo::Hdr hdrForTransfer(const QString& tf, int maxLuminance = -1, int referenceLuminance = -1);
 
+// What the window's surface says it holds (5.5).
+struct SurfaceDescription
+{
+  enum class Kind { None, Hdr10 } kind = Kind::None;
+  int referenceWhite = 203;              // cd/m² of SDR white in the PQ signal
+  // The video's HDR10 static metadata; 0 / false = not known, left out.
+  bool hasMasteringPrimaries = false;
+  double masteringPrimaries[8] = {};     // red, green, blue, white: CIE 1931 x, y
+  double masteringMinLuminance = 0;      // cd/m²
+  int masteringMaxLuminance = 0;         // cd/m²
+  int maxCll = 0, maxFall = 0;           // cd/m²
+  bool operator==(const SurfaceDescription& o) const;
+  bool operator!=(const SurfaceDescription& o) const { return !(*this == o); }
+  QString summary() const;
+};
+
 class HdrCapabilityProbe : public QObject
 {
   Q_OBJECT
@@ -37,6 +59,12 @@ public:
   void attach(QWindow* window);   // probes now and on every screen change
   DisplayInfo current() const { return m_info; }
   void probe();
+  // The compositor accepts an HDR10 surface description: parametric, PQ, BT.2020, its own luminances, perceptual intent.
+  bool canTagHdr10() const;
+  // Tags `window`'s surface (Wayland only). Kind::None removes the tag. Returns an error, or an empty string.
+  QString tagSurface(QWindow* window, const SurfaceDescription& d);
+  SurfaceDescription currentTag() const { return m_tag; }
+  QWindow* window() const;
   struct Wl;  // Wayland objects (HdrCapabilityProbe.cpp); public so the C listeners can reach it
 Q_SIGNALS:
   void changed(const QVariantMap& info);
@@ -44,6 +72,7 @@ private:
   HdrCapabilityProbe() = default;
   QPointer<QWindow> m_window;
   DisplayInfo m_info;
+  SurfaceDescription m_tag;
   Wl* m_wl = nullptr;
 };
 }

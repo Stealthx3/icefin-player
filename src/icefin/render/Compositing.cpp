@@ -35,11 +35,23 @@ QString outputEncodingName(OutputEncoding o)
   }
 }
 
+bool VideoHdrMetadata::operator==(const VideoHdrMetadata& o) const
+{
+  if (minLuminance != o.minLuminance || maxLuminance != o.maxLuminance || maxCll != o.maxCll || maxFall != o.maxFall
+      || hasPrimaries != o.hasPrimaries)
+    return false;
+  for (int i = 0; i < 8; ++i)
+    if (primaries[i] != o.primaries[i]) return false;
+  return true;
+}
+
 QVariantMap CompositorState::toMap() const
 {
   return {{"active", active}, {"reason", reason}, {"blend", uiBlendName(blend)}, {"output", outputEncodingName(output)},
           {"referenceWhite", referenceWhite}, {"peak", peak}, {"gamma22", gamma22}, {"shaderUrl", shaderUrl},
-          {"videoLinearWhite", kVideoLinearWhite}};
+          {"videoLinearWhite", kVideoLinearWhite}, {"hdrRequested", hdrRequested}, {"hdrReason", hdrReason},
+          {"tagged", tagged}, {"maxCll", video.maxCll}, {"maxFall", video.maxFall},
+          {"masteringMax", video.maxLuminance}, {"masteringMin", video.minLuminance}};
 }
 
 CompositorState& compositorState()

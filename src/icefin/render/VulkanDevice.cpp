@@ -10,7 +10,9 @@
 #include "settings/SettingsComponent.h"
 #include "VulkanVideo.h"
 #include "Compositing.h"
+#include "HdrCapabilityProbe.h"
 #include "RouterComponent.h"
+#include <QGuiApplication>
 #if __has_include(<rhi/qrhi.h>)
 #include <rhi/qrhi.h>
 #define ICEFIN_DEVICE_RHI 1
@@ -37,7 +39,11 @@ bool useVulkan(RendererChoice choice, bool vulkanUsable, bool videoPath)
 
 bool vulkanVideoPath() { return vulkanVideoCompiled(); }
 bool autoPicksVulkan() { return false; }   // 5.8 parity, D23
-bool vulkanHdrOutput() { return false; }   // 5.4 / 5.5
+bool vulkanHdrOutput()
+{
+  const CompositorState& cs = compositorState();
+  return cs.active && cs.output == OutputEncoding::Hdr10 && cs.tagged;
+}
 
 QList<WantedExtension> wantedDeviceExtensions()
 {
@@ -170,6 +176,28 @@ bool VulkanDevice::attach(QQuickWindow* window)
     cs.active = !cs.shaderUrl.isEmpty();
     cs.reason = cs.active ? "Vulkan video path" : err;
   }
+  // HDR output (5.5): an HDR10 swapchain when the window's display is HDR and the compositor can be told what the
+  // surface holds. Qt reads the format once, when the scene graph makes the swapchain, so it is decided here; HDR
+  // turned on or off on the display later applies after a restart. main.icefin_hdr_output: auto (default) or off;
+  // ICEFIN_HDR_OUTPUT overrides it.
+  const QVariant hv = SettingsComponent::readPreinitValue(SETTINGS_SECTION_MAIN, "icefin_hdr_output");
+  QString hdrSetting = qEnvironmentVariable("ICEFIN_HDR_OUTPUT");
+  if (hdrSetting.isEmpty()) hdrSetting = hv.isValid() && !hv.isNull() ? hv.toString() : QString("auto");
+  if (!cs.active) cs.hdrReason = "the compositor is off";
+  else if (hdrSetting == "off") cs.hdrReason = "HDR output is off in the settings";
+  else if (!QGuiApplication::platformName().startsWith("wayland")) cs.hdrReason = "not on Wayland (X11 and Gamescope: 5.6)";
+  else {
+    HdrCapabilityProbe& probe = HdrCapabilityProbe::instance();
+    probe.attach(window);  // probes the window's screen now, before the swapchain exists
+    if (probe.current().hdr != DisplayInfo::Hdr::Yes) cs.hdrReason = "the display is in SDR";
+    else if (!probe.canTagHdr10()) cs.hdrReason = "the compositor can't take an HDR10 surface description";
+    else {
+      window->setProperty("_qt_sg_hdr_format", QByteArray("hdr10"));
+      cs.hdrRequested = true;
+      cs.hdrReason = "HDR display";
+    }
+  }
+  qInfo().noquote() << "Icefin renderer: HDR output" << (cs.hdrRequested ? "on" : "off") << "(" + cs.hdrReason + ")";
   QMetaObject::invokeMethod(&RouterComponent::Get(), "refreshCompositor", Qt::QueuedConnection);
   // Once the scene graph is up, confirm Qt renders with this device rather than one of its own.
   QObject::connect(window, &QQuickWindow::sceneGraphInitialized, window, [this, window] {
