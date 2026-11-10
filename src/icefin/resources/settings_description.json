@@ -38,6 +38,17 @@
         "default": true
       },
       {
+        "value": "icefin_renderer",
+        "display_name": "Renderer",
+        "help": "How the app draws its window. Auto picks the best that works here. Vulkan (experimental) runs the interface on Vulkan; until the Vulkan video path is finished, video doesn't show with it. OpenGL is the fallback for systems without working Vulkan. Takes effect after a restart.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "vulkan", "Vulkan (experimental)" ],
+          [ "opengl", "OpenGL" ]
+        ]
+      },
+      {
         "value": "icefin_nintendo_layout",
         "display_name": "Nintendo Button Layout",
         "help": "On Nintendo controllers, the button marked A confirms and B goes back, as printed. Other controllers are unchanged.",

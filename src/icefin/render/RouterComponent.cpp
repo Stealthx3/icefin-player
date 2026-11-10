@@ -6,6 +6,7 @@
 #include <QSGRendererInterface>
 #include "settings/SettingsComponent.h"
 #include "HdrCapabilityProbe.h"
+#include "VulkanDevice.h"
 #include <QGuiApplication>
 #include <QTimer>
 #include <QWindow>
@@ -37,7 +38,8 @@ System RouterComponent::system() const { return currentSystem(); }
 System currentSystem()
 {
   System s;
-  s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan ? Renderer::Vulkan : Renderer::OpenGlFallback;
+  // The UI can already run on Vulkan (5.1), but video plays there only once the Vulkan video item exists (5.3).
+  s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan && vulkanVideoPath() ? Renderer::Vulkan : Renderer::OpenGlFallback;
   s.vulkanAvailable = false;     // until the Vulkan renderer exists (5.1): no "switch to Vulkan" option
   switch (HdrCapabilityProbe::instance().current().hdr) {  // 6.1
     case DisplayInfo::Hdr::Yes: s.display = DisplayState::Hdr; break;
