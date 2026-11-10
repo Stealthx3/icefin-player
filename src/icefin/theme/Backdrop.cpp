@@ -1,8 +1,14 @@
 #include "Backdrop.h"
 #include <QRegularExpression>
+// QShader is Qt's semi-public RHI API (private include tree): a build without Qt's private headers has no backdrop.
+#if __has_include(<rhi/qshader.h>)
 #include <rhi/qshader.h>
-#ifdef ICEFIN_SHADERTOOLS
+#define ICEFIN_QSHADER 1
+#endif
+#if defined(ICEFIN_SHADERTOOLS) && defined(ICEFIN_QSHADER)
 #include <rhi/qshaderbaker.h>
+#else
+#undef ICEFIN_SHADERTOOLS
 #endif
 
 namespace Icefin::Theme
@@ -135,6 +141,11 @@ QByteArray bakeBackdrop(const QString& body, const QMap<QString, QString>& types
 
 bool checkBackdropQsb(const QByteArray& qsb, const QMap<QString, QString>& types, QString* error)
 {
+#ifndef ICEFIN_QSHADER
+  Q_UNUSED(qsb); Q_UNUSED(types);
+  *error = "this build can't load backdrop shaders (Qt's RHI headers missing)";
+  return false;
+#else
   const QShader s = QShader::fromSerialized(qsb);
   if (!s.isValid() || s.stage() != QShader::FragmentStage) { *error = "not a precompiled fragment shader (.qsb)"; return false; }
   const auto blocks = s.description().uniformBlocks();
@@ -151,5 +162,6 @@ bool checkBackdropQsb(const QByteArray& qsb, const QMap<QString, QString>& types
   }
   if (!s.description().combinedImageSamplers().isEmpty()) { *error = "backdrop shaders can't sample textures"; return false; }
   return true;
+#endif
 }
 }
