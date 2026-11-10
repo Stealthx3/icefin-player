@@ -55,7 +55,7 @@ def main():
         apps.append(app)
         page = Page(a.port, timeout=90)
         if fresh_login:
-            page.wait_for("document.getElementById('address') !== null", timeout=60)
+            page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
             page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
             time.sleep(5)
             page.reconnect()

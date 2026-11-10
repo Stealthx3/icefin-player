@@ -112,7 +112,7 @@ def main():
     try:
         page = Page(a.port, timeout=90)
         step("devtools attached")
-        page.wait_for("document.getElementById('address') !== null", timeout=60)
+        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
         page.eval(f"document.getElementById('address').value = '{admin.base}'; "
                   "document.getElementById('connect-form').requestSubmit(); true")
         step("server address submitted")
