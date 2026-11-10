@@ -121,6 +121,14 @@ Mesa can produce a PQ-encoded swapchain. Design consequences for Phase 5:
 4. **KWin 6.3 is below the Plasma 6.4+ target.** Re-run `cmprobe` on Plasma 6.4+ (a newer lab base or the HTPC).
 5. The TV/monitor actually switching to HDR10 is a hardware check (1.10 (HTPC tier)).
 
+**Correction (2026-11-09, found in 2.8).** `vkcolorspaces` named colour spaces from hand-typed numbers, and values
+1000104006–1000104013 were one off: what it printed as BT2020_LINEAR was BT709_NONLINEAR, HDR10_ST2084 was
+BT2020_LINEAR, DOLBYVISION was **HDR10_ST2084**, ADOBERGB_LINEAR was **HDR10_HLG**, PASS_THROUGH was
+ADOBERGB_NONLINEAR. Read the tables here with that mapping: the lab's Flatpak Mesa offered BT2020_LINEAR,
+EXTENDED_SRGB_LINEAR, DISPLAY_P3 and **HDR10_ST2084** on KWin, and BT709_NONLINEAR, BT2020_LINEAR and **HDR10_ST2084**
+on Mutter; RADV on the HTPC offered **HDR10_ST2084 and HDR10_HLG** with BT2020_LINEAR, EXTENDED_SRGB_LINEAR and
+SRGB_NONLINEAR. Every verdict stands (HDR10 was available in each case); the probe now uses `vulkan.h`'s names.
+
 **Re-run on the HTPC (2026-11-09: Plasma 6.8.2 / KWin 6.8.2 Wayland, RADV with Flatpak Mesa 26.2.5, HDR on in KWin).**
 - `cmprobe`: features as KWin 6.3 plus the same mastering-metadata support; transfer functions bt1886, gamma22,
   ext_linear, st2084_pq **and hlg**; an HLG/BT.2020 surface description is **accepted**. So design note 2 no longer
@@ -181,3 +189,45 @@ also stops those events at capture. Only a focused page sees pads (a Chromium ru
 kernel for `/dev/uinput`.
 
 **Steam Input** virtual-pad visibility needs Steam, so it moves to 7.4 (Steam Input handling) on the Deck or HTPC.
+
+## 2.8 NVIDIA Vulkan HDR on Wayland and Gamescope: **GO (swapchain level) on both**
+
+_2026-11-09 · `src/icefin/spikes/2.8-nvidia-hdr/` (`build.sh` builds `vkcolorspaces` (2.3), `vkcs_xcb`, `cmprobe` (2.3)
+and `qtswapchain` against the Flatpak SDK in the lab guest; `run.sh` and `run-gamescope.sh` run them inside Icefin's
+installed Flatpak) · the user's workstation: RTX 4090, NVIDIA 595.99.02 (Flatpak `GL.nvidia-595-99-02`), KWin 6.6.6
+Wayland on Ubuntu 26.04, HDR on for an ultrawide (BT.2020, 800 nits, reference white 200); Gamescope 3.16.20 nested on
+that desktop with `--hdr-enabled`, Flathub's `VulkanLayer.gamescope` 3.16.31_
+
+**Vulkan swapchain colour spaces** (names from `vulkan.h`; see the correction under 2.3):
+
+| Session | 10-bit (`A2B10G10R10`, `A2R10G10B10`) | FP16 (`R16G16B16A16_SFLOAT`) |
+|---|---|---|
+| KWin Wayland | SRGB_NONLINEAR, PASS_THROUGH, BT709_NONLINEAR, **HDR10_ST2084** | SRGB_NONLINEAR, PASS_THROUGH, **EXTENDED_SRGB_LINEAR**, DISPLAY_P3_LINEAR, BT709_LINEAR/NONLINEAR, BT2020_LINEAR, ADOBERGB_LINEAR |
+| Gamescope, WSI layer on (`ENABLE_GAMESCOPE_WSI=1`) | SRGB_NONLINEAR, PASS_THROUGH, **HDR10_ST2084** | SRGB_NONLINEAR, PASS_THROUGH, **EXTENDED_SRGB_LINEAR** |
+| Gamescope, WSI layer off | (8-bit SRGB_NONLINEAR only) | none |
+
+**Qt Quick** (Qt 6.11.3, Vulkan, `QSG_RHI_HDR=hdr10`, `qtswapchain`): an **HDR10 swapchain** on KWin Wayland and in
+Gamescope with the WSI layer (max 1000 nits, SDR white 200); with the WSI layer off it falls back to SDR without error.
+
+**Other findings.**
+- The driver doesn't tag the Wayland surface (`WAYLAND_DEBUG=client`: no `get_surface` or `set_image_description`),
+  same as Mesa: Icefin tags it itself (5.5).
+- KWin 6.6.6 (`cmprobe`): PQ/BT.2020 with HDR10 mastering metadata accepted; HLG not offered (KWin 6.8 offers it).
+- Nested in an HDR desktop, Gamescope exposes HDR to its clients (`bExposeHDRSupport: true`) without
+  `--hdr-debug-force-support`.
+- A nested Gamescope inside Plasma needs `flatpak run --socket=x11 --nosocket=wayland` to give the app the sockets game
+  mode gives it (Flatpak's `fallback-x11` sees the desktop's `wayland-0` and withholds X11).
+- The app itself in nested Gamescope: a 4K HDR10 HEVC film direct-plays on NVDEC (copy mode, `p010`), tone-mapped
+  to SDR on the OpenGL fallback, picture on screen. Display state reads "unknown" under X11 until 5.6.
+
+**Verdict.** Go. NVIDIA's driver gives Qt Quick an HDR10 swapchain on KWin Wayland and inside Gamescope (with the WSI
+layer) from the Flatpak, on a 10-bit format, as on AMD. Design consequences for Phase 5:
+1. **Icefin tags the Wayland surface itself (5.5)** on NVIDIA too (2.3 note 1).
+2. **Gamescope needs the WSI layer:** the Flatpak must run with `ENABLE_GAMESCOPE_WSI=1` and Flathub's
+   `VulkanLayer.gamescope` for HDR in game mode; without it, SDR output (safe, tone-mapped).
+3. **HLG on KWin depends on the version:** 6.8 offers it, 6.6 doesn't; keep the HLG-to-PQ conversion for older KWin,
+   Mutter and Gamescope.
+4. The panel switching to HDR output is checked once 5.5 tags the surface (5.8).
+
+Also found on this machine (not part of the spike): NVDEC's zero-copy CUDA frames show a blank picture on the
+OpenGL fallback, so Auto uses copy mode on NVIDIA until the Vulkan renderer (4.5, #39).
