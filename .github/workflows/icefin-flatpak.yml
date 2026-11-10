@@ -30,3 +30,42 @@ jobs:
           bundle: icefin-player-${{ github.sha }}.flatpak
           run-tests: true
           cache-key: flatpak-builder-${{ hashFiles('flatpak/*.yml') }}
+
+  # A stable download for testers: every green build of main replaces the rolling "nightly" pre-release, whose bundle
+  # keeps one name (releases/download/nightly/icefin-player-x86_64.flatpak). The bundle names Flathub as its runtime
+  # repo, so `flatpak install --user` fetches org.kde.Platform 6.11 itself.
+  nightly:
+    needs: flatpak
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: flatpak-nightly
+      cancel-in-progress: true
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: icefin-player-*
+          path: dl
+          merge-multiple: true
+      - name: Publish the nightly pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          src=$(find dl -name '*.flatpak' | head -n1)
+          [ -n "$src" ] || { echo "no bundle in the flatpak job's artifact"; exit 1; }
+          cp "$src" icefin-player-x86_64.flatpak
+          sha256sum icefin-player-x86_64.flatpak > icefin-player-x86_64.flatpak.sha256
+          short=${GITHUB_SHA::7}
+          notes="Rolling test build of main at ${short} ($(date -u +%Y-%m-%d)). Not a release.
+
+          Install (needs the Flathub remote; the KDE 6.11 runtime comes with it):
+
+              flatpak install --user ./icefin-player-x86_64.flatpak
+              flatpak run io.github.stealthx3.IcefinPlayer"
+          gh release delete nightly --cleanup-tag --yes 2>/dev/null || true
+          gh release create nightly --prerelease --target "$GITHUB_SHA" --title "Nightly (${short})" --notes "$notes" \
+            icefin-player-x86_64.flatpak icefin-player-x86_64.flatpak.sha256
