@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_spark.py — the Spark benchmark theme in the running app (PLAN 9.5; target Fire TV). Lab guests only.
 
-  - Spark is in the benchmark pack (Client Settings → Benchmark Themes);
+  - Spark is a built-in theme, offered in Client Settings → Theme;
   - home: the top-bar chrome slot (Home, Search, each library, Settings, Classic home), a hero carousel of featured
     items, and rows of 16:9 tiles (Continue watching, Next up, Recently added per library);
   - the hero: left/right step through its items (wrapping); after a short dwell a muted preview plays in the page's
@@ -9,7 +9,7 @@
   - five-way navigation: down from the bar to the hero to the rows, up back; each row keeps its position; Back from a
     row returns to the hero and from the hero to the bar; Enter opens jellyfin-web's details page (Spark's tokens);
   - long rows recycle: a 300-item row keeps nine tiles in the DOM while focus moves along it;
-  - Classic home shows the stock home; turning the pack off switches the engine off.
+  - Classic home shows the stock home; turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_spark.py --app ~/build/src/icefin-player --server jf12 --out ~/r95/jf12
 """
@@ -66,11 +66,8 @@ def main():
         themes = lambda: {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
-        check("Spark not offered while the pack is off", "spark" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         sp = themes().get("spark", {})
-        check("Benchmark Themes on: Spark offered, bundled, usable", sp.get("ok") is True and sp.get("source") == "bundled", json.dumps(sp)[:160])
+        check("Spark offered as a built-in theme, usable", sp.get("ok") is True and sp.get("source") == "bundled", json.dumps(sp)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('spark', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-sp-ready]')", timeout=40)
         time.sleep(1.5)
@@ -179,9 +176,9 @@ def main():
         check("no preview and no transitions under the low-motion cap", js("!!document.querySelector('video.icefin-preview')") is False
               and js("getComputedStyle(document.querySelector('.sp-row')).transitionDuration") == "0s")
         js("window.icefinTheme.ui.motion.cap('normal'); true")
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Spark gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "spark" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

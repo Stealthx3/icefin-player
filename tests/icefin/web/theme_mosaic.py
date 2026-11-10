@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme_mosaic.py — the Mosaic benchmark theme in the running app (PLAN 9.9; target Xbox 360 Metro). Lab guests only.
 
-  - Mosaic is in the opt-in benchmark pack: offered only with Client Settings → Benchmark Themes on;
+  - Mosaic is a built-in theme, offered in Client Settings → Theme;
   - pivot headers across the top (home, each library, settings), large and lowercase, the active one at the left;
   - each section a grid of flat tiles in three sizes (large 2×2, wide 2×1, small 1×1) flowing in columns;
   - live tiles cycle their content and freeze under low motion;
@@ -69,11 +69,8 @@ def main():
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f || !f.mosaicTile) return ''; "
                          "return f.mosaicTile.size + '/' + f.mosaicTile.label; })()")
 
-        check("benchmark pack off by default", "mosaic" not in themes())
-        setv("benchPack", True)
-        time.sleep(1)
         p = themes().get("mosaic", {})
-        check("Benchmark Themes on: Mosaic offered, bundled, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
+        check("Mosaic offered as a built-in theme, usable", p.get("ok") is True and p.get("source") == "bundled", json.dumps(p)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('mosaic', '', r))")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pv]'); return !!r && +r.getAttribute('data-pv-ready') > 0; })()", timeout=40)
         time.sleep(1.5)
@@ -124,9 +121,9 @@ def main():
         check("Enter on a tile opens its page, styled by Mosaic's tokens", js("window.icefinTheme.active().route") is None
               and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim().toLowerCase()") == "#2f8f1f")
 
-        setv("benchPack", False)
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
-        check("pack turned off while active: engine off, Mosaic gone", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and "mosaic" not in themes())
+        check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
