@@ -29,6 +29,9 @@ def main():
     ap.add_argument("--server", default="jf12")
     ap.add_argument("--port", type=int, default=9258)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--probe-repaint", action="store_true",
+                    help="8.4 diagnosis: after the switch to Tide, try each web-view repaint (ThemeComponent::repaintWeb) and "
+                         "report the pixels through the page and whether the page still gets frames; then stop")
     ap.add_argument("--qpa", default="xcb", help="session: the HTPC's on-screen session (htpc.sh web), where the pixel check is strict")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -90,6 +93,33 @@ def main():
         time.sleep(3)
         top = (bd().get("params") or {}).get("colorTop", {}).get("value")
         check("a time-of-day palette reaches the shader's colours", str(top).lower().startswith("#2fa3a0"), str(top))
+        if a.probe_repaint:
+            pts = [(0.5, 0.06), (0.85, 0.55), (0.62, 0.42)]
+
+            def sample():
+                js("new Promise(r => window.api.theme.grabWindow(r))")
+                time.sleep(2)
+                return [js(f"new Promise(r => window.api.theme.grabPixel({x}, {y}, r))") for x, y in pts]
+
+            def alive():
+                return js("new Promise(r => { const t = setTimeout(() => r(false), 3000); "
+                          "requestAnimationFrame(() => { clearTimeout(t); r(true); }); })")
+
+            # each mode from a fresh stale page: theme off (opaque page), Tide again (transparent page, stale pixels)
+            # least invasive first: bgAlpha froze the page on the HTPC once (#57)
+            for mode in ["resize", "layer", "visible", "bgAlpha"]:
+                js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+                time.sleep(3)
+                js("new Promise(r => window.api.theme.setActiveTheme('tide', '', r))")
+                page.wait_for("!!document.querySelector('#icefin-theme-root[data-td-ready]')", timeout=40)
+                time.sleep(4)
+                before = sample()
+                ok = js(f"new Promise(r => window.api.theme.repaintWeb('{mode}', r))")
+                time.sleep(1.5)
+                print(f"theme_backdrop: probe {mode} {ok} before {before} after {sample()} frames {alive()}", flush=True)
+            js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")  # the choice syncs to the server user
+            time.sleep(1.5)
+            return 0
         # Qt's own render of the window (QML scene: backdrop, video item, web view texture), sampled in the app
         js("new Promise(r => window.api.theme.grabWindow(r))")
         page.wait_for("new Promise(r => window.api.theme.backdropStats(s => r(!!s.grab)))", timeout=15)
