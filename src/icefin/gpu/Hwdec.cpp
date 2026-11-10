@@ -8,6 +8,20 @@
 
 namespace Icefin::Gpu
 {
+static int s_loading = 0;
+HwdecLoadScope::HwdecLoadScope() { ++s_loading; }
+HwdecLoadScope::~HwdecLoadScope() { --s_loading; }
+
+bool deferHwdecChange(bool playing, const QString& current, const QString& next)
+{
+  static QString logged;  // settings changes arrive more than once: log each pending change once
+  if (s_loading > 0 || !playing || current == next) { logged.clear(); return false; }
+  if (logged != current + ">" + next)
+    qInfo().noquote() << "Icefin hwdec: decoder change" << current << "->" << next << "applies to the next video (not switched mid-playback)";
+  logged = current + ">" + next;
+  return true;
+}
+
 bool hasNvidiaGpu(const QString& sysRoot)
 {
   for (const QString& card : QDir(sysRoot + "/class/drm").entryList({"card[0-9]", "card[0-9][0-9]"}, QDir::Dirs | QDir::System)) {
