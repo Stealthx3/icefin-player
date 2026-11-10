@@ -20,12 +20,12 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **2.1** Spike: Qt Quick on Qt's Vulkan backend with Qt WebEngine working inside it
 - [x] **2.2** Spike: patched libmpv rendering through libplacebo on Qt's shared Vulkan device
 - [x] **2.3** Spike: HDR swapchain format and Wayland surface tagging on KWin and Mutter
-- [ ] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (renderer works in game mode; open: HDR, which needs Flathub's gamescope VulkanLayer extension on the HTPC, waiting for the user's OK)
-- [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white)
-- [ ] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA
+- [x] **2.4** Spike: same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak (GO: HDR10 swapchain through Flathub's gamescope VulkanLayer in a nested Gamescope and in Steam's game-mode UI on an RTX 4090, 2026-11-09; the HTPC re-run waits for the user's OK to install the extension there)
+- [ ] **2.5** Spike: SDR UI brightness over HDR video (reference white) (not gating; inputs known (reference white 200 on KWin, Qt sdrWhiteLevel 200); the visual check runs with 5.8)
+- [x] **2.6** Spike: runtime IEC958 format setting on PipeWire and PulseAudio; device reservation for exclusive ALSA (GO: built as 3.4 and 3.5; HDMI result in 3.8)
 - [x] **2.7** Spike: `icefin-theme:` scheme vs jellyfin-web CSP; WebEngine Gamepad API exposure (Steam Input virtual pad visibility moved to 7.4)
 - [x] **2.8** Spike: NVIDIA Vulkan HDR on Wayland (GO at swapchain level on an RTX 4090, KWin 6.6 Wayland and nested Gamescope with the WSI layer: HDR10 on a 10-bit swapchain; the driver doesn't tag the surface; `docs/SPIKES.md`)
-- [ ] **2.9** Write go/no-go per spike in `docs/SPIKES.md`; a no-go on 2.1–2.3 switches the plan to the two-window contingency
+- [x] **2.9** Write go/no-go per spike in `docs/SPIKES.md`; a no-go on 2.1–2.3 switches the plan to the two-window contingency (2.1–2.3 all go: Phase 5 stays single-surface; summary in `docs/SPIKES.md` 2.9)
 
 ## Phase 3 — Audio subsystem (4 wks)
 - [x] **3.1** `audio.backend` setting (Auto, PipeWire, PulseAudio, JACK, ALSA) mapped to mpv `ao`; hide passthrough under JACK [Audio subsystem]
