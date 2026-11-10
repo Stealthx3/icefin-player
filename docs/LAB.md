@@ -75,6 +75,13 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
 - **Stand-in:** `HTPC_ENV=tests/icefin/htpc/htpc.sim.env scripts/icefin/htpc.sh …` targets `lab-icefin-htpcsim`
   (headless Weston as the "TV session"; no GPU, so `play … --app-arg=--disable-gpu` there).
 
+## Test builds for people (nightly)
+Every green `icefin-flatpak` run on `main` replaces the rolling **nightly** pre-release:
+https://github.com/Stealthx3/icefin-player/releases/tag/nightly. Its bundle keeps one name,
+`icefin-player-x86_64.flatpak` (with a `.sha256`), and names Flathub as its runtime repo:
+`flatpak install --user ./icefin-player-x86_64.flatpak`, then `flatpak run io.github.stealthx3.IcefinPlayer`.
+Per-commit bundles stay on each workflow run as artifacts (90 days).
+
 ## Provisioning
 - scripts/provision.sh: native build deps (Qt 6 + WebEngine dev, libmpv-dev, SDL2, CEC), flatpak + flatpak-builder + Flathub remote, podman.
 
