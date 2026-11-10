@@ -79,7 +79,7 @@
             const list = el('div', 'pl-menu');
             rail.append(list);
             const views = await T.ui.userViews();
-            const client = window.ApiClient;  // a cold start creates the client late: read it after userViews
+            const client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
             if (!S) return;
             S.client = client;
             S.views = views;
@@ -193,7 +193,7 @@
         S.grid.style.transform = S.topRow ? `translateY(${-S.topRow * rowHeight()}px)` : 'none';
         S.content.setAttribute('data-pl-top', String(S.topRow));
         loadArt();
-        T._engine.focus(S.cells[i]);
+        T.ctx.focus(S.cells[i]);
     }
 
     function enterGrid() {
@@ -207,7 +207,7 @@
         i = Math.max(0, Math.min(S.menu.length - 1, i));
         S.zone = 'menu';
         S.menuIndex = i;
-        T._engine.focus(S.menu[i]);
+        T.ctx.focus(S.menu[i]);
         S.menu.forEach((b, k) => b.classList.toggle('current', k === i));
         clearTimeout(S.sectionTimer);
         if (S.section !== S.menu[i].plum) S.sectionTimer = setTimeout(() => renderSection(S.menu[i].plum), ui.motion.duration(250));
@@ -256,7 +256,7 @@
         mount(root, ctx) {
             root.setAttribute('data-pl', 'home');
             ui.motion.cap('low');
-            S = { client: window.ApiClient, root, menu: null, views: [], cells: [], cols: 3, index: 0, topRow: 0, menuIndex: 0, zone: 'menu' };
+            S = { client: T.ctx.apiClient(), root, menu: null, views: [], cells: [], cols: 3, index: 0, topRow: 0, menuIndex: 0, zone: 'menu' };
             const content = ui.chrome.frame(root, ctx);
             S.content = content;
             content.plumFill = (g) => fill(g);
