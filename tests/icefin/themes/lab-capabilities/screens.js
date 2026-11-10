@@ -4,7 +4,10 @@
     const cell = (t) => { const d = document.createElement('div'); d.className = 'lab-cell'; d.textContent = t; d.tabIndex = -1; return d; };
     const range = (n, p) => Array.from({ length: n }, (_, i) => `${p}${i + 1}`);
     ui.chrome.set('topBar', { height: '3em', mount(el) { el.append(Object.assign(cell('top-home'), { id: 'lab-top' })); el.firstChild.dataset.icefinFocus = ''; } });
-    ui.chrome.set('sideRail', { width: '10em', mount(el) { const c = cell('rail-movies'); c.dataset.icefinFocus = ''; el.append(c); } });
+    ui.chrome.set('sideRail', { width: '10em', collapsedWidth: '4em', mount(el) {
+        const c = cell('rail-movies'); c.dataset.icefinFocus = '';
+        const l = document.createElement('span'); l.className = 'icefin-rail-label'; c.append(l); el.append(c);
+    } });
     ui.overlay.set({ mount(el, ctx) {
         el.className = 'lab-overlay';
         for (const t of ['guide-a', 'guide-b']) { const c = cell(t); c.dataset.icefinFocus = ''; c.addEventListener('click', () => { window.labOverlayClicks = (window.labOverlayClicks || []).concat(t); }); el.append(c); }
@@ -27,5 +30,16 @@
         window.labLive = ui.liveTile(tile, { interval: 400, fetch: () => range(3, 'live'), render: (t) => { const c = cell(t); c.dataset.icefinFocus = ''; return c; } });
         const pv = document.createElement('div'); pv.style.cssText = 'width:20em;height:12em'; root.append(pv);
         if (window.labPreviewItem) window.labPreview = ui.mutedPreview(pv, { itemId: window.labPreviewItem });
+    } });
+    window.icefinTheme.registerScreen('#/search', { mount(root) {
+        const panel = document.createElement('div'); panel.className = 'lab-material'; panel.textContent = 'material';
+        window.labMaterial = ui.material(panel, 'panel');
+        const row = document.createElement('div'); row.className = 'lab-row';
+        for (const t of range(6, 'r')) { const c = cell(t); c.dataset.icefinFocus = ''; row.append(c); }
+        root.append(panel, row);
+        window.labParallax = ui.parallax(row);
+        window.labExpand = ui.cardExpand(row, { dwell: 300, item: (c) => c.textContent, preview: () => window.labPreviewItem,
+            render(item, p) { p.textContent = `expanded-${item}`; const v = document.createElement('div'); v.className = 'icefin-expand-video'; v.style.cssText = 'width:100%;height:60%'; p.append(v); } });
+        ui.material.force(window.labMaterialForce || 'auto');
     } });
 })();

@@ -11,7 +11,14 @@ Drives the lab-capabilities fixture through window.icefinTheme.handleAction (the
   - live tile: cycles, and freezes under the low-motion cap;
   - low-motion cap: <html data-icefin-motion="low">, durations capped;
   - pointer-first: hover moves focus;
-  - muted preview: the page's own <video>, muted, playing a server transcode of a lab item.
+  - muted preview: the page's own <video>, muted, playing a server transcode of a lab item;
+  - expanding side rail (9.11): collapsed to its narrow width, expanded while focus is inside, the content column never moves;
+  - focus parallax (9.11): the focused card lifts, an arrow press tilts it, pointer motion moves tilt and highlight,
+    flat under low motion;
+  - translucent materials (9.11): backdrop blur from material.* tokens, opaque fallback (forced, and by the frame-rate
+    watch when frames are slow);
+  - in-row card expansion (9.11): after the dwell a panel grows over the neighbours with a muted trailer, the row's
+    cards don't move, and moving focus collapses it.
 Usage: python3 theme_capabilities.py --app ~/build/src/icefin-player --server jf12
 """
 import argparse, json, os, signal, sys, tempfile, time
@@ -81,6 +88,19 @@ def main():
         check("page indicators follow", js("document.querySelector('.icefin-page-indicators').dataset.page") == "2/3")
         act("left")
         check("left at the page edge turns back", js("window.labGrid.page()") == 0 and foc() == "g4", f"page={js('window.labGrid.page()')} focused={foc()}")
+        # expanding side rail (9.11): g1 is at the left edge of page 1, so left goes to the rail
+        js("window.labGrid.go(0); true")
+        content_x = js("document.querySelector('#icefin-theme-root .icefin-content').getBoundingClientRect().left")
+        check("rail: collapsed while focus is elsewhere", js("document.querySelector('.icefin-siderail').dataset.icefinRail") == "collapsed"
+              and js("document.querySelector('.icefin-siderail').style.width") == "4em")
+        act("left")
+        time.sleep(0.4)
+        check("rail: expands when it takes focus", foc().startswith("rail-movies") and js("document.querySelector('.icefin-siderail').dataset.icefinRail") == "expanded"
+              and js("document.querySelector('.icefin-siderail').getBoundingClientRect().width") > js("document.querySelector('.icefin-content').getBoundingClientRect().left") - 1, foc())
+        check("rail: the content column doesn't move", abs(js("document.querySelector('#icefin-theme-root .icefin-content').getBoundingClientRect().left") - content_x) < 0.5)
+        act("right")
+        time.sleep(0.4)
+        check("rail: collapses when focus leaves", js("document.querySelector('.icefin-siderail').dataset.icefinRail") == "collapsed", foc())
         act("up")
         check("chrome reachable by arrows (top bar)", foc() == "top-home", foc())
 
@@ -142,6 +162,69 @@ def main():
             playing = False
         check("muted preview: the page's own video, muted", js("(() => { const v = document.querySelector('video.icefin-preview'); return v.muted && v.tagName === 'VIDEO'; })()"))
         check("muted preview plays a server transcode", playing, js("JSON.stringify({t: document.querySelector('video.icefin-preview').currentTime, e: (document.querySelector('video.icefin-preview').error || {}).message || ''})"))
+
+        # 9.11: parallax, materials, card expansion
+        js("window.labMaterialForce = 'translucent'; location.hash = '#/search'; true")
+        page.wait_for("window.icefinTheme.active().route === '#/search' && !!window.labExpand", timeout=15)
+        tile = lambda i: f"document.querySelectorAll('.lab-row .lab-cell')[{i}]"
+        js(f"window.icefinTheme._engine.focus({tile(0)}); true")
+        time.sleep(0.4)
+        check("parallax: the focused card lifts and carries a highlight", js(f"{tile(0)}.classList.contains('icefin-lifted') && !!{tile(0)}.querySelector('.icefin-glare')"))
+        check("parallax: the lift is a transform", "scale" in js(f"getComputedStyle({tile(0)}).transform") or js(f"getComputedStyle({tile(0)}).transform") != "none",
+              js(f"getComputedStyle({tile(0)}).transform"))
+        lefts = js("JSON.stringify([...document.querySelectorAll('.lab-row .lab-cell')].map(c => c.offsetLeft))")
+        js(f"window.icefinTheme._engine.focus({tile(5)}); true")
+        time.sleep(0.4)
+        tilt = js(f"window.icefinTheme.handleAction('right'); {tile(5)}.style.getPropertyValue('--icefin-tilt-x')")
+        check("parallax: an arrow press at the row's end tilts the card toward it", foc() == "r6" and tilt == "8.00deg", f"focused={foc()} tilt-x={tilt}")
+        time.sleep(0.5)
+        check("parallax: then it settles flat", js(f"{tile(5)}.style.getPropertyValue('--icefin-tilt-x')") == "0.00deg", js(f"{tile(5)}.style.getPropertyValue('--icefin-tilt-x')"))
+        js(f"window.icefinTheme._engine.focus({tile(0)}); true")
+        act("right")
+        check("parallax: focus moves on with the arrows", foc() == "r2", foc())
+        time.sleep(0.5)
+        r = json.loads(js(f"JSON.stringify((() => {{ const c = {tile(1)}.getBoundingClientRect(); return [c.left + c.width * 0.9, c.top + c.height * 0.2]; }})())"))
+        page.send("Input.dispatchMouseEvent", type="mouseMoved", x=r[0], y=r[1])
+        time.sleep(0.3)
+        tx = js(f"parseFloat({tile(1)}.style.getPropertyValue('--icefin-tilt-x'))")
+        gx = js(f"parseFloat({tile(1)}.style.getPropertyValue('--icefin-glare-x'))")
+        check("parallax: pointer motion tilts the card and moves the highlight", tx > 3 and gx > 70, f"tilt-x={tx} glare-x={gx}")
+        # card expansion: dwell 300 ms
+        time.sleep(0.6)
+        check("card expansion: a panel grows from the focused card", js("(document.querySelector('.icefin-card-expanded') || {}).textContent || ''").startswith("expanded-r2"))
+        pr = json.loads(js("JSON.stringify((() => { const p = document.querySelector('.icefin-card-expanded').getBoundingClientRect(); return [p.width, p.height]; })())"))
+        cr = json.loads(js(f"JSON.stringify((() => {{ const c = {tile(1)}.getBoundingClientRect(); return [c.width, c.height]; }})())"))
+        check("card expansion: larger than the card, over its neighbours", pr[0] > cr[0] * 1.3 and pr[1] > cr[1] * 1.3, f"panel={pr} card={cr}")
+        check("card expansion: the row doesn't reflow", js("JSON.stringify([...document.querySelectorAll('.lab-row .lab-cell')].map(c => c.offsetLeft))") == lefts)
+        try:
+            page.wait_for("!!document.querySelector('.icefin-card-expanded video.icefin-preview') && document.querySelector('.icefin-card-expanded video.icefin-preview').muted", timeout=5)
+            trailer = True
+        except Exception:  # noqa: BLE001
+            trailer = False
+        check("card expansion: a muted trailer in the panel", trailer)
+        act("right")
+        check("card expansion: moving focus collapses it", js("!document.querySelector('.icefin-card-expanded')") and foc() == "r3")
+        # materials
+        check("material: blurred translucent panel from tokens", "blur(18px)" in js("getComputedStyle(window.labMaterial).backdropFilter"),
+              js("getComputedStyle(window.labMaterial).backdropFilter"))
+        js("window.icefinTheme.ui.material.force('opaque'); true")
+        check("material: opaque fallback uses material.panel.opaque", js("getComputedStyle(window.labMaterial).backdropFilter") == "none"
+              and js("getComputedStyle(window.labMaterial).backgroundColor") == "rgb(36, 18, 74)", js("getComputedStyle(window.labMaterial).backgroundColor"))
+        # frame-rate watch: block the main thread so frames fall under 50 fps; the watch switches to opaque on its own
+        js("window.icefinTheme.ui.material.force('auto'); window.labJank = setInterval(() => { const t = performance.now(); while (performance.now() - t < 40) {} }, 0); true")
+        try:
+            page.wait_for("window.icefinTheme.ui.material.mode() === 'opaque'", timeout=8)
+            jank = True
+        except Exception:  # noqa: BLE001
+            jank = False
+        js("clearInterval(window.labJank); true")
+        check("material: slow frames switch to opaque by themselves", jank, f"fps={js('document.documentElement.dataset.icefinMaterialFps')}")
+        # parallax frozen under low motion
+        js("window.icefinTheme.ui.motion.cap('low'); true")
+        act("left")
+        time.sleep(0.3)
+        check("parallax: flat under low motion", js(f"{tile(1)}.style.getPropertyValue('--icefin-tilt-x')") in ("0deg", ""), js(f"{tile(1)}.style.getPropertyValue('--icefin-tilt-x')"))
+        js("window.icefinTheme.ui.motion.cap('normal'); true")
 
         # pointer-first
         js("location.hash = '#/home'; true")

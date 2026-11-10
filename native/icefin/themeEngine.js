@@ -43,7 +43,9 @@
             // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
             st.textContent = `html.${SCREEN_CLASS} .skinHeader, html.${SCREEN_CLASS} .mainDrawer, html.${SCREEN_CLASS} .mainDrawerHandle,`
                 + ` html.${SCREEN_CLASS} .mainAnimatedPages, html.${SCREEN_CLASS} .backgroundContainer, html.${SCREEN_CLASS} #reactRoot`
-                + ' { visibility: hidden !important; }';
+                + ' { visibility: hidden !important; }'
+                // the hidden page's height would still show the document's scrollbar beside the screen
+                + ` html.${SCREEN_CLASS}, html.${SCREEN_CLASS} body { overflow: hidden !important; }`;
             (document.head || h).append(st);
         }
     }

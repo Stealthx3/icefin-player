@@ -33,5 +33,7 @@ variables directly, so a jellyfin-web update only changes the engine's adapter (
 | Token | Used for |
 |---|---|
 | `font.family` | page font (the font must be bundled with the theme; 8.3 serves it over `icefin-theme:`) |
+| `material.<name>.tint` / `.blur` / `.saturate` / `.opaque` | a translucent panel used with `ui.material(el, name)`: its colour over the content, blur radius, saturation boost, and the opaque colour used when the GPU can't hold 60 fps (defaults: `color.surface`, `20px`, `1.4`) |
+| `parallax.highlight` / `parallax.lift` | the moving highlight's colour and the focused item's scale with `ui.parallax` (defaults: none, `1.08`) |
 
 Themes may define more tokens, such as a private `palette` group, for their own references and later layers.

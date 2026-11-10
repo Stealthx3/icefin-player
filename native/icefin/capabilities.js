@@ -13,6 +13,10 @@
 //   ui.liveTile      a tile cycling content (Next Up, Latest, ...); frozen under reduced or low motion (9.2)
 //   ui.mutedPreview  a muted SDR preview in the page's own video element, never mpv or the audio device (9.2)
 //   ui.userViews     the signed-in user's libraries, once the client is ready (cold start), with a short retry
+//   ui.parallax      the focused item lifts, tilts and moves a highlight with pointer motion and arrow nudges (9.11)
+//   ui.material      translucent blurred panels from material.* tokens, opaque when the GPU can't hold 60 fps (9.11)
+//   ui.chrome        (9.11) a side rail with collapsedWidth collapses to icons and expands, labelled, while it has focus
+//   ui.cardExpand    the focused card grows into a larger preview over its neighbours without reflowing the row (9.11)
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -86,6 +90,7 @@
             const rail = document.createElement('nav');
             rail.className = 'icefin-siderail';
             root.append(rail);
+            if (side.collapsedWidth) expandingRail(root, rail, side);
             side.mount(rail, ctx);
         }
         content = document.createElement('div');
@@ -95,6 +100,28 @@
         root.append(content);
         return content;
     };
+
+    // ---- expanding side rail (9.11) ----
+    // The grid column keeps the collapsed width, so the content never reflows: the rail itself widens over the content
+    // while focus is inside it. Labels (.icefin-rail-label) show only when expanded; html[data-icefin-rail] follows.
+    function expandingRail(root, rail, spec) {
+        root.style.gridTemplateColumns = `${spec.collapsedWidth} 1fr`;
+        rail.style.position = 'relative';
+        rail.style.zIndex = '5';
+        rail.style.overflow = 'hidden';
+        const set = (open) => {
+            const st = open ? 'expanded' : 'collapsed';
+            if (rail.getAttribute('data-icefin-rail') === st) return;
+            rail.setAttribute('data-icefin-rail', st);
+            rail.style.transition = `width ${motion.duration(spec.ms || 220)}ms ease`;
+            rail.style.width = open ? (spec.width || '14em') : spec.collapsedWidth;
+            attr('data-icefin-rail', st);
+            if (spec.onChange) spec.onChange(open);
+        };
+        rail.style.width = spec.collapsedWidth;
+        set(false);
+        root.addEventListener('icefin-focus', (e) => set(rail.contains(e.target)));
+    }
 
     // ---- pivot headers (9.3) ----
     function pivot(el, sections, opts = {}) {
@@ -329,6 +356,209 @@
         return { video: v, stop: () => { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); } };
     }
 
+    // ---- engine stylesheet for 9.11 capabilities: values come from tokens or the theme's own CSS ----
+    function engineStyle() {
+        if (document.getElementById('icefin-caps-style') || !document.head) return;
+        const st = document.createElement('style');
+        st.id = 'icefin-caps-style';
+        st.textContent = [
+            '.icefin-parallax [data-icefin-focus] { transform-style: preserve-3d; }',
+            '.icefin-parallax .icefin-lifted { transform: perspective(var(--icefin-parallax-perspective, 900px)) rotateX(var(--icefin-tilt-y, 0deg)) rotateY(var(--icefin-tilt-x, 0deg)) scale(var(--icefin-parallax-lift, 1.08)); }',
+            '.icefin-parallax[data-icefin-parallax-transform=off] .icefin-lifted { transform: none; }',
+            '.icefin-glare { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; opacity: 0; transition: opacity 160ms;',
+            '  background: radial-gradient(circle at var(--icefin-glare-x, 50%) var(--icefin-glare-y, 0%), var(--icefin-parallax-highlight, transparent), transparent 60%); }',
+            '.icefin-lifted > .icefin-glare { opacity: 1; }',
+            'html[data-icefin-motion=low] .icefin-glare { display: none; }',
+            '[data-icefin-material] { background: var(--icefin-m-tint); -webkit-backdrop-filter: blur(var(--icefin-m-blur)) saturate(var(--icefin-m-saturate));',
+            '  backdrop-filter: blur(var(--icefin-m-blur)) saturate(var(--icefin-m-saturate)); }',
+            'html[data-icefin-materials=opaque] [data-icefin-material] { background: var(--icefin-m-opaque); -webkit-backdrop-filter: none; backdrop-filter: none; }',
+            '.icefin-card-expanded { position: fixed; z-index: 990; pointer-events: none; overflow: hidden; transform-origin: var(--icefin-expand-origin, left center); }'
+        ].join('\n');
+        document.head.append(st);
+    }
+
+    // ---- focus parallax and highlight (9.11) ----
+    // On the focused item inside el: --icefin-tilt-x/-y (deg) and --icefin-glare-x/-y (%) follow the pointer over it; an
+    // arrow press tilts it toward the direction for a moment (also at a row's end, where nothing moves); a newly focused
+    // item settles from the side it was entered from. The default transform composes tilt with a lift
+    // (--icefin-parallax-lift); transform: false leaves the transform to the theme, which reads the same variables.
+    // A .icefin-glare child carries the moving highlight (--icefin-parallax-highlight, a token colour).
+    // Frozen (flat, no highlight) under reduced or low motion.
+    function parallax(el, opts = {}) {
+        engineStyle();
+        const maxTilt = opts.tilt || 8, nudgeMs = opts.nudgeMs || 260;
+        el.classList.add('icefin-parallax');
+        if (opts.transform === false) el.setAttribute('data-icefin-parallax-transform', 'off');
+        let cur = null, settle = null;
+        const set = (node, tx, ty) => {
+            const frozen = motion.reduced();
+            node.style.setProperty('--icefin-tilt-x', `${frozen ? 0 : tx.toFixed(2)}deg`);
+            node.style.setProperty('--icefin-tilt-y', `${frozen ? 0 : ty.toFixed(2)}deg`);
+            node.style.setProperty('--icefin-glare-x', `${(50 + (tx / maxTilt) * 50).toFixed(1)}%`);
+            node.style.setProperty('--icefin-glare-y', `${(50 - (ty / maxTilt) * 50).toFixed(1)}%`);
+        };
+        const flat = (node) => { ['--icefin-tilt-x', '--icefin-tilt-y', '--icefin-glare-x', '--icefin-glare-y'].forEach((v) => node.style.removeProperty(v)); };
+        const transition = (node, ms) => { node.style.transition = `transform ${motion.duration(ms)}ms ease-out`; };
+        const lift = (node, from) => {
+            if (cur && cur !== node) { cur.classList.remove('icefin-lifted'); flat(cur); }
+            cur = node;
+            if (!node.querySelector(':scope > .icefin-glare')) { const g = document.createElement('div'); g.className = 'icefin-glare'; node.append(g); }
+            if (getComputedStyle(node).position === 'static') node.style.position = 'relative';
+            node.classList.add('icefin-lifted');
+            const v = { left: [maxTilt, 0], right: [-maxTilt, 0], up: [0, -maxTilt], down: [0, maxTilt] }[from] || [0, 0];
+            transition(node, 0);
+            set(node, v[0] * 0.6, v[1] * 0.6);
+            clearTimeout(settle);
+            requestAnimationFrame(() => { transition(node, nudgeMs); set(node, 0, 0); });
+        };
+        let lastDir = null;
+        el.addEventListener('icefin-focus', (e) => {
+            const node = e.target.closest && e.target.closest(FOCUS);
+            if (node && el.contains(node)) lift(node, lastDir);
+            lastDir = null;
+        });
+        el.addEventListener('mousemove', (e) => {
+            if (!cur || !cur.contains(e.target)) return;
+            const r = cur.getBoundingClientRect();
+            const nx = (e.clientX - r.left) / r.width - 0.5, ny = (e.clientY - r.top) / r.height - 0.5;
+            transition(cur, 60);
+            set(cur, nx * 2 * maxTilt, -ny * 2 * maxTilt);
+        });
+        el.addEventListener('mouseleave', () => { if (cur) { transition(cur, nudgeMs); set(cur, 0, 0); } });
+        // Watches arrows without using them: the item tilts toward the press, then settles.
+        const off = E.addActionHook((a) => {
+            if (!el.isConnected) { off(); return false; }
+            if (!isDir(a) || !cur || !cur.isConnected || E.focused() !== cur) return false;
+            lastDir = { left: 'right', right: 'left', up: 'down', down: 'up' }[a];  // the next item enters from the far side
+            const node = cur;
+            const v = { left: [-maxTilt, 0], right: [maxTilt, 0], up: [0, maxTilt], down: [0, -maxTilt] }[a];
+            transition(node, 90);
+            set(node, v[0], v[1]);
+            clearTimeout(settle);
+            settle = setTimeout(() => { transition(node, nudgeMs); set(node, 0, 0); }, 120);
+            return false;
+        });
+        const f = E.focused();
+        if (f && el.contains(f)) lift(f, null);
+        return { current: () => cur, stop: () => { off(); if (cur) { cur.classList.remove('icefin-lifted'); flat(cur); } el.classList.remove('icefin-parallax'); } };
+    }
+
+    // ---- translucent materials (9.11) ----
+    // ui.material(el, name): el becomes a blurred translucent panel from the tokens material.<name>.tint, .blur,
+    // .saturate and .opaque (--icefin-material-<name>-…). While any material is on screen the engine samples the frame
+    // rate; a second under 50 fps switches every material to its opaque colour (html[data-icefin-materials=opaque])
+    // until the theme changes. ui.material.force('opaque' | 'translucent' | 'auto') overrides it.
+    let materialMode = 'translucent', materialForced = null, materialWatch = null;
+    const materialEls = new Set();
+    function material(el, name = 'panel') {
+        engineStyle();
+        const v = (k, d) => `var(--icefin-material-${name}-${k}${d ? ', ' + d : ''})`;
+        el.setAttribute('data-icefin-material', name);
+        el.style.setProperty('--icefin-m-tint', v('tint', 'var(--icefin-color-surface)'));
+        el.style.setProperty('--icefin-m-blur', v('blur', '20px'));
+        el.style.setProperty('--icefin-m-saturate', v('saturate', '1.4'));
+        el.style.setProperty('--icefin-m-opaque', v('opaque', 'var(--icefin-color-surface)'));
+        materialEls.add(el);
+        watchFrames();
+        return el;
+    }
+    const applyMaterialMode = () => attr('data-icefin-materials', materialForced || materialMode);
+    function watchFrames() {
+        applyMaterialMode();
+        if (materialWatch || materialForced || materialMode === 'opaque') return;
+        let frames = 0, start = 0, last = 0;
+        const step = (t) => {
+            for (const e of materialEls) if (!e.isConnected) materialEls.delete(e);
+            if (!materialEls.size || materialForced || materialMode === 'opaque' || document.hidden) { materialWatch = null; return; }
+            if (!start || t - last > 250) { start = t; frames = 0; }  // a stall (hidden page, a dialog) restarts the window
+            last = t;
+            frames++;
+            if (t - start >= 1000) {
+                const fps = (frames - 1) * 1000 / (t - start);
+                document.documentElement.setAttribute('data-icefin-material-fps', String(Math.round(fps)));
+                if (fps < 50) { materialMode = 'opaque'; applyMaterialMode(); materialWatch = null; return; }
+                start = t; frames = 0;
+            }
+            materialWatch = requestAnimationFrame(step);
+        };
+        materialWatch = requestAnimationFrame(step);
+    }
+    material.mode = () => materialForced || materialMode;
+    material.force = (m) => {
+        materialForced = m === 'opaque' || m === 'translucent' ? m : null;
+        if (!materialForced) materialMode = 'translucent';
+        if (materialWatch) { cancelAnimationFrame(materialWatch); materialWatch = null; }
+        watchFrames();
+    };
+
+    // ---- in-row card expansion (9.11) ----
+    // After a dwell on a card in el, a panel grows from the card over its neighbours (fixed, above the row, so the row
+    // never reflows); render(item, panel, card) fills it, and preview(item) may return an item id for a muted trailer
+    // (ui.mutedPreview). It stays inside the row's view, so at either edge it grows inward. Moving focus collapses it at once. Under reduced or low
+    // motion it still opens, without the grow animation or a trailer.
+    function cardExpand(el, opts) {
+        engineStyle();
+        const dwell = opts.dwell != null ? opts.dwell : 900;
+        let timer = null, panel = null, card = null, pv = null;
+        const collapse = () => {
+            clearTimeout(timer);
+            if (pv) { pv.stop(); pv = null; }
+            if (panel) { panel.remove(); panel = null; }
+            if (card) { card.removeAttribute('data-icefin-expanded'); card = null; }
+            el.removeAttribute('data-icefin-expanded');
+        };
+        const open = (c) => {
+            if (!c.isConnected || E.focused() !== c) return;
+            const item = opts.item(c);
+            if (item == null) return;
+            const r = c.getBoundingClientRect();
+            const w = r.width * (opts.scale || 1.5), h = opts.height ? opts.height(r) : r.height * (opts.scale || 1.5) + (opts.detailsHeight || r.height);
+            // Stays inside the row's view (el's parent, or opts.bounds()): grows centred, pushed in at either edge.
+            const b = opts.bounds ? opts.bounds() : (el.parentElement || el).getBoundingClientRect();
+            const lo = Math.max(8, b.left), hi = Math.min(window.innerWidth - 8, b.right);
+            const x = Math.max(lo, Math.min(hi - w, r.left - (w - r.width) / 2));
+            const y = Math.max(8, Math.min(window.innerHeight - h - 8, r.top - (r.height * (opts.scale || 1.5) - r.height) / 2));
+            panel = document.createElement('div');
+            panel.className = 'icefin-card-expanded';
+            panel.style.left = `${x}px`; panel.style.top = `${y}px`; panel.style.width = `${w}px`; panel.style.height = `${h}px`;
+            const ox = ((r.left + r.width / 2 - x) / w) * 100, oy = ((r.top + r.height / 2 - y) / h) * 100;
+            panel.style.setProperty('--icefin-expand-origin', `${ox.toFixed(1)}% ${oy.toFixed(1)}%`);
+            (E.root() || document.body).append(panel);
+            opts.render(item, panel, c);
+            const ms = motion.duration(opts.ms || 220);
+            if (!motion.reduced()) {
+                panel.animate([{ transform: `scale(${(r.width / w).toFixed(3)}, ${(r.height / h).toFixed(3)})`, opacity: 0.6 }, { transform: 'none', opacity: 1 }],
+                    { duration: ms, easing: 'ease-out' });
+            }
+            card = c;
+            c.setAttribute('data-icefin-expanded', '');
+            el.setAttribute('data-icefin-expanded', '');
+            const id = opts.preview && !motion.reduced() ? opts.preview(item) : null;
+            const box = panel.querySelector('.icefin-expand-video');
+            if (id && box) {
+                setTimeout(() => {
+                    if (!panel || card !== c) return;
+                    pv = mutedPreview(box, { itemId: id, maxWidth: 640, loop: false });
+                    pv.video.addEventListener('error', () => { if (pv) { pv.stop(); pv = null; } });
+                    panel.setAttribute('data-icefin-preview', 'playing');
+                }, opts.previewDelay != null ? opts.previewDelay : 600);
+            }
+            if (opts.onExpand) opts.onExpand(item, panel, c);
+        };
+        el.addEventListener('icefin-focus', (e) => {
+            collapse();
+            const c = e.target.closest && e.target.closest(FOCUS);
+            if (c && el.contains(c)) timer = setTimeout(() => open(c), dwell);
+        });
+        // Focus leaving el entirely (no icefin-focus inside it) collapses too.
+        const off = E.addActionHook((a) => {
+            if (!el.isConnected) { collapse(); off(); return false; }
+            if (card && (isDir(a) || a === 'back')) collapse();
+            return false;
+        });
+        return { collapse, expanded: () => card, panel: () => panel };
+    }
+
     // ---- the user's libraries, safe on a cold start ----
     // A screen can mount while jellyfin-web is still restoring the session: the client has no user yet, or the first
     // request fails. Waits for a user and a token, then asks; an error or an empty answer is retried with backoff
@@ -357,11 +587,17 @@
         if (overlayEl) overlay.close();
         overlaySpec = null;
         liveTiles.forEach((t) => t.stop());
+        materialEls.clear();
+        materialMode = 'translucent';
+        materialForced = null;
+        if (materialWatch) { cancelAnimationFrame(materialWatch); materialWatch = null; }
+        attr('data-icefin-materials', false);
+        attr('data-icefin-rail', false);
         // mount() cleared the hooks just before this runs: the overlay's goes back first (it is modal)
         E.addActionHook(overlayHook);
     });
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews };
+    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand };
 })();
