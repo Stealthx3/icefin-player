@@ -3,12 +3,13 @@
 
   - Tide's GLSL wave is baked into a .qsb and drawn by qml/icefin/Backdrop.qml between the video and the web view;
   - html[data-icefin-backdrop] makes the page transparent and Tide's web-layer canvas steps aside;
-  - the backdrop draws: frames advance at the theme's fps (the pixels through the transparent page are reported only:
-    Xvfb's compositing keeps stale web pixels; the HTPC run checks them on a real GPU);
+  - the backdrop draws: frames advance at the theme's fps, and its gradient shows through the transparent page in
+    Qt's render of the window (needs Backdrop.qml's web-view repaint: Chromium keeps a page that loaded opaque as an
+    opaque layer otherwise);
   - a time-of-day palette from the web runtime reaches the shader's colour params;
   - low motion freezes it; ui.backdrop.hide()/show(); it hides while video plays and comes back after;
   - Media Center's ribbons are a backdrop too; turning the theme off removes it;
-  - cost: window frame rate with the backdrop on and off (reported; meaningful numbers come from the HTPC).
+  - cost: window frame rate with the backdrop on and off (reported; the HTPC run adds GPU busy, the meaningful numbers).
 Screenshots go to --out.
 Usage: python3 theme_backdrop.py --app ~/build/src/icefin-player --server jf12 --out ~/r84/jf12
        HTPC (real GPU, strict pixel check, GPU busy cost): scripts/icefin/htpc.sh web theme_backdrop.py --server jf12
@@ -94,13 +95,18 @@ def main():
         js("new Promise(r => window.api.theme.grabWindow(r))")
         page.wait_for("new Promise(r => window.api.theme.backdropStats(s => r(!!s.grab)))", timeout=15)
         qpx = js("new Promise(r => window.api.theme.grabPixel(0.5, 0.06, r))")
+        # what's opaque at that point (anything that hides the backdrop), for the report
+        opaque = js("""(() => { const out = []; const x = innerWidth * 0.5, y = innerHeight * 0.06;
+            for (const el of document.elementsFromPoint(x, y)) { const cs = getComputedStyle(el);
+                const bg = cs.backgroundColor, img = cs.backgroundImage;
+                if ((bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') || (img && img !== 'none'))
+                    out.push((el.tagName + '#' + el.id + '.' + String(el.className).split(' ').join('.')).slice(0, 80) + ' ' + bg + ' ' + img.slice(0, 60)); }
+            return out; })()""")
+        print(f"theme_backdrop: info opaque at the top {json.dumps(opaque)}", flush=True)
         teal = bool(qpx) and abs(qpx[0] - 0x2f) < 40 and abs(qpx[1] - 0xa3) < 40 and abs(qpx[2] - 0xa0) < 40
-        if a.qpa == "session":
-            check("the window shows the shader's gradient through the page (teal at the top)", teal, f"{qpx}")
-        else:
-            # Xvfb's software compositing keeps stale web pixels where the page turns transparent: reported only here;
-            # the HTPC run (htpc.sh web theme_backdrop.py) checks it on a real GPU.
-            print(f"theme_backdrop: info pixel at the top {qpx} ({'teal: the backdrop shows through' if teal else 'not visible through the web view on this X server'})", flush=True)
+        # strict on every X server: Chromium keeps a page that loaded opaque as an opaque layer until the web view's
+        # background colour changes, which Backdrop.qml does when it appears (8.4)
+        check("the window shows the shader's gradient through the page (teal at the top)", teal, f"{qpx}")
         # motion
         js("window.icefinTheme.ui.motion.cap('low'); true")
         time.sleep(2.5)

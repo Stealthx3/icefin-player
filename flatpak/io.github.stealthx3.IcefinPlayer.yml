@@ -23,6 +23,7 @@ finish-args:
   - --talk-name=org.freedesktop.ScreenSaver
   - --own-name=org.freedesktop.ReserveDevice1.*  # exclusive ALSA device reservation (3.5)
   - --own-name=org.mpris.MediaPlayer2.IcefinPlayer.*
+  - --env=QML_DISABLE_DISK_CACHE=1  # the qrc QML carries the build's fixed timestamps, so Qt's disk cache kept the previous build's compiled QML after an update (seen on the HTPC, 8.4)
   # Added with their features: --device=shm (host jackd, 3.1), Mutter DisplayConfig (refresh matching),
   # xdg-config/wireplumber:create (only if the runtime IEC958 setting fails, 3.4).
 cleanup:
