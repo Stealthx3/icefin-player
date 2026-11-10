@@ -46,7 +46,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 5 — Single-surface renderer (7 wks)
 - [x] **5.1** Switch Qt Quick to the Vulkan backend; create the shared Vulkan device with explicit features [Rendering, playback routing and HDR] (`src/icefin/render/VulkanDevice`, setting `main.icefin_renderer`; Auto stays OpenGL until 5.3; on the RTX 4090 Qt Quick renders on the shared device with 13 extensions incl. DMA-BUF, DRM modifiers, HDR metadata and Vulkan Video decode; `renderer_choice.py`)
-- [ ] **5.2** Patched libmpv in `external/mpv` with a Vulkan render API; pin version
+- [x] **5.2** Patched libmpv in `external/mpv` with a Vulkan render API; pin version (mpv v0.42.0 + 2 patches, libplacebo v7.387.0; Flatpak applies them, `external/mpv/build-lab.sh` for lab builds; `test_icefin_gpu` checks the API in the Flatpak build)
 - [ ] **5.3** `VulkanVideoItem` replacing `MpvVideoItem` on the Vulkan path; DMA-BUF import of hwdec frames
 - [ ] **5.4** Linear-light compositing and HDR10 / extended-sRGB encode pass with mastering metadata
 - [ ] **5.5** Wayland surface tagging via `wp_color_manager_v1`
