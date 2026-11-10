@@ -75,7 +75,7 @@ def main():
     app = None
     try:
         app, page, log = start("app-1.log")
-        page.wait_for("document.getElementById('address') !== null", timeout=60)
+        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
         page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
         time.sleep(5)
         page.reconnect()
