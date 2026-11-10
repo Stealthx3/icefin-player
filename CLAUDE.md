@@ -13,14 +13,13 @@ Fork of jellyfin-desktop v2.0.0 (Qt 6 + Qt WebEngine + jellyfin-web + libmpv), r
 ## Standards (in `docs/standards/`, they apply to this project)
 Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If the master copies change, ask the user before updating these.
 - `VM-LAB-STANDARD.md`: all build/run/test happens in libvirt guests via `scripts/lab.sh`, watchable in virt-manager. Never build on the host.
-- `TOKEN-USAGE-OPTIMIZATION-STANDARD.md`: `docs/USAGE-PLAN.md` before substantive work.
 - `PROGRESS-BAR-STANDARD.md`: progress page generated from `docs/PLAN.md`.
 - `PHONE-ALERTS-STANDARD.md`: push alerts when the user is needed.
 - `POST-MORTEM-STANDARD.md`: append one line per session to `docs/postmortem/JOURNAL.md`.
 
 ## Working setup
 - Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).
-- Usage plan and agents: `docs/USAGE-PLAN.md`, `.claude/agents/` (read the Handoff note at session start).
+- Agents: `.claude/agents/` (scout, runner, implementer, reviewer). The usage plan is dropped (D20).
 - Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, republish to the same URL after each task).
 - HTPC tier (D16): hardware tests run on the user's Bazzite HTPC via `scripts/icefin/htpc.sh` (docs/LAB.md *HTPC tier*); respect its house rules.
 - Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
