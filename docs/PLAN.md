@@ -66,7 +66,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **7.1** SDL3 `GamepadService` replacing `InputSDL` (build flag), hotplug, multiple pads, battery [Controller support] (`-DENABLE_SDL2=OFF -DICEFIN_SDL3=ON`, on in the Flatpak)
 - [x] **7.2** Standard action map, per-controller remapping, Nintendo layout option (map `src/icefin/inputmaps/icefin-gamepad.json`; remap editor in Client Settings → Controllers)
 - [x] **7.3** Glyph-family detection and button-prompt tokens (`data-icefin-glyphs`, `icefinTheme.glyph()`)
-- [ ] **7.4** Steam Input handling, recommended Steam layout, duplicate-input guard (Steam desktop layout only); verify Steam Input's virtual pad visibility (from spike 2.7)
+- [ ] **7.4** Steam Input handling, recommended Steam layout, duplicate-input guard (Steam desktop layout only); verify Steam Input's virtual pad visibility (from spike 2.7) (game mode checked 2026-11-09, nested on the workstation: only Steam Virtual Gamepad is visible, no duplicate; open: its glyph family reads "generic" because the Flatpak's private /tmp hides `SteamVirtualGamepadInfo`, the desktop-mode guard and the recommended layout; `docs/SPIKES.md` 2.8)
 - [x] **7.5** Hide `navigator.getGamepads` from the page; Controllers settings page (Client Settings → Controllers)
 - [ ] **7.6** Controller run of all screens inside and outside Steam
 
