@@ -1,4 +1,4 @@
-// Mosaic (benchmark theme, PLAN 9.9; target: the Xbox 360 Metro dashboard's layout). Built from the engine's generic
+// Mosaic (benchmark theme, PLAN 9.9; its target is named in docs/PLAN.md). Built from the engine's generic
 // capabilities only: bold pivot headers across the top that slide with their sections (ui.pivot), each section a grid
 // of flat tiles in three sizes (large 2×2, wide 2×1, small 1×1) laid out in columns, and live tiles cycling content
 // (ui.liveTile). Typography carries the design: large lowercase headers, flat colour, no shadows. Every other route is

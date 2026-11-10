@@ -1,4 +1,4 @@
-// Spark (benchmark theme, PLAN 9.5; target: Fire TV's home layout). Built from the engine's generic capabilities only:
+// Spark (benchmark theme, PLAN 9.5; its target is named in docs/PLAN.md). Built from the engine's generic capabilities only:
 // the top-bar chrome slot holds the navigation, a hero carousel shows featured items with a muted preview after a short
 // dwell (ui.mutedPreview: the page's own <video>, never mpv or the passthrough device), and rows of 16:9 tiles below
 // recycle a fixed pool of tiles however long the row is. Every other route is jellyfin-web's own page, styled by tokens.
