@@ -67,8 +67,8 @@ def main():
 
         td = themes().get("tide", {})
         check("Tide offered as a built-in theme, usable", td.get("ok") is True and td.get("source") == "bundled", json.dumps(td)[:160])
-        js("new Promise(r => window.api.theme.setActiveTheme('tide', '', r))")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-td-ready]') && !!document.querySelector('.td-item.icefin-focused')", timeout=40)
+        # Tide declares a backdrop: the page reloads once over it (8.4)
+        page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]') && !!document.querySelector('.td-item.icefin-focused')")
         time.sleep(1)
         R = "document.querySelector('#icefin-theme-root')"
         cat = lambda: js(f"{R}.dataset.tdCat")

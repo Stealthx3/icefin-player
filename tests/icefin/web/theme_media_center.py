@@ -63,7 +63,8 @@ def main():
         act = lambda x: js(f"window.icefinTheme.handleAction({json.dumps(x)})")
         listed = {t["id"]: t for t in js("new Promise(r => window.api.theme.themes(r))")}
         check("Media Center bundled and usable", listed.get("media-center", {}).get("ok") is True and listed["media-center"]["source"] == "bundled")
-        js("new Promise(r => window.api.theme.setActiveTheme('media-center', '', r))")
+        # Media Center declares a backdrop: the page reloads once over it (8.4)
+        page.switch_theme_reloading("media-center", "!!document.querySelector('#icefin-theme-root')")
         page.wait_for("+(document.querySelector('#icefin-theme-root[data-mc-ready]') || {dataset: {}}).dataset.mcReady > 0 || +((document.querySelector('#icefin-theme-root') || {}).getAttribute && document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=30)
         cats = js("JSON.stringify([...document.querySelectorAll('.mc-cat-title')].map(e => e.textContent))")
         check("start strip: one row per library, plus More", json.loads(cats)[-1] == "More" and len(json.loads(cats)) >= 3, cats)
