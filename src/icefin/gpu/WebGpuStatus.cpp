@@ -54,9 +54,20 @@ static const char* kExtract = R"JS((() => {
   return s ? s.items : [];
 })())JS";
 
+WebGpuStatus::~WebGpuStatus()
+{
+  // Children go in creation order, which would take the profile before its pages ("Release of profile requested
+  // but WebEnginePage still not deleted").
+  qDeleteAll(findChildren<QWebEnginePage*>(Qt::FindDirectChildrenOnly));
+}
+
 void WebGpuStatus::check()
 {
-  auto* page = new QWebEnginePage(QWebEngineProfile::defaultProfile(), this);
+  // A private off-the-record profile: GPU status is process-wide, and the default profile's injected shell script
+  // (nativeshell.js, which needs qt.webChannelTransport) would otherwise run on chrome://gpu and log errors. The
+  // profile lives as long as this object; each check's page is deleted after it (a profile must outlive its pages).
+  if (!m_profile) m_profile = new QWebEngineProfile(this);
+  auto* page = new QWebEnginePage(m_profile, this);
   auto finish = [this, page](const QVariantMap& status) {
     emit done(status);
     page->deleteLater();

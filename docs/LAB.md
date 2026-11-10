@@ -93,7 +93,11 @@ Per-commit bundles stay on each workflow run as artifacts (90 days).
 - Watch: `scripts/lab.sh view`
 
 ## Host exceptions
-- none on this workstation.
+- **Testing the published Flatpak on this workstation** (user's request, 2026-11-09): the nightly bundle installs
+  `--user` here and runs in the real Plasma Wayland session and in a nested Gamescope, for GPU decode, HDR, Wayland,
+  Gamescope, the user's own server and controllers. No builds on the host: builds stay in the lab guests. HDMI
+  passthrough is tested separately. A nested Gamescope inside Plasma needs `flatpak run --socket=x11 --nosocket=wayland`
+  to give the app what game mode gives it (Flatpak's `fallback-x11` sees Plasma's `wayland-0` and withholds X11).
 - **Remote hardware (not a libvirt guest):** the user's Bazzite HTPC runs the hardware tests over SSH, per-user only
   (see *HTPC tier*). Approved by the user on 2026-11-08 (D16).
 

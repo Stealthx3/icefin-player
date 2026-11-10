@@ -7,6 +7,8 @@
 #include <QStringList>
 #include <QVariantMap>
 
+class QWebEngineProfile;
+
 namespace Icefin::Gpu
 {
 // "*   Rasterization: Hardware accelerated" lines -> {"Rasterization": "Hardware accelerated", ...}
@@ -22,9 +24,12 @@ class WebGpuStatus : public QObject
   Q_OBJECT
 public:
   using QObject::QObject;
+  ~WebGpuStatus() override;  // deletes any page before the profile it belongs to
   // Asynchronous; emits done() with {accelerated, features{...}, gbm (the user's switch), gbmEnv, error}.
   void check();
 Q_SIGNALS:
   void done(const QVariantMap& status);
+private:
+  QWebEngineProfile* m_profile = nullptr;  // private, off the record, kept for this object's lifetime
 };
 }

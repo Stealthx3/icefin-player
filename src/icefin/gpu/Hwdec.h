@@ -8,8 +8,13 @@
 
 namespace Icefin::Gpu
 {
-// mpv "hwdec" value for a hardwareDecoding setting value (unknown values -> auto-safe).
+// mpv "hwdec" value for a hardwareDecoding setting value (unknown values -> auto-safe). Auto takes the copy path
+// (auto-copy-safe) on an NVIDIA GPU while Qt Quick runs on OpenGL: NVDEC's zero-copy CUDA frames reach mpv's OpenGL
+// renderer as a blank picture there (RTX 4090, Plasma Wayland, Flatpak, 2026-11-09). An explicit NVDEC choice is kept.
 QString hwdecFor(const QString& setting);
+QString hwdecFor(const QString& setting, bool nvidiaOnOpenGl);
+// True if a DRM card under sysRoot has PCI vendor 0x10de (NVIDIA).
+bool hasNvidiaGpu(const QString& sysRoot = "/sys");
 // Icefin value for an upstream value saved before Icefin's choices (enabled -> auto, disabled -> off, osx_compat -> auto);
 // empty if the value is already one of Icefin's.
 QString migratedSetting(const QString& setting);

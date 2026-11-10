@@ -26,6 +26,31 @@ private slots:
     QCOMPARE(hwdecFor("disabled"), QString("no"));
     QCOMPARE(hwdecFor("nonsense"), QString("auto-safe"));
   }
+  void hwdecNvidiaOnOpenGl()
+  {
+    QCOMPARE(hwdecFor("auto", false), QString("auto-safe"));
+    QCOMPARE(hwdecFor("auto", true), QString("auto-copy-safe"));
+    QCOMPARE(hwdecFor("enabled", true), QString("auto-copy-safe"));
+    QCOMPARE(hwdecFor("nonsense", true), QString("auto-copy-safe"));
+    QCOMPARE(hwdecFor("nvdec", true), QString("nvdec"));  // an explicit choice is kept
+    QCOMPARE(hwdecFor("vaapi", true), QString("vaapi"));
+    QCOMPARE(hwdecFor("off", true), QString("no"));
+  }
+  void nvidiaDetection()
+  {
+    QTemporaryDir root;
+    auto card = [&](const char* name, const char* vendor) {
+      QDir().mkpath(root.path() + "/class/drm/" + name + "/device");
+      QFile f(root.path() + "/class/drm/" + name + "/device/vendor");
+      QVERIFY(f.open(QIODevice::WriteOnly));
+      f.write(vendor);
+    };
+    QVERIFY(!hasNvidiaGpu(root.path()));
+    card("card0", "0x1002\n");
+    QVERIFY(!hasNvidiaGpu(root.path()));
+    card("card1", "0x10de\n");
+    QVERIFY(hasNvidiaGpu(root.path()));
+  }
   void migration()
   {
     QCOMPARE(migratedSetting("enabled"), QString("auto"));

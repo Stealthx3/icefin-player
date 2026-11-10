@@ -1,11 +1,33 @@
 #include "Hwdec.h"
+#include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <QMap>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
 
 namespace Icefin::Gpu
 {
+bool hasNvidiaGpu(const QString& sysRoot)
+{
+  for (const QString& card : QDir(sysRoot + "/class/drm").entryList({"card[0-9]", "card[0-9][0-9]"}, QDir::Dirs | QDir::System)) {
+    QFile f(sysRoot + "/class/drm/" + card + "/device/vendor");
+    if (f.open(QIODevice::ReadOnly) && f.readAll().trimmed() == "0x10de") return true;
+  }
+  return false;
+}
+
 QString hwdecFor(const QString& setting)
+{
+  static const bool nvidia = hasNvidiaGpu();
+  const bool openGl = QQuickWindow::graphicsApi() != QSGRendererInterface::Vulkan;
+  const QString v = hwdecFor(setting, nvidia && openGl);
+  if (nvidia && openGl && v == "auto-copy-safe" && setting != "copy")
+    qInfo() << "Icefin hwdec: Auto uses copy mode on NVIDIA with the OpenGL renderer (zero-copy shows a blank picture there)";
+  return v;
+}
+
+QString hwdecFor(const QString& setting, bool nvidiaOnOpenGl)
 {
   static const QMap<QString, QString> map{
     {"auto", "auto-safe"}, {"vaapi", "vaapi"}, {"nvdec", "nvdec"}, {"vulkan", "vulkan"},
@@ -13,7 +35,8 @@ QString hwdecFor(const QString& setting)
     // upstream's values, from settings saved before Icefin 0.2
     {"enabled", "auto-safe"}, {"osx_compat", "auto-safe"}, {"disabled", "no"},
   };
-  return map.value(setting, "auto-safe");
+  const QString v = map.value(setting, "auto-safe");
+  return (nvidiaOnOpenGl && v == "auto-safe") ? QString("auto-copy-safe") : v;
 }
 
 QString migratedSetting(const QString& setting)

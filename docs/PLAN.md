@@ -42,7 +42,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 - [x] **4.2** `hardwareDecoding` options: Auto (auto-safe), VA-API, NVDEC, Vulkan, Copy, Off; renderer shown on debug overlay (`src/icefin/gpu/Hwdec`; upstream values migrate)
 - [x] **4.3** WebEngine GPU-rasterization check and `QTWEBENGINE_FORCE_USE_GBM=0` switch (Hardware page; Client Settings → Web GPU Buffers)
 - [x] **4.4** Multi-display HDR probe re-run on output change; measure low-power (`dmabuf-wayland`) savings for post-1.0 (re-run done with 6.1; power on the HTPC: 45 W `gpu-next` vs 37 W `dmabuf-wayland` for 4K HDR10 HEVC, BASELINE-REPORT)
-- [ ] **4.5** Confirm zero-copy hardware decode on AMD, Intel and NVIDIA inside the Flatpak (AMD done: zero-copy on Plasma; on Gamescope after the EGL-on-xcb fix; open: Intel and NVIDIA)
+- [ ] **4.5** Confirm zero-copy hardware decode on AMD, Intel and NVIDIA inside the Flatpak (AMD done: zero-copy on Plasma; on Gamescope after the EGL-on-xcb fix; NVIDIA RTX 4090, driver 595.99.02: hardware decode of all four samples in the nightly Flatpak on Plasma Wayland and in Gamescope, but `nvdec-copy`, not zero-copy, 2026-11-09; real playback with Auto picked zero-copy NVDEC (`cuda` frames) and showed a black picture on the OpenGL renderer, so Auto now takes the copy path on NVIDIA until the Vulkan renderer (5.x); open: NVIDIA zero-copy and Intel)
 
 ## Phase 5 — Single-surface renderer (7 wks)
 - [ ] **5.1** Switch Qt Quick to the Vulkan backend; create the shared Vulkan device with explicit features [Rendering, playback routing and HDR]
