@@ -217,6 +217,8 @@
             if (!pm || typeof pm.play !== 'function') return Promise.resolve(false);
             try { return Promise.resolve(pm.play(options)); } catch (e) { return Promise.reject(e); }
         },
+        // True when the playback manager is ready for play().
+        canPlay: () => !!(window.icefinPlaybackManager && typeof window.icefinPlaybackManager.play === 'function'),
         // {item, player} for what is playing (or paused) now, or null.
         nowPlaying() {
             const pm = window.icefinPlaybackManager;

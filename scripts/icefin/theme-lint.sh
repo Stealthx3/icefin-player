@@ -25,7 +25,7 @@ PRODUCTS='xbox|wii|nintendo|microsoft|roku|fire ?tv|amazon|kodi|estuary|apple|tv
 if hits="$(grep -rniE -- "\\b($PRODUCTS)\\b" themes/ || true)" && [ -n "$hits" ]; then
   echo "theme-lint: product names in shipped theme files (name targets in docs/PLAN.md, not in themes/):"; echo "$hits"; bad=1
 fi
-RULE4="${RULE4:-warn}"  # error once the themes are migrated (PLAN 8.7)
+RULE4="${RULE4:-error}"
 HOST='window\.(ApiClient|icefinPlaybackManager|api|jmpInfo|apiPromise|NativeShell)\b|(^|[^.A-Za-z0-9_$])(jmpInfo|apiPromise|NativeShell)\b|\._engine\b'
 if hits="$(find themes -name '*.js' -print0 | xargs -0 -r grep -nE -- "$HOST" | grep -vE '^[^:]+:[0-9]+:\s*//' || true)" && [ -n "$hits" ]; then
   echo "theme-lint: host globals in theme scripts (use ctx and window.icefinTheme, docs/themes/PACKAGE.md):"; echo "$hits"

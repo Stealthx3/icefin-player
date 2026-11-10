@@ -73,6 +73,7 @@ and the engine absorbs that here instead of in every theme. `scripts/icefin/them
 | `screen.onBack()` | Optional: true when the screen used Back |
 | `ctx.apiClient()` | The server client (jellyfin-web's ApiClient): items, images, user. Ask for it when you use it; on a cold start it appears after `ui.userViews()` resolves |
 | `ctx.play(options)` | Starts playback (`{ids, serverId, startPositionTicks}` or `{items}`), through the capability prompt (6.3) like any play. A promise; `false` when the player isn't ready |
+| `ctx.canPlay()` | True when the player is ready for `ctx.play` |
 | `ctx.nowPlaying()` | `{item, player}` for what is playing or paused, or `null` |
 | `ctx.navigate(hash)` | Go to a route (`#/details?id=...&serverId=...`) |
 | `ctx.focus(el)`, `ctx.focused()` | Move focus to an element; the focused one (class `icefin-focused`) |
