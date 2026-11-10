@@ -1,0 +1,35 @@
+/* Tide: gradient and wave backdrop, category row crossing an item column at a fixed point. Proportions follow the
+   benchmark target at 16:9; colours from tokens (palettes by month and time of day). */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
+[data-td] { color: var(--icefin-color-text); overflow: hidden !important; --td-x: 26vw; --td-y: 30vh; --td-step: 11vw; --td-item: 9.6vh;
+  background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveBottom) 100%); }
+.td-wave { position: absolute; inset: 0; width: 100%; height: 100%; }
+.td-shade { position: absolute; inset: 0; background: var(--icefin-color-shade); pointer-events: none; }
+.td-clock { position: absolute; right: 4vw; top: 5vh; font-size: 1.1em; text-shadow: 0 0.1em 0.3em var(--icefin-color-shade); }
+
+/* Category row: slides so the focused category sits at the fixed point */
+.td-cats { position: absolute; left: 0; top: calc(var(--td-y) - 6vh); height: 12vh; transition: transform 260ms ease-out; }
+.td-cat { position: absolute; top: 0; width: var(--td-step); margin-left: calc(var(--td-step) / -2); display: flex; flex-direction: column; align-items: center; outline: none;
+  opacity: 0.55; transition: opacity 200ms, transform 200ms; }
+.td-cat svg { width: 5.2vh; height: 5.2vh; color: var(--icefin-color-text); }
+.td-cat-label { margin-top: 1vh; font-size: 0.95em; opacity: 0; transition: opacity 200ms; white-space: nowrap; }
+.td-cat.current { opacity: 1; transform: scale(1.25); }
+.td-cat.current .td-cat-label { opacity: 1; }
+
+/* Item column: slides vertically so the focused item sits just under the category row */
+.td-items { position: absolute; left: calc(var(--td-x) - 4vh); top: 0; right: 0; height: 100%; }
+.td-item { position: absolute; left: 0; height: var(--td-item); display: flex; align-items: center; gap: 1.4vw; outline: none; opacity: 0.6;
+  transition: top 220ms ease-out, opacity 200ms; white-space: nowrap; }
+.td-thumb { width: calc(var(--td-item) * 0.8); height: calc(var(--td-item) * 0.8); flex: none; border-radius: var(--icefin-shape-cardRadius);
+  background: var(--icefin-color-surface) center / cover no-repeat; display: flex; align-items: center; justify-content: center; }
+.td-thumb svg { width: 60%; height: 60%; color: var(--icefin-color-text); }
+.td-name { font-size: 1.15em; }
+.td-sub { font-size: 0.8em; color: var(--icefin-color-textSecondary); }
+.td-item.icefin-focused { opacity: 1; }
+.td-item.icefin-focused .td-thumb { box-shadow: 0 0 1.2em var(--icefin-color-waveLine); transform: scale(1.18); }
+.td-item.icefin-focused .td-name { font-weight: 700; text-shadow: 0 0 0.6em var(--icefin-color-waveLine); }
+.td-item.above { opacity: 0.45; }
+
+/* With the native backdrop (8.4) the gradient, wave and shade are drawn under the page: the web layer steps aside. */
+html[data-icefin-backdrop] [data-td] { background: transparent; }
+html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { display: none; }

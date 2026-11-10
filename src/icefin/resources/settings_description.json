@@ -24,7 +24,8 @@
       { "value": "icefin_theme", "default": "", "hidden": true },
       { "value": "icefin_theme_trust", "default": "{}", "hidden": true },
       { "value": "icefin_hw_selftest", "default": "", "hidden": true },
-      { "value": "icefin_prompt_memory", "default": "{}", "hidden": true }
+      { "value": "icefin_prompt_memory", "default": "{}", "hidden": true },
+      { "value": "icefin_pad_remaps", "default": "{}", "hidden": true }
     ]
   },
   {
@@ -35,6 +36,23 @@
         "display_name": "Web GPU Buffers (GBM)",
         "help": "Leave on. Turn off only if the app crashes or shows a black window at start with your graphics driver. Takes effect after a restart.",
         "default": true
+      },
+      {
+        "value": "icefin_renderer",
+        "display_name": "Renderer",
+        "help": "How the app draws its window. Auto picks the best that works here. Vulkan (experimental) runs the interface on Vulkan; until the Vulkan video path is finished, video doesn't show with it. OpenGL is the fallback for systems without working Vulkan. Takes effect after a restart.",
+        "default": "auto",
+        "possible_values": [
+          [ "auto", "Auto" ],
+          [ "vulkan", "Vulkan (experimental)" ],
+          [ "opengl", "OpenGL" ]
+        ]
+      },
+      {
+        "value": "icefin_nintendo_layout",
+        "display_name": "Nintendo Button Layout",
+        "help": "On Nintendo controllers, the button marked A confirms and B goes back, as printed. Other controllers are unchanged.",
+        "default": false
       }
     ]
   },
@@ -74,6 +92,12 @@
           [ "off", "Off" ]
         ],
         "platforms_excluded": "oe_rpi"
+      },
+      {
+        "value": "icefin_auto_profile",
+        "display_name": "Automatic Device Profile",
+        "help": "Ask the server to convert only what this machine can't play, based on the hardware test in Client Settings -> Hardware. The force-transcode switches still apply on top.",
+        "default": true
       }
     ]
   }

@@ -27,6 +27,7 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
   - Synthetic media from `make-media.sh` in `~/jf/media` (SDR H.264, HDR10 and HLG HEVC, AC-3, E-AC-3, TrueHD, DTS, AV1, a two-episode show, music with lyrics, subtitles).
   - `setup.py` runs the wizard with a throwaway admin `icefin` (random password in the guest's `~/jf/creds.json`, never printed), creates libraries, installs the regression plugins and writes `~/jf/status.json`.
   - Plugins: Playback Reporting, Trakt, LDAP, Intro Skipper, File Transformation, Home Screen Sections, Plugin Pages, JavaScript Injector, SSO. jf1011 9/9 active; jf12 8/9 (SSO has no 12.x build yet).
+- Live TV (9.15): `python3 tests/icefin/servers/livetv.py tests/icefin/servers/servers.json` gives both servers 24 M3U channels (the lab clips over HTTP, a lab API key) and an XMLTV guide from 6 h ago to 2 days ahead. Run it again before guide tests: it moves the guide to now.
 - Client harness: `tests/icefin/web/session_play.py` drives a build over DevTools (Xvfb), plays by remote command and records what the server saw; `compare_runs.py` diffs two runs.
 
 ## HTPC tier (D16): the user's Bazzite HTPC runs the hardware tests
@@ -44,6 +45,7 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
   README, probe, this workstation's public key). The user runs `bash icefin-htpc-setup.sh` on the HTPC as the TV
   user: it authorizes the key as `restrict,port-forwarding,pty` (tag `icefin-lab-workstation`), offers to enable sshd,
   and writes `~/icefin-htpc-info.txt`; `--check` changes nothing, `--remove` undoes it.
+- **Web tests on the HTPC:** `htpc.sh web <script>.py [args]` runs any `tests/icefin/web` test in the on-screen session against the installed Flatpak (same tunnels, credentials and house rules as `play`); its `--out` folder comes back to `build-htpc/results/`. Used for what needs the real GPU, such as the 8.4 backdrop's GPU-busy cost (`theme_backdrop.py`).
 - **Flow:** `htpc.sh build` (Flatpak into the VM's repo) → `deploy` (Flatpak `--user` from remote `icefin-lab`)
   → `play` / `probe` → results in `build-htpc/results/`. `doctor` first; `watch` opens Moonlight (Sunshine on the HTPC).
 - **Runs inside the session on screen.** Remote commands take on the environment of the user's Plasma, GNOME or
@@ -74,6 +76,13 @@ workstation ──ssh──> HTPC (Bazzite, the TV session's user)
 - **Lab-server credentials** go VM → HTPC over SSH into `~/.local/share/icefin-lab/jf/creds.json` (0600), never through a log or the console.
 - **Stand-in:** `HTPC_ENV=tests/icefin/htpc/htpc.sim.env scripts/icefin/htpc.sh …` targets `lab-icefin-htpcsim`
   (headless Weston as the "TV session"; no GPU, so `play … --app-arg=--disable-gpu` there).
+
+## Test builds for people (nightly)
+Every green `icefin-flatpak` run on `main` replaces the rolling **nightly** pre-release:
+https://github.com/Stealthx3/icefin-player/releases/tag/nightly. Its bundle keeps one name,
+`icefin-player-x86_64.flatpak` (with a `.sha256`), and names Flathub as its runtime repo:
+`flatpak install --user ./icefin-player-x86_64.flatpak`, then `flatpak run io.github.stealthx3.IcefinPlayer`.
+Per-commit bundles stay on each workflow run as artifacts (90 days).
 
 ## Virtual AV tier (D18): a virtual TV and AV receiver inside the lab
 Sits between the lab VM and the HTPC. It proves what Icefin **sends** (ELD read, passthrough decision,
@@ -113,7 +122,7 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   ```
 - **Watching:** the client has no display. `avsim.sh console` shows its serial log, and the commands run
   through `lab-run`, so they show on `lab-icefin-main`'s console in virt-manager.
-- **HDR half (PLAN 5.9):** headless Weston with color management in the client or `lab-icefin-htpcsim`,
+- **HDR half (PLAN 5.10):** headless Weston with color management in the client or `lab-icefin-htpcsim`,
   a protocol log of the image description per routing row. Debian 13's Weston 14 is too old (SPEC: 15.0).
 - **Limits:** no real decoder behind the sink, so no lip sync, no receiver display, no CEC, no HDCP, and no
   check of how a real receiver treats a borderline stream. Those rows stay on the HTPC.
@@ -123,12 +132,18 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
 
 ## Commands
 - Build: `scripts/lab.sh run 'cmake -S . -B ~/build -G Ninja -DUSE_STATIC_MPVQT=ON && ninja -C ~/build 2>&1 | tail -n 50'` (build dir stays outside the synced tree)
+- SDL3 controller build (as the Flatpak): add `-DENABLE_SDL2=OFF -DICEFIN_SDL3=ON` (separate build dir, e.g. `~/build-sdl3`). After adding files under `native/` or `src/icefin/resources/`, re-run cmake: upstream globs those at configure time.
 - Test:  `scripts/lab.sh run '<cmd> 2>&1 | tail -n 50'`
+- Patched libmpv for native builds (the Vulkan render API, PLAN 5.2; the Flatpak always has it): `scripts/lab.sh run 'external/mpv/build-lab.sh ~/mpv-icefin'` once, then configure with `PKG_CONFIG_PATH=~/mpv-icefin/lib/x86_64-linux-gnu/pkgconfig` and run with `LD_LIBRARY_PATH=~/mpv-icefin/lib/x86_64-linux-gnu` (`external/mpv/README.md`)
 - Flatpak: `scripts/lab.sh run 'flatpak-builder --user --install-deps-from=flathub --force-clean --state-dir=$HOME/fp-state --repo=$HOME/fp-repo $HOME/fp-build flatpak/io.github.stealthx3.IcefinPlayer.yml'` (state outside the synced tree)
 - Watch: `scripts/lab.sh view`
 
 ## Host exceptions
-- none on this workstation.
+- **Testing the published Flatpak on this workstation** (user's request, 2026-11-09): the nightly bundle installs
+  `--user` here and runs in the real Plasma Wayland session and in a nested Gamescope, for GPU decode, HDR, Wayland,
+  Gamescope, the user's own server and controllers. No builds on the host: builds stay in the lab guests. HDMI
+  passthrough is tested separately. A nested Gamescope inside Plasma needs `flatpak run --socket=x11 --nosocket=wayland`
+  to give the app what game mode gives it (Flatpak's `fallback-x11` sees Plasma's `wayland-0` and withholds X11).
 - **Remote hardware (not a libvirt guest):** the user's Bazzite HTPC runs the hardware tests over SSH, per-user only
   (see *HTPC tier*). Approved by the user on 2026-11-08 (D16).
 

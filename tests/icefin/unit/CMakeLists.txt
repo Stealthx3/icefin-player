@@ -26,3 +26,13 @@ add_executable(test_icefin_log test_log.cpp)
 target_link_libraries(test_icefin_log jmp_core Qt6::Test)
 target_include_directories(test_icefin_log PRIVATE ${CMAKE_SOURCE_DIR}/src)
 add_test(NAME test_icefin_log COMMAND test_icefin_log)
+
+add_executable(test_icefin_gamepad test_gamepad.cpp)
+target_link_libraries(test_icefin_gamepad jmp_core Qt6::Test)
+target_include_directories(test_icefin_gamepad PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME test_icefin_gamepad COMMAND test_icefin_gamepad)
+
+add_executable(test_icefin_iec958 test_iec958.cpp)
+target_link_libraries(test_icefin_iec958 jmp_core Qt6::Test)
+target_include_directories(test_icefin_iec958 PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME test_icefin_iec958 COMMAND test_icefin_iec958)

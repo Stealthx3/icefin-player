@@ -606,9 +606,13 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/nativeshell.js",  // ICEFIN-HOOK: the list continues with the theme token engine
     ":/web-client/extension/icefin/tokenEngine.js",  // ICEFIN-HOOK: theme token engine (PLAN 6.5)
     ":/web-client/extension/icefin/themeEngine.js",  // ICEFIN-HOOK: theme web runtime (PLAN 8.3)
+    ":/web-client/extension/icefin/capabilities.js",  // ICEFIN-HOOK: generic theme capabilities (PLAN 9.2, 9.3)
     ":/web-client/extension/icefin/themeSync.js",  // ICEFIN-HOOK: per-user theme choice (PLAN 8.5)
     ":/web-client/extension/icefin/hardwarePage.js",  // ICEFIN-HOOK: Client Settings -> Hardware (PLAN 4.1)
-    ":/web-client/extension/icefin/capabilityPrompt.js"  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
+    ":/web-client/extension/icefin/capabilityPrompt.js",  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
+    ":/web-client/extension/icefin/deviceProfile.js",  // ICEFIN-HOOK: Auto device profile (PLAN 6.4)
+    ":/web-client/extension/icefin/gamepads.js",  // ICEFIN-HOOK: controller layer, page side (PLAN 7.3, 7.5)
+    ":/web-client/extension/icefin/audioTestPage.js"  // ICEFIN-HOOK: Client Settings -> Audio test (PLAN 3.8)
   };
 
   cachedScript = jmpInfoDeclaration;

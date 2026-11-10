@@ -1,0 +1,35 @@
+{
+  "name": "Icefin standard gamepad (SDL3)",
+  "idmatcher": "^Gamepad$",
+  "mapping":
+  {
+    // SPEC "Controller support" -> standard action map. Buttons are positional (south = bottom face button);
+    // the Nintendo layout option swaps south and east on Nintendo pads before this map applies.
+    // Override per controller with your own file in the inputmaps folder of Icefin's data directory.
+    "PAD_DPAD_UP": "up",
+    "PAD_DPAD_DOWN": "down",
+    "PAD_DPAD_LEFT": "left",
+    "PAD_DPAD_RIGHT": "right",
+    "PAD_LEFTSTICK_UP": "up",
+    "PAD_LEFTSTICK_DOWN": "down",
+    "PAD_LEFTSTICK_LEFT": "left",
+    "PAD_LEFTSTICK_RIGHT": "right",
+
+    "PAD_SOUTH": "enter",
+    "PAD_EAST": "back",
+    "PAD_WEST": "menu",
+    "PAD_NORTH": "search",
+
+    "PAD_START": "play_pause",
+    // View: short press Home, long press the theme's global overlay panel (SPEC: Guide stays with Steam/the system)
+    "PAD_BACK": { "short": "home", "long": "icefin_overlay" },
+
+    "PAD_LEFTSHOULDER": "step_backward",
+    "PAD_RIGHTSHOULDER": "step_forward",
+    "PAD_LEFTTRIGGER": "seek_backward",
+    "PAD_RIGHTTRIGGER": "seek_forward",
+
+    "PAD_RIGHTSTICK_UP": "increase_volume",
+    "PAD_RIGHTSTICK_DOWN": "decrease_volume"
+  }
+}

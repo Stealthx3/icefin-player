@@ -5,6 +5,11 @@
 #include <QQuickWindow>
 #include <QSGRendererInterface>
 #include "settings/SettingsComponent.h"
+#include "HdrCapabilityProbe.h"
+#include "VulkanDevice.h"
+#include <QGuiApplication>
+#include <QTimer>
+#include <QWindow>
 
 namespace Icefin::Render
 {
@@ -28,12 +33,21 @@ QString optionId(Option o)
   return "cancel";
 }
 
-System RouterComponent::system() const
+System RouterComponent::system() const { return currentSystem(); }
+
+System currentSystem()
 {
   System s;
-  s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan ? Renderer::Vulkan : Renderer::OpenGlFallback;
+  // The UI can already run on Vulkan (5.1), but video plays there only once the Vulkan video item exists (5.3).
+  s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan && vulkanVideoPath() ? Renderer::Vulkan : Renderer::OpenGlFallback;
   s.vulkanAvailable = false;     // until the Vulkan renderer exists (5.1): no "switch to Vulkan" option
-  s.display = DisplayState::Unknown;  // HdrCapabilityProbe: 6.1
+  switch (HdrCapabilityProbe::instance().current().hdr) {  // 6.1
+    // On the Vulkan path the display counts as HDR only once that path can output HDR (5.4/5.5); until then
+    // libplacebo tone-maps there.
+    case DisplayInfo::Hdr::Yes: s.display = s.renderer != Renderer::Vulkan || vulkanHdrOutput() ? DisplayState::Hdr : DisplayState::Sdr; break;
+    case DisplayInfo::Hdr::No: s.display = DisplayState::Sdr; break;
+    default: s.display = DisplayState::Unknown;
+  }
   s.serverTranscode = true;      // the page drops the transcode options when the user's policy forbids them
   return s;
 }
@@ -61,6 +75,10 @@ bool RouterComponent::hold(const QVariantMap& load, std::function<void()> procee
   if (d.value("output").toString() != outputName(Output::Prompt)) return false;
   const QString key = d.value("key").toString();
   if (m_bypassKey == key) { m_bypassKey.clear(); return false; }  // answered: this load goes ahead
+  if (m_session.contains(key)) {  // answered at the start of this play action (bumpers, then the feature)
+    qInfo().noquote() << "Icefin router:" << key << "-> this play action's choice" << m_session.value(key);
+    return false;
+  }
   const QString remembered = d.value("remembered").toString();
   if (remembered == "play" || remembered == "playBaseLayer") {
     qInfo().noquote() << "Icefin router:" << key << "-> remembered choice" << remembered;
@@ -89,11 +107,8 @@ void RouterComponent::resolve(const QString& choice, bool remember)
   m_pendingKey.clear();
   m_proceed = nullptr;
   m_end = nullptr;
-  if (remember && choice != "cancel") {
-    QJsonObject m = memory();
-    m[key] = choice;
-    SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kMemory, QString::fromUtf8(QJsonDocument(m).toJson(QJsonDocument::Compact)));
-  }
+  if (remember && choice != "cancel") this->remember(key, choice);
+  if (choice.startsWith("transcode")) m_session.insert(key, choice);  // the page's transcode restart goes ahead
   qInfo().noquote() << "Icefin router:" << key << "->" << choice << (remember ? "(remembered on this device)" : "");
   if (choice == "play" || choice == "playBaseLayer") {
     m_bypassKey = key;
@@ -103,11 +118,49 @@ void RouterComponent::resolve(const QString& choice, bool remember)
   }
 }
 
+void RouterComponent::remember(const QString& key, const QString& choice)
+{
+  QJsonObject m = memory();
+  m[key] = choice;
+  SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kMemory, QString::fromUtf8(QJsonDocument(m).toJson(QJsonDocument::Compact)));
+}
+
+void RouterComponent::setSessionChoice(const QString& key, const QString& choice, bool remember)
+{
+  if (key.isEmpty() || choice == "cancel") return;
+  if (remember) this->remember(key, choice);
+  m_session.insert(key, choice);
+  qInfo().noquote() << "Icefin router:" << key << "->" << choice << "for this play action"
+                    << (remember ? "(remembered on this device)" : "");
+}
+
+void RouterComponent::clearSession()
+{
+  if (!m_session.isEmpty()) qInfo() << "Icefin router: new play action, earlier answers cleared";
+  m_session.clear();
+  m_bypassKey.clear();
+}
+
 QVariantMap RouterComponent::rememberedChoices() const { return memory().toVariantMap(); }
 
 void RouterComponent::forgetChoices()
 {
   SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kMemory, QString("{}"));
   qInfo() << "Icefin router: remembered playback choices cleared";
+}
+
+QVariantMap RouterComponent::display() const { return HdrCapabilityProbe::instance().current().toMap(); }
+
+void RouterComponent::componentPostInitialize()
+{
+  connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &RouterComponent::displayChanged);
+  // The main window exists once QML has loaded; attach the probe to the first visible top-level window.
+  auto* t = new QTimer(this);
+  t->setInterval(1000);
+  connect(t, &QTimer::timeout, this, [t] {
+    for (QWindow* w : QGuiApplication::topLevelWindows())
+      if (w->isVisible()) { HdrCapabilityProbe::instance().attach(w); t->stop(); t->deleteLater(); return; }
+  });
+  t->start();
 }
 }

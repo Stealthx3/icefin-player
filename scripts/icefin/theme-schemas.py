@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """theme-schemas.py: check every theme package in the repo against the shared JSON schemas (PLAN 8.5).
 
-Packages: themes/* (bundled) and tests/icefin/themes/* (fixtures). Exit 1 on a schema error.
+Packages: themes/* (built in) and tests/icefin/themes/* (fixtures). Exit 1 on a schema error.
 Needs python3-jsonschema (CI: icefin-hooks installs it).
 """
 import glob, json, os, sys

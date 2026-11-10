@@ -75,7 +75,7 @@ def main():
     app = None
     try:
         app, page, log = start("app-1.log")
-        page.wait_for("document.getElementById('address') !== null", timeout=60)
+        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
         page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
         time.sleep(5)
         page.reconnect()
@@ -98,6 +98,10 @@ def main():
         check("lab-broken listed and refused", broken.get("ok") is False and len(broken.get("errors", [])) >= 3,
               f"({len(broken.get('errors', []))} errors)")
 
+        # The lab user's theme choice syncs to the server (8.5), so an earlier run can leave one: start from off.
+        if call("activeTheme"):
+            call("setActiveTheme", "", "")
+            time.sleep(1.5)
         off = style()
         check("engine off: no Icefin stylesheet", not off["themed"] and not off["style"], f"bg={off['bg']}")
         shot(page, "1-off.png")

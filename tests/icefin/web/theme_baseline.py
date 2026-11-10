@@ -53,7 +53,7 @@ def main():
 
     try:
         page = Page(a.port, timeout=90)
-        page.wait_for("document.getElementById('address') !== null", timeout=60)
+        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
         page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
         time.sleep(5)
         page.reconnect()
@@ -74,10 +74,11 @@ def main():
         def grab(name, route):
             js(f"location.hash = {json.dumps(route)}; true")
             time.sleep(4)
-            # Same for both shots: hide spinners and the "ends at" clock (content, not theme). Animations stay on:
+            # Same for both shots: hide spinners, the "ends at" clock and Live TV progress (content that moves with time,
+            # not theme). Animations stay on:
             # jellyfin-web's image fade-in only finishes when its animation ends.
             js("(() => { if (!document.getElementById('lab-stabilize')) { const s = document.createElement('style'); s.id = 'lab-stabilize';"
-               " s.textContent = '.mdl-spinner,.docspinner,.progressring,.endsAt{visibility:hidden!important}';"
+               " s.textContent = '.mdl-spinner,.docspinner,.progressring,.endsAt,.card[data-type=Program] .itemProgressBar,.card[data-type=TvChannel] .itemProgressBar{visibility:hidden!important}';"
                " document.documentElement.appendChild(s); } return true; })()")
             js("document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0); true")
             shot = lambda: Image.open(io.BytesIO(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))).convert("RGB")
@@ -92,11 +93,13 @@ def main():
             img.save(os.path.join(a.out, name + ".png"))
             return img
 
-        # Computed styles of the main controls on home, off vs on: names the property behind any pixel difference.
-        PROPS = ["backgroundColor", "color", "borderTopLeftRadius", "borderTopColor", "boxShadow"]  # not opacity: image loading state
+        # Computed styles of the main controls on home, off vs on: names the property behind any pixel difference. Live TV
+        # cards are skipped: home sections load in any order, so the first card in the page can differ between
+        # the runs: each selector samples the top-left visible element instead.
+        PROPS = ["backgroundColor", "color", "borderTopLeftRadius", "borderTopColor", "boxShadow", "backgroundImage"]  # not opacity: image loading state
         SEL = [".skinHeader", ".cardBox", ".cardScalable", ".cardPadder", ".cardImageContainer", ".cardContent", ".blurhash-canvas",
                ".cardOverlayContainer", ".emby-tab-button", ".emby-tab-button-active", ".cardText", ".sectionTitle", "html", "body"]
-        styles = lambda: json.loads(js("JSON.stringify(Object.fromEntries(%s.map(sel => { const e = document.querySelector(sel);"
+        styles = lambda: json.loads(js("JSON.stringify(Object.fromEntries(%s.map(sel => { const e = [...document.querySelectorAll(sel)].filter(x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < innerHeight && !x.closest('.card[data-type=Program], .card[data-type=TvChannel]'); }).sort((a, b) => { const p = a.getBoundingClientRect(), q = b.getBoundingClientRect(); return p.top - q.top || p.left - q.left; })[0] || document.querySelector(sel);"
                                        " if (!e) return [sel, null]; const cs = getComputedStyle(e); return [sel, Object.fromEntries(%s.map(p => [p, cs[p]]))]; })))"
                                        % (json.dumps(SEL), json.dumps(PROPS))))
         js("location.hash = '#/home'; true")
@@ -113,8 +116,16 @@ def main():
         js("location.hash = '#/home'; true")
         page.wait_for("[...document.querySelectorAll('.cardImageContainer')].filter(e => { const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.width > 0; }).every(e => getComputedStyle(e).opacity === '1')", timeout=30)
         st_on = styles()
+        for _ in range(10):  # jellyfin-web re-renders cards after the switch: read again until they settle like stock
+            if all(st_on.get(k) == v for k, v in st_off.items() if v):
+                break
+            time.sleep(1)
+            st_on = styles()
+        # A card's placeholder colour under a loaded image is loading state, not theme: compare it only when neither run has
+        # an image on that element (the pixel comparison below covers what shows).
+        covered = lambda sel: "url(" in (st_off[sel]["backgroundImage"] + st_on[sel]["backgroundImage"])
         style_diffs = [f"{sel} {p}: {st_off[sel][p]} -> {st_on[sel][p]}" for sel in SEL if st_off.get(sel) and st_on.get(sel)
-                       for p in PROPS if st_off[sel][p] != st_on[sel][p]]
+                       for p in PROPS if p != "backgroundImage" and st_off[sel][p] != st_on[sel][p] and not (p == "backgroundColor" and covered(sel))]
         check("home: computed styles of the main controls match", not style_diffs, "; ".join(style_diffs)[:600], soft=not newer)
         on = {k: grab(f"{k}-baseline", r) for k, r in pages.items()}
         for k in pages:

@@ -1,0 +1,51 @@
+/* Orbit: channels stacked vertically, each a 3D carousel of tiles; a parallax backdrop; the guide panel. Proportions
+   follow the benchmark target at 16:9; all colours from tokens. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Segoe UI", "Noto Sans", "Open Sans", sans-serif; }
+
+[data-ob] { overflow: clip !important; background: var(--icefin-color-background); }
+.ob-backdrop { position: absolute; inset: -8vh 0; pointer-events: none; transition: transform 600ms ease;
+  background: radial-gradient(ellipse at 70% 20%, var(--icefin-color-backdropTop) 0%, transparent 60%),
+              linear-gradient(180deg, var(--icefin-color-backdropTop) 0%, var(--icefin-color-backdropBottom) 100%); }
+.ob-backdrop::after { content: ""; position: absolute; inset: 0;
+  background: repeating-radial-gradient(circle at 20% 120%, transparent 0 9vh, rgb(var(--icefin-color-surfaceRaised-channel) / 0.18) 9vh 9.3vh); }
+
+/* The stack: each channel is a title on the left and a carousel; the focused one sits on the centre line. */
+.ob-view { position: absolute; inset: 0; overflow: clip; }
+.ob-stack { position: absolute; left: 0; right: 0; top: 0; transition: transform 320ms ease; }
+.ob-channel { position: relative; height: 50vh; display: grid; grid-template-columns: 20vw 1fr; align-items: center;
+  opacity: 0.28; transform: scale(0.82); transform-origin: 30% 50%; transition: opacity 320ms ease, transform 320ms ease; }
+.ob-channel.near { opacity: 0.5; }
+.ob-channel.current { opacity: 1; transform: none; }
+.ob-channel-title { justify-self: end; padding-right: 2vw; font-size: 3.2em; font-weight: 300; letter-spacing: -0.02em; color: var(--icefin-color-text);
+  writing-mode: horizontal-tb; white-space: nowrap; }
+.ob-channel.current .ob-channel-title { color: var(--icefin-color-accentStrong); }
+.ob-ring { position: relative; height: 40vh; }
+
+/* Tiles: large 16:9 faces; the front one carries the green focus frame and its label. */
+.ob-tile { width: 30vw; outline: none; }
+.ob-face { aspect-ratio: 16 / 9; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
+  box-shadow: 0 1.2em 2.4em rgb(var(--icefin-color-text-channel) / 0.25); display: flex; align-items: center; justify-content: center;
+  border: 0.25em solid transparent; }
+.ob-face-title { font-size: 2em; font-weight: 300; color: var(--icefin-color-accentStrong); }
+.ob-tile.icefin-focused .ob-face { border-color: var(--icefin-color-focus); }
+.ob-label { margin-top: 1.2vh; font-size: 1.35em; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; }
+.ob-sub { font-size: 1em; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; }
+.ob-tile.icefin-focused .ob-label, .ob-tile.icefin-focused .ob-sub { opacity: 1; }
+
+.ob-clock { position: absolute; right: 3vw; top: 3vh; font-size: 1.6em; color: var(--icefin-color-text); }
+.ob-hint { position: absolute; right: 3vw; bottom: 3vh; font-size: 0.95em; color: var(--icefin-color-textSecondary); }
+
+/* The guide: a dark panel on the left over a dimmed screen. */
+#icefin-theme-overlay.ob-guide-host { background: rgba(0, 0, 0, 0.45); }
+.ob-guide { position: absolute; left: 6vw; top: 10vh; bottom: 10vh; width: 30vw; padding: 3vh 2vw; border-radius: 0.6em;
+  background: var(--icefin-color-guide); color: #ffffff; border-left: 0.4em solid var(--icefin-color-accent);
+  box-shadow: 0 1em 3em rgba(0, 0, 0, 0.5); animation: ob-guide-in 220ms ease-out; }
+@keyframes ob-guide-in { from { transform: translateX(-4vw); opacity: 0; } to { transform: none; opacity: 1; } }
+.ob-guide-title { font-size: 1.8em; font-weight: 300; }
+.ob-guide-clock { font-size: 1.1em; opacity: 0.7; margin-bottom: 3vh; }
+.ob-guide-list { display: flex; flex-direction: column; gap: 0.8vh; }
+.ob-guide-item { padding: 1.4vh 1.2vw; font-size: 1.35em; border-radius: 0.3em; outline: none; }
+.ob-guide-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+
+html[data-icefin-motion="low"] .ob-stack, html[data-icefin-motion="low"] .ob-channel, html[data-icefin-motion="low"] .ob-backdrop { transition-duration: 0ms; }
+html[data-icefin-motion="low"] .ob-guide { animation: none; }

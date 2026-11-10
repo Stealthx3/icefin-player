@@ -1,0 +1,41 @@
+/* Media Center: the start strip and the field it sits on. All colours come from tokens. */
+html[data-icefin-theme] body { background: var(--icefin-color-background); }
+
+/* Ribbon field: two slow gradient bands drifting across. The native backdrop (8.4, backdrop/ribbons.frag) draws them
+   under the page when the engine has it; this CSS field is the fallback. */
+.mc-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  background: radial-gradient(120% 90% at 20% 10%, var(--icefin-color-surface) 0%, var(--icefin-color-background) 60%); }
+.mc-ribbon { position: absolute; left: -30%; width: 160%; height: 38%; border-radius: 50%; filter: blur(28px); opacity: 0.9;
+  background: linear-gradient(100deg, transparent 10%, var(--icefin-color-ribbon) 45%, var(--icefin-color-ribbonAlt) 60%, transparent 90%);
+  animation: mc-drift 38s ease-in-out infinite alternate; }
+.mc-ribbon.two { top: 48%; animation-duration: 52s; animation-direction: alternate-reverse; transform: rotate(-6deg); }
+.mc-ribbon.one { top: 18%; transform: rotate(4deg); }
+@keyframes mc-drift { from { translate: -6% 0; } to { translate: 6% 3%; } }
+html[data-icefin-motion="low"] .mc-ribbon { animation: none; }
+
+.mc-start { position: absolute; inset: 0; font-size: 1.15em; }
+.mc-brand { position: absolute; left: 4.5vw; top: 4vh; font-weight: 300; letter-spacing: 0.04em; font-size: 1.6em; opacity: 0.9; }
+.mc-clock { position: absolute; right: 4.5vw; top: 4.4vh; font-weight: 300; font-size: 1.3em; opacity: 0.8; }
+
+/* The strip: categories stacked vertically; the focused category sits at a fixed line, its row of items to the right. */
+.mc-strip { position: absolute; left: 0; right: 0; top: 0; transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
+.mc-cat { display: grid; grid-template-columns: 22vw 1fr; align-items: center; height: 26vh; }
+.mc-cat-title { padding-left: 4.5vw; font-size: 2.3em; font-weight: 300; opacity: 0.45; transition: opacity 200ms, transform 200ms; transform-origin: left center; }
+.mc-cat.current .mc-cat-title { opacity: 1; transform: scale(1.08); }
+.mc-row { display: flex; gap: 1.4vw; overflow: visible; transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
+.mc-cat:not(.current) .mc-row { opacity: 0.5; }
+.mc-tile { flex: 0 0 auto; width: 11vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
+  position: relative; transition: transform 180ms, box-shadow 180ms; outline: none; }
+.mc-tile.wide { width: 19vw; aspect-ratio: 16 / 9; }
+.mc-tile .mc-label { position: absolute; left: 0; right: 0; bottom: -1.8em; font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 150ms; }
+.mc-tile.icefin-focused { transform: scale(1.1); box-shadow: 0 0 0 0.18em var(--icefin-color-focus), 0 0 2.2em 0.4em var(--icefin-color-focusGlow); z-index: 2; }
+.mc-tile.icefin-focused .mc-label { opacity: 1; }
+.mc-tile.text { display: flex; align-items: center; justify-content: center; font-size: 1.2em; aspect-ratio: auto; height: 8vh; width: 14vw; padding: 0 1em; text-align: center; }
+
+/* Now playing inset */
+.mc-now { position: absolute; right: 4.5vw; bottom: 5vh; display: flex; gap: 1em; align-items: center; padding: 0.8em 1.2em;
+  border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised); box-shadow: 0 0 1.5em var(--icefin-color-focusGlow); }
+.mc-now[hidden] { display: none; }
+.mc-now small { display: block; opacity: 0.7; }
+
+html[data-icefin-backdrop] .mc-field { display: none; }

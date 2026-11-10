@@ -1,0 +1,27 @@
+#icefin-theme-root { background: var(--icefin-color-background); color: var(--icefin-color-text); }
+.lab-cell { min-height: 3em; padding: 0.5em; background: var(--icefin-color-surface); border: 0.2em solid transparent; }
+.lab-cell.icefin-focused { border-color: var(--icefin-color-focus); }
+.icefin-carousel3d { height: 20em; }
+.icefin-carousel3d .lab-cell { width: 10em; height: 14em; }
+.icefin-pivot-header.active { font-weight: 700; }
+html[data-icefin-pointer] .lab-cell { min-height: 4em; }
+.lab-row { display: flex; gap: 1em; margin: 2em; }
+.lab-row .lab-cell { width: 10em; height: 6em; }
+.lab-material { width: 20em; height: 6em; margin: 2em; }
+.icefin-card-expanded { background: var(--icefin-color-surfaceRaised); }
+.icefin-siderail .icefin-rail-label { transition: opacity 120ms; }
+.icefin-siderail[data-icefin-rail=collapsed] .icefin-rail-label { opacity: 0; }
+.icefin-guide { height: 24em; margin: 1em; }
+.icefin-guide-times { position: relative; height: 2em; margin-left: 8em; }
+.icefin-guide-row { display: flex; height: 3em; }
+.icefin-guide-channel { width: 8em; flex: none; }
+.icefin-guide-lane { flex: 1; }
+.icefin-guide-cell { border: 0.1em solid var(--icefin-color-divider); box-sizing: border-box; overflow: hidden; white-space: nowrap; }
+.icefin-guide-cell.icefin-focused { border-color: var(--icefin-color-focus); }
+.icefin-guide-now { position: absolute; top: 2em; bottom: 0; width: 0.15em; background: var(--icefin-color-accent); }
+#icefin-osk { background: var(--icefin-color-surfaceRaised); padding: 1em; }
+.icefin-osk-row { display: flex; gap: 0.4em; margin: 0.3em 0; }
+.icefin-osk-key { min-width: 2.4em; padding: 0.5em; text-align: center; background: var(--icefin-color-surface); }
+.icefin-osk-key.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.icefin-osk-space { flex: 1; }
+.lab-input { margin: 2em; font-size: 1.2em; }

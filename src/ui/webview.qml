@@ -8,7 +8,7 @@ import QtQuick.Controls 6.0
 Window
 {
   id: mainWindow
-  title: "Jellyfin"
+  title: "Icefin Player"  // ICEFIN-HOOK: window title (branding, PLAN 1.3)
   objectName: "mainWindow"
   width: 1280
   height: 720
@@ -203,6 +203,8 @@ Window
     onWidthChanged: console.log("MpvVideoItem width changed:", width)
     onHeightChanged: console.log("MpvVideoItem height changed:", height)
   }
+
+  Loader { source: "qrc:/icefin-qml/Backdrop.qml"; anchors.fill: parent; z: 50 }  // ICEFIN-HOOK: native theme backdrop between video and web (PLAN 8.4)
 
   WebEngineView
   {

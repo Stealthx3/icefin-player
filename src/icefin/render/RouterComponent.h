@@ -17,6 +17,10 @@
 
 namespace Icefin::Render
 {
+// This system as the router sees it now: renderer, display (HdrCapabilityProbe), server transcode. Shared by the
+// router and PlayerComponent's routing log, so the two can't disagree.
+System currentSystem();
+
 class RouterComponent : public ComponentBase
 {
   Q_OBJECT
@@ -31,19 +35,30 @@ public:
   bool hold(const QVariantMap& loadMetadata, std::function<void()> proceed, std::function<void()> end);
 
   Q_INVOKABLE void resolve(const QString& choice, bool remember);
+  // A play action (jellyfin-web's playbackManager.play: cinema-mode intros, then the feature) asks once, before
+  // anything plays; its answer holds for every load until the next play action clears it. remember also keeps it
+  // on this device for later play actions.
+  Q_INVOKABLE void setSessionChoice(const QString& key, const QString& choice, bool remember);
+  Q_INVOKABLE void clearSession();
   Q_INVOKABLE QVariantMap rememberedChoices() const;
   Q_INVOKABLE void forgetChoices();
   // Diagnostics/tests: the decision for a VideoRangeType on this system, without loading anything.
   Q_INVOKABLE QVariantMap decide(const QString& videoRangeType) const;
+  // The display state the router uses (6.1): {hdr: yes/no/unknown, transfer, primaries, maxLuminance, source, error}.
+  Q_INVOKABLE QVariantMap display() const;
+  void componentPostInitialize() override;
 
 Q_SIGNALS:
   // {key, range, reason, options[{id, label}], remembered, itemId, serverId, startMs}
   void promptRequested(const QVariantMap& info);
+  void displayChanged(const QVariantMap& info);
 
 private:
   RouterComponent() = default;
   System system() const;
+  void remember(const QString& key, const QString& choice);
   QString m_bypassKey;  // one load that the user already answered for
+  QMap<QString, QString> m_session;  // this play action's answers, by key
   QString m_pendingKey;
   std::function<void()> m_proceed, m_end;
 };
