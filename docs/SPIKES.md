@@ -142,7 +142,7 @@ SRGB_NONLINEAR. Every verdict stands (HDR10 was available in each case); the pro
   itself (5.5); without a tag KWin treats the PQ swapchain as sRGB.
 - Note 4 is done: Plasma 6.8 is above the 6.4+ target.
 
-## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **BLOCKED (WSI layer extension not installed on the HTPC)**
+## 2.4 Same renderer as a Gamescope XWayland client, HDR via Gamescope WSI, inside the Flatpak: **GO (on NVIDIA, nested Gamescope, 2026-11-09); the HTPC re-run waits for the WSI layer extension**
 
 _2026-11-07_ Gamescope 3.16.17 builds in the lab, and Flathub's `org.freedesktop.Platform.VulkanLayer.gamescope//25.08`
 (the WSI layer the Flatpak would use) installs. But Gamescope's headless backend refuses software Vulkan: it requires
@@ -157,6 +157,29 @@ has `VkLayer_FROG_gamescope_wsi` in `/usr/share/vulkan/implicit_layer.d`, but a 
 (`flatpak install --user flathub org.freedesktop.Platform.VulkanLayer.gamescope//25.08`) waits for the user's OK;
 then the spike runs unattended in game mode. The SPEC's install guide should list the extension for Steam Deck /
 Bazzite users either way.
+
+_2026-11-09 (the user's workstation, RTX 4090; details under 2.8)._ The HDR part ran in a nested Gamescope 3.16 with
+`--hdr-enabled` and Flathub's `VulkanLayer.gamescope` 3.16.31 installed: inside Icefin's Flatpak, with
+`ENABLE_GAMESCOPE_WSI=1`, the WSI layer offers `HDR10_ST2084` on 10-bit formats and Qt Quick gets an HDR10 swapchain;
+without the layer it falls back to SDR. Steam's game-mode UI in the same nested Gamescope launched Icefin as a non-Steam
+game, the layer loaded into it, and a 4K HDR10 film played. **Verdict: go.** The AMD re-run on the HTPC still waits for
+the user's OK to install the extension there; the install guide must list
+`org.freedesktop.Platform.VulkanLayer.gamescope` for Steam Deck / Bazzite users.
+
+## 2.5 SDR UI brightness over HDR video (reference white): **NOT RUN; not gating; folded into 5.4 / 5.8**
+
+The question is how bright jellyfin-web's SDR controls look over HDR video once the swapchain is PQ. The inputs are
+known: the compositor's reference white (KWin 6.6 and 6.8: 200 nits, the user's SDR-brightness setting) and Qt's
+`QRhiSwapChainHdrInfo::sdrWhiteLevel` (200 on both test machines, 2.3 / 2.8), so 5.4 maps SDR white to the compositor's
+reference white. The visual check needs a tagged PQ surface (5.5), so it runs with 5.8 ("controls readable over
+video"), not as a separate spike. It doesn't affect the go/no-go on the single-surface design.
+
+## 2.6 Runtime IEC958 format setting on PipeWire and PulseAudio; exclusive ALSA reservation: **GO (implemented as 3.4 and 3.5); HDMI check with 3.8**
+
+Answered by building it: 3.4 sets the sink's IEC958 formats at runtime through the device-restore path on both
+PipeWire and PulseAudio, with a WirePlumber drop-in (`Iec958Formats`) as the fallback; 3.5 reserves the ALSA device
+through `org.freedesktop.ReserveDevice1` for exclusive output. Both pass their lab tests. What a real receiver shows is
+the 3.8 run on the HTPC.
 
 ## 2.7 `icefin-theme:` scheme vs jellyfin-web CSP; Gamepad API in WebEngine: **GO**; Steam Input part moved to 7.4
 
@@ -229,5 +252,38 @@ layer) from the Flatpak, on a 10-bit format, as on AMD. Design consequences for 
    Mutter and Gamescope.
 4. The panel switching to HDR output is checked once 5.5 tags the surface (5.8).
 
+**Steam game mode, nested (same machine, 2026-11-09).** Steam's game-mode UI (`gamescope -e --hdr-enabled -- steam
+-gamepadui`) in a nested Gamescope, Icefin added as a non-Steam game (launch: `flatpak run --socket=x11
+--nosocket=wayland --env=ENABLE_GAMESCOPE_WSI=1 …`) and started from Steam:
+- Gamescope exposed HDR to clients, and Gamescope's WSI layer loaded into Icefin (`[Gamescope WSI] Executable name:
+  icefin-player`), so the HDR10 swapchain path above is the one game mode uses.
+- A 4K HDR10 HEVC film direct-played on NVDEC (copy mode, `p010`) in real time, tone-mapped to SDR on the OpenGL
+  fallback; the picture showed (the user checked).
+- Controllers (Xbox 360 pad, Steam Input on): the app saw only **Steam Virtual Gamepad**; Steam hides the physical
+  pad, so there is no duplicate input in game mode. Its glyph family read "generic": SDL3 learns a virtual pad's real
+  type from the file Steam names in `SteamVirtualGamepadInfo`, under `/tmp`, which the Flatpak's private `/tmp`
+  hides. 7.4 should pass that file through or treat Steam's virtual pad as Xbox-style.
+- Navigation inside jellyfin-web with the pad is limited; that is theme-layer work (Phase 8/9), not a game-mode issue.
+
 Also found on this machine (not part of the spike): NVDEC's zero-copy CUDA frames show a blank picture on the
 OpenGL fallback, so Auto uses copy mode on NVIDIA until the Vulkan renderer (4.5, #39).
+
+## 2.9 Go / no-go summary (2026-11-09)
+
+| Spike | Verdict | Gates |
+|---|---|---|
+| 2.1 Qt Quick on Vulkan with WebEngine | **Go** (lab; AMD) | single-surface design |
+| 2.2 libmpv through libplacebo on Qt's Vulkan device | **Go** (functional; hwdec confirmed per GPU in 4.5) | single-surface design |
+| 2.3 HDR swapchain and Wayland tagging | **Go** (protocol level; Icefin tags the surface) | single-surface design |
+| 2.4 Gamescope XWayland with HDR via WSI, in the Flatpak | **Go** (NVIDIA, nested); HTPC re-run waits for the extension | game-mode HDR (5.6) |
+| 2.5 SDR UI brightness over HDR video | not run; folded into 5.4 / 5.8 | — |
+| 2.6 Runtime IEC958, exclusive ALSA | **Go** (built as 3.4 / 3.5); HDMI in 3.8 | — |
+| 2.7 `icefin-theme:` scheme vs CSP; Gamepad API | **Go**; Steam Input part in 7.4 | — |
+| 2.8 NVIDIA Vulkan HDR on Wayland and Gamescope | **Go** (swapchain level) | NVIDIA HDR (5.x) |
+
+**Decision.** 2.1, 2.2 and 2.3 are all go, so the plan stays on the single-surface Vulkan renderer (Phase 5); the
+two-window contingency is not needed. Design notes carried into Phase 5: Icefin tags the Wayland surface itself (2.3,
+2.8); HDR10 on a 10-bit swapchain on AMD and NVIDIA (2.8); Gamescope needs the WSI layer and
+`ENABLE_GAMESCOPE_WSI=1` (2.4); HLG goes to KWin 6.8+ as HLG, elsewhere as PQ (2.3, 2.8); SDR white maps to the
+compositor's reference white (2.5); NVIDIA's zero-copy NVDEC needs the Vulkan path (4.5).
+
