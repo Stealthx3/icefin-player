@@ -32,7 +32,9 @@ QString optionId(Option o)
   return "cancel";
 }
 
-System RouterComponent::system() const
+System RouterComponent::system() const { return currentSystem(); }
+
+System currentSystem()
 {
   System s;
   s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan ? Renderer::Vulkan : Renderer::OpenGlFallback;
@@ -69,6 +71,10 @@ bool RouterComponent::hold(const QVariantMap& load, std::function<void()> procee
   if (d.value("output").toString() != outputName(Output::Prompt)) return false;
   const QString key = d.value("key").toString();
   if (m_bypassKey == key) { m_bypassKey.clear(); return false; }  // answered: this load goes ahead
+  if (m_session.contains(key)) {  // answered at the start of this play action (bumpers, then the feature)
+    qInfo().noquote() << "Icefin router:" << key << "-> this play action's choice" << m_session.value(key);
+    return false;
+  }
   const QString remembered = d.value("remembered").toString();
   if (remembered == "play" || remembered == "playBaseLayer") {
     qInfo().noquote() << "Icefin router:" << key << "-> remembered choice" << remembered;
@@ -97,11 +103,8 @@ void RouterComponent::resolve(const QString& choice, bool remember)
   m_pendingKey.clear();
   m_proceed = nullptr;
   m_end = nullptr;
-  if (remember && choice != "cancel") {
-    QJsonObject m = memory();
-    m[key] = choice;
-    SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kMemory, QString::fromUtf8(QJsonDocument(m).toJson(QJsonDocument::Compact)));
-  }
+  if (remember && choice != "cancel") this->remember(key, choice);
+  if (choice.startsWith("transcode")) m_session.insert(key, choice);  // the page's transcode restart goes ahead
   qInfo().noquote() << "Icefin router:" << key << "->" << choice << (remember ? "(remembered on this device)" : "");
   if (choice == "play" || choice == "playBaseLayer") {
     m_bypassKey = key;
@@ -109,6 +112,29 @@ void RouterComponent::resolve(const QString& choice, bool remember)
   } else if (end) {
     end();  // cancel, or a transcode the page restarts
   }
+}
+
+void RouterComponent::remember(const QString& key, const QString& choice)
+{
+  QJsonObject m = memory();
+  m[key] = choice;
+  SettingsComponent::Get().setValue(SETTINGS_SECTION_STATE, kMemory, QString::fromUtf8(QJsonDocument(m).toJson(QJsonDocument::Compact)));
+}
+
+void RouterComponent::setSessionChoice(const QString& key, const QString& choice, bool remember)
+{
+  if (key.isEmpty() || choice == "cancel") return;
+  if (remember) this->remember(key, choice);
+  m_session.insert(key, choice);
+  qInfo().noquote() << "Icefin router:" << key << "->" << choice << "for this play action"
+                    << (remember ? "(remembered on this device)" : "");
+}
+
+void RouterComponent::clearSession()
+{
+  if (!m_session.isEmpty()) qInfo() << "Icefin router: new play action, earlier answers cleared";
+  m_session.clear();
+  m_bypassKey.clear();
 }
 
 QVariantMap RouterComponent::rememberedChoices() const { return memory().toVariantMap(); }

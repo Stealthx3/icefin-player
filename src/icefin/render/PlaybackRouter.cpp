@@ -1,4 +1,5 @@
 #include "PlaybackRouter.h"
+#include "RouterComponent.h"
 #include <QDebug>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
@@ -128,10 +129,7 @@ QString videoRangeType(const QVariantMap& item)
 void logRoute(const QVariantMap& item)
 {
   const QString vrt = videoRangeType(item);
-  System sys;
-  sys.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan ? Renderer::Vulkan : Renderer::OpenGlFallback;
-  sys.display = DisplayState::Unknown;  // HdrCapabilityProbe: 6.1
-  const Route r = route(rangeFromJellyfin(vrt), sys);
+  const Route r = route(rangeFromJellyfin(vrt), currentSystem());  // the same system the router decides with
   QStringList opts;
   for (Option o : r.options) opts << optionName(o);
   qInfo().noquote() << "Icefin router:" << (vrt.isEmpty() ? QString("(no VideoRangeType)") : vrt) << "->" << outputName(r.output)
