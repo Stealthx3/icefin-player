@@ -12,7 +12,7 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             gpu/Hwdec.cpp gpu/Hwdec.h gpu/DecoderSelfTest.cpp gpu/DecoderSelfTest.h
             gpu/HardwareComponent.cpp gpu/HardwareComponent.h gpu/WebGpuStatus.cpp gpu/WebGpuStatus.h
             render/PlaybackRouter.cpp render/PlaybackRouter.h render/RouterComponent.cpp render/RouterComponent.h
-            render/HdrCapabilityProbe.cpp render/HdrCapabilityProbe.h render/VulkanDevice.cpp render/VulkanDevice.h
+            render/HdrCapabilityProbe.cpp render/HdrCapabilityProbe.h render/VulkanDevice.cpp render/VulkanDevice.h render/VulkanVideo.cpp render/VulkanVideo.h
             log/Redact.cpp log/Redact.h
             input/GamepadNames.cpp input/GamepadNames.h input/GamepadComponent.cpp input/GamepadComponent.h)
 
