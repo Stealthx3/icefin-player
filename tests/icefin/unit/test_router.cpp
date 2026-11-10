@@ -2,6 +2,7 @@
 #include <QtTest>
 #include "icefin/render/PlaybackRouter.h"
 #include "icefin/render/HdrCapabilityProbe.h"
+#include "icefin/render/VulkanDevice.h"
 
 using namespace Icefin::Render;
 
@@ -104,6 +105,40 @@ private slots:
     QCOMPARE(videoRangeType(streamdata), QString("DOVIWithHDR10"));
     QVariantMap itemOnly{{"metadata", QVariantMap{{"MediaStreams", QVariantList{video}}}}, {"icefinMediaSource", QVariant()}};
     QCOMPARE(videoRangeType(itemOnly), QString("HDR10"));
+  }
+  void rendererChoice()
+  {
+    QCOMPARE(rendererChoiceFrom("vulkan"), RendererChoice::Vulkan);
+    QCOMPARE(rendererChoiceFrom("opengl"), RendererChoice::OpenGl);
+    QCOMPARE(rendererChoiceFrom("auto"), RendererChoice::Auto);
+    QCOMPARE(rendererChoiceFrom(""), RendererChoice::Auto);
+    // Auto takes Vulkan only once video plays there (5.3); an explicit Vulkan needs a usable GPU.
+    QVERIFY(!useVulkan(RendererChoice::Auto, true, false));
+    QVERIFY(useVulkan(RendererChoice::Auto, true, true));
+    QVERIFY(!useVulkan(RendererChoice::Auto, false, true));
+    QVERIFY(useVulkan(RendererChoice::Vulkan, true, false));
+    QVERIFY(!useVulkan(RendererChoice::Vulkan, false, false));
+    QVERIFY(!useVulkan(RendererChoice::OpenGl, true, true));
+    QVERIFY(!vulkanVideoPath());
+  }
+  void deviceExtensions()
+  {
+    const QList<QByteArray> all{"VK_KHR_swapchain", "VK_KHR_external_memory_fd", "VK_KHR_external_semaphore_fd",
+                                "VK_EXT_external_memory_dma_buf", "VK_EXT_image_drm_format_modifier", "VK_EXT_hdr_metadata",
+                                "VK_KHR_video_queue", "VK_KHR_video_decode_queue", "VK_KHR_video_decode_h265", "VK_EXT_something_else"};
+    const auto on13 = pickDeviceExtensions(all, VK_API_VERSION_1_3);
+    QVERIFY(on13.contains("VK_KHR_swapchain"));
+    QVERIFY(on13.contains("VK_EXT_image_drm_format_modifier"));
+    QVERIFY(on13.contains("VK_KHR_video_decode_h265"));
+    QVERIFY(!on13.contains("VK_EXT_something_else"));       // only what Icefin asks for
+    QVERIFY(!on13.contains("VK_KHR_video_decode_av1"));      // only what the device has
+    const auto on12 = pickDeviceExtensions(all, VK_API_VERSION_1_2);
+    QVERIFY(on12.contains("VK_EXT_image_drm_format_modifier"));
+    QVERIFY(!on12.contains("VK_KHR_video_queue"));           // Vulkan Video needs 1.3 here
+    QVERIFY(!pickDeviceExtensions(all, VK_API_VERSION_1_1).contains("VK_EXT_image_drm_format_modifier"));
+    QVERIFY(pickDeviceExtensions({"VK_KHR_video_decode_h264"}, VK_API_VERSION_1_3).isEmpty());  // no swapchain: nothing
+    const auto noQueue = pickDeviceExtensions({"VK_KHR_swapchain", "VK_KHR_video_decode_queue"}, VK_API_VERSION_1_3);
+    QCOMPARE(noQueue, QList<QByteArray>{"VK_KHR_swapchain"});  // decode needs video_queue
   }
 };
 
