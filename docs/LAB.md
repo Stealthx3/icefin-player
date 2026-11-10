@@ -91,6 +91,7 @@ Per-commit bundles stay on each workflow run as artifacts (90 days).
 - Build: `scripts/lab.sh run 'cmake -S . -B ~/build -G Ninja -DUSE_STATIC_MPVQT=ON && ninja -C ~/build 2>&1 | tail -n 50'` (build dir stays outside the synced tree)
 - SDL3 controller build (as the Flatpak): add `-DENABLE_SDL2=OFF -DICEFIN_SDL3=ON` (separate build dir, e.g. `~/build-sdl3`). After adding files under `native/` or `src/icefin/resources/`, re-run cmake: upstream globs those at configure time.
 - Test:  `scripts/lab.sh run '<cmd> 2>&1 | tail -n 50'`
+- Patched libmpv for native builds (the Vulkan render API, PLAN 5.2; the Flatpak always has it): `scripts/lab.sh run 'external/mpv/build-lab.sh ~/mpv-icefin'` once, then configure with `PKG_CONFIG_PATH=~/mpv-icefin/lib/x86_64-linux-gnu/pkgconfig` and run with `LD_LIBRARY_PATH=~/mpv-icefin/lib/x86_64-linux-gnu` (`external/mpv/README.md`)
 - Flatpak: `scripts/lab.sh run 'flatpak-builder --user --install-deps-from=flathub --force-clean --state-dir=$HOME/fp-state --repo=$HOME/fp-repo $HOME/fp-build flatpak/io.github.stealthx3.IcefinPlayer.yml'` (state outside the synced tree)
 - Watch: `scripts/lab.sh view`
 
