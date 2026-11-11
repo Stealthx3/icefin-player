@@ -2,15 +2,18 @@
   "theme": "plaza",
   "target": "The Wii Menu (system menu 4.3, widescreen) as rendered by the Dolphin emulator at 1920x1080",
   "sources": [
+    "The user's own reference walk of the target (Dolphin, 2026-11-11), measured from a screen recording mapped to 1920x1080; measurements only, nothing kept",
     "YouTube, Laura Freeman, \"My Wii Menu (Via Dolphin Emulator)\", https://www.youtube.com/watch?v=LIto3W_PZPc (1080p): the channel grid at 8 s and 98-106 s, a page turn at 102.03-102.40 s; frames read in the browser at 1/30 s steps, nothing downloaded",
     "Layout only: no channel art, icons, sounds, fonts or names from the target are used"
   ],
   "measurements": {
-    "grid": "four columns of channels 392 x 212 from x 157 on a 404.5 pitch (12.5 gaps), the grid centred; rows from y 89, 228 apart (16 gaps); partial neighbour columns show at the edges in the target, page arrows in Plaza",
-    "bar": "a light panel (#d0d1d8) from about y 761 at the sides and 776-806 in the middle (Plaza: a flat top at 776); round buttons about 180 across centred on (175, 910) and (1747, 916)",
-    "clock": "large, light grey, centred on x 960, y ~829 (digits ~80 tall); the date darker under it, centred on y 954",
-    "page turn": "the next page slides in from its side in about 370 ms, fast at first",
-    "colours": "field #ececec, channel frames #b7b6bb"
+    "grid": "channels 382 x 212 from (162, 93) on a 405 x 232 pitch, four columns at 16:9 (more at the same size on wider screens); the neighbouring pages peek at the sides",
+    "bar": "a light panel (#d0d1d8) whose top edge is at y ~795 at the sides and dips to ~900 in a centred notch; round buttons about 170 across centred on (174, 922) and (1746, 924)",
+    "clock": "large, light grey, in the notch (centre ~y 845); the date darker under it, centred on y ~973",
+    "page turn": "one page slides in about 450 ms, ease-out",
+    "colours": "field #ececec, channel frames #b7b6bb",
+    "open": "about 870 ms: the screen dims, the channel grows into a framed card, its content fades in, then the name tab",
+    "hover": "a thick cyan glow round the channel and its name in a white pill under it; no zoom"
   },
   "tolerancePx": 14,
   "timingTolerance": 0.1,
@@ -23,62 +26,62 @@
         "second channel": {
           "sel": ".pz-tile",
           "index": 1,
-          "x": 562,
-          "y": 89,
-          "w": 392,
+          "x": 567,
+          "y": 93,
+          "w": 382,
           "h": 212
         },
         "fourth channel": {
           "sel": ".pz-tile",
           "index": 3,
-          "x": 1370,
-          "y": 89
+          "x": 1377,
+          "y": 93
         },
         "a second-row channel": {
           "sel": ".pz-tile",
           "index": 5,
-          "x": 562,
-          "y": 317,
+          "x": 567,
+          "y": 325,
           "h": 212
         },
         "a third-row channel": {
           "sel": ".pz-tile",
           "index": 9,
-          "y": 545
+          "y": 557
         },
         "bottom bar": {
           "sel": ".pz-bar",
-          "y": 776,
-          "h": 304,
+          "y": 795,
+          "h": 285,
           "tol": 8
         },
         "left round button": {
           "sel": ".pz-round",
           "index": 0,
-          "cx": 175,
-          "cy": 910,
-          "w": 180,
-          "h": 180
+          "cx": 174,
+          "cy": 922,
+          "w": 170,
+          "h": 170
         },
         "right round button": {
           "sel": ".pz-round",
           "index": 1,
-          "cx": 1747,
-          "cy": 910,
-          "w": 180
+          "cx": 1746,
+          "cy": 924,
+          "w": 170
         }
       },
       "text": {
         "clock": {
           "sel": ".pz-clock",
           "cx": 960,
-          "cy": 829,
-          "tol": 16
+          "cy": 845,
+          "tol": 18
         },
         "date": {
           "sel": ".pz-date",
           "cx": 960,
-          "cy": 954,
+          "cy": 973,
           "tol": 16
         }
       }
@@ -106,10 +109,11 @@
   "timings": [
     {
       "name": "page turn",
-      "sel": ".pz-pages .icefin-grid-page",
-      "kind": "animation",
-      "animation": "pz-turn-right",
-      "ms": 370
+      "sel": ".pz-track",
+      "kind": "transition",
+      "property": "transform",
+      "ms": 450,
+      "easing": "cubic-bezier(0.2, 0.8, 0.3, 1)"
     }
   ]
 }
