@@ -87,7 +87,7 @@ html[data-icefin-backdrop] .mc-field { display: none; }
    buttons that turn into a pane of the strip's glass on focus. */
 .icefin-details .icefin-d-shade { background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0.86) 45%, rgb(var(--icefin-color-background-channel) / 0.35) 100%),
   linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 40%); }
-.icefin-details .icefin-d-main { padding-top: 16vh; }
+.icefin-details .icefin-d-main { padding-top: 7vh; }
 .icefin-details .icefin-d-poster { width: 16vw; box-shadow: 0 1em 3em rgb(var(--icefin-color-glassEdge-channel) / 0.45); }
 .icefin-details .icefin-d-kicker { opacity: 0.75; }
 .icefin-details .icefin-d-title { font-weight: 300; font-size: 3em; }

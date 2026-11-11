@@ -190,6 +190,12 @@ def main():
             open_details(series)
             ser = json.loads(js("JSON.stringify({seasons: document.querySelectorAll('[data-section=seasons] .icefin-d-card').length, episodes: document.querySelectorAll('[data-section=episodes] .icefin-d-card').length, stock: location.hash.includes('icefin=stock'), actions: [...document.querySelectorAll('.icefin-d-btn')].map(b => b.dataset.action)})"))
             check(f"{tid}: a series opens themed, with Seasons and Episodes", not ser["stock"] and ser["seasons"] >= 1 and ser["episodes"] >= 1 and "shuffle" in ser["actions"], json.dumps(ser))
+            # Focus deep in the lists never scrolls the page sideways: the title stays in view (a list's cards once
+            # widened their column and focus scrolled the whole screen).
+            js("window.icefinTheme.ctx.focus([...document.querySelectorAll('.icefin-d-section .icefin-d-card')].pop()); true")
+            time.sleep(1)
+            side = json.loads(js("JSON.stringify({scroll: document.querySelector('.icefin-d-scroll').scrollLeft, wrap: document.querySelector('.icefin-details').scrollLeft, root: document.querySelector('#icefin-theme-root').scrollLeft, title: Math.round(document.querySelector('.icefin-d-title').getBoundingClientRect().left)})"))
+            check(f"{tid}: focus in the lists keeps the page in place sideways", side["scroll"] == 0 and side["wrap"] == 0 and side["root"] == 0 and side["title"] >= 0, json.dumps(side))
             shot(f"{tid}-series.png")
             if deep:
                 season = js("document.querySelector('[data-section=seasons] .icefin-d-card').dataset.id")

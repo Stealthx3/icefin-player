@@ -44,15 +44,16 @@
 
     // Structural layouts, colours from tokens only (theme-lint). Themes restyle anything with their own CSS.
     const BASE = `
-.icefin-details { position: absolute; inset: 0; color: var(--icefin-color-text); overflow: hidden; font-size: 2.4vh; }
+.icefin-details { position: absolute; inset: 0; color: var(--icefin-color-text); overflow: clip; font-size: 2.4vh; }
 .icefin-d-art { position: absolute; inset: 0; background: center / cover no-repeat; }
 .icefin-d-shade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0.85) 40%, rgb(var(--icefin-color-background-channel) / 0.25) 100%),
   linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 45%); }
 .icefin-d-nav { position: absolute; z-index: 3; left: 3vw; top: 3vh; display: flex; gap: 0.6em; }
 .icefin-d-navbtn { font-size: 0.9em; padding: 0.45em 1.1em; }
-.icefin-d-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; scroll-behavior: smooth; }
+/* The scrolling part starts under Back and Home, so nothing scrolls beneath them; sideways it clips (focus can't scroll it). */
+.icefin-d-scroll { position: absolute; inset: 9vh 0 0 0; overflow-y: auto; overflow-x: clip; scrollbar-width: none; scroll-behavior: smooth; }
 .icefin-d-scroll::-webkit-scrollbar { display: none; }
-.icefin-d-main { display: grid; grid-template-columns: auto 1fr; gap: 3vw; padding: 14vh 6vw 4vh; align-items: start; }
+.icefin-d-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3vw; padding: 5vh 6vw 4vh; align-items: start; }
 .icefin-d-poster { width: 17vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius, 0.3em); background: var(--icefin-color-surface) center / cover no-repeat; }
 .icefin-details[data-shape="square"] .icefin-d-poster { aspect-ratio: 1; }
 .icefin-details[data-shape="wide"] .icefin-d-poster { aspect-ratio: 16 / 9; width: 28vw; }
@@ -72,7 +73,7 @@
 .icefin-d-select b { font-weight: 600; margin-left: 0.4em; }
 .icefin-d-btn.icefin-focused, .icefin-d-select.icefin-focused, .icefin-d-track.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
 .icefin-d-btn[aria-pressed="true"]::after { content: " ✓"; }
-.icefin-d-sections { padding: 0 6vw 10vh; }
+.icefin-d-sections { padding: 0 6vw 10vh; min-width: 0; }
 .icefin-d-section { margin-top: 4vh; }
 .icefin-d-section h2 { font-size: 1.4em; font-weight: 500; margin: 0 0 1.2vh; }
 .icefin-d-row { display: flex; gap: 1.2vw; overflow-x: auto; overflow-y: visible; padding: 1vh 0.6vw; scrollbar-width: none; scroll-behavior: smooth; }
@@ -101,25 +102,25 @@
 .icefin-d-option[aria-selected="true"]::after { content: " ✓"; }
 .icefin-d-option.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
 /* hero: art full-bleed, the text low on the left, no poster */
-.icefin-details[data-layout="hero"] .icefin-d-main { grid-template-columns: 1fr; min-height: 78vh; align-content: end; padding-top: 0; }
+.icefin-details[data-layout="hero"] .icefin-d-main { grid-template-columns: minmax(0, 1fr); min-height: 69vh; align-content: end; padding-top: 0; }
 .icefin-details[data-layout="hero"] .icefin-d-poster { display: none; }
 /* banner: the art as a band across the top, poster and text under it */
 .icefin-details[data-layout="banner"] .icefin-d-art { bottom: auto; height: 46vh; }
 .icefin-details[data-layout="banner"] .icefin-d-shade { background: linear-gradient(0deg, var(--icefin-color-background) 54%, transparent 100%); }
-.icefin-details[data-layout="banner"] .icefin-d-main { padding-top: 34vh; }
+.icefin-details[data-layout="banner"] .icefin-d-main { padding-top: 25vh; }
 .icefin-details[data-layout="banner"] .icefin-d-poster { width: 13vw; }
 /* panel: a fixed information panel on the left, the lists to its right */
 .icefin-details[data-layout="panel"] .icefin-d-art { left: 34vw; }
 .icefin-details[data-layout="panel"] .icefin-d-shade { background: linear-gradient(90deg, var(--icefin-color-background) 34%, rgb(var(--icefin-color-background-channel) / 0.6) 60%, rgb(var(--icefin-color-background-channel) / 0.3) 100%); }
-.icefin-details[data-layout="panel"] .icefin-d-scroll { display: grid; grid-template-columns: 34vw 1fr; }
-.icefin-details[data-layout="panel"] .icefin-d-main { grid-template-columns: 1fr; padding: 1vh 2.5vw 4vh 4vw; position: sticky; top: 10vh; align-self: start;
-  margin-top: 10vh; max-height: 90vh; box-sizing: border-box; overflow-y: auto; scrollbar-width: none; }  /* below Back and Home */
+.icefin-details[data-layout="panel"] .icefin-d-scroll { display: grid; grid-template-columns: 34vw minmax(0, 1fr); }
+.icefin-details[data-layout="panel"] .icefin-d-main { grid-template-columns: minmax(0, 1fr); padding: 1vh 2.5vw 4vh 4vw; position: sticky; top: 0; align-self: start;
+  max-height: 91vh; box-sizing: border-box; overflow-y: auto; overflow-x: clip; scrollbar-width: none; }
 .icefin-details[data-layout="panel"] .icefin-d-title { font-size: 2.2em; }
 .icefin-details[data-layout="panel"] .icefin-d-main::-webkit-scrollbar { display: none; }
 .icefin-details[data-layout="panel"] .icefin-d-poster { width: 11vw; }
 .icefin-details[data-layout="panel"] .icefin-d-info { max-width: none; }
 .icefin-details[data-layout="panel"] .icefin-d-overview { -webkit-line-clamp: 8; }
-.icefin-details[data-layout="panel"] .icefin-d-sections { padding: 8vh 4vw 10vh 1vw; }
+.icefin-details[data-layout="panel"] .icefin-d-sections { padding: 0 4vw 10vh 1vw; }
 html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] .icefin-d-row { scroll-behavior: auto; }
 `;
     function ensureStyle() {
