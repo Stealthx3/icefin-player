@@ -75,7 +75,7 @@ def main():
         check("top bar: Home, Search, the libraries, Settings, Classic home", top[:2] == ["Home", "Search"] and top[-2:] == ["Settings", "Classic home"] and len(top) >= 5, json.dumps(top))
         geo = js("JSON.stringify({bar: document.querySelector('.icefin-topbar').getBoundingClientRect().height / innerHeight, hero: document.querySelector('.sp-hero').getBoundingClientRect().height / innerHeight})")
         g = json.loads(geo)
-        check("proportions: bar about 9% and hero about half the height", 0.08 <= g["bar"] <= 0.10 and 0.48 <= g["hero"] <= 0.56, geo)
+        check("proportions: bar 115/1080 over a hero 590/1080 tall", abs(g["bar"] - 115 / 1080) < 0.01 and abs(g["hero"] - 590 / 1080) < 0.01, geo)
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; "
                          "if (f.classList.contains('sp-nav-item')) return 'top/' + f.textContent; "
                          "if (f.classList.contains('sp-hero')) return 'hero/' + f.getAttribute('data-sp-hero'); "
@@ -118,6 +118,10 @@ def main():
             check("down moves to the next row", foc().startswith("row/1/"), foc())
             act("up")
             check("up returns to the row's kept position", foc() == ("row/0/1" if len0 >= 2 else "row/0/0"), foc())
+        time.sleep(1.2)
+        check("the first row keeps the full hero above it", js("document.querySelector('.sp-hero').getBoundingClientRect().height / innerHeight") > 0.5)
+        if nrows >= 2:
+            act("down")  # a deeper row: the hero shrinks and the row slides up
         time.sleep(1.2)  # let the 220 ms slides settle (software rendering in the lab is slow)
         tv = js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); const t = f.closest('.sp-row-section').querySelector('.sp-row-title').getBoundingClientRect(); const h = document.querySelector('.sp-hero').getBoundingClientRect(); const sec = f.closest('.sp-row-section'); return JSON.stringify({title: t.top, hero: h.bottom, heroH: h.height / innerHeight, row: [...document.querySelectorAll('.sp-row-section')].indexOf(sec), off: sec.offsetTop, tf: document.querySelector('.sp-rows').style.transform, view: document.querySelector('.sp-rows-view').getBoundingClientRect().top}); })()")
         tvj = json.loads(tv)
