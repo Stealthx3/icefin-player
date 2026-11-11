@@ -2,17 +2,15 @@
 """theme_marquee.py — the Marquee benchmark theme in the running app (PLAN 9.13; target the Netflix TV app). Lab guests only.
 
   - Marquee is a built-in theme, offered in Client Settings → Theme;
-  - home: a collapsed icon rail (Search, Home, each library, Settings, Classic home) that widens with labels while it
-    has focus, without moving the content; a billboard with Play and More info; rows of 16:9 cards;
-  - the billboard: after a dwell a muted trailer plays in the page's own <video> (never mpv) and the title shrinks;
-    leaving the billboard stops it; none under the low-motion cap;
-  - rows jump by a page: moving past the last whole card shifts the row by a page;
-  - the focused card grows into an inline preview (details, muted trailer) over its neighbours, without reflowing the
-    row; moving on collapses it;
-  - Back from a row returns to the billboard, from the billboard to the rail; right from the rail goes back;
+  - home: a navigation bar along the top (Search, Home, each library, Settings, Classic home); rows of titles where the
+    focused row stands tall at the top, its focused card widened to 16:9 with the title's details under it;
+  - after a dwell a muted preview plays in the widened card, in the page's own <video> (never mpv); none under the
+    low-motion cap;
+  - right/left move along the row and the focused card keeps the first slot; down/up change row and the focused row
+    rises to the top; up from the first row reaches the bar, down returns; Back from a row goes to the bar;
   - Enter opens jellyfin-web's details page (Marquee's tokens); Classic home shows the stock home; turning the theme
     off restores the stock UI.
-Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
+Layout positions against the reference: clone_layout.py --theme marquee. Screenshots go to --out.
 Usage: python3 theme_marquee.py --app ~/build/src/icefin-player --server jf12 --out ~/r913/jf12
 """
 import argparse, base64, json, os, signal, sys, tempfile, time
@@ -75,79 +73,61 @@ def main():
         time.sleep(1.5)
         R = "document.querySelector('#icefin-theme-root')"
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; "
-                         "if (f.classList.contains('mq-nav')) return 'rail/' + f.querySelector('.icefin-rail-label').textContent; "
-                         "if (f.classList.contains('mq-btn')) return 'bill/' + [...document.querySelectorAll('.mq-btn')].indexOf(f); "
+                         "if (f.classList.contains('mq-nav')) return 'nav/' + f.marqueeName; "
                          "const s = f.closest('.mq-row'); return 'row/' + [...document.querySelectorAll('.mq-row')].indexOf(s) + '/' + f.marqueeIndex; })()")
-        rail = json.loads(js("JSON.stringify([...document.querySelectorAll('.mq-nav .icefin-rail-label')].map(e => e.textContent))"))
-        check("rail: Search, Home, the libraries, Settings, Classic home", rail[:2] == ["Search", "Home"] and rail[-2:] == ["Settings", "Classic home"] and len(rail) >= 5, json.dumps(rail))
-        check("focus starts on Play; the rail is collapsed", foc() == "bill/0" and js("document.querySelector('.icefin-siderail').dataset.icefinRail") == "collapsed", foc())
-        g = json.loads(js("JSON.stringify({rail: document.querySelector('.icefin-siderail').getBoundingClientRect().width / innerWidth, bill: document.querySelector('.mq-billboard').getBoundingClientRect().height / innerHeight, content: document.querySelector('.icefin-content').getBoundingClientRect().left})"))
-        check("proportions: rail about 6% wide, billboard about two thirds of the height", 0.05 <= g["rail"] <= 0.07 and 0.62 <= g["bill"] <= 0.70, json.dumps(g))
+        nav = json.loads(js("JSON.stringify([...document.querySelectorAll('.mq-nav')].map(e => e.marqueeName))"))
+        check("top bar: Search, Home, the libraries, Settings, Classic home", nav[:2] == ["Search", "Home"] and nav[-2:] == ["Settings", "Classic home"] and len(nav) >= 5, json.dumps(nav))
+        check("focus starts on the first row's first card", foc() == "row/0/0", foc())
+        g = json.loads(js("JSON.stringify((() => { const o = document.querySelector('.mq-card.open').getBoundingClientRect(), n = document.querySelectorAll('.mq-row.current .mq-card')[1]; const r = n ? n.getBoundingClientRect() : {width: 0}; return {open: o.width / innerWidth, h: o.height / innerHeight, next: r.width / innerWidth, facts: document.querySelector('.mq-row.current .mq-facts').textContent}; })())"))
+        check("the focused card is widened to 916/1920 beside 316/1920 cards, 512/1080 tall, details under it", abs(g["open"] - 916 / 1920) < 0.01 and abs(g["h"] - 512 / 1080) < 0.01
+              and (g["next"] == 0 or abs(g["next"] - 316 / 1920) < 0.01) and g["facts"] != "", json.dumps(g))
         shot("home.png")
-        # trailer after the dwell
         try:
-            page.wait_for(f"{R}.dataset.mqTrailer === 'playing'", timeout=15)
-            page.wait_for("document.querySelector('.mq-billboard video.icefin-preview').currentTime > 0.3", timeout=30)
+            page.wait_for(f"{R}.dataset.mqPreview === 'playing'", timeout=15)
+            page.wait_for("document.querySelector('.mq-card.open video.icefin-preview').currentTime > 0.3", timeout=30)
             playing = True
         except Exception:  # noqa: BLE001
             playing = False
-        check("after a dwell a muted trailer plays in the page's own video", playing and js("document.querySelector('.mq-billboard video.icefin-preview').muted") is True,
-              js("JSON.stringify((v => v ? {t: v.currentTime, e: (v.error || {}).message || ''} : null)(document.querySelector('.mq-billboard video.icefin-preview')))"))
-        time.sleep(1)
-        check("the title shrinks while the trailer plays", "matrix(0.62" in js("getComputedStyle(document.querySelector('.mq-title')).transform"), js("getComputedStyle(document.querySelector('.mq-title')).transform"))
-        check("the trailer isn't mpv (no player session)", js("!!(window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying())") is False)
-        shot("trailer.png")
-        # rail
-        act("left")
-        time.sleep(0.5)
-        g2 = json.loads(js("JSON.stringify({rail: document.querySelector('.icefin-siderail').getBoundingClientRect().width / innerWidth, content: document.querySelector('.icefin-content').getBoundingClientRect().left})"))
-        check("left from Play opens the rail on Home, labels shown; the trailer stops", foc() == "rail/Home" and g2["rail"] > 0.2
-              and js("getComputedStyle(document.querySelector('.mq-nav .icefin-rail-label')).opacity") == "1" and js("!!document.querySelector('.mq-billboard video.icefin-preview')") is False, f"{foc()} {json.dumps(g2)}")
-        check("the content doesn't move when the rail expands", abs(g2["content"] - g["content"]) < 0.5)
-        shot("rail.png")
-        act("down")
-        check("up/down move along the rail", foc() == f"rail/{rail[2]}", foc())
+        check("after a dwell a muted preview plays in the widened card", playing and js("document.querySelector('.mq-card.open video.icefin-preview').muted") is True,
+              js("JSON.stringify((v => v ? {t: v.currentTime, e: (v.error || {}).message || ''} : null)(document.querySelector('.mq-card.open video.icefin-preview')))"))
+        check("the preview isn't mpv (no player session)", js("!!(window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying())") is False)
+        shot("preview.png")
+        left0 = js("document.querySelector('.mq-card.open').getBoundingClientRect().left")
+        n0 = js("document.querySelectorAll('.mq-row')[0].querySelectorAll('.mq-card').length")
+        if n0 >= 2:
+            act("right")
+            time.sleep(0.8)
+            left1 = js("document.querySelector('.mq-card.open').getBoundingClientRect().left")
+            check("right opens the next card in the first slot; the preview stops", foc() == "row/0/1" and abs(left1 - left0) < 2 and js("!!document.querySelector('video.icefin-preview')") is False, f"{foc()} {left0}->{left1}")
+            act("left")
+        nrows = js("document.querySelectorAll('.mq-row').length")
+        if nrows >= 2:
+            top0 = js("document.querySelector('.mq-row.current .mq-row-title').getBoundingClientRect().top")
+            act("down")
+            time.sleep(0.8)
+            top1 = js("document.querySelector('.mq-row.current .mq-row-title').getBoundingClientRect().top")
+            check("down: the next row rises to the top line and stands tall", foc().startswith("row/1/") and abs(top1 - top0) < 2, f"{foc()} {top0}->{top1}")
+            act("up")
+            time.sleep(0.6)
+            check("up returns to the first row where it was", foc() == "row/0/0", foc())
+        act("up")
+        check("up from the first row reaches the bar on Home", foc() == "nav/Home", foc())
         act("right")
-        time.sleep(0.4)
-        check("right from the rail returns to where focus was; the rail collapses", foc() == "bill/0" and js("document.querySelector('.icefin-siderail').dataset.icefinRail") == "collapsed", foc())
-        # rows
+        check("the bar moves left and right", foc() == f"nav/{nav[2]}", foc())
         act("down")
-        time.sleep(0.6)
-        check("down from the billboard enters the first row", foc() == "row/0/0", foc())
-        lefts = js("JSON.stringify([...document.querySelectorAll('.mq-row')[0].querySelectorAll('.mq-card')].map(c => c.offsetLeft))")
-        time.sleep(1.2)
-        exp = js("(document.querySelector('.icefin-card-expanded .mq-x-title') || {}).textContent || ''")
-        card0 = js("document.querySelector('.mq-card.icefin-focused').marqueeItem.Name")
-        check("after a dwell the focused card grows into a preview with its details", exp != "" and card0 in exp, f"{exp!r} for {card0!r}")
-        pr = json.loads(js("JSON.stringify((() => { const p = document.querySelector('.icefin-card-expanded').getBoundingClientRect(), c = document.querySelector('.mq-card.icefin-focused').getBoundingClientRect(); return [p.width / c.width, p.height / c.height]; })())"))
-        check("the preview is larger than the card, the row doesn't reflow", pr[0] > 1.3 and pr[1] > 1.3
-              and js("JSON.stringify([...document.querySelectorAll('.mq-row')[0].querySelectorAll('.mq-card')].map(c => c.offsetLeft))") == lefts, json.dumps(pr))
-        shot("expanded.png")
-        # page jump: a 40-item row (the lab libraries are small)
+        check("down from the bar returns to the rows", foc() == "row/0/0", foc())
+        # a long row keeps the focused card in the first slot (the lab libraries are small)
         js("document.querySelectorAll('.mq-row')[0].marqueeRow.setItems(Array.from({length: 40}, (_, i) => ({Id: 'x' + i, Name: 'Item ' + i, ImageTags: {}}))); true")
         js("window.icefinTheme._engine.focus(document.querySelectorAll('.mq-row')[0].querySelector('.mq-card')); true")
-        per = js("document.querySelectorAll('.mq-row')[0].marqueeRow.perPage()")
-        for _ in range(per - 1):
+        for _ in range(12):
             act("right")
-        p_before = js("document.querySelectorAll('.mq-row')[0].dataset.mqPage")
-        act("right")
         time.sleep(0.8)
-        p_after = js("document.querySelectorAll('.mq-row')[0].dataset.mqPage")
-        vis = js("(() => { const r = document.querySelector('.mq-card.icefin-focused').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; })()")
-        first = js("(() => { const r = document.querySelector('.mq-card.icefin-focused').getBoundingClientRect(); return r.left / innerWidth; })()")
-        check("past the last whole card the row jumps a page; the focused card is first on the new page", p_before == "0" and p_after == "1" and foc() == f"row/0/{per}" and vis is True and first < 0.15,
-              f"{p_before}->{p_after} {foc()} per={per} left={first:.3f}")
-        act("left")
-        time.sleep(0.6)
-        check("left past the page's first card jumps back", js("document.querySelectorAll('.mq-row')[0].dataset.mqPage") == "0" and foc() == f"row/0/{per - 1}", foc())
-        check("moving on collapses the preview", js("!document.querySelector('.icefin-card-expanded')") or js("document.querySelector('.icefin-card-expanded .mq-x-title').textContent").find(js("document.querySelector('.mq-card.icefin-focused').marqueeItem.Name")) >= 0)
+        lx = js("document.querySelector('.mq-card.icefin-focused').getBoundingClientRect().left / innerWidth")
+        check("along a long row the focused card keeps the first slot", foc() == "row/0/12" and abs(lx - 49 / 1920) < 0.01, f"{foc()} left={lx:.3f}")
         act("back")
-        time.sleep(0.5)
-        check("Back from a row returns to the billboard", foc() == "bill/0", foc())
-        act("back")
-        check("Back from the billboard opens the rail", foc() == "rail/Home", foc())
-        act("right")
+        check("Back from a row goes to the bar", foc() == "nav/Home", foc())
         act("down")
+        time.sleep(0.5)
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
@@ -158,10 +138,10 @@ def main():
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-mq-ready]')", timeout=30)
         time.sleep(1)
-        act("left")
-        for _ in range(len(rail)):
-            act("down")
-        check("the rail stops at its last entry", foc() == "rail/Classic home", foc())
+        act("up")
+        for _ in range(len(nav)):
+            act("right")
+        check("the bar stops at its last entry", foc() == "nav/Classic home", foc())
         act("enter")
         page.wait_for("!!document.querySelector('.sectionTitle')", timeout=20)
         time.sleep(2)
@@ -170,10 +150,10 @@ def main():
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-mq-ready]')", timeout=30)
         js("window.icefinTheme.ui.motion.cap('low'); true")
-        act("down")
         act("up")
+        act("down")
         time.sleep(4)
-        check("no trailer under the low-motion cap", js("!!document.querySelector('.mq-billboard video.icefin-preview')") is False)
+        check("no preview under the low-motion cap", js("!!document.querySelector('.mq-card video.icefin-preview')") is False)
         js("window.icefinTheme.ui.motion.cap('normal'); true")
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)

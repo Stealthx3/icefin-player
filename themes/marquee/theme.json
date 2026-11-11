@@ -2,8 +2,10 @@
   "schema": 1,
   "id": "marquee",
   "name": "Marquee",
-  "version": "0.1.0",
-  "description": "A collapsed icon rail that expands with labels on focus, a billboard whose muted trailer starts after a dwell, and rows that jump by a page, the focused card growing into an inline preview; black with a red accent.",
+  "version": "0.2.0",
+  "description": "A navigation bar along the top and rows of titles: the focused row stands tall at the top with its focused card widened to 16:9, details under it and a muted preview after a dwell; the other rows small and wide below. Black with one red accent.",
   "styles": "styles.css",
-  "scripts": ["marquee.js"]
+  "scripts": [
+    "marquee.js"
+  ]
 }
