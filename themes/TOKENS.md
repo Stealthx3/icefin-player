@@ -14,6 +14,9 @@ variables directly, so a jellyfin-web update only changes the engine's adapter (
   `focusFill`, `focusText`, `focusRing`, `progress`, `progressTrack`, `progressHeight`, `marker`, `titleSize`,
   `titleWeight`, `titleTransform`, `text`, `textSecondary`, `menuBackground`, `menuRadius`. All optional, with defaults
   from the colour tokens (`native/icefin/osdLayout.js`). Over video, scrims should stay dark even in a light theme.
+- Colours from another theme (9.25): a selection's preset may be `@<theme>` or `@<theme>/<preset>`. That theme's
+  resolved `color.*` tokens (with the selected scheme, so its Dark when Dark is on) go over this theme's own; this
+  theme's other colours (a tile, a ribbon) stay. The theme manager lists them under "From other themes".
 - `theme.json` `schemes` are colour schemes the user picks in the theme manager's *Mode* list (9.20), on top of the
   preset: `{"schemes": {"dark": {"name": "Dark", "tokens": {…}, "presets": {"green": {…}}}}}`. Order: base, preset,
   scheme `tokens`, the scheme's override for that preset. The choice carries across themes: a theme without that

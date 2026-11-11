@@ -6,3 +6,10 @@
     const T = window.icefinTheme;
     if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'poster' }));
 })();
+
+// Settings (PLAN 9.24): the engine's settings area (Client settings, Classic View, Server Settings) in this theme's look.
+(function () {
+    'use strict';
+    const T = window.icefinTheme;
+    if (T && T.ui && T.ui.settings) T.registerScreen('#/mypreferencesmenu', T.ui.settings.screen({ layout: 'tiles' }));
+})();

@@ -132,7 +132,7 @@ void ThemeComponent::setUser(const QString& userId)
   const QJsonObject sel = st.value("users").toObject().value(userId).toObject();
   qInfo().noquote() << "Icefin theme: user" << (userId.isEmpty() ? QString("(none)") : userId.left(8))
                     << (sel.isEmpty() ? "has no choice on this device yet" : "-> " + sel.value("theme").toString());
-  if (!sel.isEmpty() && (sel.value("theme").toString() != m_active || sel.value("preset").toString() != m_preset
+  if (!sel.isEmpty() && !m_classic && (sel.value("theme").toString() != m_active || sel.value("preset").toString() != m_preset
                          || sel.value("scheme").toString() != m_colorScheme)) {
     m_colorScheme = sel.value("scheme").toString();
     apply(sel.value("theme").toString(), sel.value("preset").toString(), 0);
@@ -146,9 +146,54 @@ QVariantMap ThemeComponent::selection() const
           {"timestamp", sel.value("timestamp").toDouble()}, {"user", m_user}};
 }
 
+void ThemeComponent::saveSelection(const QString& id, const QString& preset, const QString& scheme, qint64 timestamp)
+{
+  QJsonObject st = stateObject();
+  QJsonObject users = st.value("users").toObject();
+  users[m_user] = QJsonObject{{"theme", id}, {"preset", preset}, {"scheme", scheme}, {"timestamp", double(timestamp)}};
+  st["users"] = users;
+  st["last"] = m_user;
+  saveState(st);
+}
+
+TokenMap ThemeComponent::resolveFor(const Package& p, const QString& preset, const QString& scheme, QStringList* errs) const
+{
+  if (!preset.startsWith('@')) return p.resolved(preset, {}, errs, scheme);
+  // Another theme's colours: its resolved color.* tokens (with its own preset and scheme) over this theme's base.
+  // This theme's own extra colours (a tile, a ribbon) stay where the other theme has none.
+  const QString fid = preset.mid(1).section('/', 0, 0), fpreset = preset.mid(1).section('/', 1);
+  if (!m_packages.contains(fid) || !m_packages[fid].ok()) {
+    if (errs) *errs << QString("no colour scheme from theme '%1'").arg(fid);
+    return {};
+  }
+  const TokenMap other = m_packages[fid].resolved(fpreset, {}, errs, scheme);
+  TokenMap colours;
+  for (auto it = other.begin(); it != other.end(); ++it)
+    if (it.key().startsWith("color.")) colours.insert(it.key(), it.value());
+  return p.resolved(QString(), colours, errs, QString());
+}
+
+bool ThemeComponent::setClassic(bool on)
+{
+  if (on == m_classic) return true;
+  m_classic = on;
+  qInfo().noquote() << "Icefin theme: Classic View" << (on ? "on for this session" : "off");
+  bool ok = true;
+  if (on) {
+    apply(QString(), QString(), 0);
+  } else {
+    const QVariantMap sel = selection();
+    m_colorScheme = sel.value("scheme").toString();
+    ok = apply(sel.value("theme").toString(), sel.value("preset").toString(), 0);
+  }
+  emit classicChanged(on);
+  return ok;
+}
+
 bool ThemeComponent::applyRemote(const QString& id, const QString& preset, const QString& scheme, double timestamp)
 {
   if (timestamp <= selection().value("timestamp").toDouble()) return false;
+  if (m_classic) { saveSelection(id, preset, scheme, qint64(timestamp)); return true; }  // shown when Classic View ends
   const QString before = m_colorScheme;
   m_colorScheme = scheme;
   if (!apply(id, preset, qint64(timestamp))) { m_colorScheme = before; return false; }
@@ -157,6 +202,7 @@ bool ThemeComponent::applyRemote(const QString& id, const QString& preset, const
 
 bool ThemeComponent::select(const QString& id, const QString& preset, const QString& scheme)
 {
+  if (m_classic) { m_classic = false; emit classicChanged(false); }
   const QString before = m_colorScheme;
   m_colorScheme = scheme;
   if (!apply(id, preset, QDateTime::currentMSecsSinceEpoch())) { m_colorScheme = before; return false; }
@@ -222,18 +268,11 @@ bool ThemeComponent::apply(const QString& id, const QString& preset, qint64 save
     const Package& p = m_packages[id];
     if (!p.ok()) { m_errors = p.errors; return false; }
     QStringList e;
-    TokenMap t = p.resolved(preset, {}, &e, m_colorScheme);
+    TokenMap t = resolveFor(p, preset, m_colorScheme, &e);
     if (!e.isEmpty()) { m_errors = e; return false; }
     m_active = id; m_preset = preset; m_tokens = t;
   }
-  if (saveTimestamp) {
-    QJsonObject st = stateObject();
-    QJsonObject users = st.value("users").toObject();
-    users[m_user] = QJsonObject{{"theme", m_active}, {"preset", m_preset}, {"scheme", m_colorScheme}, {"timestamp", double(saveTimestamp)}};
-    st["users"] = users;
-    st["last"] = m_user;
-    saveState(st);
-  }
+  if (saveTimestamp) saveSelection(m_active, m_preset, m_colorScheme, saveTimestamp);
   for (QSoundEffect* e : m_sounds) e->deleteLater();
   m_sounds.clear();
   mirrorSetting();
@@ -374,6 +413,7 @@ void ThemeComponent::setBackdropState(const QVariantMap& state)
 
 bool ThemeComponent::setActiveTheme(const QString& id, const QString& preset)
 {
+  if (m_classic) { m_classic = false; emit classicChanged(false); }
   return apply(id, preset, QDateTime::currentMSecsSinceEpoch());
 }
 
@@ -464,7 +504,7 @@ QVariantMap ThemeComponent::previewTokens(const QString& id, const QString& pres
   QVariantMap m;
   if (!m_packages.contains(id) || !m_packages[id].ok()) return m;
   QStringList e;
-  const TokenMap t = m_packages[id].resolved(preset, {}, &e, scheme);
+  const TokenMap t = resolveFor(m_packages[id], preset, scheme, &e);
   if (!e.isEmpty()) return m;
   for (auto it = t.begin(); it != t.end(); ++it) m.insert(it.key(), it.value());
   return m;
