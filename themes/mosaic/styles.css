@@ -38,3 +38,11 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 
 html[data-icefin-motion="low"] .pv-frame { animation: none; }
 html[data-icefin-motion="low"] .pv-tile { transition-duration: 0ms; }
+
+/* Details (9.18): typography carries it: a large lowercase title, lowercase section headers, flat square buttons. */
+.icefin-details .icefin-d-title { font-weight: 300; font-size: 3.4em; text-transform: lowercase; }
+.icefin-details .icefin-d-section h2 { font-weight: 300; font-size: 2em; text-transform: lowercase; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0; background: var(--icefin-color-tile); color: var(--icefin-color-onTile); text-transform: lowercase; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-tile); color: var(--icefin-color-onTile); box-shadow: 0 0 0 0.2em var(--icefin-color-focus); }
+.icefin-details .icefin-d-poster, .icefin-details .icefin-d-card .icefin-d-img { border-radius: 0; }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 0 0.2em var(--icefin-color-focus); }

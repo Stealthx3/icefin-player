@@ -67,3 +67,9 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 
 html[data-icefin-motion="low"] .ob-channel-title, html[data-icefin-motion="low"] .ob-ring, html[data-icefin-motion="low"] .ob-backdrop { transition-duration: 0ms; }
 html[data-icefin-motion="low"] .ob-guide { animation: none; }
+
+/* Details (9.18): poster left, the text and a row of tile buttons; the focused tile bright. */
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.15em; background: var(--icefin-color-surfaceRaised); padding: 0.8em 1.6em; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.icefin-details .icefin-d-poster, .icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.15em; }
+.icefin-details .icefin-d-title { font-weight: 300; }

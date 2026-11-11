@@ -58,3 +58,10 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
    it would glide. */
 .pl-grid { transition: transform 160ms ease-out; }
 html[data-icefin-motion="low"] .pl-grid { transition-duration: 60ms; }
+
+/* Details (9.18): the springboard: poster left, the text beside it and the actions as a vertical list. */
+.icefin-details .icefin-d-actions { flex-direction: column; align-items: stretch; max-width: 24vw; gap: 0.3em; }
+.icefin-details .icefin-d-btn { border-radius: 0.3em; background: transparent; padding: 0.55em 1em; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focusFill); color: var(--icefin-color-text); box-shadow: inset 0 0 0 0.15em var(--icefin-color-focusRing); }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 0 0.25em var(--icefin-color-focusRing); }
+.icefin-details .icefin-d-title { font-weight: 600; }

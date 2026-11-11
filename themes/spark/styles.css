@@ -54,3 +54,11 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
   text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.9); }
 .sp-progress { position: absolute; left: 0; bottom: 0; height: 0.25em; width: 0; background: var(--icefin-color-accent); }
 html[data-icefin-motion="low"] .sp-rows, html[data-icefin-motion="low"] .sp-row, html[data-icefin-motion="low"] .sp-tile, html[data-icefin-motion="low"] .sp-hero, html[data-icefin-motion="low"] .sp-rows-view { transition-duration: 0ms; }
+
+/* Details (9.18): a full-bleed hero, the title's logo when there is one, rounded buttons that fill on focus, rows below. */
+.icefin-details[data-has-logo] .icefin-d-title { display: none; }
+.icefin-details .icefin-d-logo[src] { max-width: 34vw; max-height: 18vh; }
+.icefin-details .icefin-d-title { font-weight: 700; font-size: 3em; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.4em; background: var(--icefin-color-button); }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focusFill); color: var(--icefin-color-onFocusFill); }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 0 0.2em var(--icefin-color-focusRing); }
