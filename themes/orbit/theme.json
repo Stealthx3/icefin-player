@@ -17,10 +17,10 @@
           "surface": "#1a2c07",
           "surfaceRaised": "#24400b",
           "onAccent": "#10200a",
-          "backdropTop": "#1f330a",
-          "backdropMid": "#4d5a2e",
-          "backdropBottom": "#3c414b",
-          "floor": "#2c2d31",
+          "backdropTop": "#142208",
+          "backdropMid": "#2c3a14",
+          "backdropBottom": "#262a31",
+          "floor": "#1b1c1f",
           "guide": "#10161c"
         }
       }
