@@ -10,6 +10,7 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 | --- | --- | --- | --- |
 | Virtual AV tier, audio (`hda-hdmi-sink`, D18) | AV receiver, soundbar, TV over HDMI | The ELD Icefin reads, the per-track passthrough decision, bit-exact bitstreams, HBR, hotplug | The receiver's display, lip sync, CEC |
 | Virtual HDR display (Weston 16, 5.10) | An HDR10 or SDR display on Wayland | The swapchain, surface tag, mastering metadata and MaxCLL/MaxFALL Icefin sends per routing row | Whether a TV switches to HDR; how it looks |
+| VA-API through nvidia-vaapi-driver (option V1) | An AMD or Intel VA-API decoder | `vaapi` decode and zero-copy DMA-BUF import on the shared Vulkan device, 8-bit | 10-bit p010 import (NVIDIA lacks r16 modifiers); real AMD or Intel drivers |
 
 ## Proposed
 
@@ -53,10 +54,12 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 ### V. A VA-API device for the DMA-BUF import path (PLAN 5.3)
 The lab's virtual GPU has no video decoder, so Icefin's VA-API zero-copy path (AMD and Intel) can't run there.
 Three ways to reach it, best fidelity last:
-1. **On the workstation's RTX 4090 with `nvidia-vaapi-driver`.** It implements VA-API on NVDEC and exports
-   DMA-BUFs, so mpv's `vaapi` hwdec and Icefin's DMA-BUF import run the same code as on AMD and Intel. Runs the
-   built Flatpak (no building on the host), as the earlier NVIDIA checks did. **Needs your OK:** a VA-API driver
-   on the workstation, or the Flatpak extension that carries it.
+1. **On the workstation's RTX 4090 with `nvidia-vaapi-driver`: built (approved 2026-11-11).** Flathub's
+   `org.freedesktop.Platform.VAAPI.nvidia` extension carries it into the sandbox; it implements VA-API on NVDEC and
+   exports DMA-BUFs, so mpv's `vaapi` hwdec and Icefin's DMA-BUF import run the same code as on AMD and Intel.
+   `tests/icefin/web/vaapi_import.py` runs the built Flatpak there (nothing is built on the host) against the lab's
+   servers: H.264 and AV1 map zero-copy. **Limit:** NVIDIA's Vulkan driver has no DRM modifiers for 16-bit formats,
+   so 10-bit (p010) surfaces can't be imported; 10-bit VA-API stays with beta testers on AMD and Intel.
 2. **virtio-gpu video in a lab guest.** QEMU with virglrenderer's video decode passes VA-API through to the host's
    decoder. Experimental, and it would still need option 1's driver on the host. Not recommended.
 3. **A low-cost Intel Arc or AMD card passed through to a lab guest.** Real VA-API, real HDMI out (to a capture
