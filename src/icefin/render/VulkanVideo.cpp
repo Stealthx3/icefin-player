@@ -1,4 +1,5 @@
 #include "VulkanVideo.h"
+#include "icefin/capability/CapabilityModel.h"
 #include <QDebug>
 #include <QGuiApplication>
 #include <QQuickItem>
@@ -53,6 +54,7 @@ QSGTextureProvider* VideoTexture::textureProvider() const
 
 VulkanVideo* VulkanVideo::createFor(QQuickItem* item, MpvController* controller)
 {
+  Capability::CapabilityModel::instance().setMpv(controller);  // versions and hwdec state, on either renderer (6.7)
   if (!vulkanVideoCompiled() || !controller || QQuickWindow::graphicsApi() != QSGRendererInterface::Vulkan) return nullptr;
   auto* v = new VulkanVideo(item, controller->mpv());
   // MpvAbstractItem::ready() tells MpvVideoItem the player can use mpv, as MpvQt's OpenGL renderer does.

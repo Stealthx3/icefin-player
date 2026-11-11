@@ -129,15 +129,11 @@ static QString fallbackPath() { return Paths::dataDir("vulkan-fallback.json"); }
 
 QString vulkanFallbackReason() { return s_fallbackReason; }
 
-void fallBackToOpenGl(const QString& reason)
+void restartApp(const QString& why)
 {
   static std::atomic<bool> once{false};
   if (once.exchange(true)) return;
-  qCritical().noquote() << "Icefin renderer: Vulkan failed (" + reason + "); restarting on OpenGL";
-  QFile f(fallbackPath());
-  if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-    f.write(QJsonDocument(QJsonObject{{"reason", reason}, {"setting", s_setting}, {"version", QCoreApplication::applicationVersion()},
-                                      {"when", QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}}).toJson());
+  qInfo().noquote() << "Icefin: restarting (" + why + ")";
   // The new process must start after this one has let go of the single-instance socket, or it hands over and quits.
   QMetaObject::invokeMethod(qApp, [] {
     // Its Qt WebEngine helper processes let go of their sockets (the DevTools port) a moment after it exits.
@@ -168,6 +164,28 @@ void fallBackToOpenGl(const QString& reason)
     QTimer::singleShot(8000, [] { std::_Exit(0); });  // a wedged Vulkan teardown mustn't keep the old process alive
     QCoreApplication::exit(0);
   }, Qt::QueuedConnection);
+}
+
+void fallBackToOpenGl(const QString& reason)
+{
+  static std::atomic<bool> once{false};
+  if (once.exchange(true)) return;
+  qCritical().noquote() << "Icefin renderer: Vulkan failed (" + reason + "); restarting on OpenGL";
+  QFile f(fallbackPath());
+  if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    f.write(QJsonDocument(QJsonObject{{"reason", reason}, {"setting", s_setting}, {"version", QCoreApplication::applicationVersion()},
+                                      {"when", QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}}).toJson());
+  restartApp("Vulkan failed");
+}
+
+bool vulkanUsable()
+{
+  static int cached = -1;
+  if (cached < 0) {
+    QString why;
+    cached = probeVulkan(&why) ? 1 : 0;
+  }
+  return cached == 1;
 }
 
 void chooseGraphicsApi()

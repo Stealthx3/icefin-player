@@ -1,4 +1,5 @@
 #include "RouterComponent.h"
+#include "icefin/capability/CapabilityModel.h"
 #include "Compositing.h"
 #include "VulkanVideo.h"
 #include <QtQml/qqml.h>
@@ -40,19 +41,8 @@ System RouterComponent::system() const { return currentSystem(); }
 
 System currentSystem()
 {
-  System s;
-  // The UI can already run on Vulkan (5.1), but video plays there only once the Vulkan video item exists (5.3).
-  s.renderer = QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan && vulkanVideoPath() ? Renderer::Vulkan : Renderer::OpenGlFallback;
-  s.vulkanAvailable = false;     // until the Vulkan renderer exists (5.1): no "switch to Vulkan" option
-  switch (HdrCapabilityProbe::instance().current().hdr) {  // 6.1
-    // On the Vulkan path the display counts as HDR only once that path can output HDR (5.4/5.5); until then
-    // libplacebo tone-maps there.
-    case DisplayInfo::Hdr::Yes: s.display = s.renderer != Renderer::Vulkan || vulkanHdrOutput() ? DisplayState::Hdr : DisplayState::Sdr; break;
-    case DisplayInfo::Hdr::No: s.display = DisplayState::Sdr; break;
-    default: s.display = DisplayState::Unknown;
-  }
-  s.serverTranscode = true;      // the page drops the transcode options when the user's policy forbids them
-  return s;
+  // The capability model (6.7) is the one source: renderer, display, HDR preference, Vulkan availability.
+  return Capability::CapabilityModel::instance().system();
 }
 
 static QString keyFor(Range r, const System& s)
@@ -110,9 +100,16 @@ void RouterComponent::resolve(const QString& choice, bool remember)
   m_pendingKey.clear();
   m_proceed = nullptr;
   m_end = nullptr;
-  if (remember && choice != "cancel") this->remember(key, choice);
+  if (remember && choice != "cancel" && choice != "switchToVulkan") this->remember(key, choice);
   if (choice.startsWith("transcode")) m_session.insert(key, choice);  // the page's transcode restart goes ahead
   qInfo().noquote() << "Icefin router:" << key << "->" << choice << (remember ? "(remembered on this device)" : "");
+  if (choice == "switchToVulkan") {
+    // Renderer = Vulkan, then a restart: Qt picks its graphics API once, before the window exists.
+    SettingsComponent::Get().setValue(SETTINGS_SECTION_MAIN, "icefin_renderer", "vulkan");
+    if (end) end();
+    restartApp("switching to the Vulkan renderer from the capability prompt");
+    return;
+  }
   if (choice == "play" || choice == "playBaseLayer") {
     m_bypassKey = key;
     if (proceed) proceed();
@@ -220,8 +217,13 @@ void RouterComponent::refreshCompositor()
   }
 }
 
+QVariantMap RouterComponent::capabilities() const { return Capability::CapabilityModel::instance().current(); }
+
 void RouterComponent::componentPostInitialize()
 {
+  auto& model = Capability::CapabilityModel::instance();
+  connect(&model, &Capability::CapabilityModel::changed, this, &RouterComponent::capabilitiesChanged);
+  model.attach();
   connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &RouterComponent::displayChanged);
   connect(&HdrCapabilityProbe::instance(), &HdrCapabilityProbe::changed, this, &RouterComponent::refreshCompositor);
   refreshCompositor();
