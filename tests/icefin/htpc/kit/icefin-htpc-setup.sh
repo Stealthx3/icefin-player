@@ -33,7 +33,10 @@ if [ "$MODE" = --remove ]; then
     mv "$HOME/.ssh/authorized_keys.tmp" "$HOME/.ssh/authorized_keys"; chmod 600 "$HOME/.ssh/authorized_keys"
     ok "workstation key removed from ~/.ssh/authorized_keys"
   else ok "workstation key was not authorized"; fi
+  # A graceful quit first: flatpak kill leaves Qt WebEngine's helper sandboxes behind.
+  pkill -TERM -x icefin-player 2>/dev/null; for i in $(seq 20); do pgrep -x icefin-player >/dev/null || break; sleep 0.5; done
   flatpak kill "$APP" 2>/dev/null || true
+  for p in $(pgrep -x bwrap); do grep -qa "QtWebEngineProcess.*application-name=icefin-player" /proc/$p/cmdline 2>/dev/null && kill $p; done
   flatpak --user uninstall -y --noninteractive "$APP" >/dev/null 2>&1 && ok "Icefin Player (lab build) uninstalled" || ok "Icefin Player lab build was not installed"
   flatpak --user remote-delete --force icefin-lab >/dev/null 2>&1 && ok "icefin-lab Flatpak remote removed" || true
   rm -rf "$HOME/.var/app/$APP" "$LABDIR" "$INFO"; ok "lab files removed ($LABDIR, ~/.var/app/$APP)"
