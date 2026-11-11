@@ -199,3 +199,11 @@
     const T = window.icefinTheme;
     if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'hero' }));
 })();
+
+// Player controls (PLAN 9.19): jellyfin-web's own controls (every function kept) in this theme's layout; the look is
+// the osd.* tokens in tokens.json.
+(function () {
+    'use strict';
+    const T = window.icefinTheme;
+    if (T && T.ui && T.ui.osd) T.ui.osd.set({ layout: 'panel', align: 'center' });
+})();
