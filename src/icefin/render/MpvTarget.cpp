@@ -43,10 +43,16 @@ MpvOptions mpvTargetOptions(const DisplayInfo& d, bool hdrOutput)
 MpvOptions mpvLinearTargetOptions(const CompositorState& s, const DisplayInfo& d)
 {
   const bool sdr = s.output == OutputEncoding::Sdr;
+  // SDR output: the same target stock gpu-next renders to for this display (BT.709, the compositor's SDR transfer,
+  // the SDR display's black), so libplacebo treats it as SDR exactly as stock does (black level, HLG's reference white);
+  // the compositor decodes it with that transfer (5.8 parity). A linear target would count as an HDR display.
+  if (sdr)
+    return {{"target-prim", "bt.709"}, {"target-trc", s.gamma22 ? "gamma2.2" : "srgb"},
+            {"target-peak", QByteArray::number(qRound(s.referenceWhite))},
+            {"hdr-reference-white", QByteArray::number(qRound(s.referenceWhite))}, {"target-contrast", "auto"}};
   QByteArray contrast("auto");
-  if (!sdr && d.minLuminance > 0 && d.maxLuminance > 0) contrast = QByteArray::number(qRound(d.maxLuminance / d.minLuminance));
-  return {{"target-prim", sdr ? "bt.709" : "bt.2020"}, {"target-trc", "linear"},
-          {"target-peak", QByteArray::number(qRound(sdr ? s.referenceWhite : s.peak))},
+  if (d.minLuminance > 0 && d.maxLuminance > 0) contrast = QByteArray::number(qRound(d.maxLuminance / d.minLuminance));
+  return {{"target-prim", "bt.2020"}, {"target-trc", "linear"}, {"target-peak", QByteArray::number(qRound(s.peak))},
           {"hdr-reference-white", QByteArray::number(qRound(s.referenceWhite))}, {"target-contrast", contrast}};
 }
 }

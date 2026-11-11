@@ -1,7 +1,8 @@
 // Icefin: the single-surface compositor (PLAN 5.4, SPEC "Single-surface renderer" 3-4, D23/D24).
 //
-// On the Vulkan path with the compositor on, mpv renders video in linear light into an RGBA16F image (1.0 = libplacebo's
-// reference white, 203 nits), in the output's working primaries (BT.709 for SDR, BT.2020 for HDR10 and scRGB). The UI
+// On the Vulkan path with the compositor on, mpv renders video into an RGBA16F image: for HDR10 and scRGB output in linear
+// light (1.0 = libplacebo's reference white, 203 nits) in BT.2020; for SDR output encoded with the compositor's SDR
+// transfer in BT.709, the target stock gpu-next renders to (5.8 parity), which the compositor decodes. The UI
 // (backdrop, web view, overlays) is flattened by Qt Quick into one RGBA8 layer in its own sRGB encoding, so UI elements
 // blend among themselves as a browser blends them. One fragment pass (Compositor.qml, compositorShaderSource()) then
 // puts the UI over the video and encodes the window:
@@ -51,6 +52,7 @@ struct CompositorState
   QString hdrReason;
   bool tagged = false;
   VideoHdrMetadata video;
+  bool uiVisible = true;          // false: the video alone (tests)
   QVariantMap toMap() const;
 };
 
@@ -72,8 +74,9 @@ double pqDecode(double encoded);
 Rgb bt709To2020(const Rgb& c);
 Rgb bt2020To709(const Rgb& c);
 
-// One output pixel: ui is premultiplied in the UI's encoding (as Qt Quick's layer holds it), video is linear in the
-// output's working primaries with 1.0 = kVideoLinearWhite nits. Returns the swapchain value for state.output.
+// One output pixel: ui is premultiplied in the UI's encoding (as Qt Quick's layer holds it); video is what mpv wrote
+// (SDR output: SDR-encoded BT.709; otherwise linear in BT.2020 with 1.0 = kVideoLinearWhite nits). Returns the
+// swapchain value for state.output.
 Rgb composePixel(const CompositorState& state, const Rgb& uiPremultiplied, double uiAlpha, const Rgb& video, bool hasVideo = true);
 
 // The fragment shader (GLSL 440 for Qt Quick's ShaderEffect) and its baked .qsb, cached on disk. Baking needs Qt

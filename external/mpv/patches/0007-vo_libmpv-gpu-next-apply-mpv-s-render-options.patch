@@ -1,0 +1,289 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Icefin Player <noreply@github.com>
+Date: Wed, 11 Nov 2026 01:30:00 +0000
+Subject: [PATCH 7/7] vo_libmpv: gpu-next: apply mpv's render options
+
+The carried backend rendered with libplacebo's default render parameters, so mpv's own video options had no effect
+and the picture differed from stock vo_gpu_next: its defaults differ from libplacebo's (tone-mapping contrast
+recovery, peak detection percentile, dither, debanding, and so on). The video engine now builds a pl_options from
+gl_video_opts every frame the way vo_gpu_next's update_render_options does: background, anti-aliasing, linear
+scaling, sub-pixel offsets, the scale/dscale/cscale filters (vo_gpu_next's map_scaler), deband, sigmoid, peak
+detection, tone mapping, gamut mapping and dither. The gpu-next-only extras (tone constants, delayed peak, border,
+blur, corner rounding, LUTs, user shaders, ICC) keep libplacebo's defaults, and there is no frame mixer (one frame
+per render). Uploaded frames also get the guessed colour space, rotation and chroma location, as vo_gpu_next's
+map_frame sets them.
+
+With Icefin's compositor rendering to the same target, the lab's parity test (lavapipe, the same frame, a
+1280x720 window) now matches stock gpu-next within 0.3/255 on average for SDR, HDR10 and HLG.
+
+Icefin Player (PLAN 5.8, D23, D25).
+---
+diff --git a/video/out/gpu_next/video.c b/video/out/gpu_next/video.c
+index e409701..5c03093 100644
+--- a/video/out/gpu_next/video.c
++++ b/video/out/gpu_next/video.c
+@@ -19,6 +19,11 @@
+ #include "video/out/gpu_next/ra.h"         // for ra_next_find_fmt, ra_next_...
+ #include "video/out/gpu/video.h"           // for gl_video_opts, gl_video_conf
+ #include "video/out/gpu/hwdec.h"           // for ra_hwdec_mapper, ra_hwdec_get
++#include <math.h>                          // for isnan
++#include <string.h>                        // for strcmp
++#include <libplacebo/options.h>            // for pl_options
++#include "options/m_option.h"              // for m_opt_choice_str
++#include "video/out/gpu/video_shaders.h"   // for deband_opts
+ #include "video/out/vo.h"                  // for vo_frame
+ 
+ // Forward declarations
+@@ -96,6 +101,10 @@ struct pl_video {
+     // Hardware decoding interop (zero-copy); NULL when only software frames are rendered.
+     struct ra_hwdec_ctx *hwdec_ctx;
+     struct hwdec_slot hwdec;
++
++    // Render options from mpv's own (scale, deband, tone-mapping, dither, ...), as vo_gpu_next maps them.
++    pl_options pars;
++    struct pl_filter_config scalers[SCALER_COUNT];
+ };
+ 
+ /**
+@@ -261,6 +270,17 @@ static bool map_frame(pl_gpu gpu, pl_tex *tex, const struct pl_source_frame *src
+         talloc_free(mpi); // Clean up the mp_image reference on failure
+         return false;
+     }
++    if (!fp->hwdec) {
++        // As vo_gpu_next's map_frame: the guessed colour space, the image's rotation and chroma location.
++        struct mp_image_params par = mpi->params;
++        mp_image_params_guess_csp(&par);
++        struct pl_bit_encoding bits = frame->repr.bits;
++        frame->color = par.color;
++        frame->repr = par.repr;
++        frame->repr.bits = bits;
++        frame->rotation = par.rotate / 90;
++        pl_frame_set_chroma_location(frame, par.chroma_location);
++    }
+ 
+     // SDR video sits at the reference white (hdr-reference-white), as vo_gpu_next places it, so it matches SDR
+     // UI on an HDR output.
+@@ -331,6 +351,7 @@ struct pl_video *pl_video_init(struct mpv_global *global, struct mp_log *log, st
+ 
+     // Get video options for target colorspace settings
+     p->opts_cache = m_config_cache_alloc(p, global, &gl_video_conf);
++    p->pars = pl_options_alloc(ra_get_pl_log(ra));
+ 
+     // Pre-find the texture formats we'll need for OSD bitmaps for efficiency.
+     p->osd_fmt[SUBBITMAP_LIBASS] = ra_next_find_fmt(p->ra, PL_FMT_UNORM, 1, 8, 8, 0);
+@@ -342,6 +363,191 @@ struct pl_video *pl_video_init(struct mpv_global *global, struct mp_log *log, st
+     return p;
+ }
+ 
++// mpv's scaler options as a libplacebo filter (vo_gpu_next's map_scaler).
++static const struct pl_filter_config *map_scaler(struct pl_video *p, enum scaler_unit unit)
++{
++    const struct pl_filter_preset fixed_scalers[] = {
++        { "bilinear",       &pl_filter_bilinear },
++        { "bicubic_fast",   &pl_filter_bicubic },
++        { "nearest",        &pl_filter_nearest },
++        { "oversample",     &pl_filter_oversample },
++        {0},
++    };
++    const struct pl_filter_preset fixed_frame_mixers[] = {
++        { "linear",         &pl_filter_bilinear },
++        { "oversample",     &pl_filter_oversample },
++        {0},
++    };
++    const struct pl_filter_preset *fixed_presets = unit == SCALER_TSCALE ? fixed_frame_mixers : fixed_scalers;
++
++    const struct gl_video_opts *opts = p->opts_cache->opts;
++    const struct scaler_config *cfg = &opts->scaler[unit];
++    struct scaler_config tmp;
++    if (cfg->kernel.function == SCALER_INHERIT) {
++        tmp = *cfg;
++        scaler_conf_merge(&tmp, &opts->scaler[SCALER_SCALE], unit);
++        cfg = &tmp;
++    }
++
++    const char *kernel_name = m_opt_choice_str(cfg->kernel.functions, cfg->kernel.function);
++    for (int i = 0; fixed_presets[i].name; i++) {
++        if (strcmp(kernel_name, fixed_presets[i].name) == 0)
++            return fixed_presets[i].filter;
++    }
++
++    struct pl_filter_config *par = &p->scalers[unit];
++    const struct pl_filter_preset *preset;
++    const struct pl_filter_function_preset *fpreset;
++    if ((preset = pl_find_filter_preset(kernel_name))) {
++        *par = *preset->filter;
++    } else if ((fpreset = pl_find_filter_function_preset(kernel_name))) {
++        *par = (struct pl_filter_config) {
++            .kernel = fpreset->function,
++            .params[0] = fpreset->function->params[0],
++            .params[1] = fpreset->function->params[1],
++        };
++    } else {
++        mp_msg(p->log, MSGL_ERR, "Failed mapping filter function '%s', no libplacebo analog?\n", kernel_name);
++        return &pl_filter_bilinear;
++    }
++
++    const struct pl_filter_function_preset *wpreset;
++    if ((wpreset = pl_find_filter_function_preset(m_opt_choice_str(cfg->window.functions, cfg->window.function)))) {
++        par->window = wpreset->function;
++        par->wparams[0] = wpreset->function->params[0];
++        par->wparams[1] = wpreset->function->params[1];
++    }
++    for (int i = 0; i < 2; i++) {
++        if (!isnan(cfg->kernel.params[i]))
++            par->params[i] = cfg->kernel.params[i];
++        if (!isnan(cfg->window.params[i]))
++            par->wparams[i] = cfg->window.params[i];
++    }
++    par->clamp = cfg->clamp;
++    if (cfg->antiring > 0.0)
++        par->antiring = cfg->antiring;
++    if (cfg->kernel.blur > 0.0)
++        par->blur = cfg->kernel.blur;
++    if (cfg->kernel.taper > 0.0)
++        par->taper = cfg->kernel.taper;
++    if (cfg->radius > 0.0) {
++        if (par->kernel->resizable) {
++            par->radius = cfg->radius;
++        } else {
++            mp_msg(p->log, MSGL_WARN, "Filter radius specified but filter '%s' is not resizable, ignoring\n",
++                   kernel_name);
++        }
++    }
++    return par;
++}
++
++// mpv's video options as libplacebo render params (vo_gpu_next's update_render_options; the gpu-next-only extras
++// - tone constants, delayed peak, border, blur, corner rounding, LUTs, hooks, ICC - keep libplacebo's defaults).
++static void update_render_options(struct pl_video *p)
++{
++    pl_options pars = p->pars;
++    const struct gl_video_opts *opts = p->opts_cache->opts;
++    pars->params.background_color[0] = opts->background_color.r / 255.0;
++    pars->params.background_color[1] = opts->background_color.g / 255.0;
++    pars->params.background_color[2] = opts->background_color.b / 255.0;
++    pars->params.background_transparency = 1 - opts->background_color.a / 255.0;
++    pars->params.skip_anti_aliasing = !opts->correct_downscaling;
++    pars->params.disable_linear_scaling = !opts->linear_downscaling && !opts->linear_upscaling;
++    pars->params.disable_fbos = opts->dumb_mode == 1;
++    static const int map_background_types[] = {
++        [BACKGROUND_NONE]  = PL_CLEAR_SKIP,
++        [BACKGROUND_COLOR] = PL_CLEAR_COLOR,
++        [BACKGROUND_TILES] = PL_CLEAR_TILES,
++        [BACKGROUND_BLUR]  = PL_CLEAR_BLUR,
++    };
++    pars->params.background = map_background_types[opts->background];
++    pars->params.tile_size = opts->background_tile_size * 2;
++    for (int i = 0; i < 2; ++i) {
++        pars->params.tile_colors[i][0] = opts->background_tile_color[i].r / 255.0f;
++        pars->params.tile_colors[i][1] = opts->background_tile_color[i].g / 255.0f;
++        pars->params.tile_colors[i][2] = opts->background_tile_color[i].b / 255.0f;
++    }
++    pars->params.correct_subpixel_offsets = !opts->scaler_resizes_only;
++
++    pars->params.upscaler = map_scaler(p, SCALER_SCALE);
++    pars->params.downscaler = map_scaler(p, SCALER_DSCALE);
++    pars->params.plane_upscaler = map_scaler(p, SCALER_CSCALE);
++    pars->params.frame_mixer = NULL;  // one frame per render here: no interpolation
++
++    pars->params.deband_params = opts->deband ? &pars->deband_params : NULL;
++    pars->deband_params.iterations = opts->deband_opts->iterations;
++    pars->deband_params.radius = opts->deband_opts->range;
++    pars->deband_params.threshold = opts->deband_opts->threshold / 16.384;
++    pars->deband_params.grain = opts->deband_opts->grain / 8.192;
++
++    pars->params.sigmoid_params = opts->sigmoid_upscaling ? &pars->sigmoid_params : NULL;
++    pars->sigmoid_params.center = opts->sigmoid_center;
++    pars->sigmoid_params.slope = opts->sigmoid_slope;
++
++    pars->params.peak_detect_params = opts->tone_map.compute_peak >= 0 ? &pars->peak_detect_params : NULL;
++    pars->peak_detect_params.smoothing_period = opts->tone_map.decay_rate;
++    pars->peak_detect_params.scene_threshold_low = opts->tone_map.scene_threshold_low;
++    pars->peak_detect_params.scene_threshold_high = opts->tone_map.scene_threshold_high;
++    pars->peak_detect_params.percentile = opts->tone_map.peak_percentile;
++
++    const struct pl_tone_map_function * const tone_map_funs[] = {
++        [TONE_MAPPING_AUTO]     = &pl_tone_map_auto,
++        [TONE_MAPPING_CLIP]     = &pl_tone_map_clip,
++        [TONE_MAPPING_MOBIUS]   = &pl_tone_map_mobius,
++        [TONE_MAPPING_REINHARD] = &pl_tone_map_reinhard,
++        [TONE_MAPPING_HABLE]    = &pl_tone_map_hable,
++        [TONE_MAPPING_GAMMA]    = &pl_tone_map_gamma,
++        [TONE_MAPPING_LINEAR]   = &pl_tone_map_linear,
++        [TONE_MAPPING_SPLINE]   = &pl_tone_map_spline,
++        [TONE_MAPPING_BT_2390]  = &pl_tone_map_bt2390,
++        [TONE_MAPPING_BT_2446A] = &pl_tone_map_bt2446a,
++        [TONE_MAPPING_ST2094_40] = &pl_tone_map_st2094_40,
++        [TONE_MAPPING_ST2094_10] = &pl_tone_map_st2094_10,
++    };
++    const struct pl_gamut_map_function * const gamut_modes[] = {
++        [GAMUT_AUTO]            = pl_color_map_default_params.gamut_mapping,
++        [GAMUT_CLIP]            = &pl_gamut_map_clip,
++        [GAMUT_PERCEPTUAL]      = &pl_gamut_map_perceptual,
++        [GAMUT_RELATIVE]        = &pl_gamut_map_relative,
++        [GAMUT_SATURATION]      = &pl_gamut_map_saturation,
++        [GAMUT_ABSOLUTE]        = &pl_gamut_map_absolute,
++        [GAMUT_DESATURATE]      = &pl_gamut_map_desaturate,
++        [GAMUT_DARKEN]          = &pl_gamut_map_darken,
++        [GAMUT_WARN]            = &pl_gamut_map_highlight,
++        [GAMUT_LINEAR]          = &pl_gamut_map_linear,
++    };
++    pars->color_map_params.tone_mapping_function = tone_map_funs[opts->tone_map.curve];
++    pars->color_map_params.inverse_tone_mapping = opts->tone_map.inverse;
++    pars->color_map_params.contrast_recovery = opts->tone_map.contrast_recovery;
++    pars->color_map_params.visualize_lut = opts->tone_map.visualize;
++    pars->color_map_params.contrast_smoothness = opts->tone_map.contrast_smoothness;
++    pars->color_map_params.gamut_mapping = gamut_modes[opts->tone_map.gamut_mode];
++    pars->color_map_params.mastering_clip = opts->tone_map.mastering_clip;
++    pars->color_map_params.film_strength = opts->tone_map.film_strength;
++
++    pars->params.dither_params = NULL;
++    pars->params.error_diffusion = NULL;
++    switch (opts->dither_algo) {
++    case DITHER_ERROR_DIFFUSION:
++        pars->params.error_diffusion = pl_find_error_diffusion_kernel(opts->error_diffusion);
++        if (!pars->params.error_diffusion)
++            mp_msg(p->log, MSGL_WARN, "Could not find error diffusion kernel '%s', falling back to fruit.\n",
++                   opts->error_diffusion);
++        MP_FALLTHROUGH;
++    case DITHER_ORDERED:
++    case DITHER_FRUIT:
++        pars->params.dither_params = &pars->dither_params;
++        pars->dither_params.method = opts->dither_algo == DITHER_ORDERED ? PL_DITHER_ORDERED_FIXED : PL_DITHER_BLUE_NOISE;
++        pars->dither_params.lut_size = opts->dither_size;
++        pars->dither_params.temporal = opts->temporal_dither;
++        break;
++    }
++    if (opts->dither_depth < 0) {
++        pars->params.dither_params = NULL;
++        pars->params.error_diffusion = NULL;
++    }
++}
++
+ void pl_video_set_hwdec(struct pl_video *p, struct ra_hwdec_ctx *hwdec_ctx)
+ {
+     p->hwdec_ctx = hwdec_ctx;
+@@ -357,6 +563,7 @@ void pl_video_uninit(struct pl_video **p_ptr) {
+ 
+     ra_next_queue_destroy(&p->queue);
+     slot_uninit(&p->hwdec);
++    pl_options_free(&p->pars);
+ 
+     // Clean up all allocated OSD GPU resources
+     for (int i = 0; i < MP_ARRAY_SIZE(p->osd_state_storage.entries); i++) {
+@@ -586,9 +793,9 @@ void pl_video_render(struct pl_video *p, struct vo_frame *frame, pl_tex target_t
+     // frame's duration is equivalent to one source frame (1.0 in normalized time).
+     mix.vsync_duration = 1.0f;
+ 
+-    // Prepare the rendering parameters for libplacebo: its defaults (the same
+-    // scalers stock vo_gpu_next starts from), not nearest-neighbour.
+-    struct pl_render_params params = pl_render_default_params;
++    // mpv's video options, mapped as vo_gpu_next maps them (Icefin 0007; before, libplacebo's defaults).
++    update_render_options(p);
++    struct pl_render_params params = p->pars->params;
+ 
+     // Declare a local struct to hold the color adjustment values.
+     struct pl_color_adjustment color_adj;
+-- 
+2.43.0
+
