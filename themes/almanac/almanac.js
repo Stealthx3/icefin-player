@@ -8,7 +8,7 @@
     const ui = T.ui;
     const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-    const ROWS = 7, SPAN = 90, PREVIEW_DWELL = 900;
+    const ROWS = 8, SPAN = 120, PREVIEW_DWELL = 900;  // eight channel rows over two hours, as on the target (almanac.json)
     const iso = (ms) => new Date(ms).toISOString();
     const hm = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 

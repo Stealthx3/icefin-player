@@ -1,33 +1,36 @@
-/* Almanac: info pane with a live preview in the corner, a menu row, and the guide grid. Proportions follow the
-   benchmark target at 16:9; colours from tokens. */
+/* Almanac: info pane with a live preview in the corner, a menu row, and the guide grid. Geometry follows the target's
+   measurements (docs/themes/references/almanac.json); px at 1920x1080 map to vw (x/19.2) and vh (y/10.8). Colours from
+   tokens. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
-[data-al] { color: var(--icefin-color-text); overflow: hidden !important; display: flex; flex-direction: column; padding: 3vh 3vw 2vh; box-sizing: border-box;
+[data-al] { color: var(--icefin-color-text); overflow: hidden !important; display: flex; flex-direction: column; padding: 0 0 2vh; box-sizing: border-box;
   background: linear-gradient(180deg, var(--icefin-color-surface) 0%, var(--icefin-color-background) 40%); }
 
 /* Info pane: what has focus, and the focused channel live in the corner */
-.al-top { display: flex; gap: 2vw; height: 27vh; flex: none; }
-.al-info { flex: 1; min-width: 0; }
-.al-clock { font-size: 1.1em; color: var(--icefin-color-textSecondary); margin-bottom: 1vh; }
-.al-title { font-size: 2em; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.al-when { margin: 0.6vh 0 1vh; color: var(--icefin-color-accent); font-weight: 600; }
-.al-desc { line-height: 1.4; max-height: 4.2em; overflow: hidden; color: var(--icefin-color-textSecondary); }
-.al-preview { width: 30vw; flex: none; aspect-ratio: 16 / 9; height: auto; max-height: 27vh; background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
+/* The info pane 350 tall: the title from x 302 centred on y 110; the live preview in the corner, 510 wide, ending x 1872. */
+.al-top { display: flex; gap: 2vw; height: 32.41vh; flex: none; padding: 0 2.5vw 0 15.73vw; box-sizing: border-box; }
+.al-info { flex: 1; min-width: 0; padding-top: 5.37vh; }
+.al-clock { font-size: 1.1vw; line-height: 1; color: var(--icefin-color-textSecondary); margin-bottom: 1vh; }
+.al-title { font-size: 1.9vw; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-when { margin: 0.6vh 0 1vh; color: var(--icefin-color-accent); font-weight: 600; font-size: 1.05vw; }
+.al-desc { line-height: 1.4; max-height: 4.2em; overflow: hidden; color: var(--icefin-color-textSecondary); font-size: 1.05vw; }
+.al-preview { width: 26.56vw; flex: none; height: 32.41vh; background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
   border: 0.15em solid var(--icefin-color-divider); position: relative; overflow: hidden; }
 .al-preview-label { position: absolute; left: 0.5em; bottom: 0.4em; font-size: 0.8em; font-weight: 700; padding: 0.1em 0.5em; background: var(--icefin-color-background); }
 
 /* Menu row */
-.al-menu { display: flex; gap: 0.6vw; margin: 2vh 0 1.2vh; flex: none; }
+.al-menu { display: flex; gap: 0.6vw; height: 5.28vh; align-items: center; margin: 0 0 0 24.48vw; flex: none; font-size: 0.94vw; }
 .al-menu-item { padding: 0.35em 1em; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface); outline: none; white-space: nowrap; }
 .al-menu-item.current { box-shadow: inset 0 -0.2em 0 var(--icefin-color-accent); }
 .al-menu-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
 
 /* Guide */
-.al-guide { flex: 1; min-height: 0; position: relative; }
-.al-guide .icefin-guide-times { position: relative; height: 4.4vh; margin-left: 15vw; border-bottom: 0.12em solid var(--icefin-color-divider); }
-.al-guide .icefin-guide-time { top: 0; bottom: 0; padding-left: 0.5em; line-height: 4.4vh; font-weight: 600; color: var(--icefin-color-textSecondary);
+/* The grid: times centred on y ~435 from x 470, 324 px a half hour (two hours to x 1766); channel rows 58.6 apart from y 464. */
+.al-guide { flex: 1; min-height: 0; position: relative; margin-right: 8.02vw; font-size: 1.05vw; }
+.al-guide .icefin-guide-times { position: relative; height: 5.28vh; margin-left: 24.48vw; border-bottom: 0.12em solid var(--icefin-color-divider); box-sizing: border-box; }
+.al-guide .icefin-guide-time { top: 0; bottom: 0; padding-left: 0.5em; line-height: 5.28vh; font-weight: 600; color: var(--icefin-color-textSecondary);
   border-left: 0.1em solid var(--icefin-color-divider); box-sizing: border-box; }
-.al-guide .icefin-guide-row { display: flex; height: 7.4vh; border-bottom: 0.1em solid var(--icefin-color-background); }
-.al-guide .icefin-guide-channel { width: 15vw; flex: none; display: flex; align-items: center; gap: 0.8em; padding: 0 0.8em; box-sizing: border-box;
+.al-guide .icefin-guide-row { display: flex; height: 5.43vh; box-sizing: border-box; border-bottom: 0.1em solid var(--icefin-color-background); }
+.al-guide .icefin-guide-channel { width: 24.48vw; flex: none; display: flex; align-items: center; gap: 0.8em; padding: 0 0.8em; box-sizing: border-box;
   background: var(--icefin-color-surfaceRaised); font-weight: 600; white-space: nowrap; overflow: hidden; }
 .al-chno { color: var(--icefin-color-accent); min-width: 2.2em; }
 .al-guide .icefin-guide-lane { flex: 1; }
@@ -38,5 +41,5 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .al-guide .icefin-guide-cut-start::before { content: "‹ "; color: var(--icefin-color-textSecondary); }
 .al-guide .icefin-guide-cut-end::after { content: " ›"; margin-left: auto; color: var(--icefin-color-textSecondary); }
 .al-guide .icefin-guide-cell.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
-.al-guide .icefin-guide-now { position: absolute; top: 4.4vh; bottom: 0; width: 0.18em; background: var(--icefin-color-nowLine); z-index: 2; pointer-events: none; }
+.al-guide .icefin-guide-now { position: absolute; top: 5.28vh; bottom: 0; width: 0.18em; background: var(--icefin-color-nowLine); z-index: 2; pointer-events: none; }
 .al-empty { margin-top: 6vh; font-size: 1.3em; color: var(--icefin-color-textSecondary); }
