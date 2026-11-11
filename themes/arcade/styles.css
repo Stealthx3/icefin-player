@@ -4,7 +4,7 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 [data-ar] { color: var(--icefin-color-text); overflow: hidden !important; display: flex; flex-direction: column;
   background: radial-gradient(ellipse at 30% 0%, var(--icefin-color-surface) 0%, var(--icefin-color-background) 70%); }
 
-/* Geometry and motion follow the target's measurements (docs/themes/references/arcade.json): Steam Deck layout units
+/* Geometry and motion follow the target's measurements (docs/themes/references/arcade.json): handheld layout units (1280x800)
    scaled by height to 1080 lines; px at 1920x1080 map to vw (x/19.2) and vh (y/10.8) here. */
 
 /* Top bar (58 px) and the bottom bar of button hints (56 px) */
