@@ -77,3 +77,10 @@ html[data-icefin-motion="low"] .hb-shelf-box.hb-fade, html[data-icefin-motion="l
 .hb-info-buttons { display: flex; gap: 1vw; margin-top: 2.4vh; }
 .hb-button { padding: 0.7em 1.6em; background: var(--icefin-color-surfaceRaised); outline: none; font-size: 1.1em; }
 .hb-button.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+
+/* Details (9.18): the info dialog: poster left, text right, a row of flat buttons that fill with the focus colour. */
+.icefin-details .icefin-d-title { font-weight: 600; font-size: 2.4em; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0; background: var(--icefin-color-surfaceRaised); padding: 0.7em 1.6em; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.icefin-details .icefin-d-poster, .icefin-details .icefin-d-card .icefin-d-img { border-radius: 0; }
+.icefin-details .icefin-d-card.icefin-focused { transform: scale(1.1); }

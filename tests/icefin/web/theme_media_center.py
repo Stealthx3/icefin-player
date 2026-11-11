@@ -5,7 +5,7 @@
   - the strip as measured (docs/themes/references/media-center.json): titles only except the current category, whose row
     is open; the focused item swells into a glass lens; the current title stays on its line as categories change;
   - remote navigation: down moves between categories and keeps the focused one on its line, right moves along a row,
-    Enter opens the item's themed details screen (Play/Resume, Favourite); a series keeps jellyfin-web's page;
+    Enter opens the item's themed details screen (Play/Resume, Favourite); a series has one too (seasons);
   - each library row ends in "All ...", which opens the poster wall: seven across, art near the view, Enter opens details;
   - turning the theme off restores the stock UI without a restart;
   - "Classic home" (?icefin=stock) shows the stock home with plugin sections;
@@ -125,32 +125,28 @@ def main():
         check(f"{back} returns to the column the row remembered", foc() == along, foc())
         snd = js("new Promise(r => window.api.theme.soundState(r))")
         check("UI sounds play", snd.get("played", 0) >= 2, json.dumps(snd))
-        for _ in range(6):
-            act("up")  # back to the first row: a media tile
+        # A movie from the Movies row (the first row may be Live TV, whose channels keep jellyfin-web's page).
+        js("(() => { const cat = [...document.querySelectorAll('.mc-cat')].find(c => c.querySelector('.mc-cat-title').textContent === 'Movies'); window.icefinTheme.ctx.focus(cat.querySelector('.mc-tile')); return true; })()")
+        time.sleep(0.5)
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(4)
-        kind = js("(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-mc')")
-        if kind == "details":
-            check("Enter opens the themed details screen", js("!!document.querySelector('.mc-details-title') && document.querySelector('.mc-details-title').textContent.length > 0") is True)
-            btns = js("JSON.stringify([...document.querySelectorAll('.mc-btn')].map(b => b.textContent))")
-            check("details: Play (or Resume) and Favourite", "Favourite" in btns and ("Play" in btns or "Resume" in btns), btns)
-            check("details: a button has focus", js("!!document.querySelector('.mc-btn.icefin-focused')") is True)
-            act("right")
-            time.sleep(0.3)
-            check("details: right moves along the buttons", js("[...document.querySelectorAll('.mc-btn')].indexOf(document.querySelector('.mc-btn.icefin-focused'))") == 1)
-            shot("details.png")
-        else:
-            # The first row held a series or a folder: those keep jellyfin-web's page (?icefin=stock).
-            check("a series or folder falls back to jellyfin-web's page", js("location.hash.includes('icefin=stock')") is True
-                  and js("window.icefinTheme.active().route") is None)
-        # A series always falls back to jellyfin-web (no Back loop: the themed entry is replaced).
+        page.wait_for("!!(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details-ready')", timeout=20)
+        check("Enter opens the themed details screen", js("document.querySelector('.icefin-d-title').textContent.length > 0") is True)
+        btns = js("JSON.stringify([...document.querySelectorAll('.icefin-d-btn')].map(b => b.dataset.action))")
+        check("details: Play (or Resume) and Favourite", "favourite" in btns and ("play" in btns or "resume" in btns), btns)
+        check("details: a button has focus", js("!!document.querySelector('.icefin-d-btn.icefin-focused')") is True)
+        act("right")
+        time.sleep(0.3)
+        check("details: right moves along the buttons", js("[...document.querySelectorAll('.icefin-d-btn')].indexOf(document.querySelector('.icefin-d-btn.icefin-focused'))") == 1)
+        shot("details.png")
+        # A series has its own themed details too (9.18): seasons and episodes, no fallback to jellyfin-web's page.
         series = js("new Promise(r => window.icefinTheme.ctx.apiClient().getItems(window.icefinTheme.ctx.apiClient().getCurrentUserId(), {IncludeItemTypes: 'Series', Recursive: true, Limit: 1}).then(x => r((x.Items[0] || {}).Id || '')))")
         if series:
             js(f"location.hash = '#/details?id={series}&serverId=' + window.icefinTheme.ctx.apiClient().serverId(); true")
-            page.wait_for("location.hash.includes('icefin=stock')", timeout=20)
-            check("a series details page is jellyfin-web's, with the theme's tokens", js("window.icefinTheme.active().route") is None
-                  and js("document.documentElement.classList.contains('icefin-themed')") is True)
+            page.wait_for(f"(document.querySelector('#icefin-theme-root') || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready') === '{series}'", timeout=20)
+            check("a series opens the themed details with its seasons", js("!!document.querySelector('[data-section=seasons] .icefin-d-card')") is True
+                  and not js("location.hash.includes('icefin=stock')"))
         # The poster wall: the start strip's "All ..." tile opens it.
         js("location.hash = '#/home'; true")
         page.wait_for("+(document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=20)
@@ -178,9 +174,9 @@ def main():
         time.sleep(3)
         # Movies are playable on their own: the themed details screen, whatever the start strip's first row held.
         check("wall: Enter opens the themed details screen", js("location.hash.startsWith('#/details')") is True
-              and js("(document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc')") == "details"
-              and js("!!document.querySelector('.mc-btn.icefin-focused')") is True,
-              js("JSON.stringify([...document.querySelectorAll('.mc-btn')].map(b => b.textContent))"))
+              and js("!!(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details')") is True
+              and js("!!document.querySelector('.icefin-d-btn.icefin-focused')") is True,
+              js("JSON.stringify([...document.querySelectorAll('.icefin-d-btn')].map(b => b.dataset.action))"))
         shot("details.png")
         js("location.hash = '#/home?icefin=stock'; true")
         page.wait_for("!!document.querySelector('.sectionTitle')", timeout=20)

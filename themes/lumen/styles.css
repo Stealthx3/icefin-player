@@ -43,3 +43,12 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 html[data-icefin-theme] .skinHeader { -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8);
   background: var(--icefin-material-bar-tint) !important; }
 html[data-icefin-theme][data-icefin-materials=opaque] .skinHeader { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--icefin-material-bar-opaque) !important; }
+
+/* Details (9.18): a full-bleed hero, the logo for the title, translucent buttons that lift and turn white on focus. */
+.icefin-details[data-has-logo] .icefin-d-title { display: none; }
+.icefin-details .icefin-d-logo[src] { max-width: 30vw; max-height: 16vh; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.6em; background: var(--icefin-m-tint, var(--icefin-color-surfaceRaised)); backdrop-filter: blur(20px); }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); transform: scale(1.08); }
+.icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.6em; }
+.icefin-details .icefin-d-card.icefin-focused { transform: scale(1.1); }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 1.2em 2.4em rgb(0 0 0 / 0.5); }

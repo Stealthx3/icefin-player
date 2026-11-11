@@ -57,3 +57,12 @@ html[data-icefin-motion="low"] .mq-rows, html[data-icefin-motion="low"] .mq-trac
 html[data-icefin-motion="low"] .mq-poster, html[data-icefin-motion="low"] .mq-wide { transition-duration: 0ms; }
 
 /* Stock pages keep the tokens; nothing else here. */
+
+/* Details (9.18): the title's logo over the art, a white Play button and grey ones beside it, the accent on progress. */
+.icefin-details[data-has-logo] .icefin-d-title { display: none; }
+.icefin-details .icefin-d-logo[src] { max-width: 32vw; max-height: 18vh; }
+.icefin-details .icefin-d-title { font-weight: 800; font-size: 3.2em; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.25em; background: var(--icefin-color-pill); font-weight: 600; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.25em; }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 0 0.18em var(--icefin-color-focus); }
