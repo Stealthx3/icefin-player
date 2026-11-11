@@ -1,0 +1,63 @@
+{
+  "theme": "arcade",
+  "target": "Steam Big Picture (Steam client, October 2026 build), home, scaled to 1920x1080",
+  "sources": [
+    "Workstation capture 2026-11-11: Big Picture in a 2567x1603 window (16:10), measured from a crop of the window only and converted to Steam Deck layout units (1280x800; the window is 2.005x), then scaled by height to 1080 lines (x1.35); the capture was deleted after measuring",
+    "Steam client steamui/css/sp.css (gamepad UI): the dominant focus and scroll transitions (transform .2s ease-in-out; transform .32s cubic-bezier(0, 0.73, 0.48, 1)). Class names are hashed, so these are not confirmed to be the home capsule's own rules"
+  ],
+  "measurements": {
+    "units": "Deck units x1.35 = px at 1920x1080 (16:9 shows more of each row; positions anchor left and top)",
+    "top bar": "icons centred on y 29 (21 deck); the clock and an avatar at the right",
+    "recent row": "capsules 347 tall from y 135 (257 deck from 100); the hero 734 wide (544), portraits 231 (171, 2:3), about 17 apart (12.4-15.5); from x 57 (42.5)",
+    "focus": "focused capsule scales to ~1.05 (270 vs 257 deck tall) with a light ~3 px ring",
+    "focused name": "name under the row at x 49, centred y 510 (377.6 deck), bold ~25 px; status line uppercase at y 537",
+    "pills": "a centred row of pills on y 612 (453.6 deck), 40 tall (29.4); the current pill filled #2f3439",
+    "cards": "label above at y 675 (500 deck); cards from y 693 (513), 404 wide (299) on a 421 pitch (312), art 227 tall (168) over a #31363c caption panel",
+    "bottom bar": "56 tall (41 deck) from y 1024, #111417, Menu at the left, Options / Select / Back at the right"
+  },
+  "tolerancePx": 14,
+  "timingTolerance": 0.1,
+  "ready": "!!document.querySelector('#icefin-theme-root[data-ar-ready]') && !!document.querySelector('.ar-cap.hero.icefin-focused')",
+  "states": [
+    {
+      "name": "home",
+      "settleMs": 1500,
+      "boxes": {
+        "top bar": {"sel": ".ar-top", "y": 0, "h": 58, "tol": 6},
+        "focused hero (105%)": {"sel": ".ar-cap.hero", "x": 39, "y": 126, "w": 771, "h": 365},
+        "first portrait": {"sel": ".ar-recent .ar-cap:not(.hero)", "index": 0, "x": 812, "y": 135, "w": 231, "h": 347},
+        "second portrait": {"sel": ".ar-recent .ar-cap:not(.hero)", "index": 1, "x": 1060, "y": 135},
+        "current pill": {"sel": ".ar-pill.current", "cy": 612, "h": 40, "tol": 8},
+        "first card": {"sel": ".ar-cap.card", "index": 0, "x": 53, "y": 693, "w": 404},
+        "card art": {"sel": ".ar-card-art", "index": 0, "h": 227},
+        "second card": {"sel": ".ar-cap.card", "index": 1, "x": 474},
+        "bottom bar": {"sel": ".ar-hints", "y": 1024, "h": 56, "tol": 6}
+      },
+      "text": {
+        "focused name": {"sel": ".ar-focus-name", "x": 49, "cy": 510},
+        "status line": {"sel": ".ar-focus-sub", "x": 49, "cy": 537},
+        "card label": {"sel": ".ar-card-label", "x": 53, "cy": 675}
+      }
+    },
+    {
+      "name": "along-the-row",
+      "actions": ["right"],
+      "settleMs": 900,
+      "boxes": {
+        "focused portrait (105%), no scroll": {"sel": ".ar-recent .ar-cap.icefin-focused", "x": 806, "y": 126, "w": 243, "h": 365}
+      }
+    },
+    {
+      "name": "cards",
+      "actions": ["down", "down"],
+      "settleMs": 900,
+      "boxes": {
+        "focused card (105%)": {"sel": ".ar-cap.card.icefin-focused", "x": 43, "y": 685, "w": 424}
+      }
+    }
+  ],
+  "timings": [
+    {"name": "focus scale", "sel": ".ar-cap", "kind": "transition", "property": "transform", "ms": 200, "easing": "ease-in-out"},
+    {"name": "row scroll", "sel": ".ar-track", "kind": "transition", "property": "transform", "ms": 320, "easing": "cubic-bezier(0, 0.73, 0.48, 1)"}
+  ]
+}

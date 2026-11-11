@@ -2,8 +2,10 @@
   "schema": 1,
   "id": "arcade",
   "name": "Arcade",
-  "version": "0.1.0",
-  "description": "A controller-first library with a home of large capsules, a filterable and sortable grid, a quick-access panel that slides in from the right, button hints, and an on-screen keyboard for search and sign-in; dark slate with blue focus.",
+  "version": "0.2.0",
+  "description": "A controller-first home of a recent row led by a wide hero, feed pills over a row of cards and a bar of button hints; a filterable, sortable library grid, a quick-access panel from the right and an on-screen keyboard. Near-black navy with a light focus ring.",
   "styles": "styles.css",
-  "scripts": ["arcade.js"]
+  "scripts": [
+    "arcade.js"
+  ]
 }

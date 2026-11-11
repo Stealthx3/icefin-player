@@ -37,7 +37,8 @@
         cap.tabIndex = -1;
         cap.arcadeItem = it;
         const img = hero ? wide(c, it, 1280) : portrait(c, it, 360);
-        if (img) cap.style.backgroundImage = `url("${img}")`;
+        if (img) { cap.style.backgroundImage = `url("${img}")`; cap.classList.add('has-art'); }
+        cap.setAttribute('aria-label', label(it));
         cap.append(el('div', 'ar-cap-name', label(it)));
         const ticks = it.UserData && it.UserData.PlaybackPositionTicks;
         if (ticks && it.RunTimeTicks) { const p = el('div', 'ar-progress'); const b = el('i'); b.style.width = `${Math.min(100, (100 * ticks) / it.RunTimeTicks).toFixed(1)}%`; p.append(b); cap.append(p); }
@@ -62,11 +63,10 @@
         bar.append(el('div', 'ar-spacer'));
         const search = el('div', 'ar-btn', 'Search');
         const qa = el('div', 'ar-btn ar-qa-btn', '•••');
-        for (const b of [search, qa]) { b.setAttribute('data-icefin-focus', ''); b.tabIndex = -1; bar.append(b); }
+        const clock = el('div', 'ar-clock');
+        for (const b of [search, clock, qa]) { if (b !== clock) { b.setAttribute('data-icefin-focus', ''); b.tabIndex = -1; } bar.append(b); }
         search.addEventListener('click', () => { location.hash = '#/search'; });
         qa.addEventListener('click', () => ui.overlay.open());
-        const clock = el('div', 'ar-clock');
-        bar.append(clock);
         const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
         tick();
         const timer = setInterval(() => { if (!clock.isConnected) clearInterval(timer); else tick(); }, 15000);
@@ -126,34 +126,102 @@
         return true;
     }
 
+    // Arcade moves its rows itself (transforms timed like the target); the browser's scroll-into-view on focus would
+    // add a jump on top, so these views stay pinned at 0.
+    function pin(view) {
+        view.addEventListener('scroll', () => { if (view.scrollTop || view.scrollLeft) { view.scrollTop = 0; view.scrollLeft = 0; } });
+    }
+
     // ---- home ----
+    // Like the target's home (docs/themes/references/arcade.json): a row of recent capsules led by a wide hero, the
+    // focused capsule's name and status under the row, a centred row of pills choosing a feed, and a row of cards with
+    // art above a caption panel; a bar of button hints along the bottom. Everything fits one 1080-line screen.
+    function cardEl(c, it) {
+        const card = el('div', 'ar-cap card');
+        card.setAttribute('data-icefin-focus', '');
+        card.tabIndex = -1;
+        card.arcadeItem = it;
+        const art = el('div', 'ar-card-art');
+        const img = wide(c, it, 640);
+        if (img) art.style.backgroundImage = `url("${img}")`;
+        card.append(art, el('div', 'ar-card-text', label(it)));
+        card.addEventListener('click', () => details(c, it));
+        return card;
+    }
+    function status(it) {
+        const d = it.UserData || {};
+        if (d.PlaybackPositionTicks && it.RunTimeTicks) return `Continue · ${Math.max(1, Math.round((it.RunTimeTicks - d.PlaybackPositionTicks) / 600000000))} min left`;
+        if (it.Type === 'Episode' && it.ParentIndexNumber != null) return `Next up · S${it.ParentIndexNumber} E${it.IndexNumber}`;
+        return [it.ProductionYear, it.Type === 'Series' ? 'Series' : null].filter(Boolean).join(' · ') || 'New';
+    }
+    function showFocused(it) {
+        if (!S || !it) return;
+        S.name.textContent = label(it);
+        S.sub.textContent = status(it);
+        const img = wide(S.client, it, 1280);
+        S.backdrop.style.backgroundImage = img ? `url("${img}")` : 'none';
+    }
+    function choosePill(k) {
+        S.pill = k;
+        S.pills.forEach((p, i) => p.classList.toggle('current', i === k));
+        const [, items, when] = S.feeds[k];
+        S.cardLabel.textContent = when;
+        const caps = items.map((it) => cardEl(S.client, it));
+        S.shelves[1].track.textContent = '';
+        S.shelves[1].track.style.transform = '';
+        S.shelves[1].track.append(...caps);
+        S.shelves[1].caps = caps;
+        S.shelves[1].index = 0;
+    }
     T.registerScreen('#/home', {
         onAction(action, ctx) {
             if (!S || !S.ready) return false;
             const f = ctx.focused();
+            const pi = S.pills.indexOf(f);
+            if (pi >= 0) {
+                if (action === 'left' || action === 'right') {
+                    const n = pi + (action === 'right' ? 1 : -1);
+                    if (n >= 0 && n < S.pills.length) { E.focus(S.pills[n]); choosePill(n); ctx.sound('focus'); }
+                    return true;
+                }
+                if (action === 'down') { if (S.shelves[1].caps.length) { focusCap(1, 0); ctx.sound('focus'); } return true; }
+                if (action === 'up') { focusCap(0, S.shelves[0].index); ctx.sound('focus'); return true; }
+                if (action === 'back') { focusCap(0, S.shelves[0].index); ctx.sound('back'); return true; }
+                return false;
+            }
             const r = S.shelves.findIndex((s) => s.track.contains(f));
             if (r >= 0) {
                 const sh = S.shelves[r], i = sh.caps.indexOf(f);
                 if (action === 'left' || action === 'right') { const n = i + (action === 'right' ? 1 : -1); if (n >= 0 && n < sh.caps.length) { focusCap(r, n); ctx.sound('focus'); } return true; }
-                if (action === 'down') { if (r + 1 < S.shelves.length) { focusCap(r + 1, S.shelves[r + 1].index); ctx.sound('focus'); } return true; }
-                if (action === 'up') { if (r > 0) focusCap(r - 1, S.shelves[r - 1].index); else { S.scroll.style.transform = ''; E.focus(S.top.items[0]); } ctx.sound('focus'); return true; }
-                if (action === 'back') { S.scroll.style.transform = ''; E.focus(S.top.items[0]); ctx.sound('back'); return true; }
+                if (action === 'down') {
+                    if (r === 0 && S.pills.length) { E.focus(S.pills[S.pill]); ctx.sound('focus'); }
+                    return true;
+                }
+                if (action === 'up') {
+                    if (r === 1) E.focus(S.pills[S.pill]);
+                    else E.focus(S.top.items[0]);
+                    ctx.sound('focus');
+                    return true;
+                }
+                if (action === 'back') { if (r === 1) focusCap(0, S.shelves[0].index); else E.focus(S.top.items[0]); ctx.sound('back'); return true; }
                 return false;
             }
             if (S.top.items.includes(f)) {
                 const i = S.top.items.indexOf(f);
                 if (action === 'left' || action === 'right') { const n = i + (action === 'right' ? 1 : -1); if (n >= 0 && n < S.top.items.length) { E.focus(S.top.items[n]); ctx.sound('focus'); } return true; }
-                if (action === 'down') { if (S.shelves.length) { focusCap(0, S.shelves[0].index); ctx.sound('focus'); } return true; }
+                if (action === 'down') { if (S.shelves[0].caps.length) { focusCap(0, S.shelves[0].index); ctx.sound('focus'); } return true; }
                 return action === 'up';
             }
             return false;
         },
         async mount(root) {
             root.setAttribute('data-ar', 'home');
-            S = { client: T.ctx.apiClient(), root, shelves: [], ready: false };
+            S = { client: T.ctx.apiClient(), root, shelves: [], ready: false, pills: [], feeds: [], pill: 0 };
             const views = await ui.userViews();
             if (!S || S.root !== root) return;
             S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
+            S.backdrop = el('div', 'ar-backdrop');
+            root.append(S.backdrop);
             S.top = topBar(root, 'Home', views);
             const body = el('div', 'ar-body');
             S.scroll = el('div', 'ar-scroll');
@@ -166,41 +234,61 @@
                 get(c.getResumableItems(uid, { Limit: 20, MediaTypes: 'Video', Fields: FIELDS })),
                 get(c.getNextUpEpisodes({ UserId: uid, Limit: 20, Fields: FIELDS }))
             ]);
-            const recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id)));
-            const shelves = [];
+            let recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id)));
+            const feeds = [];
             for (const v of views.filter((x) => x.CollectionType !== 'livetv')) {  // Live TV has channels, not new items
                 const items = await get(c.getLatestItems({ userId: uid, parentId: v.Id, Limit: 24, Fields: FIELDS }));
-                if (items.length) shelves.push([`New in ${v.Name}`, items]);
+                if (items.length) feeds.push([`New in ${v.Name}`, items, 'Recently added']);
             }
             if (!S || S.root !== root) return;
-            // The first shelf leads with one large hero capsule: the most recent thing in progress, else the newest item.
-            const first = recent.length ? ['Recent', recent] : shelves.shift();
-            if (first) shelves.unshift(first);
-            S.shelves = shelves.map(([title, items], k) => {
-                const sec = el('section', 'ar-shelf');
-                sec.append(el('div', 'ar-shelf-title', title));
-                const track = el('div', 'ar-track');
-                const caps = items.map((it, i) => capsule(c, it, k === 0 && i === 0));
-                track.append(...caps);
-                sec.append(track);
-                S.scroll.append(sec);
-                return { sec, track, caps, index: 0 };
+            // The recent row leads with a wide hero: the most recent thing in progress, else the newest items.
+            if (!recent.length && feeds.length) recent = feeds[0][1];
+            const sec0 = el('section', 'ar-shelf ar-recent');
+            const track0 = el('div', 'ar-track');
+            const caps0 = recent.slice(0, 20).map((it, i) => capsule(c, it, i === 0));
+            track0.append(...caps0);
+            S.name = el('div', 'ar-focus-name');
+            S.sub = el('div', 'ar-focus-sub');
+            sec0.append(track0, S.name, S.sub);
+            const pills = el('div', 'ar-pills');
+            S.feeds = feeds;
+            S.pills = feeds.map(([title], k) => {
+                const p = el('div', 'ar-pill', title);
+                p.setAttribute('data-icefin-focus', '');
+                p.tabIndex = -1;
+                p.addEventListener('click', () => choosePill(k));
+                pills.append(p);
+                return p;
             });
+            const sec1 = el('section', 'ar-shelf ar-feed');
+            S.cardLabel = el('div', 'ar-card-label');
+            const track1 = el('div', 'ar-track ar-cards');
+            sec1.append(S.cardLabel, track1);
+            S.scroll.append(sec0, pills, sec1);
+            [body, S.scroll, sec0, sec1].forEach(pin);
+            S.shelves = [{ sec: sec0, track: track0, caps: caps0, index: 0 }, { sec: sec1, track: track1, caps: [], index: 0 }];
+            if (feeds.length) choosePill(0);
             S.ready = true;
-            root.setAttribute('data-ar-ready', String(S.shelves.length));
-            if (S.shelves.length) focusCap(0, 0); else E.focus(S.top.items[0]);
+            root.setAttribute('data-ar-ready', String(S.shelves.filter((x) => x.caps.length).length));
+            if (caps0.length) focusCap(0, 0); else E.focus(S.top.items[0]);
         },
         unmount() { S = null; }
     });
+    // Focus walks the visible slots; the row scrolls only when the next capsule would leave the screen.
     function focusCap(r, i) {
         const sh = S.shelves[r];
         sh.index = i;
         const cap = sh.caps[i];
         E.focus(cap);
-        // keep one capsule of context on the left; the shelf scrolls under the bar
-        const prev = sh.caps[Math.max(0, i - 1)];
-        sh.track.style.transform = `translateX(${-Math.max(0, prev.offsetLeft - sh.caps[0].offsetLeft)}px)`;
-        S.scroll.style.transform = r === 0 ? '' : `translateY(${-(sh.sec.offsetTop - S.shelves[0].sec.offsetTop)}px)`;
+        const view = sh.track.parentElement.offsetWidth, first = sh.caps[0].offsetLeft;
+        const cur = sh.shift || 0;
+        let shift = cur;
+        const left = cap.offsetLeft - first, right = cap.offsetLeft + cap.offsetWidth;
+        if (left < shift) shift = left;
+        else if (right - shift > view - first) shift = right - (view - first);
+        sh.shift = Math.max(0, shift);
+        sh.track.style.transform = sh.shift ? `translateX(${-Math.round(sh.shift)}px)` : '';
+        if (cap.arcadeItem) showFocused(r === 0 ? cap.arcadeItem : S.shelves[0].caps[S.shelves[0].index] && S.shelves[0].caps[S.shelves[0].index].arcadeItem);
     }
 
     // ---- library: a sortable, filterable grid ----
