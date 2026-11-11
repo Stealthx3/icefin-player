@@ -77,6 +77,12 @@ def main():
         js("Dashboard.navigate('home'); true")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root'); return !!r && !r.hidden && +r.getAttribute('data-mc-ready') > 0; })()", timeout=30)
         check("jellyfin-web's own navigation (pushState) mounts the themed home", js("window.icefinTheme.active().route") == "#/home")
+        # Rows don't overlap (tiles fit their row), and page UI a plugin puts straight into <body> doesn't show through.
+        ov = js("(() => { const c = [...document.querySelectorAll('.mc-cat')]; let worst = 0; c.forEach((cat) => { const r = cat.getBoundingClientRect(); cat.querySelectorAll('.mc-tile:not(.icefin-focused)').forEach((t) => { const b = t.getBoundingClientRect(); worst = Math.max(worst, b.bottom - r.bottom, r.top - b.top); }); }); return Math.round(worst); })()")
+        check("each row holds its tiles (no overlap between rows)", ov <= 1, f"{ov}px over")
+        js("(() => { const d = document.createElement('div'); d.id = 'lab-plugin-ui'; d.textContent = 'plugin'; d.style.cssText = 'position:absolute;inset:0;z-index:1;background:red'; document.body.append(d); return true; })()")
+        check("plugin UI added to <body> stays hidden under a themed screen", js("getComputedStyle(document.getElementById('lab-plugin-ui')).visibility") == "hidden")
+        js("document.getElementById('lab-plugin-ui').remove(); true")
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); return f ? (f.closest('.mc-cat').querySelector('.mc-cat-title').textContent + '/' + (f.textContent || '')) : ''; })()")
         time.sleep(1.2)
         shot("start.png")
