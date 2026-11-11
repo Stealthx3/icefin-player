@@ -126,16 +126,19 @@ def mix(*parts):
     return out
 
 
-def reverb(x, mix_amount=0.2, size=1.0, tail_ms=250):
-    """A small Schroeder reverb: four combs into two all-passes."""
+def reverb(x, mix_amount=0.2, size=1.0, tail_ms=250, feedback=0.72, predelay_ms=0, damp_hz=0):
+    """A Schroeder reverb: four combs into two all-passes. feedback sets how long it rings (0.72 a small room,
+    0.85+ a hall); predelay_ms holds the wet signal back; damp_hz low-passes it (a soft, distant room)."""
     y = list(x) + [0.0] * n_of(tail_ms)
     n = len(y)
     combs = [int(d * size) for d in (1557, 1617, 1491, 1422)]
     wet = [0.0] * n
+    pd = n_of(predelay_ms) if predelay_ms else 0
+    src = ([0.0] * pd + y)[:n] if pd else y
     for d in combs:
         buf = [0.0] * n
         for i in range(n):
-            buf[i] = y[i] + (0.72 * buf[i - d] if i >= d else 0.0)
+            buf[i] = src[i] + (feedback * buf[i - d] if i >= d else 0.0)
             wet[i] += buf[i] * 0.25
     for d in (225, 556):
         out = [0.0] * n
@@ -144,6 +147,8 @@ def reverb(x, mix_amount=0.2, size=1.0, tail_ms=250):
             yd = out[i - d] if i >= d else 0.0
             out[i] = -0.5 * wet[i] + xd + 0.5 * yd
         wet = out
+    if damp_hz:
+        wet = lowpass(wet, damp_hz)
     return [(1 - mix_amount) * a + mix_amount * b for a, b in zip(y, wet)]
 
 
@@ -210,14 +215,18 @@ def plum():
 
 
 def plaza():
-    # Playful plucks: a marimba-like bar (sine + its 4th partial, quick decay); a two-note bright confirm.
-    def bar(f, ms=160):
-        return mul(mix(tone(ms, f), gain(tone(ms, f * 3.98), 0.25)), env(n_of(ms), 0.5, ms / 4))
-    sel = reverb(mix(bar(1047, 200), (bar(1568, 240), 70)), 0.2)
-    back = mix(bar(784, 150), (bar(587, 170), 60))
-    nav = reverb(mix(bar(1319, 120), (bar(1760, 140), 45), (bar(2093, 160), 90)), 0.2)
-    err = mix(bar(370, 180), (bar(349, 220), 110))
-    return {"focus": (bar(1568, 110), -15), "select": (sel, -9), "back": (back, -11), "navigate": (nav, -12), "error": (err, -10)}
+    # Atmospheric (user feedback 2026-11-11: "lots of reverb"): soft marimba-like bars with a faint octave shimmer, in a
+    # large, warm hall: pre-delay, a long damped tail, mostly wet. Focus stays short at its source so quick moves
+    # don't smear; the room carries it.
+    def bar(f, ms=180):
+        return mul(mix(tone(ms, f), gain(tone(ms, f * 3.98), 0.18), gain(tone(ms, f * 2), 0.12)), env(n_of(ms), 1.5, ms / 3.5))
+    hall = lambda x, tail=1600, wet=0.55: reverb(x, wet, 1.7, tail, 0.86, 28, 5200)
+    focus = hall(bar(1568, 110), 1100, 0.5)
+    sel = hall(mix(bar(1047, 220), (bar(1568, 260), 80), (gain(bar(2093, 300), 0.5), 160)), 1800, 0.55)
+    back = hall(mix(bar(784, 170), (bar(587, 200), 70)), 1400, 0.55)
+    nav = hall(mix(bar(1319, 130), (bar(1760, 150), 50), (bar(2093, 170), 100), (gain(bar(2637, 200), 0.5), 150)), 1800, 0.6)
+    err = hall(mix(bar(370, 200), (bar(349, 240), 120)), 1300, 0.45)
+    return {"focus": (focus, -15), "select": (sel, -9), "back": (back, -11), "navigate": (nav, -12), "error": (err, -10)}
 
 
 def orbit():
@@ -290,7 +299,7 @@ def tide():
 
 SETS = {"media-center": media_center, "harbor": harbor, "spark": spark, "plum": plum, "plaza": plaza, "orbit": orbit, "mosaic": mosaic,
         "lumen": lumen, "marquee": marquee, "almanac": almanac, "arcade": arcade, "tide": tide}
-MAX_MS = 900
+MAX_MS = 2600  # Plaza's hall tails run to about two seconds
 
 
 def build(tid):
