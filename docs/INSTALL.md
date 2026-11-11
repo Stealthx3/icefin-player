@@ -3,9 +3,10 @@
 Icefin Player ships as a Flatpak (app ID `io.github.stealthx3.IcefinPlayer`) and runs on Linux, Wayland first. It
 installs alongside Flathub's Jellyfin Desktop: separate app ID, separate settings and data.
 
-> **Status, November 2026:** Icefin is pre-1.0. There is no public download yet. The signed `stable` and `nightly`
-> repositories with one-click `.flatpakref` files are PLAN 12.1. Until then, builds come from this repository's CI
-> (a Flatpak bundle per commit) or from a local `flatpak-builder` run (see `docs/LAB.md`).
+> **Status, November 2026:** Icefin is in alpha. Download the bundle from the
+> [releases page](https://github.com/Stealthx3/icefin-player/releases) (the latest alpha, or the rolling *Nightly*
+> build of `main`) and install it as below. Signed `stable` and `nightly` repositories with one-click `.flatpakref`
+> files come later (PLAN 12.1).
 
 ## Install a bundle
 ```bash

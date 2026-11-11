@@ -40,9 +40,10 @@
   </supports>
   <content_rating type="oars-1.1"/>
   <releases>
-    <release version="0.1.0" date="2026-11-07" type="development">
+    <release version="0.1.0~alpha.1" date="2026-11-11" type="development">
+      <url>https://github.com/Stealthx3/icefin-player/releases/tag/v0.1.0-alpha.1</url>
       <description>
-        <p>First development build: Icefin branding on jellyfin-desktop 2.0.0.</p>
+        <p>First alpha: the theme engine with Media Center and eleven layout themes, the Vulkan renderer with HDR output, HDMI audio passthrough with receiver detection, SDL3 controllers and in-app diagnostics, on jellyfin-desktop 2.0.0. Tested in a virtual lab; not yet on testers' hardware.</p>
       </description>
     </release>
   </releases>
