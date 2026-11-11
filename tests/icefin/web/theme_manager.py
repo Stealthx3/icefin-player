@@ -48,6 +48,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--app", required=True)
     ap.add_argument("--port", type=int, default=9251)
+    ap.add_argument("--out", help="also save a screenshot with a drop-down open")
     a = ap.parse_args()
     xv = start_x()
     cfgdir = tempfile.mkdtemp(prefix="icefin-tm-")
@@ -77,6 +78,53 @@ def main():
         hidden = js("[...document.querySelectorAll('label.inputContainer')].filter(l => /^Theme:/.test((l.querySelector('.inputLabel') || {}).textContent || '') && l.querySelector('select') && !l.closest('" + M + "')).every(l => l.style.display === 'none')")
         check("the plain theme drop-down is hidden under the manager", hidden is True)
         before = selection()["theme"]
+
+        # Drop-downs (user report: they didn't show as drop-downs): a box and a chevron each, the disabled one too, and
+        # an in-page list that opens, picks with Down + Enter and closes with Escape without leaving Client Settings.
+        look = json.loads(js(f"JSON.stringify([...document.querySelectorAll('{M} select')].map(s => {{ const w = s.parentElement, a = getComputedStyle(w, '::after'); return [s.className.split(' ').pop(), w.classList.contains('icefin-dd'), a.content !== 'none' && a.borderRightStyle === 'solid', getComputedStyle(s).backgroundColor !== 'rgba(0, 0, 0, 0)', getComputedStyle(s).opacity === '1']; }}))"))
+        check("every drop-down has a box and a chevron (disabled ones too)", len(look) == 3 and all(x[1] and x[2] and x[3] and x[4] for x in look), json.dumps(look))
+        key = lambda k, code, vk: [page.send("Input.dispatchKeyEvent", type=t, key=k, code=code, windowsVirtualKeyCode=vk) for t in ("keyDown", "keyUp")]
+        js(f"document.querySelector('{M}').scrollIntoView({{block: 'start'}}); true")  # in view, as for a user
+        time.sleep(0.5)
+        # A real mouse press on it, as a user's.
+        r = json.loads(js(f"JSON.stringify({q('.icefin-tm-theme')}.getBoundingClientRect())"))
+        cx, cy = r["left"] + r["width"] / 2, r["top"] + r["height"] / 2
+        for t in ("mousePressed", "mouseReleased"):
+            page.send("Input.dispatchMouseEvent", type=t, x=cx, y=cy, button="left", clickCount=1)
+        time.sleep(0.4)
+        opts = js("[...document.querySelectorAll('.icefin-dd-list .icefin-dd-option')].map(o => o.dataset.value)")
+        check("a drop-down opens its list in the page", opts == options(), f"{len(opts)} options")
+        if a.out:
+            os.makedirs(a.out, exist_ok=True)
+            import base64  # noqa: E402
+            open(os.path.join(a.out, "dropdown-open.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
+        start = js(f"{q('.icefin-tm-theme')}.value")
+        key("ArrowDown", "ArrowDown", 40)
+        key("Enter", "Enter", 13)
+        time.sleep(0.6)
+        picked = js(f"{q('.icefin-tm-theme')}.value")
+        check("Down + Enter picks the next entry and closes the list", picked != start and not js("!!document.querySelector('.icefin-dd-list')")
+              and js("document.activeElement === document.querySelector('#icefin-theme-manager .icefin-tm-theme')") is True, f"{start!r} -> {picked!r}")
+        check("the pick updates the preview without applying", js(f"{q('.icefin-tm-apply')}.disabled") is (picked == before) and selection()["theme"] == before)
+        key("Enter", "Enter", 13)  # Enter on the focused drop-down opens it (the keyboard and the remote's OK)
+        time.sleep(0.3)
+        check("Enter on a focused drop-down opens its list", js("!!document.querySelector('.icefin-dd-list')") is True)
+        key("ArrowDown", "ArrowDown", 40)
+        key("Escape", "Escape", 27)
+        time.sleep(0.4)
+        check("Escape closes the list, keeps the value and stays in Client Settings", not js("!!document.querySelector('.icefin-dd-list')")
+              and js(f"{q('.icefin-tm-theme')}.value") == picked and js("!!document.querySelector('#icefin-theme-manager')") is True)
+        js(f"(() => {{ const p = {q('.icefin-tm-preset')}; p.disabled = true; return true; }})()")
+        js(f"{q('.icefin-tm-preset')}.click(); true")
+        time.sleep(0.3)
+        check("a disabled drop-down doesn't open", not js("!!document.querySelector('.icefin-dd-list')"))
+        js(f"{q('.icefin-tm-scheme')}.click(); true")  # element.click(), as jellyfin-web's input layer does for OK
+        time.sleep(0.3)
+        check("a click without a mouse press (the remote's OK) opens the list", js("!!document.querySelector('.icefin-dd-list')") is True)
+        key("Escape", "Escape", 27)
+        time.sleep(0.3)
+        pick(".icefin-tm-theme", before)
+        time.sleep(0.5)
 
         # 2. Preview without applying: Media Center's own background, then its teal scheme's focus colour.
         pick(".icefin-tm-theme", "media-center")
