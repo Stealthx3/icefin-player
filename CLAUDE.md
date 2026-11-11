@@ -3,7 +3,7 @@
 Fork of jellyfin-desktop v2.0.0 (Qt 6 + Qt WebEngine + jellyfin-web + libmpv), rebranded **icefin-player**. It adds a theme engine, a single-surface Vulkan HDR renderer, hardened HDMI audio passthrough, first-class controller support and verified GPU paths. It ships as a Flatpak; Linux, Wayland-first.
 
 ## Read first
-- **Development is active** (unpaused by the user 2026-11-09). Work through PLAN continuously; ask only for decisions reserved to the user. HTPC tests follow the lab window (`htpc.sh window`).
+- **Development is active** (unpaused by the user 2026-11-09). Work through PLAN continuously; ask only for decisions reserved to the user. No HTPC testing (D28): develop in the virtual lab, simulate hardware where it can be built, and leave real hardware to beta testers (`docs/BETA-CHECKLIST.md`).
 - `docs/dev/HANDOFF.md`: current state and the first-session checklist. Start here.
 - `docs/PLAN.md`: task tracker (source of truth for progress; tick boxes in the same commit as the work).
 - `docs/SPEC.md`: full design. Read only the section a task names in brackets.
@@ -21,7 +21,7 @@ Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If t
 - Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).
 - Agents: `.claude/agents/` (scout, runner, implementer, reviewer). The usage plan is dropped (D20).
 - Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, republish to the same URL after each task).
-- HTPC tier (D16): hardware tests run on the user's Bazzite HTPC via `scripts/icefin/htpc.sh` (docs/LAB.md *HTPC tier*); respect its house rules.
+- Hardware (D28): no automated HTPC testing (the HTPC tier of D16 is retired; `scripts/icefin/htpc.sh` stays as history). Simulated hardware: `docs/dev/HARDWARE-SIMULATION.md`; real hardware: beta testers with `docs/BETA-CHECKLIST.md`.
 - Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
 - Branding assets: `/mnt/FileDrive/Personal/Projects/IceSuite/IceFin` (D15). App icon is the fin mark.
 - Git workflow (D17, `docs/BRANCHING.md`): trunk-based. Branch `feat/<task>-<topic>` (or `fix/`, `docs/`, `ci/`, `chore/`) from `main`, push, open a PR, squash-merge when `icefin-hooks` and `icefin-flatpak` pass. Upstream merges use `sync/upstream-<ver>` and a merge commit. Never force-push `main`; never commit to `upstream/master`.

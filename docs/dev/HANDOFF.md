@@ -1,3 +1,5 @@
+> **2026-11-11: D28.** No HTPC testing any more. The goal is a feature-complete Icefin built and checked in the virtual lab, with simulated hardware where it can be built (`docs/dev/HARDWARE-SIMULATION.md`); real hardware goes to beta testers (`docs/BETA-CHECKLIST.md`). The HTPC notes below are history.
+
 # Handoff to Claude Code
 
 > **2026-11-08: GitHub restructuring done (D17), admin steps done by Claude Code the same day** (`docs/dev/GITHUB-RESTRUCTURE.md` → *Result*). Wait for the user to say continue; next up is PLAN 1.10, then the HTPC tasks. From now on all work goes through pull requests into `main` (`docs/BRANCHING.md`). The first-session list below is history.
