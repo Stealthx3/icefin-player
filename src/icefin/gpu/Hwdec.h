@@ -13,6 +13,11 @@ namespace Icefin::Gpu
 // renderer as a blank picture there (RTX 4090, Plasma Wayland, Flatpak, 2026-11-09). An explicit NVDEC choice is kept.
 QString hwdecFor(const QString& setting);
 QString hwdecFor(const QString& setting, bool nvidiaOnOpenGl);
+// mpv "gpu-hwdec-interop" value for the render context (set before it's created). An explicit VA-API choice loads
+// the VA-API interop up front without probing, as mpv's --gpu-hwdec-interop=vaapi does: the probing load-all (Auto)
+// skips a driver mpv thinks emulated, such as nvidia-vaapi-driver, so a user who picks VA-API on NVIDIA got
+// software decoding (RTX 4090, Flatpak, 2026-11-11). Everything else stays "auto" (load all, probing).
+QString interopFor(const QString& setting);
 // A hardwareDecoding change made while a video plays waits for the next load: switching mpv's decoder under the
 // running render path left the picture white (RTX 4090, OpenGL, 2026-11-09). PlayerComponent::queueMedia opens a
 // HwdecLoadScope around its settings refresh, so a load always applies the setting.

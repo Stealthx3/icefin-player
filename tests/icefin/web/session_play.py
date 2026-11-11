@@ -52,7 +52,9 @@ def launch(app, port, cfgdir, logf, qpa="xcb", extra=(), gpu=False):
         env = dict(os.environ, LC_ALL="C.UTF-8")
         args = [f"--remote-debugging-port={port}", "--log-level=info"] + list(extra)
         if app.startswith("flatpak:"):
-            cmd = ["flatpak", "run", "--user", app.split(":", 1)[1], f"--config-dir=/var/tmp/{os.path.basename(cfgdir)}"] + args
+            # ICEFIN_FLATPAK_ENV="K=V,K=V": environment for inside the sandbox (a VA-API driver choice, for example)
+            fenv = [f"--env={kv}" for kv in os.environ.get("ICEFIN_FLATPAK_ENV", "").split(",") if "=" in kv]
+            cmd = ["flatpak", "run", "--user"] + fenv + [app.split(":", 1)[1], f"--config-dir=/var/tmp/{os.path.basename(cfgdir)}"] + args
         else:
             cmd = [os.path.expanduser(app), f"--config-dir={cfgdir}"] + args
         return subprocess.Popen(cmd, env=env, stdout=logf, stderr=subprocess.STDOUT, start_new_session=True)
