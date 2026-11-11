@@ -102,8 +102,28 @@ If the server already injects the theme plugin's runtime, Icefin's web layers st
 - Icefin calls `icefinPluginRuntime.attachNative({version: 1, client: 'icefin-player', tokens(), services})` once,
   so the plugin can use native services: the active tokens now; UI sounds and the backdrop as they land.
 
+## Installing a package
+A package file is a zip of the theme's folder: `theme.json` at its top, or inside one top-level folder. Client
+Settings → Theme → *Install from file…* opens the file chooser (the desktop portal in the Flatpak). The package is
+unpacked to a temporary folder and checked with the same rules as any user theme, then moved to the user themes
+folder as `<id>/` (`src/icefin/theme/ThemeInstall`). Refused, with the reason shown and nothing installed:
+- not a zip, larger than 64 MB, more than 4000 files or 256 MB unpacked;
+- links, or paths that leave the package;
+- an id a built-in or development theme uses.
+
+Installing a package whose id you already installed updates it, and asks for trust again if it has scripts. *Remove*
+deletes a theme you installed (not the active one). From scripts: `theme.installFile(path)`, `theme.pickPackage()`
+(result with the `installFinished` signal) and `theme.removePackage(id)`.
+
 ## Per-user choice
-The theme picker is in Client Settings → Theme. The choice belongs to the signed-in user:
+The theme manager is in Client Settings → Theme (PLAN 9.21, `native/icefin/themeManager.js`):
+- a theme list and a colour scheme (preset) list;
+- a preview drawn from the chosen theme's tokens (`theme.previewTokens(id, preset)`). Nothing changes until *Apply*;
+  *Cancel* goes back to the active theme;
+- for a theme you installed with scripts, the trust warning and a box to allow them;
+- *Install from file…* and *Remove*.
+
+The choice belongs to the signed-in user:
 - it's cached on the device (instant at startup, works offline);
 - it's synced to the server's DisplayPreferences (`usersettings`, client `icefin-player`, custom pref `icefin.theme` =
   `{"schema":1,"theme","preset","timestamp"}`); the newest timestamp wins;

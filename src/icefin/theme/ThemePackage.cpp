@@ -33,6 +33,7 @@ Package loadPackage(const QString& dir, Source source)
     for (const QString& k : meta.keys()) if (!known.contains(k)) p.errors << QString("theme.json: unknown key '%1'").arg(k);
     p.id = meta.value("id").toString();
     p.name = meta.value("name").toString();
+    p.description = meta.value("description").toString();
     p.version = meta.value("version").toString();
     static const QRegularExpression idRe(QStringLiteral("^[a-z0-9][a-z0-9-]{1,47}$"));
     if (!idRe.match(p.id).hasMatch()) p.errors << "theme.json: id must be 2-48 characters of a-z, 0-9 and -";

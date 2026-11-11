@@ -9,6 +9,7 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             theme/Tokens.cpp theme/Tokens.h theme/ThemePackage.cpp theme/ThemePackage.h
             theme/ThemeComponent.cpp theme/ThemeComponent.h theme/ThemeScheme.cpp theme/ThemeScheme.h
             theme/CssSanitizer.cpp theme/CssSanitizer.h theme/Backdrop.cpp theme/Backdrop.h
+            theme/ThemeInstall.cpp theme/ThemeInstall.h
             gpu/Hwdec.cpp gpu/Hwdec.h gpu/DecoderSelfTest.cpp gpu/DecoderSelfTest.h
             gpu/HardwareComponent.cpp gpu/HardwareComponent.h gpu/WebGpuStatus.cpp gpu/WebGpuStatus.h
             render/PlaybackRouter.cpp render/PlaybackRouter.h render/RouterComponent.cpp render/RouterComponent.h
@@ -34,6 +35,13 @@ else()
   if(TARGET Qt6::GuiPrivate)
     cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_link_libraries jmp_core Qt6::GuiPrivate)  # QShader (.qsb checks)
   endif()
+endif()
+
+# Theme install from file (PLAN 9.21) unpacks zips with QZipReader, in Qt Core's private headers (a separate
+# Qt6CorePrivate package since Qt 6.10, part of Qt6Core before).
+find_package(Qt6 COMPONENTS CorePrivate QUIET GLOBAL)
+if(TARGET Qt6::CorePrivate)
+  cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL target_link_libraries jmp_core Qt6::CorePrivate)
 endif()
 
 # libpulse for the IEC958 format setting (PLAN 3.4; pipewire-pulse implements the same protocol).
