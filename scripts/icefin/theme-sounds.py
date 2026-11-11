@@ -184,14 +184,37 @@ def media_center():
     return {"focus": (tick, -16), "select": (chime, -9), "back": (back, -12), "navigate": (nav, -14), "error": (err, -10)}
 
 
+def rustle(ms, seed, grain_ms=6):
+    """Paper texture: noise whose loudness flickers at random (fibres catching), smoothed so it doesn't click."""
+    r = random.Random(seed)
+    n, step = n_of(ms), n_of(grain_ms)
+    marks = [r.uniform(0.25, 1.0) for _ in range(n // step + 2)]
+    am = [marks[i // step] + (marks[i // step + 1] - marks[i // step]) * ((i % step) / step) for i in range(n)]
+    return mul(noise(ms, seed + 1000), am)
+
+
 def harbor():
-    # Short, soft, neutral clicks; a lower tock for back.
-    click = mul(mix(bandpass(noise(25, 21), 1200, 6000), gain(tone(25, 1800), 0.4)), env(n_of(25), 0.5, 5))
-    sel = mul(mix(tone(70, 1250, 1100, "tri"), gain(bandpass(noise(30, 22), 1500, 7000), 0.4)), env(n_of(70), 1, 18))
-    back = mul(tone(80, 700, 560, "tri"), env(n_of(80), 1, 20))
-    nav = mul(lowpass(noise(140, 23), 2200), env(n_of(140), 30, 40))
-    err = mul(tone(180, 220, 210, "soft"), env(n_of(180), 2, 70))
-    return {"focus": (click, -17), "select": (sel, -11), "back": (back, -12), "navigate": (nav, -18), "error": (err, -11)}
+    # Subtle, unpitched paper and card sounds (user feedback 2026-11-11: "no pews; card-flipping, page turning"): no
+    # tones at all, only shaped noise. A soft card tick for focus, a card flip for select, a card sliding back for back,
+    # a page turn for navigate, a dull double paper tap for error. Quiet overall.
+    def snap(ms, lo, hi, decay, seed):
+        return mul(bandpass(noise(ms, seed), lo, hi), env(n_of(ms), 0.4, decay))
+
+    def body(ms, hz, decay, seed):  # the soft low "landing" of a card on a table
+        return mul(lowpass(noise(ms, seed), hz), env(n_of(ms), 1, decay))
+
+    focus = mix(snap(22, 1800, 5200, 4, 21), gain(body(30, 500, 8, 22), 0.5))
+    # A flip: the flick off the thumb, then the card landing a moment later.
+    flip = mix(snap(30, 2500, 7500, 6, 23), (gain(snap(40, 900, 3500, 9, 24), 0.7), 38), (gain(body(60, 420, 14, 25), 0.6), 40))
+    # Back: a card sliding back across the others, the brightness falling as it slows.
+    slide = mul(sweep_lowpass(highpass(rustle(140, 26, 5), 400), 5500, 1400), env(n_of(140), 18, 40))
+    # A page turn: the sheet lifts (rising brightness), sweeps over (rustle) and settles (falling), then lies flat.
+    turn_n = 320
+    lift = sweep_lowpass(highpass(rustle(turn_n, 27, 7), 300), 900, 6000)
+    turn_env = [math.sin(math.pi * min(1.0, i / n_of(turn_n))) ** 1.6 for i in range(n_of(turn_n))]
+    turn = mix(mul(sweep_lowpass(lift, 7000, 1800), turn_env), (gain(body(70, 380, 16, 28), 0.5), turn_n - 30))
+    err = mix(body(70, 300, 14, 29), (body(80, 260, 16, 30), 110))
+    return {"focus": (focus, -24), "select": (flip, -17), "back": (slide, -19), "navigate": (turn, -18), "error": (err, -16)}
 
 
 def spark():
