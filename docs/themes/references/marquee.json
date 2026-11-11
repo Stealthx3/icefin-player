@@ -1,0 +1,45 @@
+{
+  "theme": "marquee",
+  "target": "Netflix TV home, the current design (introduced 2025), 1920x1080",
+  "sources": [
+    "YouTube, Netflix, \"How To Use The New Netflix Experience\", https://www.youtube.com/watch?v=mLRbltNrEBk (1080p): the TV home at 46 s, shown inset at 1766 px wide in the frame (scaled x1.0872 to 1920); frames read in the browser, nothing downloaded",
+    "Layout and colours only: no logo, wordmark, artwork, sounds, fonts or names from the target are used"
+  ],
+  "measurements": {
+    "top bar": "a profile mark top left, the entries centred across the screen on y ~71 (search first, the current one a pill ~148 wide), the brand mark top right",
+    "focused row": "its title from x 52 centred on y ~145; its cards from y 180, 512 tall: 2:3 posters 316 wide on a 333 pitch, the focused card widened to 16:9 (916 x 517 with its ring) at x 49",
+    "details": "under the focused row from x 49: genre, year, seasons and rating centred on y ~744, then a two-line overview",
+    "next row": "its title centred on y ~938; its cards 16:9 at the same 316 width",
+    "motion": "the source pans across the screen rather than moving focus, so no timing is checked"
+  },
+  "tolerancePx": 14,
+  "timingTolerance": 0.1,
+  "ready": "!!document.querySelector('#icefin-theme-root[data-mq-ready]') && !!document.querySelector('.mq-card.open.icefin-focused')",
+  "states": [
+    {
+      "name": "home",
+      "settleMs": 1500,
+      "boxes": {
+        "focused card, widened": {"sel": ".mq-row.current .mq-card.open", "x": 49, "y": 180, "w": 916, "h": 512},
+        "the card beside it": {"sel": ".mq-row.current .mq-card", "index": 1, "x": 983, "y": 180, "w": 316, "h": 512},
+        "the card after": {"sel": ".mq-row.current .mq-card", "index": 2, "x": 1316},
+        "next row's first card": {"sel": ".mq-row.current + .mq-row .mq-card", "index": 0, "x": 49, "y": 973, "w": 316, "tol": 18}
+      },
+      "text": {
+        "current entry": {"sel": ".mq-nav.current", "cy": 71},
+        "row title": {"sel": ".mq-row.current .mq-row-title", "x": 52, "cy": 145},
+        "facts": {"sel": ".mq-row.current .mq-facts", "x": 49, "cy": 744},
+        "next row title": {"sel": ".mq-row.current + .mq-row .mq-row-title", "x": 52, "cy": 938}
+      }
+    },
+    {
+      "name": "along-the-row",
+      "actions": ["right"],
+      "settleMs": 900,
+      "boxes": {
+        "the next card widens in the first slot": {"sel": ".mq-row.current .mq-card.open", "x": 49, "y": 180, "w": 916}
+      }
+    }
+  ],
+  "timings": []
+}
