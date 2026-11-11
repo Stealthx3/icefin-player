@@ -1,0 +1,8 @@
+{
+  "$comment": "Known contrast misses in a clone theme's default colours, which copy its target's (CLAUDE.md clone rules). Only the default scheme can be listed here: every other scheme must pass. Each theme's Dark scheme fixes these.",
+  "arcade": {"onAccent/accent": "the target's white on its blue", "onFocus/focus": "the target's white on its blue"},
+  "orbit": {"onAccent/accent": "the target's white on its lime"},
+  "plaza": {"onAccent/accent": "the target's white on its sky blue", "onFocus/focus": "the target's white on its sky blue",
+            "focus/background": "the target's light blue focus on its white field"},
+  "tide": {"text/surface": "the target's translucent panels over its bright blue wave"}
+}

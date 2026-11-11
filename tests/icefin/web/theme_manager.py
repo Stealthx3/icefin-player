@@ -2,7 +2,8 @@
 """theme_manager.py — Client Settings -> Theme, the theme manager (PLAN 9.21). Lab guests only; no server needed.
 
   1. the manager replaces the section's plain drop-down: a theme list (Off + every usable theme) and a scheme list;
-  2. choosing a theme or a scheme redraws the preview from that theme's tokens and applies nothing;
+  2. choosing a theme, a colour scheme or a Mode (Standard, Dark: 9.20) redraws the preview from that theme's tokens
+     and applies nothing; the Mode is a preference across themes;
   3. Cancel goes back to the active theme; Apply switches the UI to the choice (no restart);
   4. install from file (installFile, the path the file chooser hands over): a zipped package inside one folder
      installs, shows in the list as yours with Remove; installing it again updates it; a package with scripts shows
@@ -80,7 +81,7 @@ def main():
         # 2. Preview without applying: Media Center's own background, then its teal scheme's focus colour.
         pick(".icefin-tm-theme", "media-center")
         time.sleep(0.6)
-        tok = js("new Promise(r => window.api.theme.previewTokens('media-center', '', r))")
+        tok = js("new Promise(r => window.api.theme.previewTokens('media-center', '', '', r))")
         bg = js(f"getComputedStyle({q('.icefin-tm-preview')}).backgroundColor")
         check("choosing a theme draws its preview from its tokens", tok.get("color.background", "").lower() == "#06122b" and bg == "rgb(6, 18, 43)", bg)
         check("choosing a theme applies nothing", selection()["theme"] == before)
@@ -90,6 +91,15 @@ def main():
         focus = js(f"{q('.icefin-tm-card.focused')}.style.boxShadow")
         check("choosing a scheme redraws the preview with it", "127, 240, 226" in focus or "#7ff0e2" in focus.lower(), focus)
         check("Apply is offered for a change", js(f"{q('.icefin-tm-apply')}.disabled") is False)
+        # Mode (9.20): Standard or the theme's Dark scheme, previewed before it's applied.
+        check("the Mode list offers Standard and Dark", js(f"[...{q('.icefin-tm-scheme')}.options].map(o => o.textContent)") == ["Standard", "Dark"])
+        pick(".icefin-tm-preset", "")
+        pick(".icefin-tm-scheme", "dark")
+        time.sleep(0.6)
+        bg = js(f"getComputedStyle({q('.icefin-tm-preview')}).backgroundColor")
+        check("choosing Dark redraws the preview with the dark scheme", bg == "rgb(2, 8, 20)", bg)
+        check("choosing Dark applies nothing", selection().get("scheme", "") == "")
+        pick(".icefin-tm-scheme", "")
 
         # 3. Cancel, then Apply (Mosaic: no backdrop, so no page reload).
         click(".icefin-tm-cancel")
@@ -101,6 +111,24 @@ def main():
         page.wait_for("!!window.icefinTheme && window.icefinTheme.active() && window.icefinTheme.active().id === 'mosaic'", timeout=20)
         check("Apply switches the UI to the theme", selection()["theme"] == "mosaic" and js("document.documentElement.hasAttribute('data-icefin-theme')") is True,
               js(f"{q('.icefin-tm-status')}.textContent"))
+        # Dark on the light theme: one Apply, the page's tokens follow, html carries the scheme.
+        pick(".icefin-tm-scheme", "dark")
+        time.sleep(0.4)
+        click(".icefin-tm-apply")
+        page.wait_for("document.documentElement.getAttribute('data-icefin-scheme') === 'dark'", timeout=20)
+        page.wait_for("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase() === '#111315'", timeout=20)
+        check("Apply with Dark switches the theme's colours to its dark scheme", selection().get("scheme") == "dark")
+        # The scheme is a preference across themes: another theme opens in its own Dark.
+        pick(".icefin-tm-theme", "spark")
+        time.sleep(0.5)
+        check("the Mode stays Dark when another theme is chosen", js(f"{q('.icefin-tm-scheme')}.value") == "dark")
+        pick(".icefin-tm-theme", "mosaic")
+        time.sleep(0.4)
+        pick(".icefin-tm-scheme", "")
+        time.sleep(0.3)
+        click(".icefin-tm-apply")
+        page.wait_for("!document.documentElement.hasAttribute('data-icefin-scheme')", timeout=20)
+        check("Standard again restores the theme's own colours", js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase()") == "#dcdcde")
 
         # 4. Install from file, update, scripts and trust, remove.
         z = make_package(work, "Lab Installed", "lab-installed")

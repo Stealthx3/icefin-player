@@ -2,7 +2,7 @@
 // shell script after themeEngine.js.
 // - Tells ThemeComponent who is signed in, so it applies that user's cached choice at once.
 // - Syncs the choice with the server: DisplayPreferences "usersettings", client "icefin-player", custom pref
-//   "icefin.theme" = {"schema":1,"theme","preset","timestamp"}. The newest timestamp wins, in either direction.
+//   "icefin.theme" = {"schema":1,"theme","preset","scheme","timestamp"} (scheme since 9.20; older entries have none). The newest timestamp wins, in either direction.
 // - Stands down when the server's theme plugin runtime is present: its settings API owns the choice then.
 (function () {
     'use strict';
@@ -34,7 +34,7 @@
         if (!sel.timestamp || sel.timestamp <= synced) return;
         const p = await prefs(c, uid);
         p.CustomPrefs = p.CustomPrefs || {};
-        p.CustomPrefs[KEY] = JSON.stringify({ schema: 1, theme: sel.theme, preset: sel.preset, timestamp: sel.timestamp });
+        p.CustomPrefs[KEY] = JSON.stringify({ schema: 1, theme: sel.theme, preset: sel.preset, scheme: sel.scheme || '', timestamp: sel.timestamp });
         p.Client = CLIENT;
         await prefs(c, uid, p);
         synced = sel.timestamp;
@@ -52,7 +52,7 @@
         const lt = local.timestamp || 0;
         const rt = (remote && remote.schema === 1 && remote.timestamp) || 0;
         if (rt > lt) {
-            await qt(api.theme.applyRemote, remote.theme || '', remote.preset || '', rt);
+            await qt(api.theme.applyRemote, remote.theme || '', remote.preset || '', remote.scheme || '', rt);
             synced = rt;
             console.info('icefinThemeSync: server choice is newer', remote.theme || '(off)');
         } else if (lt > rt) {

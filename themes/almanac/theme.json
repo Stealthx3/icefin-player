@@ -7,5 +7,18 @@
   "styles": "styles.css",
   "scripts": [
     "almanac.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#02081a",
+          "surface": "#071a3d",
+          "surfaceRaised": "#0d2a5c",
+          "live": "#12305f"
+        }
+      }
+    }
+  }
 }

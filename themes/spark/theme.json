@@ -7,5 +7,18 @@
   "styles": "styles.css",
   "scripts": [
     "spark.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#000000",
+          "surface": "#0e0f12",
+          "surfaceRaised": "#17191d",
+          "heroScrim": "rgba(0, 0, 0, 0.94)"
+        }
+      }
+    }
+  }
 }

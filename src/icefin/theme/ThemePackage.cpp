@@ -29,7 +29,7 @@ Package loadPackage(const QString& dir, Source source)
   if (!meta.isEmpty()) {
     if (meta.value("schema").toInt() != 1) p.errors << "theme.json: schema must be 1";
     // Same rule as docs/themes/schema/theme.schema.json: no unknown top-level keys.
-    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "presets", "backdrop"};
+    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "presets", "schemes", "backdrop"};
     for (const QString& k : meta.keys()) if (!known.contains(k)) p.errors << QString("theme.json: unknown key '%1'").arg(k);
     p.id = meta.value("id").toString();
     p.name = meta.value("name").toString();
@@ -72,6 +72,24 @@ Package loadPackage(const QString& dir, Source source)
       if (!it.value().isObject()) { p.errors << QString("theme.json: preset '%1' must be an object of tokens").arg(it.key()); continue; }
       p.presets[it.key()] = flatten(it.value().toObject(), &p.errors);
     }
+    const QJsonObject schemes = meta.value("schemes").toObject();
+    static const QRegularExpression schemeRe(QStringLiteral("^[a-z][a-z0-9-]{0,23}$"));
+    for (auto it = schemes.begin(); it != schemes.end(); ++it) {
+      const QJsonObject o = it.value().toObject();
+      if (!schemeRe.match(it.key()).hasMatch() || !it.value().isObject()) { p.errors << QString("theme.json: scheme '%1' must be an object under a lowercase name").arg(it.key()); continue; }
+      for (const QString& k : o.keys())
+        if (k != "name" && k != "tokens" && k != "presets") p.errors << QString("theme.json: scheme '%1': unknown key '%2'").arg(it.key(), k);
+      Scheme sc;
+      sc.name = o.value("name").toString();
+      if (sc.name.isEmpty()) sc.name = it.key().left(1).toUpper() + it.key().mid(1);
+      sc.tokens = flatten(o.value("tokens").toObject(), &p.errors);
+      const QJsonObject sp = o.value("presets").toObject();
+      for (auto pi = sp.begin(); pi != sp.end(); ++pi) {
+        if (!p.presets.contains(pi.key())) { p.errors << QString("theme.json: scheme '%1' overrides unknown preset '%2'").arg(it.key(), pi.key()); continue; }
+        sc.presets[pi.key()] = flatten(pi.value().toObject(), &p.errors);
+      }
+      p.schemes[it.key()] = sc;
+    }
   }
   p.tokens = flatten(readObject(dir + "/tokens.json", p.errors), &p.errors);
   p.contentHash = hashDirectory(dir);
@@ -84,17 +102,32 @@ Package loadPackage(const QString& dir, Source source)
       p.resolved(it.key(), {}, &pe);
       for (const QString& s : pe) e << QString("preset '%1': %2").arg(it.key(), s);
     }
+    // ... and with every scheme on top of the default and of every preset.
+    for (auto sc = p.schemes.begin(); sc != p.schemes.end(); ++sc) {
+      QStringList names{QString()};
+      names << p.presets.keys();
+      for (const QString& pr : names) {
+        QStringList pe;
+        p.resolved(pr, {}, &pe, sc.key());
+        for (const QString& s : pe) e << QString("scheme '%1'%2: %3").arg(sc.key(), pr.isEmpty() ? QString() : QString(" with preset '%1'").arg(pr), s);
+      }
+    }
     p.errors << e;
   }
   return p;
 }
 
-TokenMap Package::resolved(const QString& preset, const TokenMap& overrides, QStringList* errs) const
+TokenMap Package::resolved(const QString& preset, const TokenMap& overrides, QStringList* errs, const QString& scheme) const
 {
   TokenMap t = tokens;
   if (!preset.isEmpty()) {
     if (presets.contains(preset)) t = overlay(t, presets[preset]);
     else if (errs) *errs << QString("unknown preset '%1'").arg(preset);
+  }
+  if (!scheme.isEmpty() && schemes.contains(scheme)) {
+    const Scheme& sc = schemes[scheme];
+    t = overlay(t, sc.tokens);
+    if (sc.presets.contains(preset)) t = overlay(t, sc.presets[preset]);
   }
   t = overlay(t, overrides);
   QStringList e;

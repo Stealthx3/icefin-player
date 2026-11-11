@@ -172,6 +172,37 @@ private slots:
     Package p = loadPackage(d.path(), Source::User);
     QVERIFY(p.errors.join(" ").contains("unknown key 'scrpits'"));
   }
+  // ---- colour schemes (9.20) ----
+  void schemesLayerAfterPresets()
+  {
+    QTemporaryDir d;
+    QFile m(d.path() + "/theme.json"); QVERIFY(m.open(QIODevice::WriteOnly));
+    m.write("{\"schema\": 1, \"id\": \"x-theme\", \"name\": \"X\", \"version\": \"1\", \"presets\": {\"green\": {\"color\": {\"accent\": \"#1fa83a\"}}}, \"schemes\": {\"dark\": {\"tokens\": {\"color\": {\"background\": \"#000000\", \"accent\": \"#111111\"}}, \"presets\": {\"green\": {\"color\": {\"accent\": \"#0a5a1a\"}}}}}}");
+    m.close();
+    QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", d.path() + "/tokens.json");
+    Package p = loadPackage(d.path(), Source::User);
+    QVERIFY2(p.ok(), qPrintable(p.errors.join("; ")));
+    QCOMPARE(p.schemes.value("dark").name, QString("Dark"));  // named after its id when no name is given
+    QStringList e;
+    QCOMPARE(p.resolved(QString(), {}, &e, "dark").value("color.background"), QString("#000000"));
+    QCOMPARE(p.resolved(QString(), {}, &e, "dark").value("color.accent"), QString("#111111"));
+    QCOMPARE(p.resolved("green", {}, &e).value("color.accent"), QString("#1fa83a"));
+    QCOMPARE(p.resolved("green", {}, &e, "dark").value("color.accent"), QString("#0a5a1a"));  // the scheme's preset override last
+    QCOMPARE(p.resolved(QString(), {}, &e, "sepia"), p.resolved(QString(), {}, &e));  // a scheme it lacks: its own colours
+    QVERIFY(e.isEmpty());
+  }
+  void badSchemesRefused()
+  {
+    QTemporaryDir d;
+    QFile m(d.path() + "/theme.json"); QVERIFY(m.open(QIODevice::WriteOnly));
+    m.write("{\"schema\": 1, \"id\": \"x-theme\", \"name\": \"X\", \"version\": \"1\", \"schemes\": {\"dark\": {\"colours\": {}, \"presets\": {\"nope\": {}}}, \"Bad Name\": {}}}");
+    m.close();
+    QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", d.path() + "/tokens.json");
+    const QString errs = loadPackage(d.path(), Source::User).errors.join(" | ");
+    QVERIFY2(errs.contains("unknown key 'colours'"), qPrintable(errs));
+    QVERIFY2(errs.contains("unknown preset 'nope'"), qPrintable(errs));
+    QVERIFY2(errs.contains("scheme 'Bad Name'"), qPrintable(errs));
+  }
   // ---- native backdrop (8.4) ----
   void backdropSpecParsing()
   {

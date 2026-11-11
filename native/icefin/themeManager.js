@@ -1,6 +1,6 @@
 // Icefin: Client Settings -> Theme, the theme manager (PLAN 9.21). Appended to the injected native shell script.
 // Replaces the section's plain theme drop-down with: a theme list and a colour scheme list, a preview drawn from the
-// chosen theme's own tokens (nothing is applied until Apply), Apply and Cancel, Install from file (a theme package
+// chosen theme's own tokens (nothing is applied until Apply), a Mode list (Standard or Dark, 9.20), Apply and Cancel, Install from file (a theme package
 // zip, through the native file chooser), and Remove for themes the user installed. A theme with scripts that the
 // user installed shows the trust warning and loads its scripts only once trusted (docs/themes/PACKAGE.md, Trust).
 (function () {
@@ -68,6 +68,7 @@
 
         const themeSel = el('select', { className: 'emby-select-withcolor emby-select icefin-tm-theme' });
         const presetSel = el('select', { className: 'emby-select-withcolor emby-select icefin-tm-preset' });
+        const schemeSel = el('select', { className: 'emby-select-withcolor emby-select icefin-tm-scheme' });
         const preview = el('div', { className: 'icefin-tm-preview' });
         const about = el('p', { className: 'fieldDescription icefin-tm-about' });
         const trustRow = el('label', { className: 'icefin-tm-trust', style: 'display:none;margin:0.6em 0' });
@@ -82,11 +83,11 @@
         const remove = button('Remove', 'icefin-tm-remove');
         const field = (text, control) => el('label', { className: 'inputContainer', style: 'display:block;margin-bottom:1em' },
             el('label', { className: 'inputLabel', textContent: text }), control);
-        box.append(field('Theme: ', themeSel), field('Colour scheme: ', presetSel), preview, about, trustRow,
+        box.append(field('Theme: ', themeSel), field('Colour scheme: ', presetSel), field('Mode: ', schemeSel), preview, about, trustRow,
             el('div', {}, apply, cancel, install, remove), status);
 
         let themes = [];
-        let active = { theme: '', preset: '' };
+        let active = { theme: '', preset: '', scheme: '' };
         const chosen = () => themes.find((t) => t.id === themeSel.value) || null;
 
         // want: the scheme to select ('' = Default); undefined keeps the current one when the theme has it.
@@ -99,7 +100,16 @@
             presets.forEach((p) => presetSel.append(el('option', { value: p, textContent: p.charAt(0).toUpperCase() + p.slice(1) })));
             presetSel.value = presets.includes(keep) ? keep : '';
             presetSel.disabled = !presets.length;
-            drawPreview(preview, t ? await call(api.theme.previewTokens, t.id, presetSel.value) : null);
+            // Mode (9.20): Standard or one of the theme's schemes (Dark). It's a preference across themes, so the
+            // current choice stays while the list is rebuilt.
+            const schemes = t ? t.schemes || [] : [];
+            const keepScheme = schemeSel.options.length ? schemeSel.value : active.scheme;
+            schemeSel.textContent = '';
+            schemeSel.append(el('option', { value: '', textContent: 'Standard' }));
+            schemes.forEach((sc) => schemeSel.append(el('option', { value: sc.id, textContent: sc.name })));
+            schemeSel.value = schemes.some((sc) => sc.id === keepScheme) ? keepScheme : '';
+            schemeSel.disabled = !schemes.length;
+            drawPreview(preview, t ? await call(api.theme.previewTokens, t.id, presetSel.value, schemeSel.value) : null);
             about.textContent = t ? `${t.name} ${t.version} · ${sourceLabel[t.source] || t.source}${t.description ? ' · ' + t.description : ''}` : '';
             const needsTrust = !!t && t.source === 'user' && t.hasScripts;
             trustRow.style.display = needsTrust ? 'block' : 'none';
@@ -108,7 +118,8 @@
                 trustBox.checked = !!t.trusted;
             }
             remove.style.display = t && t.source === 'user' ? '' : 'none';
-            const changed = themeSel.value !== active.theme || presetSel.value !== (active.preset || '') || (needsTrust && trustBox.checked !== !!t.trusted);
+            const changed = themeSel.value !== active.theme || presetSel.value !== (active.preset || '') || schemeSel.value !== (active.scheme || '')
+                || (needsTrust && trustBox.checked !== !!t.trusted);
             apply.disabled = !changed;
             cancel.disabled = !changed;
         }
@@ -116,7 +127,8 @@
         async function load(selectId) {
             themes = (await call(api.theme.themes)).filter((t) => t.ok);
             const sel = await call(api.theme.selection);
-            active = { theme: sel.theme || '', preset: sel.preset || '' };
+            active = { theme: sel.theme || '', preset: sel.preset || '', scheme: sel.scheme || '' };
+            schemeSel.textContent = '';
             themeSel.textContent = '';
             themeSel.append(el('option', { value: '', textContent: 'Off (stock look)' }));
             themes.sort((a, b) => a.name.localeCompare(b.name)).forEach((t) =>
@@ -127,18 +139,20 @@
 
         themeSel.addEventListener('change', () => { status.textContent = ''; refreshPreview(themeSel.value === active.theme ? active.preset : ''); });
         presetSel.addEventListener('change', () => refreshPreview());
+        schemeSel.addEventListener('change', () => refreshPreview());
         trustBox.addEventListener('change', () => refreshPreview());
         cancel.addEventListener('click', () => { status.textContent = ''; load(); });
         apply.addEventListener('click', async () => {
             const t = chosen();
             if (t && t.source === 'user' && t.hasScripts && trustBox.checked !== !!t.trusted) await call(api.theme.setTrusted, t.id, trustBox.checked);
-            const ok = await call(api.theme.setActiveTheme, themeSel.value, presetSel.value);
+            const ok = await call(api.theme.select, themeSel.value, presetSel.value, schemeSel.value);
             if (!ok) {
                 const errs = await call(api.theme.lastErrors);
                 status.textContent = `Couldn't apply it: ${(errs || []).join('; ') || 'unknown error'}`;
                 return load();
             }
-            status.textContent = t ? `${t.name} is on.` : 'The stock look is on.';
+            const mode = schemeSel.value ? ` (${schemeSel.selectedOptions[0].textContent})` : '';
+            status.textContent = t ? `${t.name}${mode} is on.` : 'The stock look is on.';
             load();
         });
         install.addEventListener('click', () => { status.textContent = 'Choose a theme package…'; api.theme.pickPackage(); });

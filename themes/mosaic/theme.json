@@ -7,5 +7,26 @@
   "styles": "styles.css",
   "scripts": [
     "mosaic.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#111315",
+          "surface": "#1f2326",
+          "surfaceRaised": "#2a2f33",
+          "text": "#f2f3f3",
+          "textSecondary": "#b0b3b6",
+          "focus": "#f2f3f3",
+          "onFocus": "#111315",
+          "divider": "rgba(255, 255, 255, 0.12)",
+          "hover": "rgba(47, 143, 31, 0.22)",
+          "inputBackground": "#1f2326",
+          "backgroundMid": "#1a1d20",
+          "backgroundLow": "#0c0d0e"
+        }
+      }
+    }
+  }
 }

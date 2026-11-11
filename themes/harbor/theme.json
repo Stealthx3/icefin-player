@@ -7,5 +7,23 @@
   "styles": "styles.css",
   "scripts": [
     "harbor.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#000000",
+          "surface": "#070b0c",
+          "surfaceRaised": "#11191b",
+          "rail": "#050808",
+          "railEdge": "#000000",
+          "glow": "#052a39",
+          "glowMid": "#041c27",
+          "glowEdge": "#010a0e",
+          "scrim": "rgba(0, 3, 5, 0.65)"
+        }
+      }
+    }
+  }
 }

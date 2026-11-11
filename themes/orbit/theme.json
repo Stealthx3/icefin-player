@@ -7,5 +7,23 @@
   "styles": "styles.css",
   "scripts": [
     "orbit.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#0f1a04",
+          "surface": "#1a2c07",
+          "surfaceRaised": "#24400b",
+          "onAccent": "#10200a",
+          "backdropTop": "#142208",
+          "backdropMid": "#2c3a14",
+          "backdropBottom": "#262a31",
+          "floor": "#1b1c1f",
+          "guide": "#10161c"
+        }
+      }
+    }
+  }
 }

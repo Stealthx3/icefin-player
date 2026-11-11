@@ -20,6 +20,7 @@
     "teal": {
       "color": {
         "accent": "#2fb7a8",
+        "onAccent": "#06122b",
         "focus": "#7ff0e2",
         "focusGlow": "rgba(127, 240, 226, 0.55)"
       }
@@ -35,5 +36,20 @@
       "speed": 0.12
     },
     "fps": 24
+  },
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#020814",
+          "surface": "#0a1838",
+          "surfaceRaised": "#0f2250",
+          "ribbon": "rgba(60, 120, 230, 0.16)",
+          "ribbonAlt": "rgba(40, 170, 230, 0.1)",
+          "inputBackground": "rgba(232, 243, 255, 0.08)"
+        }
+      }
+    }
   }
 }

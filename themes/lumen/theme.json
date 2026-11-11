@@ -7,5 +7,28 @@
   "styles": "styles.css",
   "scripts": [
     "lumen.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#000000",
+          "surface": "#111114",
+          "surfaceRaised": "#1c1c20",
+          "shelfScrim": "rgba(0, 0, 0, 0.88)"
+        },
+        "material": {
+          "bar": {
+            "tint": "rgba(30, 30, 36, 0.5)",
+            "opaque": "#18181c"
+          },
+          "panel": {
+            "tint": "rgba(14, 14, 16, 0.6)",
+            "opaque": "#111114"
+          }
+        }
+      }
+    }
+  }
 }

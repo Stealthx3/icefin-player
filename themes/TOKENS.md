@@ -9,6 +9,11 @@ variables directly, so a jellyfin-web update only changes the engine's adapter (
 - A leaf is a string or number, or `{"$value": …, "$description": …}`.
 - `"{group.name}"` refers to another token. References are resolved before use, and cycles are refused.
 - `theme.json` `presets` override any tokens: `{"presets": {"green": {"color": {"accent": "#…"}}}}`.
+- `theme.json` `schemes` are colour schemes the user picks in the theme manager's *Mode* list (9.20), on top of the
+  preset: `{"schemes": {"dark": {"name": "Dark", "tokens": {…}, "presets": {"green": {…}}}}}`. Order: base, preset,
+  scheme `tokens`, the scheme's override for that preset. The choice carries across themes: a theme without that
+  scheme shows its own colours. The page gets `html[data-icefin-scheme="dark"]` for CSS beyond tokens. Every bundled
+  theme has `dark`, and `scripts/icefin/theme-contrast.py` checks every theme × preset × scheme (CI).
 - Every `color.*` value is `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()`. The engine also derives the
   `r g b` channels. Values can't contain `;`, `{`, `}`, `<`, `>`, `url(` or `@import`.
 - In the page, each token becomes a custom property, for example `color.accent` → `--icefin-color-accent`, and

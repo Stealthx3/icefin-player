@@ -7,5 +7,18 @@
   "styles": "styles.css",
   "scripts": [
     "marquee.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "surface": "#0a0a0a",
+          "surfaceRaised": "#161616",
+          "billboardScrim": "rgba(0, 0, 0, 0.92)",
+          "pill": "rgba(255, 255, 255, 0.12)"
+        }
+      }
+    }
+  }
 }

@@ -28,17 +28,23 @@ public:
   const char* componentName() override { return "theme"; }
   bool componentExport() override { return true; }
 
-  // [{id, name, version, description, source, presets[], ok, errors[], hasScripts, trusted}]
+  // [{id, name, version, description, source, presets[], schemes[{id, name}], ok, errors[], hasScripts, trusted}]
   Q_INVOKABLE QVariantList themes();
   Q_INVOKABLE QString activeTheme() const { return m_active; }
   Q_INVOKABLE QString activePreset() const { return m_preset; }
+  // Colour scheme (9.20): '' (the theme's own) or a scheme id such as "dark". A preference across themes: a theme
+  // without that scheme shows its own colours. Saved and synced with the theme choice.
+  Q_INVOKABLE QString activeScheme() const { return m_colorScheme; }
+  Q_INVOKABLE bool setScheme(const QString& scheme);
+  // Theme, preset and scheme in one switch (the theme manager's Apply): one change, one page reload at most.
+  Q_INVOKABLE bool select(const QString& id, const QString& preset, const QString& scheme);
   // Empty id turns the engine off. Returns false (and keeps the current theme) if the theme can't be used.
   Q_INVOKABLE bool setActiveTheme(const QString& id, const QString& preset = QString());
-  // Per-user selection: setUser() applies that user's cached choice; selection() is {theme, preset, timestamp}
+  // Per-user selection: setUser() applies that user's cached choice; selection() is {theme, preset, scheme, timestamp}
   // (timestamp 0 = never chosen on this device); applyRemote() takes a newer choice from the server.
   Q_INVOKABLE void setUser(const QString& userId);
   Q_INVOKABLE QVariantMap selection() const;
-  Q_INVOKABLE bool applyRemote(const QString& id, const QString& preset, double timestamp);
+  Q_INVOKABLE bool applyRemote(const QString& id, const QString& preset, const QString& scheme, double timestamp);
   // UI sound for an event (focus, select, back, navigate, error) from the active theme. Silent while the user
   // turned theme sounds off, or during passthrough and exclusive playback (Audio::AudioState).
   Q_INVOKABLE void playSound(const QString& event);
@@ -59,7 +65,7 @@ public:
 
   // Theme manager (9.21, native/icefin/themeManager.js). previewTokens: any theme's resolved tokens with a preset,
   // for the preview area, without applying it ({} when it can't be resolved).
-  Q_INVOKABLE QVariantMap previewTokens(const QString& id, const QString& preset) const;
+  Q_INVOKABLE QVariantMap previewTokens(const QString& id, const QString& preset, const QString& scheme) const;
   // Install from file: pickPackage() opens the file chooser (the desktop portal in the Flatpak) and installs what the
   // user picks; the result comes with installFinished. installFile() installs a path directly (tests, drag and drop).
   // Result: {ok, id, name, replaced, hasScripts, errors[]} (ThemeInstall.h).
@@ -110,7 +116,7 @@ private:
   void updateChoices();
   bool trusted(const Package& p) const;
   QMap<QString, Package> m_packages;
-  QString m_active, m_preset;
+  QString m_active, m_preset, m_colorScheme;
   TokenMap m_tokens;
   QStringList m_errors;
   class SchemeHandler* m_scheme = nullptr;

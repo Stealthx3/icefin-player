@@ -7,5 +7,26 @@
   "styles": "styles.css",
   "scripts": [
     "plaza.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#1c1e21",
+          "surface": "#2a2d31",
+          "surfaceRaised": "#33373c",
+          "text": "#eef0f2",
+          "textSecondary": "rgba(238, 240, 242, 0.7)",
+          "divider": "#4a4e54",
+          "bar": "#26292d",
+          "tileEmpty": "#2f3338",
+          "inputBackground": "#2a2d31",
+          "onAccent": "#062433",
+          "onFocus": "#062433",
+          "hover": "rgba(52, 189, 242, 0.2)"
+        }
+      }
+    }
+  }
 }

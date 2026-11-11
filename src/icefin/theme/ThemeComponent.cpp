@@ -32,6 +32,13 @@ static QJsonObject trustStore()
   return QJsonDocument::fromJson(SettingsComponent::Get().value(SETTINGS_SECTION_STATE, kTrustKey).toString().toUtf8()).object();
 }
 
+static QVariantList schemeList(const Package& p)
+{
+  QVariantList l;
+  for (auto it = p.schemes.begin(); it != p.schemes.end(); ++it) l << QVariantMap{{"id", it.key()}, {"name", it.value().name}};
+  return l;
+}
+
 static QString sourceName(Source s) { return s == Source::Bundled ? "bundled" : s == Source::Development ? "development" : "user"; }
 
 QStringList ThemeComponent::roots()
@@ -81,6 +88,7 @@ bool ThemeComponent::componentInitialize()
   m_user = st.value("last").toString();
   const QJsonObject sel = st.value("users").toObject().value(m_user).toObject();
   const QString id = sel.value("theme").toString();
+  m_colorScheme = sel.value("scheme").toString();
   if (!id.isEmpty() && !apply(id, sel.value("preset").toString(), 0))
     qWarning().noquote() << "Icefin theme: saved theme" << id << "can't be used; engine off:" << m_errors.join("; ");
   if (auto* sec = SettingsComponent::Get().getSection(kSection)) {
@@ -124,21 +132,44 @@ void ThemeComponent::setUser(const QString& userId)
   const QJsonObject sel = st.value("users").toObject().value(userId).toObject();
   qInfo().noquote() << "Icefin theme: user" << (userId.isEmpty() ? QString("(none)") : userId.left(8))
                     << (sel.isEmpty() ? "has no choice on this device yet" : "-> " + sel.value("theme").toString());
-  if (!sel.isEmpty() && (sel.value("theme").toString() != m_active || sel.value("preset").toString() != m_preset))
+  if (!sel.isEmpty() && (sel.value("theme").toString() != m_active || sel.value("preset").toString() != m_preset
+                         || sel.value("scheme").toString() != m_colorScheme)) {
+    m_colorScheme = sel.value("scheme").toString();
     apply(sel.value("theme").toString(), sel.value("preset").toString(), 0);
+  }
 }
 
 QVariantMap ThemeComponent::selection() const
 {
   const QJsonObject sel = stateObject().value("users").toObject().value(m_user).toObject();
-  return {{"theme", sel.value("theme").toString()}, {"preset", sel.value("preset").toString()},
+  return {{"theme", sel.value("theme").toString()}, {"preset", sel.value("preset").toString()}, {"scheme", sel.value("scheme").toString()},
           {"timestamp", sel.value("timestamp").toDouble()}, {"user", m_user}};
 }
 
-bool ThemeComponent::applyRemote(const QString& id, const QString& preset, double timestamp)
+bool ThemeComponent::applyRemote(const QString& id, const QString& preset, const QString& scheme, double timestamp)
 {
   if (timestamp <= selection().value("timestamp").toDouble()) return false;
-  return apply(id, preset, qint64(timestamp));
+  const QString before = m_colorScheme;
+  m_colorScheme = scheme;
+  if (!apply(id, preset, qint64(timestamp))) { m_colorScheme = before; return false; }
+  return true;
+}
+
+bool ThemeComponent::select(const QString& id, const QString& preset, const QString& scheme)
+{
+  const QString before = m_colorScheme;
+  m_colorScheme = scheme;
+  if (!apply(id, preset, QDateTime::currentMSecsSinceEpoch())) { m_colorScheme = before; return false; }
+  return true;
+}
+
+bool ThemeComponent::setScheme(const QString& scheme)
+{
+  if (scheme == m_colorScheme) return true;
+  const QString before = m_colorScheme;
+  m_colorScheme = scheme;
+  if (!apply(m_active, m_preset, QDateTime::currentMSecsSinceEpoch())) { m_colorScheme = before; apply(m_active, m_preset, 0); return false; }
+  return true;
 }
 
 void ThemeComponent::soundNote(bool played, const QString& event, const QString& reason)
@@ -175,7 +206,7 @@ QVariantList ThemeComponent::themes()
   QVariantList out;
   for (const Package& p : m_packages) {
     out << QVariantMap{{"id", p.id}, {"name", p.name}, {"version", p.version}, {"description", p.description}, {"source", sourceName(p.source)},
-                       {"presets", QStringList(p.presets.keys())}, {"ok", p.ok()}, {"errors", p.errors},
+                       {"presets", QStringList(p.presets.keys())}, {"schemes", schemeList(p)}, {"ok", p.ok()}, {"errors", p.errors},
                        {"hasScripts", !p.scripts.isEmpty()}, {"trusted", trusted(p)}};
   }
   return out;
@@ -191,14 +222,14 @@ bool ThemeComponent::apply(const QString& id, const QString& preset, qint64 save
     const Package& p = m_packages[id];
     if (!p.ok()) { m_errors = p.errors; return false; }
     QStringList e;
-    TokenMap t = p.resolved(preset, {}, &e);
+    TokenMap t = p.resolved(preset, {}, &e, m_colorScheme);
     if (!e.isEmpty()) { m_errors = e; return false; }
     m_active = id; m_preset = preset; m_tokens = t;
   }
   if (saveTimestamp) {
     QJsonObject st = stateObject();
     QJsonObject users = st.value("users").toObject();
-    users[m_user] = QJsonObject{{"theme", m_active}, {"preset", m_preset}, {"timestamp", double(saveTimestamp)}};
+    users[m_user] = QJsonObject{{"theme", m_active}, {"preset", m_preset}, {"scheme", m_colorScheme}, {"timestamp", double(saveTimestamp)}};
     st["users"] = users;
     st["last"] = m_user;
     saveState(st);
@@ -206,7 +237,7 @@ bool ThemeComponent::apply(const QString& id, const QString& preset, qint64 save
   for (QSoundEffect* e : m_sounds) e->deleteLater();
   m_sounds.clear();
   mirrorSetting();
-  qInfo().noquote() << "Icefin theme:" << (m_active.isEmpty() ? QString("engine off (stock UI)") : QString("%1%2, %3 tokens").arg(m_active, m_preset.isEmpty() ? QString() : " / " + m_preset).arg(m_tokens.size()));
+  qInfo().noquote() << "Icefin theme:" << (m_active.isEmpty() ? QString("engine off (stock UI)") : QString("%1%2%3, %4 tokens").arg(m_active, m_preset.isEmpty() ? QString() : " / " + m_preset, m_colorScheme.isEmpty() ? QString() : " (" + m_colorScheme + ")").arg(m_tokens.size()));
   prepareBackdrop();
   emit changed(m_active, m_preset);
   emit backdropChanged();
@@ -428,12 +459,12 @@ bool ThemeComponent::setTrusted(const QString& id, bool on)
   return true;
 }
 
-QVariantMap ThemeComponent::previewTokens(const QString& id, const QString& preset) const
+QVariantMap ThemeComponent::previewTokens(const QString& id, const QString& preset, const QString& scheme) const
 {
   QVariantMap m;
   if (!m_packages.contains(id) || !m_packages[id].ok()) return m;
   QStringList e;
-  const TokenMap t = m_packages[id].resolved(preset, {}, &e);
+  const TokenMap t = m_packages[id].resolved(preset, {}, &e, scheme);
   if (!e.isEmpty()) return m;
   for (auto it = t.begin(); it != t.end(); ++it) m.insert(it.key(), it.value());
   return m;
