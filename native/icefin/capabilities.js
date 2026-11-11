@@ -319,10 +319,18 @@
             const ms = motion.duration(opts.ms || 350);
             cells.forEach((c, k) => {
                 const d = k - index, ad = Math.abs(d);
-                c.style.transition = `transform ${ms}ms ease, opacity ${ms}ms ease`;
+                c.style.transition = `transform ${ms}ms ease, opacity ${ms}ms ease, filter ${ms}ms ease`;
                 c.style.transform = `translate(-50%,-50%) translateX(${d * (opts.spacing || 60)}%) translateZ(${-ad * (opts.depth || 220)}px) rotateY(${-Math.sign(d) * Math.min(ad, 1) * (opts.tilt || 35)}deg)`;
                 c.style.zIndex = String(100 - ad);
-                c.style.opacity = ad > (opts.visible || 3) ? '0' : String(1 - ad * 0.18);
+                // dim: items behind stay solid and darken (overlapping items mustn't show through each other);
+                // otherwise they fade. Past `visible` they're hidden either way.
+                const hidden = ad > (opts.visible || 3);
+                if (opts.dim) {
+                    c.style.opacity = hidden ? '0' : '1';
+                    c.style.filter = ad ? `brightness(${Math.max(0.35, 1 - ad * 0.15)})` : '';
+                } else {
+                    c.style.opacity = hidden ? '0' : String(1 - ad * 0.18);
+                }
             });
         }
         // Items overlap in depth, so geometry can't order them: left/right step through the list.
