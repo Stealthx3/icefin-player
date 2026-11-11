@@ -12,7 +12,7 @@
     const FIELDS = 'PrimaryImageAspectRatio,Overview,ProductionYear,RunTimeTicks,OfficialRating,UserData,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,ParentThumbItemId,ParentThumbImageTag';
     const POOL = 9;  // tiles per row in the DOM, whatever the row's length
     const DWELL = 1500;  // ms on the hero before its preview starts
-    const STEP = 0.19;  // tile width plus gap, as a fraction of the window width (styles.css --sp-step: 19vw)
+    const STEP = 351 / 1920;  // tile width plus gap, as a fraction of the window width (styles.css --sp-step)
 
     let S = null;  // screen state while #/home is up
 
@@ -29,7 +29,7 @@
 
     // ---- top bar ----
     ui.chrome.set('topBar', {
-        height: '9vh',
+        height: '10.65vh',  // 115 of 1080 lines; the bar floats over the full-bleed hero (styles.css)
         async mount(bar) {
             bar.append(el('div', 'sp-brand', 'Icefin'));
             const nav = el('div', 'sp-nav');
@@ -164,19 +164,20 @@
     }
 
     // ---- focus moves ----
-    function zone(z) { S.zone = z; S.content.classList.toggle('sp-in-rows', z === 'rows'); }
+    // The first row sits under the full hero, as on the target; deeper rows slide up under a shrunk hero.
+    function zone(z, deep) { S.zone = z; S.content.classList.toggle('sp-in-rows', z === 'rows' && !!deep); }
     function focusTop(i) { zone('top'); stopPreview(); E.focus(S.top[Math.max(0, Math.min(S.top.length - 1, i))]); }
     function focusHero() { zone('hero'); E.focus(S.hero.el); S.content.style.setProperty('--sp-scroll', '0px'); S.rowsBox.style.transform = ''; armPreview(); }
     function focusRow(r, i) {
         const row = S.rows[r];
         row.index = Math.max(0, Math.min(row.items.length - 1, i));
         row.layout();
-        zone('rows');
+        zone('rows', r > 0);
         S.rowIndex = r;
         stopPreview();
         E.focus(row.node(row.index));
-        // the focused row slides up under the (shrunk) hero
-        S.rowsBox.style.transform = `translateY(${-row.section.offsetTop}px)`;
+        // a deeper row slides up under the shrunk hero; the first stays where it is
+        S.rowsBox.style.transform = r > 0 ? `translateY(${-row.section.offsetTop}px)` : '';
     }
 
     T.registerScreen('#/home', {
@@ -226,7 +227,8 @@
             hero.meta = el('div', 'sp-hero-meta');
             hero.overview = el('div', 'sp-hero-overview');
             const dots = el('div', 'sp-hero-dots');
-            text.append(hero.title, hero.meta, hero.overview);
+            // The target's hero carries one button; focus on the hero shows on it (Enter opens the item either way).
+            text.append(hero.title, hero.meta, hero.overview, el('div', 'sp-hero-btn', 'More info'));
             hero.el.append(hero.art, hero.videoBox, el('div', 'sp-hero-scrim'), text, dots);
             S.hero = hero;
             S.rowsBox = el('div', 'sp-rows');
