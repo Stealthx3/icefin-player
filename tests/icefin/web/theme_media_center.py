@@ -144,7 +144,7 @@ def main():
         series = js("new Promise(r => window.icefinTheme.ctx.apiClient().getItems(window.icefinTheme.ctx.apiClient().getCurrentUserId(), {IncludeItemTypes: 'Series', Recursive: true, Limit: 1}).then(x => r((x.Items[0] || {}).Id || '')))")
         if series:
             js(f"location.hash = '#/details?id={series}&serverId=' + window.icefinTheme.ctx.apiClient().serverId(); true")
-            page.wait_for(f"(document.querySelector('#icefin-theme-root') || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready') === '{series}'", timeout=20)
+            page.wait_for(f"(document.querySelector('#icefin-theme-root') || {{getAttribute: () => null}}).getAttribute('data-icefin-details-complete') === '{series}'", timeout=20)
             check("a series opens the themed details with its seasons", js("!!document.querySelector('[data-section=seasons] .icefin-d-card')") is True
                   and not js("location.hash.includes('icefin=stock')"))
         # The poster wall: the start strip's "All ..." tile opens it.

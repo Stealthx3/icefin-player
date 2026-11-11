@@ -223,13 +223,14 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
             return c;
         }
 
-        function section(id, title, cls) {
+        // A list under the text, in the given screen's container (built into nothing once that screen is gone).
+        function sectionIn(state, id, title, cls) {
             const s = el('section', 'icefin-d-section');
             s.dataset.section = id;
             s.append(el('h2', '', title));
             const row = el('div', 'icefin-d-row' + (cls ? ' ' + cls : ''));
             s.append(row);
-            S.sections.append(s);
+            if (state && S === state) state.sections.append(s);
             return row;
         }
 
@@ -421,9 +422,17 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 tracks();
             }
 
-            // ---- sections ----
+        }
+
+        // The lists under the text, loaded after the screen is up (a server can take a while for chapters, cast and
+        // similar items). In order; dropped if the screen was left or mounted again meanwhile.
+        async function fillSections(item, mine) {
+            const client = S.client, uid = client.getCurrentUserId();
+            const live = () => S === mine;
+            const section = (id, title, cls) => sectionIn(mine, id, title, cls);
             const sid = client.serverId();
             const opts = { userId: uid, Fields: 'PrimaryImageAspectRatio,UserData' };
+            if (!live()) return;
             if (item.Type === 'Series') {
                 if (S.next) section('nextup', 'Next up').append(card(client, S.next, 'wide', null, `S${S.next.ParentIndexNumber} E${S.next.IndexNumber}`));
                 let seasons = [];
@@ -546,12 +555,15 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 if (!PLAYABLE.has(item.Type) && !CONTAINER.has(item.Type)) { toStock(); return; }
                 S = { root, client, item, picker: null };
                 root.setAttribute('data-icefin-details', item.Type);
+                const mine = S;
                 await fill(root, item);
-                if (!S || !root.isConnected) return;
+                if (S !== mine || !root.isConnected) return;
                 const first = root.querySelector('.icefin-d-actions ' + FOCUS);
                 if (first) T.ctx.focus(first);
                 root.setAttribute('data-icefin-details-ready', item.Id);
                 if (o.onReady) { try { o.onReady(root, item); } catch (e) { console.error('icefinTheme: details onReady', e); } }
+                try { await fillSections(item, mine); } catch (e) { console.error('icefinTheme: details lists', e); }
+                if (S === mine) root.setAttribute('data-icefin-details-complete', item.Id);
             },
             unmount() { S = null; }
         };

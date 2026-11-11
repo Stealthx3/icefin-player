@@ -2,7 +2,7 @@
 """theme_details.py — themed details screens with the stock page's features, in every theme (PLAN 9.18). Lab only.
 
 For every bundled theme with a details screen (all but Baseline, which keeps the stock page as the control):
-  - a movie opens the themed screen in the theme's layout: Back and Home at the top (Up from Play reaches them),
+  - a movie opens the themed screen in the theme's layout, usable at once (the lists load after it is ready): Back and Home at the top (Up from Play reaches them),
     Play, Favourite, Played, More options; the Audio picker
     for a movie with two audio tracks; focus starts on the actions and Down reaches the pickers and the lists;
   - a series opens it too (no fallback to the stock page) with Seasons and that season's Episodes.
@@ -98,7 +98,8 @@ def main():
 
         def open_details(item_id):
             js(f"location.hash = '#/details?id={item_id}&serverId=' + {api}.serverId(); true")
-            page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready') === '{item_id}'", timeout=25)
+            page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready') === '{item_id}'", timeout=10)
+            page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-complete') === '{item_id}'", timeout=30)
             time.sleep(0.8)
 
         def shot(name):
@@ -199,7 +200,7 @@ def main():
                 check("an episode opens themed with a way to its series", js("!!document.querySelector('.icefin-d-btn[data-action=series]')") is True)
                 # Back returns to the page before (the season); Home goes to the main menu.
                 js("document.querySelector('.icefin-d-btn[data-action=back]').click(); true")
-                page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready') === '{season}'", timeout=20)
+                page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-complete') === '{season}'", timeout=30)
                 check("Back returns to the previous page", True)
                 js("document.querySelector('.icefin-d-btn[data-action=home]').click(); true")
                 page.wait_for("location.hash.startsWith('#/home')", timeout=15)
