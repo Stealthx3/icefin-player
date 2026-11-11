@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Icefin Player <noreply@github.com>
 Date: Wed, 11 Nov 2026 01:30:00 +0000
-Subject: [PATCH 7/7] vo_libmpv: gpu-next: apply mpv's render options
+Subject: [PATCH 7/8] vo_libmpv: gpu-next: apply mpv's render options
 
 The carried backend rendered with libplacebo's default render parameters, so mpv's own video options had no effect
 and the picture differed from stock vo_gpu_next: its defaults differ from libplacebo's (tone-mapping contrast
