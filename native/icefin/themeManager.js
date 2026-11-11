@@ -17,129 +17,7 @@
     const call = (fn, ...args) => new Promise((r) => fn(...args, r));
     const sourceLabel = { bundled: 'built in', user: 'installed by you', development: 'development' };
 
-    // Drop-downs (user report 2026-11-11: they didn't show as drop-downs). jellyfin-web's select style removes the
-    // native arrow (its own selects get a separate arrow element), and the native pop-up list isn't something a remote
-    // or a gamepad drives well. Each select gets a box and a chevron, also when disabled, and opens an in-page list:
-    // arrows move, Enter or a click picks, Back or Escape closes it without leaving Client Settings.
-    const DD_STYLE = `
-.icefin-dd { position: relative; display: block; }
-.icefin-dd > select { width: 100%; box-sizing: border-box; padding-right: 2.6em !important; cursor: pointer; appearance: none; -webkit-appearance: none;
-  background-color: var(--icefin-color-inputBackground, Field) !important; color: var(--icefin-color-text, FieldText) !important;
-  border: 0.1em solid var(--icefin-color-divider, GrayText) !important; border-radius: 0.3em; opacity: 1 !important; }
-.icefin-dd > select:disabled { cursor: default; color: var(--icefin-color-textSecondary, GrayText) !important; }
-.icefin-dd > select:focus { outline: none; border-color: var(--icefin-color-focus, Highlight) !important; box-shadow: 0 0 0 0.12em var(--icefin-color-focus, Highlight); }
-.icefin-dd::after { content: ''; position: absolute; right: 1em; top: 50%; width: 0.55em; height: 0.55em; margin-top: -0.4em; pointer-events: none;
-  border-right: 0.15em solid var(--icefin-color-text, FieldText); border-bottom: 0.15em solid var(--icefin-color-text, FieldText); transform: rotate(45deg); }
-.icefin-dd.disabled::after { opacity: 0.4; }
-.icefin-dd-list { position: fixed; z-index: 10000; max-height: 50vh; overflow-y: auto; box-sizing: border-box; padding: 0.3em 0; border-radius: 0.3em;
-  background: var(--icefin-color-surfaceRaised, var(--icefin-color-surface, Canvas)); color: var(--icefin-color-text, CanvasText);
-  border: 0.1em solid var(--icefin-color-divider, GrayText); box-shadow: 0 0.8em 2em rgb(var(--icefin-color-background-channel, 0 0 0) / 0.5); scrollbar-width: thin; }
-.icefin-dd-option { padding: 0.6em 1em; cursor: pointer; outline: none; }
-.icefin-dd-option[aria-selected="true"] { font-weight: 600; }
-.icefin-dd-option[aria-selected="true"]::after { content: " ✓"; }
-.icefin-dd-option:focus, .icefin-dd-option:hover { background: var(--icefin-color-focus, Highlight); color: var(--icefin-color-onFocus, HighlightText); }
-`;
-    function ddStyle() {
-        if (document.getElementById('icefin-dd-style')) return;
-        const st = el('style', { id: 'icefin-dd-style', textContent: DD_STYLE });
-        document.head.append(st);
-    }
-    let ddOpen = null;
-    function ddClose(refocus) {
-        if (!ddOpen) return;
-        const { list, select } = ddOpen;
-        ddOpen = null;
-        list.remove();
-        if (refocus) select.focus({ preventScroll: true });
-    }
-    function ddPick(select, value) {
-        if (select.value !== value) {
-            select.value = value;
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        ddClose(true);
-    }
-    function ddOpenList(select) {
-        if (select.disabled) return;
-        ddClose(false);
-        const r = select.getBoundingClientRect();
-        const list = el('div', { className: 'icefin-dd-list', role: 'listbox' });
-        list.style.left = `${r.left}px`;
-        list.style.width = `${r.width}px`;
-        const below = window.innerHeight - r.bottom, above = r.top;
-        if (below >= 200 || below >= above) list.style.top = `${r.bottom + 2}px`; else list.style.bottom = `${window.innerHeight - r.top + 2}px`;
-        let current = null;
-        [...select.options].forEach((o) => {
-            const it = el('div', { className: 'icefin-dd-option', role: 'option', tabIndex: 0, textContent: o.textContent });
-            it.dataset.value = o.value;
-            if (o.value === select.value) { it.setAttribute('aria-selected', 'true'); current = it; }
-            it.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); ddPick(select, o.value); });
-            list.append(it);
-        });
-        const keys = (e) => {
-            const items = [...list.children], i = items.indexOf(document.activeElement);
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                const n = Math.max(0, Math.min(items.length - 1, (i < 0 ? 0 : i) + (e.key === 'ArrowDown' ? 1 : -1)));
-                items[n].focus({ preventScroll: true });
-                const it = items[n];
-                if (it.offsetTop < list.scrollTop) list.scrollTop = it.offsetTop;
-                else if (it.offsetTop + it.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = it.offsetTop + it.offsetHeight - list.clientHeight;
-            } else if (e.key === 'Enter' || e.key === ' ') {
-                if (i >= 0) ddPick(select, items[i].dataset.value);
-            } else if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') {
-                ddClose(true);
-            } else if (e.key === 'Tab') {
-                ddClose(true);
-                return;
-            } else {
-                return;
-            }
-            e.preventDefault();
-            e.stopImmediatePropagation();
-        };
-        list.addEventListener('keydown', keys, true);
-        // jellyfin-web's input layer (remote, gamepad) sends a cancelable "command" event to the focused element.
-        list.addEventListener('command', (e) => {
-            const c = e.detail && e.detail.command;
-            if (c === 'back') { e.preventDefault(); e.stopPropagation(); ddClose(true); }
-        });
-        document.body.append(list);
-        ddOpen = { list, select };
-        // Focus without scrolling anything else (scrolling the dialog would close the list), then bring the entry into
-        // the list's own view.
-        const first = current || list.firstChild;
-        first.focus({ preventScroll: true });
-        list.scrollTop = Math.max(0, first.offsetTop - list.clientHeight / 2);
-    }
-    function dropdown(select) {
-        ddStyle();
-        const wrap = el('div', { className: 'icefin-dd' });
-        wrap.append(select);
-        const sync = () => wrap.classList.toggle('disabled', select.disabled);
-        new MutationObserver(sync).observe(select, { attributes: true, attributeFilter: ['disabled'] });
-        sync();
-        let pressed = false;  // a mouse press handled here; its click that follows is not a second open
-        select.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            e.preventDefault();
-            pressed = true;
-            select.focus({ preventScroll: true });
-            if (ddOpen && ddOpen.select === select) ddClose(true); else ddOpenList(select);
-        });
-        select.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ' || (e.key === 'ArrowDown' && e.altKey) || e.key === 'F4') { e.preventDefault(); e.stopPropagation(); ddOpenList(select); }
-        });
-        // A click that isn't a mouse press (the remote's OK through jellyfin-web, tests) opens it too.
-        select.addEventListener('click', (e) => {
-            if (pressed) { pressed = false; return; }
-            e.preventDefault();
-            if (!ddOpen) ddOpenList(select);
-        });
-        return wrap;
-    }
-    document.addEventListener('mousedown', (e) => { if (ddOpen && !ddOpen.list.contains(e.target) && e.target !== ddOpen.select) ddClose(false); }, true);
-    window.addEventListener('resize', () => ddClose(false));
-    document.addEventListener('scroll', (e) => { if (ddOpen && !ddOpen.list.contains(e.target)) ddClose(false); }, true);  // the dialog moved under it
+    // Its selects become in-page drop-downs with the rest of Client Settings (clientSettings.js, window.icefinDropdown).
 
     function themeSection(dialog) {
         for (const fs of dialog.querySelectorAll('fieldset')) {
@@ -206,7 +84,9 @@
         const install = button('Install from file…', 'icefin-tm-install');
         const remove = button('Remove', 'icefin-tm-remove');
         const field = (text, control) => el('div', { className: 'inputContainer', style: 'display:block;margin-bottom:1em' },
-            el('label', { className: 'inputLabel', textContent: text }), dropdown(control));
+            el('label', { className: 'inputLabel', textContent: text }), control);
+        // In-page drop-downs (clientSettings.js), now rather than on its next pass, so they're ready when shown.
+        setTimeout(() => { if (window.icefinDropdown) box.querySelectorAll('select').forEach(window.icefinDropdown); }, 0);
         box.append(field('Theme: ', themeSel), field('Colour scheme: ', presetSel), field('Mode: ', schemeSel), preview, about, trustRow,
             el('div', {}, apply, cancel, install, remove), status);
 

@@ -340,6 +340,12 @@
     window.addEventListener('keydown', (e) => {
         const action = KEYS[e.key];
         if (!action || !current || e.altKey || e.ctrlKey || e.metaKey) return;
+        // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
+        // screen) are that thing's: only keys on the theme's own UI, or on nothing in particular, drive the screen.
+        const t = e.target;
+        if (t && t !== document.body && t !== document.documentElement && t.closest
+            && !t.closest(`#${ROOT_ID}, #icefin-theme-overlay, #icefin-osk`)) return;
+        if (document.querySelector('.dialogContainer .dialog.opened, .dialogContainer .formDialog')) return;
         if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
 
