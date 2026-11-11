@@ -34,7 +34,7 @@ if(LINUX_DBUS)
   set(components ${components} DBus)
 endif(LINUX_DBUS)
 
-set(components ${components} Multimedia)  # ICEFIN-HOOK: QSoundEffect for theme UI sounds (PLAN 8.5)
+set(components ${components} Multimedia)  # ICEFIN-HOOK: QAudioSink for theme UI sounds (PLAN 8.5)
 foreach(COMP ${components})
 	set(mod Qt6${COMP})
 
