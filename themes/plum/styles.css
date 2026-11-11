@@ -1,13 +1,24 @@
 /* Plum: a header band, a menu column that widens on focus, a three-wide grid of 4:3 tiles and an info panel at the right.
    Geometry follows the target's measurements (docs/themes/references/plum.json); px at 1920x1080 map to vw (x/19.2) and
-   vh (y/10.8). All colours from tokens. Motion is minimal by design: the focus frame jumps and the grid steps a row. */
+   vh (y/10.8). All colours from tokens. Motion and depth (user feedback 2026-11-11): a gliding focus frame and menu
+   highlight, gliding rows, a cross-fading info panel, tiles fading in; gradients on the field, the header, the menu,
+   library tiles, the panel and progress bars. Everything is instant under the user's reduced motion. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", Roboto, sans-serif; }
 
-[data-pl] { background: var(--icefin-color-background); }
+[data-pl] { background: radial-gradient(90% 70% at 85% 0%, rgb(var(--icefin-color-headerMid-channel) / 0.35) 0%, transparent 60%),
+  radial-gradient(70% 60% at 30% 100%, rgb(var(--icefin-color-surface-channel) / 0.55) 0%, transparent 70%),
+  linear-gradient(180deg, var(--icefin-color-background) 0%, var(--icefin-color-header) 100%); }
 
 /* Header band: 185 tall; brand and section from x 87 on y 81, options hint and clock at the right ending x 1864. */
 [data-pl] .icefin-topbar { display: flex; align-items: flex-start; justify-content: space-between; padding: 5.1vh 2.92vw 0 4.53vw; box-sizing: border-box;
-  background: linear-gradient(100deg, var(--icefin-color-header) 0%, var(--icefin-color-headerMid) 55%, var(--icefin-color-headerEdge) 100%); }
+  background: linear-gradient(100deg, var(--icefin-color-header) 0%, var(--icefin-color-headerMid) 55%, var(--icefin-color-headerEdge) 100%); position: relative; }
+/* A slow light across the band, and a soft fade into the field below it. */
+[data-pl] .icefin-topbar::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, rgb(var(--icefin-color-text-channel) / 0.1) 45%, transparent 70%) 0 0 / 250% 100%;
+  animation: pl-sheen 14s ease-in-out infinite; }
+[data-pl] .icefin-topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3vh; height: 3vh; pointer-events: none;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-header-channel) / 0.6), transparent); }
+@keyframes pl-sheen { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0% 0; } }
 .pl-brand { display: flex; align-items: center; height: 4.4vh; font-size: 2.2vw; font-weight: 700; letter-spacing: -0.02em; color: var(--icefin-color-text); white-space: nowrap; }
 .pl-where { margin-left: 0.9vw; padding-left: 0.9vw; border-left: 0.12vw solid var(--icefin-color-divider); font-size: 1.4vw; font-weight: 300; letter-spacing: 0; }
 .pl-header-right { display: flex; align-items: center; height: 4.4vh; gap: 1.6vw; }
@@ -15,49 +26,79 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .pl-clock { font-size: 1.3vw; font-weight: 300; color: var(--icefin-color-text); }
 
 /* Menu column: 210 wide with a mark per entry (centred on x 108), 470 with labels while focused; entries 90 tall from y 238 (marks centred on y 283). */
-[data-pl] .icefin-siderail { background: var(--icefin-color-rail); padding-top: 4.91vh; box-sizing: border-box; }
-.pl-menu { display: flex; flex-direction: column; }
+[data-pl] .icefin-siderail { background: linear-gradient(180deg, var(--icefin-color-rail) 0%, rgb(var(--icefin-color-header-channel) / 0.95) 100%);
+  box-shadow: inset -0.08vw 0 0 rgb(var(--icefin-color-text-channel) / 0.08), 0.6vw 0 2vw rgb(var(--icefin-color-header-channel) / 0.5);
+  padding-top: 4.91vh; box-sizing: border-box; transition: width 220ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+.pl-menu { position: relative; display: flex; flex-direction: column; }
+/* The menu highlight glides between entries. */
+.pl-menu-glow { position: absolute; left: 0; right: 0; top: 0; height: 8.33vh; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, var(--icefin-color-focusFill) 0%, rgb(var(--icefin-color-highlight-channel) / 0.18) 100%);
+  box-shadow: inset 0.3vw 0 0 var(--icefin-color-focusRing);
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 160ms ease; }
+.pl-menu-glow.on { opacity: 1; }
+[data-icefin-rail="collapsed"] .pl-menu-glow { opacity: 0.55; }
 .pl-menu-item { position: relative; display: flex; align-items: center; height: 8.33vh; padding-left: 4.27vw; outline: none; white-space: nowrap;
-  overflow: hidden; color: var(--icefin-color-textSecondary); font-size: 1.35vw; }
+  overflow: hidden; color: var(--icefin-color-textSecondary); font-size: 1.35vw; transition: color 160ms ease; }
 .pl-menu-item::before { content: attr(data-mark); flex: none; display: flex; align-items: center; justify-content: center; width: 2.6vw; height: 2.6vw;
   border-radius: 50%; border: 0.12vw solid currentColor; font-size: 1.1vw; font-weight: 600; box-sizing: border-box; }
-.pl-menu-item .icefin-rail-label { margin-left: 1.2vw; overflow: hidden; text-overflow: ellipsis; }
+.pl-menu-item .icefin-rail-label { margin-left: 1.2vw; overflow: hidden; text-overflow: ellipsis; animation: pl-label-in 220ms ease-out; }
+@keyframes pl-label-in { from { opacity: 0; transform: translateX(-0.8vw); } to { opacity: 1; transform: none; } }
 [data-icefin-rail="collapsed"] .pl-menu-item .icefin-rail-label { display: none; }
 .pl-menu-item.current { color: var(--icefin-color-text); }
-.pl-menu-item.icefin-focused { background: var(--icefin-color-focusFill); color: var(--icefin-color-text); }
+.pl-menu-item.icefin-focused { color: var(--icefin-color-text); }  /* the glide (.pl-menu-glow) is its highlight */
 
 /* Grid: 300 x 225 tiles from (242, 249) on a 324 pitch, rows 249 apart; four posters across in a library. */
 [data-pl] .icefin-content { position: relative; overflow: clip; }
 .pl-count { position: absolute; left: 1.67vw; top: 1.76vh; width: 49.38vw; text-align: right; font-size: 0.94vw; line-height: 1; color: var(--icefin-color-textSecondary); }
-.pl-grid-view { position: absolute; left: 0; top: 0; width: 53vw; bottom: 0; overflow: clip; }
+.pl-grid-view { position: absolute; left: 0; top: 0; width: 53vw; bottom: 0; overflow: clip; overflow-clip-margin: 1.5vw; }
 .pl-grid { display: grid; width: 49.38vw; column-gap: 1.25vw; row-gap: 2.22vh; padding: 5.93vh 0 0 1.67vw; }
 .pl-tile { position: relative; outline: none; min-width: 0; }
 .pl-art { position: relative; aspect-ratio: 2 / 3; background: var(--icefin-color-surface) center / cover no-repeat;
-  border-radius: var(--icefin-shape-cardRadius); display: flex; align-items: center; justify-content: center; transition: none; }
+  border-radius: var(--icefin-shape-cardRadius); display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0.8vh 1.8vh rgb(var(--icefin-color-header-channel) / 0.55); }
+/* Tiles fade and rise in, one after another, when a section opens. */
+.pl-grid.pl-in .pl-tile { animation: pl-tile-in 320ms cubic-bezier(0.2, 0.8, 0.3, 1) both; animation-delay: calc(var(--pl-i, 0) * 28ms); }
+@keyframes pl-tile-in { from { opacity: 0; transform: translateY(1.6vh) scale(0.97); } to { opacity: 1; transform: none; } }
 .pl-grid.pl-wide .pl-art { aspect-ratio: 4 / 3; }
 .pl-grid.pl-wide .pl-label, .pl-grid.pl-wide .pl-sub { display: none; }
-.pl-tile.library .pl-art { background-color: var(--icefin-color-accent); }
+.pl-tile.library .pl-art { background: linear-gradient(145deg, rgb(var(--icefin-color-text-channel) / 0.16) 0%, transparent 42%),
+  linear-gradient(160deg, var(--icefin-color-accent) 0%, var(--icefin-color-accentStrong) 60%, var(--icefin-color-surface) 100%); }
 .pl-art-label { padding: 0 1em; font-size: 1.25vw; font-weight: 600; text-align: center; color: var(--icefin-color-text); }
-/* The focus frame: a light ring 12 px outside the tile, moving at once. */
-.pl-tile.icefin-focused .pl-art { outline: 0.31vw solid var(--icefin-color-focusRing); outline-offset: 0.63vw; }
+/* The focus frame: one light ring 12 px outside the tile that glides from tile to tile, with a soft glow. */
+.pl-frame { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; box-sizing: content-box; margin: -0.94vw 0 0 -0.94vw;
+  padding: 0.63vw; border: 0.31vw solid var(--icefin-color-focusRing); border-radius: calc(var(--icefin-shape-cardRadius) + 0.5vw);
+  box-shadow: 0 0 1.6vw rgb(var(--icefin-color-focusRing-channel) / 0.45);
+  transition: transform 190ms cubic-bezier(0.2, 0.8, 0.3, 1), width 190ms cubic-bezier(0.2, 0.8, 0.3, 1), height 190ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 140ms ease; }
+.pl-frame.on { opacity: 1; }
 .pl-label { margin-top: 1vh; font-size: 0.94vw; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pl-sub { font-size: 0.8vw; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.2em; }
-.pl-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.32em; background: rgba(0, 0, 0, 0.5); }
-.pl-progress::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p); background: var(--icefin-color-highlight); }
+.pl-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.32em; background: rgb(var(--icefin-color-header-channel) / 0.6); }
+.pl-progress::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p);
+  background: linear-gradient(90deg, var(--icefin-color-accent), var(--icefin-color-highlight)); }
 .pl-empty { grid-column: 1 / -1; font-size: 1.25vw; color: var(--icefin-color-textSecondary); padding-top: 4vh; }
 
 /* Info panel at the right: 547 wide from x 1325, y 250 to 1009. */
 .pl-info { position: absolute; left: 58.07vw; top: 6.02vh; width: 28.49vw; height: 70.28vh; box-sizing: border-box; padding: 1.2vw;
-  background: var(--icefin-color-panel); border: 0.06vw solid var(--icefin-color-panelEdge); border-radius: var(--icefin-shape-cardRadius); overflow: hidden; }
-.pl-info-art { aspect-ratio: 16 / 9; background: var(--icefin-color-surface) center / cover no-repeat; border-radius: var(--icefin-shape-cardRadius); margin-bottom: 2vh; }
+  background: linear-gradient(180deg, rgb(var(--icefin-color-panelEdge-channel) / 0.18) 0%, var(--icefin-color-panel) 30%, rgb(var(--icefin-color-header-channel) / 0.9) 100%);
+  border: 0.06vw solid var(--icefin-color-panelEdge); border-radius: var(--icefin-shape-cardRadius); overflow: hidden;
+  box-shadow: 0 1.5vh 4vh rgb(var(--icefin-color-header-channel) / 0.6); }
+/* The panel cross-fades between tiles; its art drifts slowly and fades into the panel. */
+.pl-info > * { transition: opacity 110ms ease, transform 160ms ease; }
+.pl-info.swap > * { opacity: 0; transform: translateY(0.6vh); }
+.pl-info-art { aspect-ratio: 16 / 9; background: var(--icefin-color-surface) center / cover no-repeat; border-radius: var(--icefin-shape-cardRadius); margin-bottom: 2vh;
+  -webkit-mask-image: linear-gradient(180deg, black 70%, transparent 100%); mask-image: linear-gradient(180deg, black 70%, transparent 100%);
+  animation: pl-drift 18s ease-in-out infinite alternate; }
+@keyframes pl-drift { from { background-size: 100%; background-position: 50% 50%; } to { background-size: 112%; background-position: 40% 45%; } }
 .pl-info-title { font-size: 1.45vw; font-weight: 700; color: var(--icefin-color-text); margin-bottom: 0.8vh; }
 .pl-info-sub { font-size: 0.94vw; color: var(--icefin-color-textSecondary); margin-bottom: 1.6vh; }
 .pl-info-text { font-size: 0.94vw; line-height: 1.45; color: var(--icefin-color-text); max-height: 11.6em; overflow: hidden; }
 
-/* Under the theme's own cap the grid still moves a short step; with the cap lifted (another theme's normal profile)
-   it would glide. */
-.pl-grid { transition: transform 160ms ease-out; }
-html[data-icefin-motion="low"] .pl-grid { transition-duration: 60ms; }
+/* Rows glide. Under the user's reduced motion everything here is instant and still. */
+.pl-grid { transition: transform 260ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+html[data-icefin-motion="low"] .pl-grid, html[data-icefin-motion="low"] .pl-frame, html[data-icefin-motion="low"] .pl-menu-glow,
+html[data-icefin-motion="low"] .pl-info > *, html[data-icefin-motion="low"] [data-pl] .icefin-siderail { transition-duration: 0ms !important; }
+html[data-icefin-motion="low"] .pl-grid.pl-in .pl-tile, html[data-icefin-motion="low"] .pl-info-art,
+html[data-icefin-motion="low"] [data-pl] .icefin-topbar::before, html[data-icefin-motion="low"] .pl-menu-item .icefin-rail-label { animation: none !important; }
 
 /* Details (9.18): the springboard: poster left, the text beside it and the actions as a vertical list. */
 .icefin-details .icefin-d-actions { flex-direction: column; align-items: stretch; max-width: 24vw; gap: 0.3em; }

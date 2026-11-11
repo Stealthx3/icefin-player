@@ -9,7 +9,7 @@
     from a row's first item and Back return to the menu, up/down change row and each row keeps its column;
   - each category tile opens the matching jellyfin-web tab of the library;
   - Enter on a poster opens the info dialog (Play/Resume, More info); Back closes it and focus returns to the poster;
-    More info opens jellyfin-web's details page styled by Harbor's tokens; Classic home shows the stock home;
+    More info opens Harbor's themed details screen (9.18); Classic home shows the stock home;
   - transitions drop to zero under the low-motion cap.
 Layout positions and motion timings against the reference: clone_layout.py --theme harbor. Screenshots go to --out.
 Usage: python3 theme_harbor.py --app ~/build/src/icefin-player --server jf12 --out ~/r94/jf12
@@ -158,9 +158,9 @@ def main():
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
-        check("More info opens the details page, styled by Harbor's tokens",
-              js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#0f85a5")
+        check("More info opens Harbor's themed details screen (9.18)",
+              js("(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details') !== null") is True
+              and js("document.querySelector('.icefin-details').dataset.layout") == "poster")
         shot("details.png")
 
         # Each library's category tiles open the matching jellyfin-web view (Harbor's TABS against jellyfin-web 10.11, whose
@@ -215,7 +215,7 @@ def main():
         js("window.icefinTheme.ui.motion.cap('normal'); true")
 
         sounds = js("new Promise(r => window.api.theme.soundState(r))")
-        check("Harbor ships no sounds (target default is silent)", sounds.get("played", 0) == played0, json.dumps(sounds)[:120])
+        check("Harbor plays its interface sounds (theme-sounds.py; user feedback 2026-11-11)", sounds.get("played", 0) > played0, json.dumps(sounds)[:120])
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
         check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)
