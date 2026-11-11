@@ -102,23 +102,42 @@
                 else c.items.forEach((it) => row.append(tile(client, it, c.wide)));
                 // The whole library on the poster wall (wall.js).
                 if (c.view && WALL.has(c.view.CollectionType)) row.append(textTile(`All ${c.view.Name}`, () => T.ctx.navigate(`#/list?parentId=${c.view.Id}&serverId=${client.serverId()}`)));
-                cat.append(row);
+                const band = el('div', 'mc-band');
+                band.append(row);
+                cat.append(band);
                 strip.append(cat);
                 return { cat, row };
             });
 
-            // Keep the focused category on a fixed line and its focused tile in view.
+            // The current title sits on a fixed line (top 51vh) and the rows above it are closed, so its offset is just
+            // r title heights: the lens stays put while categories slide through it. Titles further from the current one
+            // fade a little more (depth).
             const ms = ui.motion.duration(320);
             strip.style.setProperty('--mc-ms', `${ms}ms`);
+            root.style.setProperty('--mc-lens-ms', `${ui.motion.duration(240)}ms`);
+            const vh = () => window.innerHeight / 100;
+            // Resting width of a tile (the CSS sizes: posters 12vh tall at 2:3, wide items and links 9.5vh at 16:9). The
+            // row's offset is worked out from these, not from offsetLeft, which is mid-animation while the lens moves.
+            const restW = (t) => (t.classList.contains('wide') || t.classList.contains('text') ? 9.5 * 16 / 9 : 12 * 2 / 3) * vh();
+            let cur = -1;
             root.addEventListener('icefin-focus', (e) => {
                 const r = rows.findIndex((x) => x.cat.contains(e.target));
                 if (r < 0) return;
-                rows.forEach((x, k) => x.cat.classList.toggle('current', k === r));
-                const catH = rows[r].cat.offsetHeight;
-                strip.style.transform = `translateY(${Math.round(window.innerHeight * 0.34 - r * catH)}px)`;
+                if (r !== cur) {
+                    cur = r;
+                    rows.forEach((x, k) => {
+                        x.cat.classList.toggle('current', k === r);
+                        x.cat.style.setProperty('--mc-dim', String(Math.max(0.22, 0.56 - 0.08 * Math.abs(k - r))));
+                    });
+                    strip.style.transform = `translateY(${Math.round(51 * vh() - r * 9 * vh())}px)`;
+                }
                 const row = rows[r].row, t = e.target;
-                const maxX = row.parentElement.offsetWidth * 0.6;
-                row.style.transform = `translateX(${Math.min(0, Math.round(maxX - t.offsetLeft))}px)`;
+                const tiles = [...row.children];
+                const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+                let left = 0;
+                for (const x of tiles) { if (x === t) break; left += restW(x) + gap; }
+                // The lens starts under the titles and travels right to 55% of the width before the row scrolls.
+                row.style.transform = `translateX(${Math.min(0, Math.round(window.innerWidth * (0.55 - 0.166) - left))}px)`;
             });
             grid = rows.map((x) => [...x.row.querySelectorAll('[data-icefin-focus]')]).filter((row) => row.length);
             lastCol = grid.map(() => 0);

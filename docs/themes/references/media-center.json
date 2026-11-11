@@ -1,0 +1,18 @@
+{
+  "theme": "media-center",
+  "target": "Windows 7 Media Center start screen, 1920x1080",
+  "sources": [
+    "YouTube, \"Learn Windows 7 - Windows Media Center Overview\", https://www.youtube.com/watch?v=_SVki3Jl51s (1080p): the start screen from 38 s to 96 s; frames read in the browser (pixel values from a canvas), nothing downloaded",
+    "The capture repeats each frame 4 to 5 times (about 7 distinct frames a second), so motion is not timed to the frame from it; durations below are the theme's own and only bounded by it",
+    "Layout, proportions, motion and colours only: Media Center's art, icons, sounds, type and names are not used"
+  ],
+  "measurements": {
+    "categories": "a column of category titles at x ~331, 98 px (9vh) apart, ~60 px type, light weight; the ones that are not current at about half opacity; only the current category shows its row, under its title",
+    "current": "the current title on a fixed line, centred on y ~599; it does not grow; categories slide through that line and the focus stays at the same height",
+    "lens": "the focused item becomes a 16:9 glass pane at x 318..676, y 656..854 (358 x 198), about twice the size of the items next to it, which sit small and dim, centred on the pane's height",
+    "glass": "1 px dark hairline outside the pane (rgb 4,30,69 on a 0,43,99 field); a light rim inside, brightest along the top (rgb 133,163,191, about 50% white) and dimmer down the sides (67,101,144); a gloss from about +18% white at the top edge fading to nothing ~34% of the way down (45,76,123 at y 664 to 4,49,106 at y 720); the rest of the pane clear; corners ~2 px",
+    "label": "the focused item's name centred under the pane at y ~887, white, larger than the dim names under the other items",
+    "pulse": "none: the rim's brightness is constant while the focus rests (54-58 s)",
+    "motion": "the closing row and the strip's slide move together; the opening row's items appear after the slide has started"
+  }
+}

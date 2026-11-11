@@ -2,6 +2,8 @@
 """theme_media_center.py — the bundled Media Center theme in the running app (PLAN 8.6, first version). Lab guests only.
 
   - bundled and usable; the start strip replaces the home route with one row per library (+ Continue, + More);
+  - the strip as measured (docs/themes/references/media-center.json): titles only except the current category, whose row
+    is open; the focused item swells into a glass lens; the current title stays on its line as categories change;
   - remote navigation: down moves between categories and keeps the focused one on its line, right moves along a row,
     Enter opens the item's themed details screen (Play/Resume, Favourite); a series keeps jellyfin-web's page;
   - each library row ends in "All ...", which opens the poster wall: seven across, art near the view, Enter opens details;
@@ -77,9 +79,13 @@ def main():
         js("Dashboard.navigate('home'); true")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root'); return !!r && !r.hidden && +r.getAttribute('data-mc-ready') > 0; })()", timeout=30)
         check("jellyfin-web's own navigation (pushState) mounts the themed home", js("window.icefinTheme.active().route") == "#/home")
-        # Rows don't overlap (tiles fit their row), and page UI a plugin puts straight into <body> doesn't show through.
-        ov = js("(() => { const c = [...document.querySelectorAll('.mc-cat')]; let worst = 0; c.forEach((cat) => { const r = cat.getBoundingClientRect(); cat.querySelectorAll('.mc-tile:not(.icefin-focused)').forEach((t) => { const b = t.getBoundingClientRect(); worst = Math.max(worst, b.bottom - r.bottom, r.top - b.top); }); }); return Math.round(worst); })()")
-        check("each row holds its tiles (no overlap between rows)", ov <= 1, f"{ov}px over")
+        # Only the current category's row is open and it holds its tiles; the others are titles only (docs/themes/
+        # references/media-center.json).
+        time.sleep(0.8)
+        ov = js("(() => { const cat = document.querySelector('.mc-cat.current'); const r = cat.getBoundingClientRect(); let worst = 0; cat.querySelectorAll('.mc-tile').forEach((t) => { const b = t.getBoundingClientRect(); worst = Math.max(worst, b.bottom - r.bottom, r.top - b.top); }); return Math.round(worst); })()")
+        check("the open row holds its tiles (no overlap with the next title)", ov <= 1, f"{ov}px over")
+        closed = js("[...document.querySelectorAll('.mc-cat:not(.current) .mc-band')].every((b) => b.getBoundingClientRect().height < 1 && getComputedStyle(b).opacity === '0')")
+        check("the other categories are titles only (their rows closed)", closed is True)
         js("(() => { const d = document.createElement('div'); d.id = 'lab-plugin-ui'; d.textContent = 'plugin'; d.style.cssText = 'position:absolute;inset:0;z-index:1;background:red'; document.body.append(d); return true; })()")
         check("plugin UI added to <body> stays hidden under a themed screen", js("getComputedStyle(document.getElementById('lab-plugin-ui')).visibility") == "hidden")
         js("document.getElementById('lab-plugin-ui').remove(); true")
@@ -93,6 +99,12 @@ def main():
                 break
             act("down")
         first = foc()
+        time.sleep(0.8)
+        # The glass lens: the focused item swells to about twice its neighbours' size, with the glass (rim and gloss)
+        # over it and a dark hairline outside.
+        lens = js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); const o = [...f.parentElement.children].find((t) => t !== f && t.classList.contains('wide') === f.classList.contains('wide') && t.classList.contains('text') === f.classList.contains('text')); const g = getComputedStyle(f, '::after'); return {h: f.getBoundingClientRect().height, other: o ? o.getBoundingClientRect().height : 0, glass: g.opacity, gloss: g.backgroundImage.includes('gradient'), edge: getComputedStyle(f).boxShadow !== 'none', top: Math.round(f.getBoundingClientRect().top)}; })()")
+        check("the focused item swells into the lens (1.5x its neighbours or more)", lens["other"] == 0 or lens["h"] >= 1.5 * lens["other"], json.dumps(lens))
+        check("the lens has its glass: gloss, rim and edge", lens["glass"] == "1" and lens["gloss"] and lens["edge"], json.dumps(lens))
         act("right")
         time.sleep(0.4)
         along = foc()
@@ -103,6 +115,10 @@ def main():
         time.sleep(0.5)
         second = foc()
         check(f"{away} moves to the neighbouring category", first.split('/')[0] != second.split('/')[0], f"{along} -> {second}")
+        time.sleep(0.6)
+        # The categories slide through the lens: the current title stays on its line, so the lens doesn't move up or down.
+        line = js("Math.round(document.querySelector('.mc-cat.current .mc-cat-title').getBoundingClientRect().top / innerHeight * 1000) / 10")
+        check("the current title stays on its line (51vh) as categories change", abs(line - 51) <= 0.6, f"{line}vh")
         check("the focused category is marked current", js("document.querySelector('.mc-cat.current .mc-cat-title').textContent") == second.split('/')[0])
         act(back)
         time.sleep(0.4)

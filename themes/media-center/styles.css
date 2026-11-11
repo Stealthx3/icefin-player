@@ -1,4 +1,5 @@
-/* Media Center: the start strip and the field it sits on. All colours come from tokens. */
+/* Media Center: the start strip and the field it sits on. All colours come from tokens (glass and glassEdge are
+   this theme's own; theme CSS reads their r g b channels for the alphas). */
 html[data-icefin-theme] body { background: var(--icefin-color-background); }
 
 /* The screen moves its rows itself: nothing may scroll it sideways (rows run past the right edge). */
@@ -20,23 +21,47 @@ html[data-icefin-motion="low"] .mc-ribbon { animation: none; }
 .mc-brand { position: absolute; left: 4.5vw; top: 4vh; font-weight: 300; letter-spacing: 0.04em; font-size: 1.6em; opacity: 0.9; }
 .mc-clock { position: absolute; right: 4.5vw; top: 4.4vh; font-weight: 300; font-size: 1.3em; opacity: 0.8; }
 
-/* The strip: categories stacked vertically; the focused category sits at a fixed line, its row of items to the right. */
+/* The strip, measured from the reference's start screen at 1920x1080 (docs/themes/references/media-center.json):
+   categories are a column of titles 9vh apart at x 17vw; only the current one opens its row of items under its title.
+   The current title sits on a fixed line (top 51vh), so the focus lens stays at the same height while categories slide
+   through it: the row that closes and the strip's slide run together, with the same duration and easing. */
 .mc-strip { position: absolute; left: 0; right: 0; top: 0; transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
-/* A row holds its tiles whatever the window's shape: tiles are sized by height (24vh posters, 18vh wide tiles) and grow
-   10% with a label under them when focused, inside a 30vh row. Width-sized tiles were taller than the row on a 16:9
-   screen and the rows overlapped. */
-.mc-cat { display: grid; grid-template-columns: 22vw 1fr; align-items: center; height: 30vh; }
-.mc-cat-title { padding-left: 4.5vw; font-size: 2.3em; font-weight: 300; opacity: 0.45; transition: opacity 200ms, transform 200ms; transform-origin: left center; }
-.mc-cat.current .mc-cat-title { opacity: 1; transform: scale(1.08); }
-.mc-row { display: flex; gap: 1.4vw; overflow: visible; transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
-.mc-cat:not(.current) .mc-row { opacity: 0.5; }
-.mc-tile { flex: 0 0 auto; height: 24vh; width: auto; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
-  position: relative; transition: transform 180ms, box-shadow 180ms; outline: none; }
-.mc-tile.wide { height: 18vh; aspect-ratio: 16 / 9; }
-.mc-tile .mc-label { position: absolute; left: 0; right: 0; bottom: -1.8em; font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 150ms; }
-.mc-tile.icefin-focused { transform: scale(1.1); box-shadow: 0 0 0 0.18em var(--icefin-color-focus), 0 0 2.2em 0.4em var(--icefin-color-focusGlow); z-index: 2; }
+.mc-cat { display: block; }
+.mc-cat-title { height: 9vh; line-height: 9vh; padding-left: 17.2vw; font-size: 5.6vh; font-weight: 300; white-space: nowrap;
+  opacity: var(--mc-dim, 0.5); transition: opacity var(--mc-ms, 320ms); }
+.mc-cat.current .mc-cat-title { opacity: 1; }
+/* The open row: 28.5vh under its title (the lens 18.3vh from y 60.7vh, its label under it); closed rows take no room. */
+.mc-band { height: 0; overflow: clip; overflow-clip-margin: 3vh; opacity: 0;
+  transition: height var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1), opacity calc(var(--mc-ms, 320ms) * 0.6) ease-out; }
+.mc-cat.current .mc-band { height: 28.5vh; opacity: 1; transition-delay: 0ms, calc(var(--mc-ms, 320ms) * 0.4); }
+.mc-row { display: flex; align-items: center; gap: 1.6vw; height: 19.6vh; padding-left: 16.6vw; overflow: visible;
+  transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
+
+/* Items rest small and dim; the focused one swells into the glass lens (about twice the size), pushing its
+   neighbours aside. Posters 2:3, wide items and links 16:9. */
+.mc-tile { --mc-h: 12vh; flex: 0 0 auto; height: var(--mc-h); width: auto; aspect-ratio: 2 / 3; position: relative; outline: none;
+  border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat; opacity: 0.78;
+  transition: height var(--mc-lens-ms, 240ms) cubic-bezier(.2,.7,.2,1), opacity var(--mc-lens-ms, 240ms), box-shadow var(--mc-lens-ms, 240ms); }
+.mc-tile.wide, .mc-tile.text { --mc-h: 9.5vh; aspect-ratio: 16 / 9; }
+.mc-tile.icefin-focused { --mc-h: 18.3vh; opacity: 1; z-index: 2;
+  box-shadow: 0 0 0 0.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.6), 0 1.4vh 2.8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-tile:not(.wide):not(.text).icefin-focused { --mc-h: 19.6vh; }
+/* The glass: a thin rim, brightest along the top, and a gloss that fades out a third of the way down (measured: about
+   +18% white at the top edge to nothing at 34%). It sits over the art, so a poster reads as seen through the lens. */
+.mc-tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  transition: opacity var(--mc-lens-ms, 240ms);
+  background: linear-gradient(180deg, rgb(var(--icefin-color-glass-channel) / 0.26) 0%, rgb(var(--icefin-color-glass-channel) / 0.1) 17%, rgb(var(--icefin-color-glass-channel) / 0) 34%);
+  box-shadow: inset 0 0.2vh 0 rgb(var(--icefin-color-glass-channel) / 0.6), inset 0 0 0 0.1vh rgb(var(--icefin-color-focus-channel) / 0.55),
+              inset 0 0 1.6vh rgb(var(--icefin-color-focus-channel) / 0.16); }
+.mc-tile.icefin-focused::after { opacity: 1; }
+.mc-tile .mc-label { position: absolute; left: -8vw; right: -8vw; top: calc(100% + 0.9vh); text-align: center; font-size: 3.6vh; font-weight: 300;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity var(--mc-lens-ms, 240ms); }
 .mc-tile.icefin-focused .mc-label { opacity: 1; }
-.mc-tile.text { display: flex; align-items: center; justify-content: center; font-size: 1.2em; aspect-ratio: auto; height: 8vh; width: 14vw; padding: 0 1em; text-align: center; }
+.mc-tile.text { display: flex; align-items: center; justify-content: center; padding: 0 0.6em; box-sizing: border-box; text-align: center;
+  font-size: 2.6vh; background: rgb(var(--icefin-color-glass-channel) / 0.06); transition-property: height, opacity, box-shadow, font-size; }
+.mc-tile.text.icefin-focused { font-size: 4vh; }
+html[data-icefin-motion="low"] .mc-strip, html[data-icefin-motion="low"] .mc-band, html[data-icefin-motion="low"] .mc-row,
+html[data-icefin-motion="low"] .mc-tile, html[data-icefin-motion="low"] .mc-tile::after { transition-duration: 0ms !important; transition-delay: 0ms !important; }
 
 /* Now playing inset */
 .mc-now { position: absolute; right: 4.5vw; bottom: 5vh; display: flex; gap: 1em; align-items: center; padding: 0.8em 1.2em;
@@ -54,7 +79,9 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 .mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 15vh; bottom: 0; overflow: hidden; }
 .mc-wall { display: grid; grid-template-columns: repeat(7, 1fr); column-gap: 1.6vw; row-gap: 4.5vh; padding: 1.2em 0.6em;
   transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
-.mc-poster { width: auto; height: auto; aspect-ratio: 2 / 3; }  /* the wall sizes posters by its columns */
+.mc-poster { width: auto; height: auto; aspect-ratio: 2 / 3; transition-property: transform, opacity, box-shadow; }  /* the wall sizes posters by its columns */
+.mc-poster.icefin-focused { transform: scale(1.08); }  /* the same glass lens, a smaller lift: the grid doesn't reflow */
+.mc-poster .mc-label { font-size: 2.2vh; top: calc(100% + 0.6vh); }
 
 /* Details (details.js): backdrop, shade, poster and text. */
 .mc-details-art { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; }
@@ -72,6 +99,9 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 .mc-details-overview { max-width: 46em; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
 .mc-details-buttons { display: flex; gap: 1.2em; margin-top: 2em; }
 .mc-btn { padding: 0.7em 1.6em; border-radius: 2em; background: var(--icefin-color-surfaceRaised); outline: none; transition: transform 160ms, box-shadow 160ms; }
-.mc-btn.icefin-focused { transform: scale(1.06); background: var(--icefin-color-accent); color: var(--icefin-color-onAccent);
-  box-shadow: 0 0 0 0.15em var(--icefin-color-focus), 0 0 1.8em 0.3em var(--icefin-color-focusGlow); }
+/* The focused button is a pane of the same glass: accent fill, top gloss, bright top rim, a dark hairline outside. */
+.mc-btn.icefin-focused { transform: scale(1.05); color: var(--icefin-color-onAccent);
+  background: linear-gradient(180deg, rgb(var(--icefin-color-glass-channel) / 0.3) 0%, rgb(var(--icefin-color-glass-channel) / 0.08) 45%, rgb(var(--icefin-color-glass-channel) / 0) 55%), var(--icefin-color-accent);
+  box-shadow: inset 0 0.2vh 0 rgb(var(--icefin-color-glass-channel) / 0.6), inset 0 0 0 0.1vh rgb(var(--icefin-color-focus-channel) / 0.55),
+              0 0 0 0.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.6), 0 0.8vh 1.8vh rgb(var(--icefin-color-glassEdge-channel) / 0.45); }
 html[data-icefin-motion="low"] .mc-details { transition: none; }
