@@ -336,9 +336,28 @@
     window.addEventListener('hashchange', route_);
     window.addEventListener('popstate', route_);
 
+    // The capability model's theme view (6.7): deep-frozen, so a theme can't change what others see.
+    let systemView = null;
+    const deepFreeze = (o) => { if (o && typeof o === 'object') { Object.values(o).forEach(deepFreeze); Object.freeze(o); } return o; };
+    if (window.apiPromise) window.apiPromise.then((api) => {
+        if (!api.router || !api.router.capabilities) return;
+        const take = (c) => {
+            if (!c || !c.theme) return;
+            const next = JSON.stringify(c.theme);
+            if (systemView && JSON.stringify(systemView) === next) return;
+            systemView = deepFreeze(JSON.parse(next));
+            window.dispatchEvent(new CustomEvent('icefin-system', { detail: systemView }));
+        };
+        api.router.capabilities(take);
+        api.router.capabilitiesChanged.connect(take);
+    });
+
     window.icefinTheme = {
         version: 1,
-        apiVersion: 1,  // the theme script API; bumped only for a breaking change. `system` is reserved for 6.7.
+        apiVersion: 1,  // the theme script API; bumped only for a breaking change
+        // What this machine can show and play (the capability model, 6.7): a frozen snapshot, replaced when it changes,
+        // with an 'icefin-system' event on window. Read-only; null until the model has answered.
+        get system() { return systemView; },
         ctx,            // the same object screens get in mount(): for code outside a screen (chrome, overlays, timers)
         // Called by theme scripts while they load. route: '#/home' style, without query.
         registerScreen(path, screen) {

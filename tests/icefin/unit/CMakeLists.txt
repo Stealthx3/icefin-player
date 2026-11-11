@@ -41,3 +41,8 @@ add_executable(test_icefin_compositing test_compositing.cpp)
 target_link_libraries(test_icefin_compositing jmp_core Qt6::Test)
 target_include_directories(test_icefin_compositing PRIVATE ${CMAKE_SOURCE_DIR}/src)
 add_test(NAME test_icefin_compositing COMMAND test_icefin_compositing)
+
+add_executable(test_icefin_capability test_capability.cpp)
+target_link_libraries(test_icefin_capability jmp_core Qt6::Test)
+target_include_directories(test_icefin_capability PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME test_icefin_capability COMMAND test_icefin_capability)

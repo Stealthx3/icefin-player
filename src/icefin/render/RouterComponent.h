@@ -56,12 +56,16 @@ public:
   Q_INVOKABLE void setUiLayerVisible(bool visible);
   // Reference white, peak and transfer from the display; called on display and swapchain changes.
   Q_INVOKABLE void refreshCompositor();
+  // The capability model (6.7, src/icefin/capability/CapabilityModel.h): what this machine can show and play. The
+  // "theme" key is what themes get as icefinTheme.system.
+  Q_INVOKABLE QVariantMap capabilities() const;
 
 Q_SIGNALS:
   // {key, range, reason, options[{id, label}], remembered, itemId, serverId, startMs}
   void promptRequested(const QVariantMap& info);
   void displayChanged(const QVariantMap& info);
   void compositorChanged(const QVariantMap& state);
+  void capabilitiesChanged(const QVariantMap& snapshot);
 
 private:
   RouterComponent() = default;

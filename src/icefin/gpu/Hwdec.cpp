@@ -1,4 +1,5 @@
 #include "Hwdec.h"
+#include "icefin/capability/CapabilityModel.h"
 #include "icefin/render/VulkanDevice.h"
 #include <QDebug>
 #include <QDir>
@@ -63,13 +64,11 @@ QString migratedSetting(const QString& setting)
 
 QString rendererName()
 {
-  switch (QQuickWindow::graphicsApi()) {
-    case QSGRendererInterface::Vulkan: return "Vulkan";
-    case QSGRendererInterface::OpenGL:
-      return Icefin::Render::vulkanFallbackReason().isEmpty() ? QString("OpenGL (fallback)")
-                                                             : "OpenGL (fallback: Vulkan failed: " + Icefin::Render::vulkanFallbackReason() + ")";
-    case QSGRendererInterface::Software: return "Software";
-    default: return "other";
-  }
+  // The capability model (6.7): Vulkan with the compositor and its output, or OpenGL and why.
+  if (QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan || QQuickWindow::graphicsApi() == QSGRendererInterface::OpenGL)
+    return Capability::rendererSummary(Capability::CapabilityModel::instance().last().isEmpty()
+                                           ? Capability::CapabilityModel::instance().current()
+                                           : Capability::CapabilityModel::instance().last());
+  return QQuickWindow::graphicsApi() == QSGRendererInterface::Software ? QString("Software") : QString("other");
 }
 }

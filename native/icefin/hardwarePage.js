@@ -50,6 +50,23 @@
             const text = d.hdr === 'yes' ? `HDR (${d.transfer}, ${d.primaries}${lum})` : d.hdr === 'no' ? `SDR (${d.transfer || '?'}${lum})` : `unknown: ${d.error}`;
             body.insertBefore(el('p', { className: 'fieldDescription icefin-hw-display', textContent: `Display: ${text}` }), btn);
         }));
+        // The capability model (6.7): renderer, how each kind of video plays here, the receiver, versions.
+        window.apiPromise.then((api) => api.router && api.router.capabilities && api.router.capabilities((c) => {
+            if (!c || !c.renderer) return;
+            const v = c.video || {};
+            const plays = Object.keys(v).map((k) => `${k}: ${v[k].output}`).join(' · ');
+            const a = c.audio || {};
+            const recv = a.valid ? `Receiver: ${a.name || 'unnamed'} (${(a.codecs || []).join(', ') || 'PCM'}, ${a.lpcmChannels || 2} ch)`
+                : a.hdmi ? 'Receiver: no valid ELD' : 'Receiver: not read yet (read when a video plays over HDMI)';
+            const ver = c.versions || {};
+            const lines = [
+                `Playback here: ${plays}`,
+                (c.renderer.vulkanAvailable ? 'A Vulkan GPU is available: the capability prompt can switch to it.' : ''),
+                recv,
+                `Versions: mpv ${ver.mpv || '?'}, FFmpeg ${ver.ffmpeg || '?'}, libplacebo ${ver.libplacebo || '?'}, Qt ${ver.qt || '?'}`
+            ].filter(Boolean);
+            for (const t of lines) body.insertBefore(el('p', { className: 'fieldDescription icefin-hw-capability', textContent: t }), btn);
+        }));
         // Playback choices remembered from the capability prompt (6.3), with a reset.
         window.apiPromise.then((api) => api.router && api.router.rememberedChoices((m) => {
             const n = Object.keys(m || {}).length;
