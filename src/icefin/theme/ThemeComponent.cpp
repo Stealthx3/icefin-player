@@ -17,6 +17,8 @@
 #include <QCoreApplication>
 #include <QUrl>
 #include <QSoundEffect>
+#include <QFileDialog>
+#include "ThemeInstall.h"
 
 namespace Icefin::Theme
 {
@@ -172,7 +174,7 @@ QVariantList ThemeComponent::themes()
 {
   QVariantList out;
   for (const Package& p : m_packages) {
-    out << QVariantMap{{"id", p.id}, {"name", p.name}, {"version", p.version}, {"source", sourceName(p.source)},
+    out << QVariantMap{{"id", p.id}, {"name", p.name}, {"version", p.version}, {"description", p.description}, {"source", sourceName(p.source)},
                        {"presets", QStringList(p.presets.keys())}, {"ok", p.ok()}, {"errors", p.errors},
                        {"hasScripts", !p.scripts.isEmpty()}, {"trusted", trusted(p)}};
   }
@@ -424,5 +426,61 @@ bool ThemeComponent::setTrusted(const QString& id, bool on)
   qInfo().noquote() << "Icefin theme:" << id << (on ? "trusted (scripts allowed)" : "no longer trusted");
   if (id == m_active) emit changed(m_active, m_preset);  // reload its assets with the new rights
   return true;
+}
+
+QVariantMap ThemeComponent::previewTokens(const QString& id, const QString& preset) const
+{
+  QVariantMap m;
+  if (!m_packages.contains(id) || !m_packages[id].ok()) return m;
+  QStringList e;
+  const TokenMap t = m_packages[id].resolved(preset, {}, &e);
+  if (!e.isEmpty()) return m;
+  for (auto it = t.begin(); it != t.end(); ++it) m.insert(it.key(), it.value());
+  return m;
+}
+
+void ThemeComponent::pickPackage()
+{
+  auto* d = new QFileDialog(nullptr, "Install a theme package", QDir::homePath(), "Theme packages (*.zip *.icefin-theme);;All files (*)");
+  d->setFileMode(QFileDialog::ExistingFile);
+  d->setAttribute(Qt::WA_DeleteOnClose);
+  connect(d, &QFileDialog::fileSelected, this, [this](const QString& path) { emit installFinished(installFile(path)); });
+  connect(d, &QFileDialog::rejected, this, [this]() { emit installFinished(QVariantMap{{"ok", false}, {"cancelled", true}, {"errors", QStringList()}}); });
+  d->open();
+}
+
+QVariantMap ThemeComponent::installFile(const QString& path)
+{
+  QSet<QString> reserved;
+  for (const Package& p : m_packages)
+    if (p.source != Source::User) reserved.insert(p.id);
+  const InstallResult r = installPackageFile(path, Paths::globalDataDir("themes"), reserved);
+  QVariantMap out{{"ok", r.ok}, {"id", r.id}, {"name", r.name}, {"replaced", r.replaced}, {"errors", r.errors}};
+  if (!r.ok) {
+    qWarning().noquote() << "Icefin theme: install from" << QFileInfo(path).fileName() << "refused:" << r.errors.join("; ");
+    return out;
+  }
+  if (r.replaced) setTrusted(r.id, false);  // trust is bound to content: an update asks again
+  rescan();
+  out["hasScripts"] = m_packages.contains(r.id) && !m_packages[r.id].scripts.isEmpty();
+  qInfo().noquote() << "Icefin theme: installed" << r.id << (r.replaced ? "(replaced the installed copy)" : "");
+  if (r.id == m_active) apply(m_active, m_preset, 0);
+  emit packagesChanged();
+  return out;
+}
+
+QVariantMap ThemeComponent::removePackage(const QString& id)
+{
+  if (!m_packages.contains(id) || m_packages[id].source != Source::User)
+    return {{"ok", false}, {"errors", QStringList{"only themes you installed can be removed"}}};
+  if (id == m_active) return {{"ok", false}, {"errors", QStringList{"switch to another theme before removing this one"}}};
+  const QString dir = m_packages[id].dir;
+  if (!QFileInfo(dir).absolutePath().startsWith(QFileInfo(Paths::globalDataDir("themes")).absoluteFilePath()) || !QDir(dir).removeRecursively())
+    return {{"ok", false}, {"errors", QStringList{"can't remove the theme's folder"}}};
+  setTrusted(id, false);
+  rescan();
+  qInfo().noquote() << "Icefin theme: removed" << id;
+  emit packagesChanged();
+  return {{"ok", true}, {"errors", QStringList()}};
 }
 }

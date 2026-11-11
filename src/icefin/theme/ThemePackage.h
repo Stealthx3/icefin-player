@@ -19,7 +19,7 @@ enum class Source { Bundled, User, Development };
 struct Package
 {
   QString dir;
-  QString id, name, version;
+  QString id, name, version, description;
   Source source = Source::User;
   TokenMap tokens;                  // flattened, unresolved
   QMap<QString, TokenMap> presets;  // name -> flattened overrides
