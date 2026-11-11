@@ -264,14 +264,20 @@ cmd_handoff() { # run when the lab window closes: report the open steps, mark th
 cmd_exec() { [ $# -gt 0 ] || die "exec CMD"; rexec "sess_env; cd \"\$D/src\" 2>/dev/null || cd; $*"; }
 
 cmd_clean() {
-  rexec 'flatpak kill "$APP" 2>/dev/null || true; sleep 1
+  # A graceful quit first: flatpak kill leaves Qt WebEngine's helper sandboxes behind (one bwrap per kill).
+  rexec 'pkill -TERM -x icefin-player 2>/dev/null; for i in $(seq 20); do pgrep -x icefin-player >/dev/null || break; sleep 0.5; done
+         flatpak kill "$APP" 2>/dev/null || true
+         for p in $(pgrep -x bwrap); do grep -qa "QtWebEngineProcess.*application-name=icefin-player" /proc/$p/cmdline 2>/dev/null && kill $p; done
+         sleep 1
          rm -rf "$HOME/.var/app/$APP" "$D/results"/*.app.log
          echo "clean: $APP stopped, ~/.var/app/$APP removed"'
 }
 
 cmd_uninstall() {
   cmd_tunnel down || true
-  rexec 'flatpak kill "$APP" 2>/dev/null || true
+  rexec 'pkill -TERM -x icefin-player 2>/dev/null; for i in $(seq 20); do pgrep -x icefin-player >/dev/null || break; sleep 0.5; done
+         flatpak kill "$APP" 2>/dev/null || true
+         for p in $(pgrep -x bwrap); do grep -qa "QtWebEngineProcess.*application-name=icefin-player" /proc/$p/cmdline 2>/dev/null && kill $p; done
          flatpak --user uninstall -y --noninteractive "$APP" 2>/dev/null || true
          flatpak --user remote-delete --force icefin-lab 2>/dev/null || true
          rm -rf "$HOME/.var/app/$APP" "$D"

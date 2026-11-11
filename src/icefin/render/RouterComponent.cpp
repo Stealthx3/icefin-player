@@ -160,7 +160,12 @@ bool RouterComponent::componentInitialize()
   return true;
 }
 
-QVariantMap RouterComponent::compositor() const { return compositorState().toMap(); }
+QVariantMap RouterComponent::compositor() const
+{
+  QVariantMap m = compositorState().toMap();
+  m["vulkanFallback"] = vulkanFallbackReason();
+  return m;
+}
 
 void RouterComponent::setUiBlend(const QString& name)
 {

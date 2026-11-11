@@ -7,11 +7,14 @@ Checks:
   3. with Vulkan chosen, after a restart: on a real GPU the UI runs on Vulkan on Icefin's shared device (its device
      extensions logged, swapchain among them); without a usable Vulkan GPU (the lab VM's software rasterizer) the
      app falls back to OpenGL with a warning. Either way the web client loads;
-  4. OpenGL chosen: OpenGL, no probe.
+  4. OpenGL chosen: OpenGL, no probe;
+  5. the OpenGL fallback (5.7), where Vulkan works (the lab's lavapipe with ICEFIN_RENDERER_ALLOW_SOFTWARE=1): with
+     Vulkan chosen and a failure simulated (ICEFIN_VULKAN_FAIL=mpv), the app records why and restarts on OpenGL with
+     the web client up; the next normal start stays on OpenGL; changing the setting gives Vulkan another try.
 Usage: python3 renderer_choice.py --app ~/build/src/icefin-player [--qpa xcb|session] [--expect vulkan|fallback]
   --app may be flatpak:<app-id>; --qpa session runs in the desktop session (host or HTPC tier).
 """
-import argparse, json, os, re, signal, sys, tempfile, time
+import argparse, json, os, re, signal, subprocess, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -92,6 +95,42 @@ def main():
         page, path = run("opengl")
         t = text(path)
         check("OpenGL chosen: OpenGL, no probe", "Icefin renderer: OpenGL (setting opengl)" in t and "shared Vulkan device" not in t)
+        if on_vk:
+            page.eval("new Promise(r => window.api.settings.setValue('main', 'icefin_renderer', 'vulkan', () => r(true)))")
+            time.sleep(1)
+            stop()
+            def marker_exists():  # next to the settings, in the profile's folder
+                return any("vulkan-fallback.json" in f for _, _, fs in os.walk(cfgdir) for f in fs)
+            os.environ["ICEFIN_VULKAN_FAIL"] = "mpv"
+            path = os.path.join(cfgdir, "app-vkfail.log")
+            log = open(path, "w")
+            app = launch(a.app, a.port, cfgdir, log, a.qpa)
+            logs.append((app, log, path))
+            del os.environ["ICEFIN_VULKAN_FAIL"]
+            deadline = time.time() + 90
+            while time.time() < deadline and "restarting on OpenGL" not in text(path):
+                time.sleep(1)
+            t = text(path)
+            check("Vulkan failure recorded and the app restarts (5.7)", "Icefin renderer: Vulkan failed (mpv's Vulkan render context failed" in t
+                  and marker_exists(), (re.search(r"Icefin renderer: Vulkan failed.*", t) or [""])[0][:160])
+            time.sleep(4)
+            page = Page(a.port, timeout=90)
+            page.wait_for("!!window.api && !!window.api.settings", timeout=90)
+            page.wait_for("!!window.ApiClient || !!document.getElementById('address')", timeout=60)
+            t = text(path)
+            check("the restarted app is on OpenGL with the web client up", "Icefin renderer: OpenGL, because Vulkan failed" in t)
+            fb = page.eval("new Promise(r => window.api.router.compositor(m => r(m)))")
+            check("the fallback reason is reported", "mpv's Vulkan render context failed" in (fb or {}).get("vulkanFallback", ""), (fb or {}).get("vulkanFallback", ""))
+            subprocess.run(["pkill", "-f", f"config-dir={cfgdir}"], capture_output=True)
+            time.sleep(3)
+            stop()
+            page, path = run("after-fallback")
+            check("the next start stays on OpenGL", "Icefin renderer: OpenGL, because Vulkan failed" in text(path))
+            page.eval("new Promise(r => window.api.settings.setValue('main', 'icefin_renderer', 'opengl', () => r(true)))")
+            time.sleep(1)
+            stop()
+            page, path = run("setting-changed")
+            check("changing the setting clears the record", not marker_exists())
         page.eval("new Promise(r => window.api.settings.setValue('main', 'icefin_renderer', 'auto', () => r(true)))")
         time.sleep(1)
         stop()

@@ -39,6 +39,16 @@ bool vulkanHdrOutput();
 // QGuiApplication exists and before the main window is created.
 void chooseGraphicsApi();
 
+// The OpenGL fallback (PLAN 5.7). Vulkan can pass the startup probe and still fail while the window comes up: the
+// shared device can't be made, Qt's scene graph reports an error or runs on a device of its own, or mpv's Vulkan
+// render context fails. Any of these calls fallBackToOpenGl(): it records why (vulkan-fallback.json next to the
+// settings), and restarts the app, which then starts on OpenGL (upstream's MpvQt path). Later starts stay on OpenGL
+// until the Renderer setting is changed or the app version changes, so a broken driver can't cause a restart loop.
+// ICEFIN_VULKAN_FAIL=device|mpv simulates a failure (tests).
+void fallBackToOpenGl(const QString& reason);
+// Non-empty when this start uses OpenGL because Vulkan failed before: the recorded reason.
+QString vulkanFallbackReason();
+
 class VulkanDevice
 {
 public:

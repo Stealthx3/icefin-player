@@ -120,10 +120,10 @@ bool VulkanVideo::createContext()
   auto* inst = static_cast<QVulkanInstance*>(ri->getResource(m_window, QSGRendererInterface::VulkanInstanceResource));
   auto* queue = static_cast<VkQueue*>(ri->getResource(m_window, QSGRendererInterface::CommandQueueResource));
   auto* dev = static_cast<VkDevice*>(ri->getResource(m_window, QSGRendererInterface::DeviceResource));
-  if (!inst || !queue || !dev) { qWarning() << "Icefin video: no Vulkan resources from Qt Quick"; return false; }
+  if (!inst || !queue || !dev) { fallBackToOpenGl("no Vulkan resources from Qt Quick for video"); return false; }
   if (!d.ready() || *dev != d.device()) {
     // libplacebo needs to know exactly what the device enables; only Icefin's own device says so.
-    qWarning() << "Icefin video: Qt Quick isn't on Icefin's shared Vulkan device; no video on the Vulkan path";
+    fallBackToOpenGl("Qt Quick isn't on Icefin's shared Vulkan device, so video can't play on Vulkan");
     return false;
   }
   m_vk->inst = inst;
@@ -156,10 +156,10 @@ bool VulkanVideo::createContext()
                                {MPV_RENDER_PARAM_VULKAN_INIT_PARAMS, &vp},
                                display,
                                {MPV_RENDER_PARAM_INVALID, nullptr}};
-  const int rc = mpv_render_context_create(&m_ctx, m_mpv, params);
+  const int rc = qEnvironmentVariable("ICEFIN_VULKAN_FAIL") == "mpv" ? MPV_ERROR_UNSUPPORTED : mpv_render_context_create(&m_ctx, m_mpv, params);
   if (rc < 0) {
-    qWarning() << "Icefin video: mpv's Vulkan render context failed:" << mpv_error_string(rc);
     m_ctx = nullptr;
+    fallBackToOpenGl(QString("mpv's Vulkan render context failed: ") + mpv_error_string(rc));
     return false;
   }
   mpv_render_context_set_update_callback(m_ctx, [](void* self) {

@@ -1,4 +1,5 @@
 #include "Hwdec.h"
+#include "icefin/render/VulkanDevice.h"
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -64,7 +65,9 @@ QString rendererName()
 {
   switch (QQuickWindow::graphicsApi()) {
     case QSGRendererInterface::Vulkan: return "Vulkan";
-    case QSGRendererInterface::OpenGL: return "OpenGL (fallback)";
+    case QSGRendererInterface::OpenGL:
+      return Icefin::Render::vulkanFallbackReason().isEmpty() ? QString("OpenGL (fallback)")
+                                                             : "OpenGL (fallback: Vulkan failed: " + Icefin::Render::vulkanFallbackReason() + ")";
     case QSGRendererInterface::Software: return "Software";
     default: return "other";
   }
