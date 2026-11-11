@@ -1,0 +1,52 @@
+{
+  "theme": "plum",
+  "target": "Roku home, the classic grid (Roku OS 15, early 2026), 1920x1080",
+  "sources": [
+    "YouTube, Datyell Close, \"Undo Roku's new menu layout and get the simple home screen back\", https://www.youtube.com/watch?v=jA0Zq4vIoK0 (1080p): the classic home at 39-52 s, a flat capture inset in the frame at 1510x850 (scaled x1.2715 to 1920x1080); frames read in the browser, nothing downloaded",
+    "Roku developer documentation, Manifest file (https://developer.roku.com/docs/developer-program/getting-started/architecture/channel-manifest.md): the home-screen app icon is 540x405 at FHD (4:3)"
+  ],
+  "measurements": {
+    "header": "a 185-tall band (art: a city skyline, which Plum replaces with a plain gradient); brand and section label from x 87 centred on y 81; options hint and clock at the right, the clock ending x 1864; the focused tile's position as 'n of m' right-aligned to the grid at y 213",
+    "menu": "a column of icons (centres x 108, from y 283 on a ~90 pitch) about 210 wide; it widens with labels while focused (the classic layout's text menu)",
+    "grid": "three columns of 4:3 tiles 300 x 225 from x 242 on a 324 pitch (24 gaps), from y 249 with rows 249 apart; no labels under app tiles",
+    "focus": "a light lavender ring (#b7afd2) about 6 px thick, 12-18 px outside the tile, no scaling; it moves at once",
+    "right panel": "a featured panel 547 wide from x 1325, y 250 to 1009, dark (#1b1e34) with a light edge; Plum shows the focused item there instead",
+    "colours": "field and menu #131e67, header band violet to magenta",
+    "motion": "the source segment holds still (no grid scroll), so only the instant focus frame is checked"
+  },
+  "tolerancePx": 14,
+  "timingTolerance": 0.1,
+  "ready": "(() => { const c = document.querySelector('.icefin-content[data-pl-ready]'); return !!c && +c.getAttribute('data-pl-ready') > 0; })()",
+  "states": [
+    {
+      "name": "grid",
+      "actions": ["right"],
+      "settleMs": 900,
+      "boxes": {
+        "header band": {"sel": ".icefin-topbar", "x": 0, "y": 0, "w": 1920, "h": 185, "tol": 6},
+        "menu folded": {"sel": ".icefin-siderail", "x": 0, "y": 185, "w": 210, "tol": 6},
+        "first menu entry": {"sel": ".pl-menu-item", "index": 0, "y": 238, "h": 90, "tol": 10},
+        "first tile": {"sel": ".pl-tile .pl-art", "index": 0, "x": 242, "y": 249, "w": 300, "h": 225},
+        "second tile": {"sel": ".pl-tile .pl-art", "index": 1, "x": 566, "y": 249, "w": 300},
+        "third tile": {"sel": ".pl-tile .pl-art", "index": 2, "x": 890},
+        "right panel": {"sel": ".pl-info", "x": 1325, "y": 250, "w": 547, "h": 759}
+      },
+      "text": {
+        "brand": {"sel": ".pl-brand", "x": 87, "cy": 81},
+        "clock": {"sel": ".pl-clock", "right": 1864, "cy": 81},
+        "count over the grid": {"sel": ".pl-count", "right": 1190, "cy": 213}
+      }
+    },
+    {
+      "name": "second-row",
+      "actions": ["down"],
+      "settleMs": 600,
+      "boxes": {
+        "a tile on the second row": {"sel": ".pl-tile .pl-art", "index": 3, "x": 242, "y": 498, "h": 225}
+      }
+    }
+  ],
+  "timings": [
+    {"name": "focus frame moves at once", "sel": ".pl-tile .pl-art", "kind": "transition", "property": "outline", "ms": 0}
+  ]
+}

@@ -59,22 +59,26 @@
     let S = null;  // { client, root, content, menu:[el], views, grid, cells:[el], cols, zone, ... } while the screen is up
 
     ui.chrome.set('topBar', {
-        height: '11vh',
+        height: '17.13vh',  // 185 of 1080 lines (docs/themes/references/plum.json)
         mount(bar) {
-            bar.append(el('div', 'pl-brand', 'icefin'));
+            const brand = el('div', 'pl-brand', 'icefin');
+            S.where = el('span', 'pl-where', 'Home');
+            brand.append(S.where);
+            bar.append(brand);
             const right = el('div', 'pl-header-right');
             const clock = el('div', 'pl-clock');
-            const count = el('div', 'pl-count');
-            right.append(count, clock);
+            right.append(el('div', 'pl-hint', '✱ for Options'), clock);
             bar.append(right);
             const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
             tick();
-            if (S) { S.clockTimer = setInterval(tick, 15000); S.count = count; }
+            if (S) S.clockTimer = setInterval(tick, 15000);
         }
     });
 
+    // The target's menu: a column of icons that widens with labels while focus is in it (the engine's expanding rail).
     ui.chrome.set('sideRail', {
-        width: '27vw',
+        width: '24.48vw',
+        collapsedWidth: '10.94vw',
         async mount(rail) {
             const list = el('div', 'pl-menu');
             rail.append(list);
@@ -86,7 +90,9 @@
             const sections = [{ label: 'Home' }, ...views.map((v) => ({ label: v.Name, view: v })),
                 { label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' }];
             S.menu = sections.map((s) => {
-                const b = el('div', 'pl-menu-item', s.label);
+                const b = el('div', 'pl-menu-item');
+                b.setAttribute('data-mark', s.label.charAt(0).toUpperCase());
+                b.append(el('span', 'icefin-rail-label', s.label));
                 b.setAttribute('data-icefin-focus', '');
                 b.tabIndex = -1;
                 b.plum = s;
@@ -130,6 +136,7 @@
         const gen = ++renderGen;
         S.section = section;
         S.content.setAttribute('data-pl-section', section.label);
+        if (S.where) S.where.textContent = section.label;
         S.content.removeAttribute('data-pl-ready');
         if (section.hash) {
             S.grid.textContent = '';
@@ -155,7 +162,8 @@
         S.index = 0;
         S.topRow = 0;
         if (!S.cells.length) S.grid.append(el('div', 'pl-empty', 'Nothing here yet'));
-        if (S.count) S.count.textContent = tiles.length ? `${tiles.length} ${tiles.length === 1 ? 'item' : 'items'}` : '';
+        if (S.count) S.count.textContent = tiles.length ? `1 of ${tiles.length}` : '';
+        showInfo(tiles[0]);
         loadArt();
         S.content.setAttribute('data-pl-ready', String(S.cells.length));
         S.content.setAttribute('data-pl-cols', String(cols));
@@ -194,6 +202,17 @@
         S.content.setAttribute('data-pl-top', String(S.topRow));
         loadArt();
         T.ctx.focus(S.cells[i]);
+        showInfo(S.cells[i].plumTile);
+        S.count.textContent = `${i + 1} of ${S.cells.length}`;
+    }
+
+    // The right-hand panel: the focused tile's art, name and summary (where the target shows a featured item).
+    function showInfo(tile) {
+        if (!S || !tile) return;
+        S.infoArt.style.backgroundImage = tile.art ? `url("${tile.art}")` : 'none';
+        S.infoTitle.textContent = tile.label || '';
+        S.infoSub.textContent = tile.sub || '';
+        S.infoText.textContent = (tile.item && tile.item.Overview) || '';
     }
 
     function enterGrid() {
@@ -260,6 +279,14 @@
             const content = ui.chrome.frame(root, ctx);
             S.content = content;
             content.plumFill = (g) => fill(g);
+            S.count = el('div', 'pl-count');
+            S.info = el('div', 'pl-info');
+            S.infoArt = el('div', 'pl-info-art');
+            S.infoTitle = el('div', 'pl-info-title');
+            S.infoSub = el('div', 'pl-info-sub');
+            S.infoText = el('div', 'pl-info-text');
+            S.info.append(S.infoArt, S.infoTitle, S.infoSub, S.infoText);
+            content.append(S.count, S.info);
             S.gridView = el('div', 'pl-grid-view');
             S.grid = el('div', 'pl-grid');
             S.gridView.append(S.grid);

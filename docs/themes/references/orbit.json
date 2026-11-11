@@ -1,0 +1,51 @@
+{
+  "theme": "orbit",
+  "target": "Xbox 360 New Xbox Experience dashboard (2008-2010), a channel with its tiles, 1920x1080",
+  "sources": [
+    "YouTube, SlasherExtras, \"NXE Dashboard [XBOX 360]\", https://www.youtube.com/watch?v=LeLocNfgexM (1080p, an OBS capture): the My Xbox channel at 262-286 s, a carousel step at 286.10-286.47 s; frames read in the browser at 1/30 s steps, nothing downloaded",
+    "Layout, timing and colours only: no tiles, icons, avatars, sounds, fonts or names from the target are used"
+  ],
+  "measurements": {
+    "front tile": "630 x 476 (4:3) at (143, 375), flat",
+    "tiles behind": "to the right and smaller, a little higher: the second 470 x 355 ending x 1239 (y 424-779), the third 372 x 282 ending x 1516 (y 454-736); in a perspective model that's a 1200 px perspective, 411 px depth per step, 734 px (116.5% of a tile) apart, the projection centre ~47 px above the front tile's middle, no tilt",
+    "titles": "the current channel's title over the front tile at x 149, centred on y ~302 (~52 px type, white), the channels above stacked upward, smaller and fainter at y 237, 188, 146",
+    "count and hints": "'1 of 8' under the front tile at x 143, y 883; the select hint at x 152, y 973; the gamer tag top right ending x 1660, centred on y 120",
+    "motion": "a carousel step takes ~370 ms, fast at first",
+    "colours": "deep green sky (#4f7f11) brightening to #cce18a, a grey floor (#a1a8b6 to #6e6f76), lime tiles (#c4e431), white type"
+  },
+  "tolerancePx": 16,
+  "timingTolerance": 0.1,
+  "ready": "+(document.querySelector('#icefin-theme-root') || {getAttribute: () => 0}).getAttribute('data-ob-ready') > 0",
+  "states": [
+    {
+      "name": "channel",
+      "actions": [{"eval": "document.getElementById('icefin-theme-root').orbitFill([0, 1, 2].map(c => ({title: 'channel ' + c, tiles: Array.from({length: 6}, (_, i) => ({label: 'Tile ' + c + '.' + i, sub: '', art: '', go: () => {}}))})))"}],
+      "settleMs": 1200,
+      "boxes": {
+        "front tile": {"sel": ".ob-channel.current .ob-face", "index": 0, "x": 143, "y": 375, "w": 630, "h": 476},
+        "second tile": {"sel": ".ob-channel.current .ob-face", "index": 1, "right": 1239, "y": 424, "w": 470, "h": 355, "tol": 18, "covered": true},
+        "third tile": {"sel": ".ob-channel.current .ob-face", "index": 2, "right": 1516, "y": 454, "w": 372, "h": 282, "tol": 20, "covered": true}
+      },
+      "text": {
+        "channel title": {"sel": ".ob-channel.current .ob-channel-title", "x": 149, "cy": 305},
+        "count": {"sel": ".ob-count", "x": 143, "cy": 883},
+        "clock": {"sel": ".ob-clock", "right": 1660, "cy": 120}
+      }
+    },
+    {
+      "name": "next-channel",
+      "actions": ["down"],
+      "settleMs": 900,
+      "boxes": {
+        "its front tile": {"sel": ".ob-channel.current .ob-face", "index": 0, "x": 143, "y": 375, "w": 630, "h": 476}
+      },
+      "text": {
+        "its title on the line": {"sel": ".ob-channel.current .ob-channel-title", "x": 149, "cy": 305},
+        "the previous title above": {"sel": ".ob-channel[data-ob-rank='1'] .ob-channel-title", "x": 149, "cy": 239}
+      }
+    }
+  ],
+  "timings": [
+    {"name": "carousel step", "sel": ".ob-channel.current .ob-tile", "kind": "transition", "property": "transform", "ms": 370}
+  ]
+}

@@ -51,6 +51,12 @@
 
     let S = null;  // { root, stack, rows:[{el, cells, carousel}], index } while the screen is up
 
+    function showCount() {
+        if (!S || !S.rows[S.index]) return;
+        const row = S.rows[S.index];
+        S.count.textContent = `${row.carousel.index() + 1} of ${row.cells.length}`;
+    }
+
     function tile(t) {
         const c = el('div', 'ob-tile');
         c.tabIndex = -1;
@@ -60,6 +66,7 @@
         else face.append(el('div', 'ob-face-title', t.label));
         c.append(face, el('div', 'ob-label', t.label), el('div', 'ob-sub', t.sub || ''));
         c.addEventListener('click', () => t.go());
+        c.addEventListener('icefin-focus', () => setTimeout(showCount, 0));
         return c;
     }
 
@@ -73,7 +80,11 @@
             const ring = el('div', 'ob-ring');
             row.append(ring);
             S.stack.append(row);
-            const carousel = ui.carousel3d(ring, ch.tiles, { render: tile, spacing: 72, depth: 260, tilt: 28, visible: 4, ms: 320 });
+            // The target's ring: the front tile flat at the left, the next ones further back on the right (scale 0.745,
+            // 0.593), no tilt, 370 ms a step. Depth and perspective are px, so they follow the window's height.
+            const k = window.innerHeight / 1080;
+            const carousel = ui.carousel3d(ring, ch.tiles, { render: tile, spacing: 116.5, depth: Math.round(411 * k), tilt: 0.001, visible: 4, ms: 370,
+                perspective: `${Math.round(1200 * k)}px` });
             return { el: row, carousel, cells: [...ring.querySelectorAll('.ob-tile')], last: 0 };
         });
         S.root.setAttribute('data-ob-ready', String(S.rows.length));
@@ -85,14 +96,19 @@
         i = Math.max(0, Math.min(S.rows.length - 1, i));
         if (S.index >= 0 && S.rows[S.index]) S.rows[S.index].last = S.rows[S.index].carousel.index();
         S.index = i;
-        S.rows.forEach((r, k) => { r.el.classList.toggle('current', k === i); r.el.classList.toggle('near', Math.abs(k - i) === 1); });
+        // The focused channel's title sits over its ring; the channels above stack their titles upward, smaller and
+        // fainter; the ones below wait out of sight.
+        S.rows.forEach((r, k) => {
+            r.el.classList.toggle('current', k === i);
+            r.el.classList.toggle('near', Math.abs(k - i) === 1);
+            r.el.setAttribute('data-ob-rank', k < i ? String(Math.min(i - k, 5)) : k > i ? 'below' : '0');
+        });
         const row = S.rows[i];
-        // The focused channel sits on the centre line; neighbours peek above and below.
-        const view = S.stack.parentElement.offsetHeight;
-        S.stack.style.transform = `translateY(${Math.round(view / 2 - (row.el.offsetTop + row.el.offsetHeight / 2))}px)`;
+        S.count.textContent = '';
         S.backdrop.style.transform = `translateY(${-i * 2.2}vh) scale(1.12)`;  // parallax: the backdrop moves a fraction
         S.root.setAttribute('data-ob-index', String(i));
         row.carousel.focus(Math.min(row.last, row.cells.length - 1));
+        showCount();
     }
 
     // ---- the guide: a panel over any screen ----
@@ -140,7 +156,8 @@
             const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
             tick();
             S.clockTimer = setInterval(tick, 15000);
-            root.append(S.backdrop, view, clock, el('div', 'ob-hint', 'Hold View for the guide'));
+            S.count = el('div', 'ob-count');
+            root.append(S.backdrop, view, clock, S.count, el('div', 'ob-hint', 'Ⓐ Select   ·   hold View for the guide'));
             root.orbitFill = (channels) => fill(channels);
             channelsFor(T.ctx.apiClient()).then((ch) => { if (S) fill(ch); }, (e) => { console.warn('Orbit: channels', e); if (S) fill([]); });
         },

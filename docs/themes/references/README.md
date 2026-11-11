@@ -26,7 +26,8 @@ rules).
 See the docstring of `clone_layout.py`. In short, a spec has:
 
 - `ready`: a JS expression that is true once the theme's screen is up;
-- `states`: each with `actions` (engine actions, or `{"repeat", "until", "max"}` to walk to a condition), `boxes`
+- `states`: each with `actions` (engine actions, `{"repeat", "until", "max"}` to walk to a condition, or `{"eval"}`
+  to set up a fixture such as a long grid), `boxes`
   (element boxes) and `text` (the text's own box, so font padding doesn't count), and optionally `log`, expressions
   printed for debugging a spec;
 - `timings`: transitions and animations with duration, easing and delay.

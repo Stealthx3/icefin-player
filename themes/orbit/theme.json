@@ -2,8 +2,10 @@
   "schema": 1,
   "id": "orbit",
   "name": "Orbit",
-  "version": "0.1.0",
-  "description": "A vertical stack of category channels, each a horizontal carousel of large tiles receding in 3D depth, over a soft parallax backdrop, with a guide panel that opens over any screen. Pale sky gradient with green focus.",
+  "version": "0.2.0",
+  "description": "Channels stacked vertically, each a ring of tiles receding to the right behind a flat front tile, the channels above stacking their titles upward; a parallax backdrop and a guide panel over any screen. Green sky over a grey floor, lime tiles.",
   "styles": "styles.css",
-  "scripts": ["orbit.js"]
+  "scripts": [
+    "orbit.js"
+  ]
 }
