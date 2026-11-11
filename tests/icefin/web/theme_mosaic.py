@@ -77,7 +77,7 @@ def main():
         heads = json.loads(js("JSON.stringify([...document.querySelectorAll('.icefin-pivot-header')].map(e => e.textContent))"))
         check("pivot headers: home, the libraries, settings", heads[0] == "home" and heads[-1] == "settings" and all(h == h.lower() for h in heads), json.dumps(heads))
         hsize = js("parseFloat(getComputedStyle(document.querySelector('.icefin-pivot-header.active')).fontSize) / innerHeight")
-        check("headers are large type (typography-led)", hsize >= 0.06, f"{hsize:.3f} of the height")
+        check("headers are 42/1080 type, the grid the larger part (typography-led)", abs(hsize - 42 / 1080) < 0.008, f"{hsize:.3f} of the height")
         sizes = json.loads(js("JSON.stringify([...document.querySelectorAll('.pv-tile')].map(t => t.mosaicTile.size))"))
         check("home is a grid of mixed sizes: large, wide and small", {"large", "wide", "small"} <= set(sizes), json.dumps(sizes))
         geo = json.loads(js("JSON.stringify((() => { const r = s => document.querySelector('.pv-' + s).getBoundingClientRect(); "
@@ -119,7 +119,7 @@ def main():
         page.wait_for("location.hash.startsWith('#/search')", timeout=10)
         time.sleep(2)
         check("Enter on a tile opens its page, styled by Mosaic's tokens", js("window.icefinTheme.active().route") is None
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim().toLowerCase()") == "#2f8f1f")
+              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim().toLowerCase()") == "#009a00")
 
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)

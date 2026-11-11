@@ -1,0 +1,63 @@
+{
+  "theme": "mosaic",
+  "target": "Xbox 360 dashboard, Metro design (2012 update), a pivot with its tile grid, 1920x1080",
+  "sources": [
+    "YouTube, IGN, \"New Xbox 360 2012 Dashboard Update Walkthrough\", https://www.youtube.com/watch?v=3zOX7_67dIQ (720p, direct feed, scaled x1.5): the music pivot at 29 s; frames read in the browser, nothing downloaded",
+    "Layout and colours only: no tiles, icons, sounds, fonts or names from the target are used"
+  ],
+  "measurements": {
+    "headers": "one row of lowercase pivot headers centred on y ~204, ~42 px type; the current one near black, the others #505052",
+    "grid": "three rows from y 266 to 864 (rows 195 tall, 6 apart); small tiles ~263 wide, 6 apart, from x ~298; wider tiles (2x1, 2x2) of the same unit",
+    "focus": "the focused tile lifts to ~107% (282 x 209 from 263 x 195)",
+    "corners": "the gamer tag top right ending x ~1719, centred on y 78 (Mosaic puts its clock there); button hints lower left at y ~986",
+    "colours": "a grey field (light at the top, #a2a1a4 lower, #8c8b8e at the bottom), Xbox-green tiles #009a00",
+    "motion": "not timed from this source"
+  },
+  "tolerancePx": 16,
+  "timingTolerance": 0.1,
+  "ready": "+(document.querySelector('#icefin-theme-root') || {getAttribute: () => 0}).getAttribute('data-pv-tiles') > 1",
+  "states": [
+    {
+      "name": "home",
+      "settleMs": 1500,
+      "boxes": {
+        "grid": {
+          "sel": ".pv-grid",
+          "x": 298,
+          "y": 266,
+          "h": 598,
+          "tol": 10
+        },
+        "first small tile": {
+          "sel": ".pv-tile.pv-small",
+          "index": 0,
+          "x": 836,
+          "y": 266,
+          "w": 263,
+          "h": 195
+        },
+        "wide tile under the large one": {
+          "sel": ".pv-tile.pv-wide",
+          "index": 0,
+          "x": 298,
+          "y": 668,
+          "w": 532,
+          "h": 195
+        }
+      },
+      "text": {
+        "current header": {
+          "sel": ".icefin-pivot-header.active",
+          "x": 298,
+          "cy": 204
+        },
+        "clock": {
+          "sel": ".pv-clock",
+          "right": 1719,
+          "cy": 78
+        }
+      }
+    }
+  ],
+  "timings": []
+}

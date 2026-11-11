@@ -1,11 +1,14 @@
 /* Tide: gradient and wave backdrop, category row crossing an item column at a fixed point. Proportions follow the
    benchmark target at 16:9; colours from tokens (palettes by month and time of day). */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
-[data-td] { color: var(--icefin-color-text); overflow: hidden !important; --td-x: 26vw; --td-y: 30vh; --td-step: 11vw; --td-item: 9.6vh;
+/* Geometry follows the target's measurements (docs/themes/references/tide.json): category icons on y 285 from the fixed
+   point x 561 on a 211 pitch; the focused item's icon centred on (561, 505), the next one on y 681, names from x 759. */
+[data-td] { color: var(--icefin-color-text); overflow: hidden !important; --td-x: 29.22vw; --td-y: 29.79vh; --td-step: 11vw; --td-item: 7.2vh;
+  --td-below: 13.35vh; --td-after: 9.07vh;
   background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveBottom) 100%); }
 .td-wave { position: absolute; inset: 0; width: 100%; height: 100%; }
 .td-shade { position: absolute; inset: 0; background: var(--icefin-color-shade); pointer-events: none; }
-.td-clock { position: absolute; right: 4vw; top: 5vh; font-size: 1.1em; text-shadow: 0 0.1em 0.3em var(--icefin-color-shade); }
+.td-clock { position: absolute; right: 5.42vw; top: 8.38vh; font-size: 1.4vw; line-height: 1; text-shadow: 0 0.1em 0.3em var(--icefin-color-shade); }
 
 /* Category row: slides so the focused category sits at the fixed point */
 .td-cats { position: absolute; left: 0; top: calc(var(--td-y) - 6vh); height: 12vh; transition: transform 260ms ease-out; }
@@ -17,16 +20,16 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .td-cat.current .td-cat-label { opacity: 1; }
 
 /* Item column: slides vertically so the focused item sits just under the category row */
-.td-items { position: absolute; left: calc(var(--td-x) - 4vh); top: 0; right: 0; height: 100%; }
-.td-item { position: absolute; left: 0; height: var(--td-item); display: flex; align-items: center; gap: 1.4vw; outline: none; opacity: 0.6;
+.td-items { position: absolute; left: calc(var(--td-x) - 2.87vh); top: 0; right: 0; height: 100%; }
+.td-item { position: absolute; left: 0; height: var(--td-item); display: flex; align-items: center; gap: 8.7vw; outline: none; opacity: 0.6;
   transition: top 220ms ease-out, opacity 200ms; white-space: nowrap; }
 .td-thumb { width: calc(var(--td-item) * 0.8); height: calc(var(--td-item) * 0.8); flex: none; border-radius: var(--icefin-shape-cardRadius);
   background: var(--icefin-color-surface) center / cover no-repeat; display: flex; align-items: center; justify-content: center; }
 .td-thumb svg { width: 60%; height: 60%; color: var(--icefin-color-text); }
-.td-name { font-size: 1.15em; }
+.td-name { font-size: 1.56vw; line-height: 1; }
 .td-sub { font-size: 0.8em; color: var(--icefin-color-textSecondary); }
-.td-item.icefin-focused { opacity: 1; }
-.td-item.icefin-focused .td-thumb { box-shadow: 0 0 1.2em var(--icefin-color-waveLine); transform: scale(1.18); }
+.td-item.icefin-focused { opacity: 1; align-items: flex-start; }
+.td-item.icefin-focused .td-thumb { box-shadow: 0 0 1.2em var(--icefin-color-waveLine); transform: scale(2); align-self: center; }
 .td-item.icefin-focused .td-name { font-weight: 700; text-shadow: 0 0 0.6em var(--icefin-color-waveLine); }
 .td-item.above { opacity: 0.45; }
 

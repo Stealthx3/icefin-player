@@ -1,6 +1,8 @@
-/* Lumen: tab bar, top shelf, poster rows. Proportions follow the benchmark target at 16:9; colours from tokens. */
+/* Lumen: tab bar, top shelf, poster rows. Geometry follows the target's published layout (docs/themes/references/lumen.json):
+   an 80 px side inset and 60 px top inset at 1920x1080, rows on its six-column (posters) and four-column (16:9) grids
+   with 40 px spacing. Colours from tokens. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Inter", "Noto Sans", "Open Sans", sans-serif; }
-[data-lm] { --lm-gutter: 5.2vw; overflow: hidden !important; color: var(--icefin-color-text); }
+[data-lm] { --lm-gutter: 4.17vw; overflow: hidden !important; color: var(--icefin-color-text); }
 
 /* Top shelf: full-bleed art of the focused item */
 .lm-shelf { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; transition: opacity 400ms ease, filter 400ms ease; }
@@ -14,7 +16,7 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .lm-shelf-overview { line-height: 1.45; max-height: 4.4em; overflow: hidden; color: var(--icefin-color-textSecondary); }
 
 /* Tab bar: a frosted pill, centred, hidden once focus leaves it */
-.lm-tabs { position: absolute; top: 4vh; left: 50%; transform: translateX(-50%); display: flex; gap: 0.3em; padding: 0.35em; border-radius: 2em; z-index: 3;
+.lm-tabs { position: absolute; top: 5.56vh; left: 50%; transform: translateX(-50%); display: flex; gap: 0.3em; padding: 0.35em; border-radius: 2em; z-index: 3;
   transition: transform 300ms ease, opacity 300ms ease; }
 [data-lm-tabs=hidden] .lm-tabs { transform: translate(-50%, -12vh); opacity: 0; }
 .lm-tab { white-space: nowrap; padding: 0.5em 1.3em; border-radius: 1.6em; font-weight: 600; color: var(--icefin-color-textSecondary); outline: none; transition: background 150ms, color 150ms, transform 150ms; }
@@ -26,10 +28,10 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .lm-row { margin-bottom: 7vh; }
 .lm-row-title { margin: 0 var(--lm-gutter) 1.4vh; font-size: 1.15em; font-weight: 600; color: var(--icefin-color-textSecondary); transition: color 200ms; }
 .lm-row.current .lm-row-title { color: var(--icefin-color-text); }
-.lm-track { display: flex; gap: 2.2vw; padding: 2.5vh var(--lm-gutter); transition: transform 300ms ease; }
-.lm-card { flex: none; width: 11.5vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
+.lm-track { display: flex; gap: 2.08vw; padding: 2.5vh var(--lm-gutter); transition: transform 300ms ease; }
+.lm-card { flex: none; width: 13.54vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
   outline: none; box-shadow: 0 0.6em 1.4em transparent; transition: transform 220ms ease-out, box-shadow 220ms ease-out; }
-.lm-row.wide .lm-card { width: 22vw; aspect-ratio: 16 / 9; }
+.lm-row.wide .lm-card { width: 21.35vw; aspect-ratio: 16 / 9; }
 .lm-card.icefin-focused { box-shadow: 0 2.2em 3em var(--icefin-color-shelfScrim); z-index: 2; }
 .lm-card-label { position: absolute; left: 0; right: 0; top: 100%; margin-top: 1.4vh; font-size: 0.9em; text-align: center; color: var(--icefin-color-text);
   opacity: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 200ms; }

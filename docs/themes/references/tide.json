@@ -1,0 +1,67 @@
+{
+  "theme": "tide",
+  "target": "PlayStation 3 XrossMediaBar (XMB), as booted by the RPCS3 emulator at 1920x1080",
+  "sources": [
+    "YouTube, RPCS3, \"RPCS3 - VSH/XMB Now Booting on the Master Build!\", https://www.youtube.com/watch?v=60lq9pXzDic (1080p): the XMB at 41 s (PlayStation Network category, What's New focused); frames read in the browser, nothing downloaded",
+    "Layout only: Tide's icons are original line drawings; no icons, sounds, fonts, the wave artwork or names from the target are used"
+  ],
+  "measurements": {
+    "categories": "a row of category icons centred on y 285 at a ~211 pitch (152, 350, 561, 772, ...); the current one at the fixed point x 561, larger, its label under it at y ~350",
+    "items": "the item column under the current category at x 561; the focused item's icon ~155 x 127 centred on (561, 505) with its title at x 759, centred on y ~474; the next items' icons from y ~681 on a ~78 pitch; the item above the row at y ~120",
+    "clock": "top right, ending x ~1816, centred on y ~104",
+    "motion": "not timed from this source"
+  },
+  "tolerancePx": 16,
+  "timingTolerance": 0.1,
+  "ready": "!!document.querySelector('.td-item.icefin-focused') && !!document.querySelector('.td-cat.current')",
+  "states": [
+    {
+      "name": "xmb",
+      "settleMs": 1500,
+      "boxes": {
+        "current category icon": {
+          "sel": ".td-cat.current svg",
+          "cx": 561,
+          "cy": 285,
+          "tol": 18
+        },
+        "next category icon": {
+          "sel": ".td-cat.current + .td-cat svg",
+          "cx": 772,
+          "cy": 285,
+          "tol": 18
+        },
+        "focused item icon": {
+          "sel": ".td-item.icefin-focused .td-thumb",
+          "cx": 561,
+          "cy": 505,
+          "h": 125,
+          "tol": 18
+        },
+        "next item icon": {
+          "sel": ".td-item.icefin-focused + .td-item .td-thumb",
+          "cx": 561,
+          "cy": 681,
+          "tol": 18
+        }
+      },
+      "text": {
+        "focused item name": {
+          "sel": ".td-item.icefin-focused .td-name",
+          "x": 759,
+          "cy": 474,
+          "tol": 18
+        },
+        "clock": {
+          "sel": ".td-clock",
+          "right": 1816,
+          "cy": 104
+        }
+      },
+      "actions": [
+        "right"
+      ]
+    }
+  ],
+  "timings": []
+}

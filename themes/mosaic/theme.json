@@ -2,8 +2,10 @@
   "schema": 1,
   "id": "mosaic",
   "name": "Mosaic",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Large lowercase pivot headers across the top that slide with their sections, each a grid of flat tiles in three sizes with live tiles cycling content. Light grey with green tiles; typography carries the design.",
   "styles": "styles.css",
-  "scripts": ["mosaic.js"]
+  "scripts": [
+    "mosaic.js"
+  ]
 }
