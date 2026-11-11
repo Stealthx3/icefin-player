@@ -52,7 +52,7 @@ QVariantMap CompositorState::toMap() const
           {"referenceWhite", referenceWhite}, {"peak", peak}, {"gamma22", gamma22}, {"shaderUrl", shaderUrl},
           {"videoLinearWhite", kVideoLinearWhite}, {"hdrRequested", hdrRequested}, {"hdrReason", hdrReason},
           {"tagged", tagged}, {"maxCll", video.maxCll}, {"maxFall", video.maxFall},
-          {"masteringMax", video.maxLuminance}, {"masteringMin", video.minLuminance}};
+          {"masteringMax", video.maxLuminance}, {"masteringMin", video.minLuminance}, {"uiVisible", uiVisible}};
 }
 
 CompositorState& compositorState()
@@ -122,9 +122,13 @@ Rgb bt2020To709(const Rgb& c)
 
 Rgb composePixel(const CompositorState& s, const Rgb& ui, double a, const Rgb& video, bool hasVideo)
 {
-  // Video relative to SDR white, in BT.709 (where the UI lives).
+  // Video relative to SDR white, in BT.709 (where the UI lives). SDR output: mpv encoded it with the SDR transfer.
   const double k = kVideoLinearWhite / s.referenceWhite;
-  Rgb v = hasVideo ? Rgb{video.r * k, video.g * k, video.b * k} : Rgb{};
+  Rgb v{};
+  if (hasVideo && s.output == OutputEncoding::Sdr)
+    v = {decodeSdr(video.r, s.gamma22), decodeSdr(video.g, s.gamma22), decodeSdr(video.b, s.gamma22)};
+  else if (hasVideo)
+    v = {video.r * k, video.g * k, video.b * k};
   if (s.output != OutputEncoding::Sdr) v = bt2020To709(v);
   auto mix = [&](double u, double vv) {
     if (s.blend == UiBlend::Srgb) return decodeSdr(u + (1.0 - a) * encodeSdr(vv, s.gamma22), s.gamma22);
@@ -164,6 +168,7 @@ layout(std140, binding = 0) uniform buf {
   float referenceWhite;  // nits of SDR white
   float videoScale;      // video texture unit -> SDR white (videoLinearWhite / referenceWhite)
   float hasVideo;
+  float uiAlpha;         // 1, or 0 to show the video alone (tests: parity with stock mpv, 5.8)
 };
 layout(binding = 1) uniform sampler2D ui;
 layout(binding = 2) uniform sampler2D video;
@@ -189,8 +194,10 @@ vec3 pqEncode(vec3 nits) {
 }
 
 void main() {
-  vec4 u = texture(ui, qt_TexCoord0);
-  vec3 v = hasVideo > 0.5 ? texture(video, qt_TexCoord0).rgb * videoScale : vec3(0.0);
+  vec4 u = texture(ui, qt_TexCoord0) * uiAlpha;
+  vec3 tv = texture(video, qt_TexCoord0).rgb;
+  // SDR output: mpv encoded the video with the SDR transfer (stock gpu-next's target); otherwise linear light.
+  vec3 v = hasVideo < 0.5 ? vec3(0.0) : (outputMode < 0.5 ? decodeSdr(tv) : tv * videoScale);
   if (outputMode > 0.5) v = BT2020_TO_709 * v;
   vec3 rel;
   if (blendMode < 0.5) {

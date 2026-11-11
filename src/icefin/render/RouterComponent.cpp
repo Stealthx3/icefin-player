@@ -176,6 +176,13 @@ void RouterComponent::setUiBlend(const QString& name)
   refreshCompositor();
 }
 
+void RouterComponent::setUiLayerVisible(bool visible)
+{
+  compositorState().uiVisible = visible;
+  qInfo() << "Icefin compositor: UI layer" << (visible ? "shown" : "hidden (video alone)");
+  refreshCompositor();
+}
+
 void RouterComponent::refreshCompositor()
 {
   CompositorState& cs = compositorState();

@@ -8,7 +8,8 @@ With Renderer = Vulkan (needs the patched libmpv, external/mpv), checks:
      over video, on either renderer, so a screen grab there proves nothing);
   3. the router routes as Vulkan (the lab's display is SDR), and the
      compositor's description reaches mpv as its target-* options with none rejected (5.2, D23);
-  4. the single-surface compositor is on (5.4): mpv renders linear light into RGBA16F, the UI items sit in the
+  4. the single-surface compositor is on (5.4): mpv renders into RGBA16F (for an SDR display, stock gpu-next's SDR
+     target, 5.8), the UI items sit in the
      compositor's layer, the window shows a composited picture (the compositor draws every pixel itself, so the
      Xvfb grab works here), and the UI blend switches at run time;
   5. a second load plays on the Vulkan path again;
@@ -108,8 +109,9 @@ def main():
         comp = page.eval("new Promise(r => window.api.router.compositor(m => r(m)))")
         check("compositor on (5.4)", bool(comp and comp.get("active")), json.dumps(comp))
         check("UI items moved into the compositor's layer", "Icefin compositor: UI layer holds" in t)
-        check("mpv renders linear light for the compositor", "Icefin video: linear RGBA16F for the compositor" in t
-              and bool(tgt) and "target-trc=linear" in tgt.group(1))
+        # SDR display: mpv renders to stock gpu-next's SDR target (5.8 parity), which the compositor decodes.
+        check("mpv renders for the compositor (RGBA16F, stock's SDR target)", "Icefin video: RGBA16F for the compositor" in t
+              and bool(tgt) and re.search(r"target-trc=(gamma2\.2|srgb)", tgt.group(1)) is not None)
         if xv is not None or a.qpa != "session":
             grab = os.path.join(cfgdir, "grab-srgb.png")
             subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", "1280x720", "-i", ":99",

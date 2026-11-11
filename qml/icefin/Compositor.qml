@@ -57,6 +57,7 @@ Item
       property real referenceWhite: root.state.referenceWhite || 203
       property real videoScale: (root.state.videoLinearWhite || 203) / (root.state.referenceWhite || 203)
       property real hasVideo: 1
+      property real uiAlpha: root.state.uiVisible === false ? 0 : 1
       fragmentShader: root.state.shaderUrl
     }
   }

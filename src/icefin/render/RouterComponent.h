@@ -52,6 +52,8 @@ public:
   Q_INVOKABLE QVariantMap compositor() const;
   // How the UI is blended over video: "srgb" or "linear" (D24 compares them; tests switch at run time).
   Q_INVOKABLE void setUiBlend(const QString& name);
+  // Tests: false shows the video alone, without the UI layer (parity with stock mpv, 5.8).
+  Q_INVOKABLE void setUiLayerVisible(bool visible);
   // Reference white, peak and transfer from the display; called on display and swapchain changes.
   Q_INVOKABLE void refreshCompositor();
 
