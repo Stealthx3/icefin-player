@@ -16,7 +16,6 @@
 #include <QImage>
 #include <QCoreApplication>
 #include <QUrl>
-#include <QSoundEffect>
 #include <QFileDialog>
 #include "ThemeInstall.h"
 
@@ -99,7 +98,7 @@ bool ThemeComponent::componentInitialize()
     });
   }
   connect(&Audio::state(), &Audio::AudioState::bitstreamChanged, this, [this](bool on) {
-    if (on) for (QSoundEffect* e : m_sounds) e->stop();
+    if (on && m_uiSounds) m_uiSounds->stopAll();
   });
   updateChoices();
   mirrorSetting();
@@ -235,15 +234,11 @@ void ThemeComponent::playSound(const QString& event)
   const QString rel = p.sounds.value(event);
   if (rel.isEmpty() || !mayServe(p, rel, trusted(p))) return;
   const QString path = p.dir + '/' + rel;
-  QSoundEffect*& e = m_sounds[path];
-  if (!e) {
-    e = new QSoundEffect(this);
-    e->setSource(path.startsWith(":/") ? QUrl("qrc" + path) : QUrl::fromLocalFile(path));
-  }
+  if (!m_uiSounds) m_uiSounds = new UiSounds(this);
   bool ok = false;
   const double vol = m_tokens.value("sound.volume").toDouble(&ok);
-  e->setVolume(ok ? qBound(0.0, vol, 1.0) : 1.0);
-  e->play();
+  QString why;
+  if (!m_uiSounds->play(path, float(ok ? qBound(0.0, vol, 1.0) : 1.0), &why)) { soundNote(false, event, why); return; }
   soundNote(true, event, QString());
 }
 
@@ -273,8 +268,7 @@ bool ThemeComponent::apply(const QString& id, const QString& preset, qint64 save
     m_active = id; m_preset = preset; m_tokens = t;
   }
   if (saveTimestamp) saveSelection(m_active, m_preset, m_colorScheme, saveTimestamp);
-  for (QSoundEffect* e : m_sounds) e->deleteLater();
-  m_sounds.clear();
+  if (m_uiSounds) m_uiSounds->clear();
   mirrorSetting();
   qInfo().noquote() << "Icefin theme:" << (m_active.isEmpty() ? QString("engine off (stock UI)") : QString("%1%2%3, %4 tokens").arg(m_active, m_preset.isEmpty() ? QString() : " / " + m_preset, m_colorScheme.isEmpty() ? QString() : " (" + m_colorScheme + ")").arg(m_tokens.size()));
   prepareBackdrop();
