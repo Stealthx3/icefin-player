@@ -1,20 +1,24 @@
-/* Mosaic: big lowercase pivot headers over a column-flowing grid of flat tiles in three sizes. Proportions follow the
-   benchmark target at 16:9; all colours from tokens. No shadows, no rounded corners: type and colour do the work. */
+/* Mosaic: lowercase pivot headers over a column-flowing grid of flat tiles in three sizes. Geometry follows the target's
+   measurements (docs/themes/references/mosaic.json); px at 1920x1080 map to vw (x/19.2) and vh (y/10.8). All colours
+   from tokens. No rounded corners: type and colour do the work. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Segoe UI", "Noto Sans", "Open Sans", sans-serif; }
 
-[data-pv] { overflow: clip !important; background: var(--icefin-color-background); }
-.pv-clock { position: absolute; right: 4vw; top: 4vh; font-size: 1.5em; color: var(--icefin-color-textSecondary); }
-.pv-host { position: absolute; left: 6vw; right: 0; top: 7vh; bottom: 0; overflow: clip; }
+[data-pv] { overflow: clip !important; background: linear-gradient(180deg, var(--icefin-color-background) 0%, var(--icefin-color-backgroundMid) 55%, var(--icefin-color-backgroundLow) 100%); }
+/* The clock where the target shows the gamer tag: top right, ending x 1719, centred on y 78. */
+.pv-clock { position: absolute; right: 10.47vw; top: 6.2vh; font-size: 1.3vw; line-height: 1; color: var(--icefin-color-text); }
+/* Headers centred on y 204; the grid from (298, 266), three rows to y 864. */
+.pv-host { position: absolute; left: 0; right: 0; top: 16.9vh; bottom: 0; padding-left: 15.52vw; box-sizing: border-box; overflow: clip; }
 
 /* Headers: the active one full strength, the rest faded; they slide left with the content. */
-.pv-host .icefin-pivot-headers { gap: 3vw !important; margin-bottom: 5vh; }
-.pv-host .icefin-pivot-header { font-size: 4.2em; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: var(--icefin-color-textSecondary);
-  opacity: 0.45; cursor: pointer; }
-.pv-host .icefin-pivot-header.active { color: var(--icefin-color-text); opacity: 1; }
-.pv-host .icefin-pivot-body { height: 62vh; }
+.pv-host .icefin-pivot-headers { gap: 1.8vw !important; margin-bottom: 3.8vh; }
+.pv-host .icefin-pivot-header { font-size: 2.2vw; font-weight: 400; letter-spacing: -0.01em; line-height: 1; color: var(--icefin-color-textSecondary);
+  cursor: pointer; }
+.pv-host .icefin-pivot-header.active { color: var(--icefin-color-text); }
+.pv-host .icefin-pivot-body { height: 55.37vh; }
 
 /* The grid: three rows of units, filled column by column; large 2×2, wide 2×1, small 1×1. */
-.pv-grid { display: grid; grid-auto-flow: column dense; grid-template-rows: repeat(3, 1fr); grid-auto-columns: 12.5vw; gap: 1vw; height: 100%; }
+/* Small tiles 263 x 195, 6 apart; wide 2x1 and large 2x2 of them. */
+.pv-grid { display: grid; grid-auto-flow: column dense; grid-template-rows: repeat(3, 1fr); grid-auto-columns: 13.7vw; gap: 0.56vh 0.31vw; height: 100%; }
 .pv-tile { position: relative; outline: none; background: var(--icefin-color-tile); color: var(--icefin-color-onTile); overflow: hidden; cursor: pointer; }
 .pv-large { grid-column: span 2; grid-row: span 2; }
 .pv-wide { grid-column: span 2; }
@@ -28,8 +32,8 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .pv-caption { position: absolute; left: 0.7em; right: 0.7em; top: 0.5em; font-size: 0.95em; text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.8);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Focus: a heavy dark frame inside the tile and a small lift; flat, no glow. */
-.pv-tile.icefin-focused { box-shadow: inset 0 0 0 0.3em var(--icefin-color-focus); transform: scale(1.03); z-index: 1; }
+/* Focus: the tile lifts to 107%, flat, with a soft shadow under it. */
+.pv-tile.icefin-focused { transform: scale(1.07); box-shadow: 0 0.6vh 1.6vh rgba(0, 0, 0, 0.3); z-index: 1; }
 .pv-tile { transition: transform 120ms ease; }
 
 html[data-icefin-motion="low"] .pv-frame { animation: none; }

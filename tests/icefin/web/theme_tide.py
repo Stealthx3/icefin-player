@@ -78,7 +78,7 @@ def main():
         pos = lambda: json.loads(js("JSON.stringify((() => { const c = document.querySelector('.td-cat.current').getBoundingClientRect(), f = document.querySelector('.td-item.icefin-focused').getBoundingClientRect(); return {cx: (c.left + c.width / 2) / innerWidth, cy: (c.top + c.height / 2) / innerHeight, fy: f.top / innerHeight, fx: f.left / innerWidth}; })())"))
         time.sleep(0.5)
         p0 = pos()
-        check("the focused category sits at the fixed point, the focused item just under it", abs(p0["cx"] - 0.26) < 0.02 and 0.2 < p0["cy"] < 0.35 and p0["cy"] < p0["fy"] < p0["cy"] + 0.15, json.dumps(p0))
+        check("the focused category sits at the fixed point, the focused item just under it", abs(p0["cx"] - 561 / 1920) < 0.02 and 0.2 < p0["cy"] < 0.35 and p0["cy"] < p0["fy"] < p0["cy"] + 0.2, json.dumps(p0))
         shot("home.png")
         n = int(js(f"{R}.dataset.tdCount"))
         if n >= 2:
@@ -92,7 +92,7 @@ def main():
         act("right")
         time.sleep(0.5)
         p2 = pos()
-        check("right changes category; the new icon takes the fixed point", cat() == cats[2] and abs(p2["cx"] - 0.26) < 0.02, f"{cat()} {json.dumps(p2)}")
+        check("right changes category; the new icon takes the fixed point", cat() == cats[2] and abs(p2["cx"] - 561 / 1920) < 0.02, f"{cat()} {json.dumps(p2)}")
         act("left"); act("left")
         time.sleep(0.4)
         check("left reaches Settings", cat() == "Settings", cat())

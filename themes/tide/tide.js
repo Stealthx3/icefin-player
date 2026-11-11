@@ -101,7 +101,11 @@
             row.tabIndex = -1;
             row.tideIndex = k;
             const d = k - i;
-            row.style.top = d < 0 ? `calc(var(--td-y) - 7vh + ${d} * var(--td-item))` : `calc(var(--td-y) + 7vh + ${d} * var(--td-item))`;
+            // Above the row the items stack upward; the focused one sits --td-below under the category row, and the
+            // ones after it leave room for its larger icon (--td-after), as on the target.
+            row.style.top = d < 0 ? `calc(var(--td-y) - 7vh + ${d} * var(--td-item))`
+                : d === 0 ? 'calc(var(--td-y) + var(--td-below))'
+                : `calc(var(--td-y) + var(--td-below) + var(--td-after) + ${d} * var(--td-item))`;
             const thumb = el('div', 'td-thumb');
             const tag = x.item && x.item.ImageTags && x.item.ImageTags.Primary;
             if (tag) thumb.style.backgroundImage = `url("${S.client.getScaledImageUrl(x.item.Id, { type: 'Primary', maxWidth: 200, tag })}")`;
