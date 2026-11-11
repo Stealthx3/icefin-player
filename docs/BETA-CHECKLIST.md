@@ -12,8 +12,8 @@ result is seen; anything else is a bug report (P1 if playback is silent, black o
 
 | Row | Hardware | Do | Expect | From |
 | --- | --- | --- | --- | --- |
-| V1 | Intel Xe or Arc | Play the 4K HDR10 HEVC and AV1 samples for 10 minutes | Hardware decode (overlay: `vaapi`), zero-copy on the Vulkan renderer, no dropped frames | 4.5, 5.3 |
-| V2 | AMD RDNA 2+ | Same, Vulkan renderer | `vaapi` zero-copy (DMA-BUF import), no dropped frames | 5.3 |
+| V1 | Intel Xe or Arc | Play the 4K HDR10 HEVC and AV1 samples for 10 minutes | Hardware decode (overlay: `vaapi`), zero-copy on the Vulkan renderer, no dropped frames; the 10-bit HDR10 clip especially (the lab's NVIDIA stand-in can't import 10-bit) | 4.5, 5.3 |
+| V2 | AMD RDNA 2+ | Same, Vulkan renderer | `vaapi` zero-copy (DMA-BUF import) for 8-bit and 10-bit, no dropped frames | 5.3 |
 | V3 | NVIDIA | Same, Vulkan renderer and OpenGL renderer | Vulkan: zero-copy NVDEC; OpenGL: copy mode, picture not black | 4.5 |
 | V4 | The slowest machine available | Browse every built-in theme for a minute each, then play a film | UI at 60 fps (overlay frame timing), the backdrop (Media Center, Tide) drops no frames | 5.8, 8.6, 9.2 |
 | V5 | Any | Play 23.976 fps content on a 60 Hz display | Even motion (no refresh switching in 1.0; note judder if seen) | SPEC risks |

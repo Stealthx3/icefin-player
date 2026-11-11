@@ -27,6 +27,10 @@ private slots:
     QCOMPARE(hwdecFor("nvdec"), QString("nvdec"));
     QCOMPARE(hwdecFor("vulkan"), QString("vulkan"));
     QCOMPARE(hwdecFor("copy"), QString("auto-copy-safe"));
+    // An explicit VA-API choice loads its interop without probing; everything else loads all, probing (5.3).
+    QCOMPARE(interopFor("vaapi"), QString("vaapi"));
+    QCOMPARE(interopFor("auto"), QString("auto"));
+    QCOMPARE(interopFor("nvdec"), QString("auto"));
     QCOMPARE(hwdecFor("off"), QString("no"));
     QCOMPARE(hwdecFor("enabled"), QString("auto-safe"));
     QCOMPARE(hwdecFor("disabled"), QString("no"));

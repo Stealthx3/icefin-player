@@ -20,7 +20,8 @@ def ver_tuple(v):
 
 class Server:
     def __init__(self, cfg):
-        self.name, self.base, self.abi = cfg["name"], f"http://127.0.0.1:{cfg['port']}", cfg["abi"]
+        # ICEFIN_SERVER_HOST: the lab guest's address when a test runs on the workstation (the servers live in the guest)
+        self.name, self.base, self.abi = cfg["name"], f"http://{os.environ.get('ICEFIN_SERVER_HOST', '127.0.0.1')}:{cfg['port']}", cfg["abi"]
         self.token = None
 
     def call(self, method, path, body=None, raw=False, timeout=60):

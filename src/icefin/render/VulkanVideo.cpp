@@ -19,6 +19,8 @@
 #include "MpvTarget.h"
 #include "HdrCapabilityProbe.h"
 #include "Compositing.h"
+#include "icefin/gpu/Hwdec.h"
+#include "settings/SettingsComponent.h"
 #include "RouterComponent.h"
 #include <QSGTexture>
 #include <QTimer>
@@ -158,6 +160,10 @@ bool VulkanVideo::createContext()
                                {MPV_RENDER_PARAM_VULKAN_INIT_PARAMS, &vp},
                                display,
                                {MPV_RENDER_PARAM_INVALID, nullptr}};
+  // Which interops the context loads (Hwdec.h interopFor): read once here, as mpv reads it at creation.
+  const QString interop = Gpu::interopFor(SettingsComponent::Get().value(SETTINGS_SECTION_VIDEO, "hardwareDecoding").toString());
+  mpv_set_property_string(m_mpv, "gpu-hwdec-interop", interop.toUtf8().constData());
+  if (interop != "auto") qInfo().noquote() << "Icefin video: hwdec interop" << interop << "(the Hardware Decoding choice)";
   const int rc = qEnvironmentVariable("ICEFIN_VULKAN_FAIL") == "mpv" ? MPV_ERROR_UNSUPPORTED : mpv_render_context_create(&m_ctx, m_mpv, params);
   if (rc < 0) {
     m_ctx = nullptr;

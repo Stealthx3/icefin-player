@@ -55,6 +55,11 @@ QString hwdecFor(const QString& setting, bool nvidiaOnOpenGl)
   return (nvidiaOnOpenGl && v == "auto-safe") ? QString("auto-copy-safe") : v;
 }
 
+QString interopFor(const QString& setting)
+{
+  return setting == "vaapi" ? QString("vaapi") : QString("auto");
+}
+
 QString migratedSetting(const QString& setting)
 {
   if (setting == "enabled" || setting == "osx_compat") return "auto";
