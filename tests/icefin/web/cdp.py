@@ -134,7 +134,11 @@ class Page:
 
     def switch_theme_reloading(self, theme, ready, timeout=90):
         """Switch to a theme that declares a backdrop, from a page without one: Backdrop.qml reloads the page once
-        (8.4). Waits for the new page (the marker set here is gone) and for `ready` on it."""
+        (8.4). Waits for the new page (the marker set here is gone) and for `ready` on it. A theme already active
+        (the server's saved choice for this user, synced at sign-in) needs no switch and no reload."""
+        if self.eval("!!(window.icefinTheme && window.icefinTheme.active() && window.icefinTheme.active().id === %s)" % json.dumps(theme)):
+            self.wait_for(ready, timeout=timeout)
+            return True
         self.eval("window.__icefinBeforeReload = 1; true")
         self.eval("new Promise(r => window.api.theme.setActiveTheme(%s, '', r))" % json.dumps(theme))
         end = time.time() + timeout
