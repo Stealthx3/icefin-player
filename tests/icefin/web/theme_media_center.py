@@ -74,7 +74,7 @@ def main():
         check("start strip: one row per library, plus More", json.loads(cats)[-1] == "More" and len(json.loads(cats)) >= 3, cats)
         # jellyfin-web's own navigation (history.pushState, no hashchange) must mount and unmount themed screens: before
         # the fix only the theme's colours showed when the user reached Home that way.
-        js("location.hash = '#/mypreferencesmenu'; true")
+        js("location.hash = '#/mypreferencesmenu?icefin=stock'; true")
         page.wait_for("!document.querySelector('#icefin-theme-root') || document.querySelector('#icefin-theme-root').hidden", timeout=20)
         js("Dashboard.navigate('home'); true")
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root'); return !!r && !r.hidden && +r.getAttribute('data-mc-ready') > 0; })()", timeout=30)

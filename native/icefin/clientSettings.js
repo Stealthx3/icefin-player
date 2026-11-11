@@ -36,6 +36,7 @@
   border: 0.1em solid var(--icefin-color-divider, GrayText); box-shadow: 0 0.8em 2em rgb(var(--icefin-color-background-channel, 0 0 0) / 0.5); scrollbar-width: thin;
   visibility: visible !important; }
 .icefin-dd-option { padding: 0.6em 1em; cursor: pointer; outline: none; }
+.icefin-dd-group { padding: 0.8em 1em 0.3em; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--icefin-color-textSecondary, GrayText); }
 .icefin-dd-option[aria-selected="true"] { font-weight: 600; }
 .icefin-dd-option[aria-selected="true"]::after { content: " ✓"; }
 .icefin-dd-option:focus, .icefin-dd-option:hover { background: var(--icefin-color-focus, Highlight); color: var(--icefin-color-onFocus, HighlightText); }
@@ -76,16 +77,25 @@
         const below = window.innerHeight - r.bottom, above = r.top;
         if (below >= 200 || below >= above) list.style.top = `${r.bottom + 2}px`; else list.style.bottom = `${window.innerHeight - r.top + 2}px`;
         let current = null;
-        [...select.options].forEach((o) => {
+        const addOption = (o) => {
             const it = el('div', { className: 'icefin-dd-option', tabIndex: 0, textContent: o.textContent });
             it.setAttribute('role', 'option');
             it.dataset.value = o.value;
             if (o.value === select.value) { it.setAttribute('aria-selected', 'true'); current = it; }
             it.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); pick(select, o.value); });
             list.append(it);
+        };
+        // Option groups get a heading (not focusable; the arrows skip it).
+        [...select.children].forEach((c) => {
+            if (c.tagName === 'OPTGROUP') {
+                list.append(el('div', { className: 'icefin-dd-group', textContent: c.label }));
+                [...c.children].forEach(addOption);
+            } else if (c.tagName === 'OPTION') {
+                addOption(c);
+            }
         });
         list.addEventListener('keydown', (e) => {
-            const items = [...list.children], i = items.indexOf(document.activeElement);
+            const items = [...list.querySelectorAll('.icefin-dd-option')], i = items.indexOf(document.activeElement);
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 const it = items[Math.max(0, Math.min(items.length - 1, (i < 0 ? 0 : i) + (e.key === 'ArrowDown' ? 1 : -1)))];
                 it.focus({ preventScroll: true });
@@ -121,7 +131,7 @@
             else list.style.bottom = `${parseFloat(list.style.bottom) - dy}px`;
         }
         open = { list, select };
-        const first = current || list.firstChild;
+        const first = current || list.querySelector('.icefin-dd-option');
         if (first) {
             first.focus({ preventScroll: true });
             list.scrollTop = Math.max(0, first.offsetTop - list.clientHeight / 2);

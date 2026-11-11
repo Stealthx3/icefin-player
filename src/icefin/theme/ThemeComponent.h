@@ -38,6 +38,12 @@ public:
   Q_INVOKABLE bool setScheme(const QString& scheme);
   // Theme, preset and scheme in one switch (the theme manager's Apply): one change, one page reload at most.
   Q_INVOKABLE bool select(const QString& id, const QString& preset, const QString& scheme);
+  // Colour schemes from other themes (9.25): a preset "@<theme>" or "@<theme>/<preset>" takes that theme's colours
+  // (its color.* tokens, with the scheme: its Dark when the scheme is "dark") over this theme's own.
+  // Classic View (9.24): the stock look for this session. The saved choice stays (and comes back at the next start or
+  // with setClassic(false)); picking a theme leaves Classic View.
+  Q_INVOKABLE bool setClassic(bool on);
+  Q_INVOKABLE bool classic() const { return m_classic; }
   // Empty id turns the engine off. Returns false (and keeps the current theme) if the theme can't be used.
   Q_INVOKABLE bool setActiveTheme(const QString& id, const QString& preset = QString());
   // Per-user selection: setUser() applies that user's cached choice; selection() is {theme, preset, scheme, timestamp}
@@ -108,6 +114,7 @@ Q_SIGNALS:
   void webRepaintRequested(const QString& mode);
   void installFinished(const QVariantMap& result);
   void packagesChanged();
+  void classicChanged(bool on);
 
 private:
   ThemeComponent() = default;
@@ -117,6 +124,9 @@ private:
   bool trusted(const Package& p) const;
   QMap<QString, Package> m_packages;
   QString m_active, m_preset, m_colorScheme;
+  bool m_classic = false;
+  TokenMap resolveFor(const Package& p, const QString& preset, const QString& scheme, QStringList* errs) const;
+  void saveSelection(const QString& id, const QString& preset, const QString& scheme, qint64 timestamp);
   TokenMap m_tokens;
   QStringList m_errors;
   class SchemeHandler* m_scheme = nullptr;

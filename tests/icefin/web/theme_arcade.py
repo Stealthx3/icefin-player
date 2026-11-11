@@ -154,7 +154,7 @@ def main():
         act("back")
         check("Back closes the dialog", js("!document.querySelector('.ar-dialog-scrim')") and foc().startswith("ui/Filter (1)"), foc())
         # quick access over a stock page (long press on View)
-        js("location.hash = '#/mypreferencesmenu'; true")
+        js("location.hash = '#/mypreferencesmenu?icefin=stock'; true")
         time.sleep(3)
         act("icefin_overlay")
         check("quick access opens over a stock page", js("!!document.querySelector('#icefin-theme-overlay .ar-qa')") and js("window.icefinTheme.active().route") is None)

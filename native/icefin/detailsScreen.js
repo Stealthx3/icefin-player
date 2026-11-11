@@ -570,5 +570,6 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
         };
     }
 
-    T.ui.details = { screen, PLAYABLE: [...PLAYABLE], TYPES: [...PLAYABLE, ...CONTAINER] };
+    // ensureStyle: the base stylesheet (buttons, Back and Home, layouts) for other engine screens that reuse the markup.
+    T.ui.details = { screen, ensureStyle, PLAYABLE: [...PLAYABLE], TYPES: [...PLAYABLE, ...CONTAINER] };
 })();
