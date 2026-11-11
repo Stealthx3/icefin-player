@@ -11,7 +11,7 @@ with the reference timings (within 10%, the SPEC's acceptance) and easings.
 Spec format (all keys but theme/states optional):
   {"theme": "harbor", "target": "...", "sources": [...], "tolerancePx": 12, "timingTolerance": 0.1,
    "ready": "<js expression true once the screen is up>",
-   "states": [{"name": "...", "actions": ["down", {"repeat": "down", "until": "<js>", "max": 12}], "settleMs": 900,
+   "states": [{"name": "...", "actions": ["down", {"repeat": "down", "until": "<js>", "max": 12}, {"eval": "<js>"}], "settleMs": 900,
                "boxes": {"label": {"sel": "css", "index": 0, "x": 0, "y": 240, "w": 462, "h": 95, "tol": 8}},
                "text": {"label": {"sel": "css", "index": 0, "x": 104, "cy": 288, "right": 1892}}}],
    "timings": [{"name": "...", "sel": "css", "kind": "transition", "property": "transform", "ms": 500,
@@ -138,6 +138,10 @@ def main():
         tol_all = spec.get("tolerancePx", 12)
         for st in spec["states"]:
             for act in st.get("actions", []):
+                if isinstance(act, dict) and "eval" in act:  # {"eval": js}: set up a fixture (a long grid, a page of data)
+                    js(f"(() => {{ {act['eval']}; return true; }})()")
+                    time.sleep(st.get("stepMs", 700) / 1000)
+                    continue
                 if isinstance(act, dict):  # {"repeat": action, "until": js, "max": n}: walk until the condition holds
                     for _ in range(act.get("max", 12)):
                         if js(f"!!({act['until']})"):

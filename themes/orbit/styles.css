@@ -1,39 +1,57 @@
-/* Orbit: channels stacked vertically, each a 3D carousel of tiles; a parallax backdrop; the guide panel. Proportions
-   follow the benchmark target at 16:9; all colours from tokens. */
+/* Orbit: channels stacked vertically, each a 3D carousel of tiles; a parallax backdrop; the guide panel. All colours
+   from tokens. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Segoe UI", "Noto Sans", "Open Sans", sans-serif; }
 
 [data-ob] { overflow: clip !important; background: var(--icefin-color-background); }
 .ob-backdrop { position: absolute; inset: -8vh 0; pointer-events: none; transition: transform 600ms ease;
-  background: radial-gradient(ellipse at 70% 20%, var(--icefin-color-backdropTop) 0%, transparent 60%),
-              linear-gradient(180deg, var(--icefin-color-backdropTop) 0%, var(--icefin-color-backdropBottom) 100%); }
+  background: radial-gradient(ellipse 60% 40% at 75% 45%, var(--icefin-color-backdropMid) 0%, transparent 70%),
+              linear-gradient(180deg, var(--icefin-color-backdropTop) 0%, var(--icefin-color-backdropMid) 62%, var(--icefin-color-backdropBottom) 66%, var(--icefin-color-floor) 100%); }
 .ob-backdrop::after { content: ""; position: absolute; inset: 0;
-  background: repeating-radial-gradient(circle at 20% 120%, transparent 0 9vh, rgb(var(--icefin-color-surfaceRaised-channel) / 0.18) 9vh 9.3vh); }
+  background: repeating-radial-gradient(circle at 20% 30%, transparent 0 9vh, rgb(255 255 255 / 0.06) 9vh 9.4vh); }
 
-/* The stack: each channel is a title on the left and a carousel; the focused one sits on the centre line. */
+/* Geometry and motion follow the target's measurements (docs/themes/references/orbit.json); px at 1920x1080 map to vw
+   (x/19.2) and vh (y/10.8). */
+
+/* The stack: every channel fills the screen; only the current one shows its ring. Its title sits above the front
+   tile (x 149, centred on y 302); the channels above stack their titles upward, smaller and fainter (y 237, 188, 146). */
 .ob-view { position: absolute; inset: 0; overflow: clip; }
-.ob-stack { position: absolute; left: 0; right: 0; top: 0; transition: transform 320ms ease; }
-.ob-channel { position: relative; height: 50vh; display: grid; grid-template-columns: 20vw 1fr; align-items: center;
-  opacity: 0.28; transform: scale(0.82); transform-origin: 30% 50%; transition: opacity 320ms ease, transform 320ms ease; }
-.ob-channel.near { opacity: 0.5; }
-.ob-channel.current { opacity: 1; transform: none; }
-.ob-channel-title { justify-self: end; padding-right: 2vw; font-size: 3.2em; font-weight: 300; letter-spacing: -0.02em; color: var(--icefin-color-text);
-  writing-mode: horizontal-tb; white-space: nowrap; }
-.ob-channel.current .ob-channel-title { color: var(--icefin-color-accentStrong); }
-.ob-ring { position: relative; height: 40vh; }
+.ob-stack { position: absolute; inset: 0; }
+.ob-channel { position: absolute; inset: 0; pointer-events: none; clip-path: inset(-50vh -50vw -50vh 6.9vw); }
+.ob-channel.current { pointer-events: auto; }
+.ob-channel-title { position: absolute; left: 7.76vw; top: 25.6vh; font-size: 2.7vw; line-height: 1; font-weight: 400; letter-spacing: -0.01em;
+  color: var(--icefin-color-text); white-space: nowrap; transform-origin: 0 50%;
+  transition: top 370ms cubic-bezier(0.2, 0.8, 0.3, 1), font-size 370ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 370ms ease; }
+.ob-channel-title::before { content: ""; display: inline-block; width: 0.18em; height: 0.18em; margin: 0 0.3em 0.12em -0.5em; background: currentColor; vertical-align: middle; }
+.ob-channel:not(.current) .ob-channel-title::before { visibility: hidden; }
+.ob-channel[data-ob-rank="1"] .ob-channel-title { top: 20.3vh; font-size: 2.08vw; opacity: 0.85; }
+.ob-channel[data-ob-rank="2"] .ob-channel-title { top: 16.3vh; font-size: 1.67vw; opacity: 0.7; }
+.ob-channel[data-ob-rank="3"] .ob-channel-title { top: 12.7vh; font-size: 1.35vw; opacity: 0.55; }
+.ob-channel[data-ob-rank="4"] .ob-channel-title { top: 9.6vh; font-size: 1.1vw; opacity: 0.35; }
+.ob-channel[data-ob-rank="5"] .ob-channel-title { top: 7vh; font-size: 0.95vw; opacity: 0; }
+.ob-channel[data-ob-rank="below"] .ob-channel-title { top: 60vh; opacity: 0; }
 
-/* Tiles: large 16:9 faces; the front one carries the green focus frame and its label. */
-.ob-tile { width: 30vw; outline: none; }
-.ob-face { aspect-ratio: 16 / 9; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
-  box-shadow: 0 1.2em 2.4em rgb(var(--icefin-color-text-channel) / 0.25); display: flex; align-items: center; justify-content: center;
-  border: 0.25em solid transparent; }
-.ob-face-title { font-size: 2em; font-weight: 300; color: var(--icefin-color-accentStrong); }
+/* The ring: the front tile 630 x 476 (4:3) at (143, 375); the projection centre a little above its middle, so the
+   tiles behind ride slightly higher, as on the target. */
+.ob-ring { position: absolute; left: 7.45vw; top: 34.72vh; width: 32.81vw; height: 44.07vh; perspective-origin: 50% 40%;
+  opacity: 0; transition: opacity 370ms ease; }
+.ob-channel.current .ob-ring { opacity: 1; }
+.ob-tile { width: 32.81vw; outline: none; }
+.ob-face { position: relative; aspect-ratio: 4 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-tile) center / cover no-repeat;
+  box-shadow: 0 1.2em 2.4em rgb(0 0 0 / 0.3); display: flex; align-items: center; justify-content: center;
+  border: 0.25em solid transparent; box-sizing: border-box; }
+.ob-face-title { font-size: 2.2vw; font-weight: 300; color: var(--icefin-color-accentStrong); }
 .ob-tile.icefin-focused .ob-face { border-color: var(--icefin-color-focus); }
-.ob-label { margin-top: 1.2vh; font-size: 1.35em; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; }
-.ob-sub { font-size: 1em; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; }
+/* The name in the tile's lower left, like the target's tile captions. */
+.ob-label { position: absolute; left: 1.4vw; bottom: 4.2vh; font-size: 1.35vw; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 80%; opacity: 0; text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.5); }
+.ob-sub { position: absolute; left: 1.4vw; bottom: 1.8vh; font-size: 0.94vw; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 80%; opacity: 0; }
 .ob-tile.icefin-focused .ob-label, .ob-tile.icefin-focused .ob-sub { opacity: 1; }
 
-.ob-clock { position: absolute; right: 3vw; top: 3vh; font-size: 1.6em; color: var(--icefin-color-text); }
-.ob-hint { position: absolute; right: 3vw; bottom: 3vh; font-size: 0.95em; color: var(--icefin-color-textSecondary); }
+/* Count under the ring (x 143, y 883), the hint lower left (y 973), the clock top right (ending x 1660, y 120). */
+.ob-count { position: absolute; left: 7.45vw; top: 80.9vh; font-size: 0.94vw; line-height: 1; color: var(--icefin-color-text); }
+.ob-clock { position: absolute; right: 13.54vw; top: 9.4vh; font-size: 1.875vw; line-height: 1; color: var(--icefin-color-text); }
+.ob-hint { position: absolute; left: 7.92vw; top: 89.4vh; font-size: 0.94vw; line-height: 1; color: var(--icefin-color-text); }
 
 /* The guide: a dark panel on the left over a dimmed screen. */
 #icefin-theme-overlay.ob-guide-host { background: rgba(0, 0, 0, 0.45); }
@@ -47,5 +65,5 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .ob-guide-item { padding: 1.4vh 1.2vw; font-size: 1.35em; border-radius: 0.3em; outline: none; }
 .ob-guide-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
 
-html[data-icefin-motion="low"] .ob-stack, html[data-icefin-motion="low"] .ob-channel, html[data-icefin-motion="low"] .ob-backdrop { transition-duration: 0ms; }
+html[data-icefin-motion="low"] .ob-channel-title, html[data-icefin-motion="low"] .ob-ring, html[data-icefin-motion="low"] .ob-backdrop { transition-duration: 0ms; }
 html[data-icefin-motion="low"] .ob-guide { animation: none; }

@@ -2,8 +2,10 @@
   "schema": 1,
   "id": "plum",
   "name": "Plum",
-  "version": "0.1.0",
-  "description": "A left menu column beside a grid of large tiles, three across on Home and four across in a library, under a slim header with the clock. Deep purple, a thick focus frame that jumps rather than glides, and a theme-level low-motion cap.",
+  "version": "0.2.0",
+  "description": "The classic home: a header band, a menu of marks that widens with labels, a grid of large 4:3 tiles three across with an info panel beside it, and a focus frame that jumps. Deep blue-violet under a violet-to-magenta band.",
   "styles": "styles.css",
-  "scripts": ["plum.js"]
+  "scripts": [
+    "plum.js"
+  ]
 }

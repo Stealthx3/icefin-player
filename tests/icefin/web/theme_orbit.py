@@ -5,14 +5,14 @@
   - a vertical stack of channels (spotlight, one per library, system), each a 3D carousel of large tiles: the focused
     tile in front, the others receding in depth and tilt;
   - five-way: left/right step through a channel's carousel and stop at its ends, up/down change channel with the
-    focused channel on the centre line, and each channel keeps its tile; the backdrop moves a fraction (parallax);
+    focused channel's title on the title line over its ring, and each channel keeps its tile; the backdrop moves a fraction (parallax);
   - the guide (long press on View, icefin_overlay) opens over the themed home and over a stock page, is modal, and
     Back closes it with focus returned;
   - Enter on a tile opens its page, styled by Orbit's tokens.
-Layout positions and timings against reference captures stay with 9.1. Screenshots go to --out.
+Layout positions and timings against the reference: clone_layout.py --theme orbit. Screenshots go to --out.
 Usage: python3 theme_orbit.py --app ~/build/src/icefin-player --server jf12 --out ~/r98/jf12
 """
-import argparse, base64, json, os, signal, sys, tempfile, time
+import argparse, re, base64, json, os, signal, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -86,8 +86,9 @@ def main():
            "({label: 'T' + c + '.' + i, sub: '', art: '', go: () => { location.hash = '#/search'; }}))}))); true")
         time.sleep(0.8)
         depth = json.loads(js("JSON.stringify([...document.querySelectorAll('.ob-channel[data-ob-channel=\"0\"] .ob-tile')].slice(0, 3).map(t => t.style.transform))"))
-        check("a 3D carousel: the front tile flat, the next ones further back and tilted",
-              "translateZ(0px)" in depth[0] and "translateZ(-260px)" in depth[1] and "rotateY(-28deg)" in depth[1] and "translateZ(-520px)" in depth[2], json.dumps(depth))
+        z = [float(re.search(r"translateZ\((-?[\d.]+)px\)", d).group(1)) for d in depth]
+        check("a 3D carousel: the front tile flat, the next ones further back to the right",
+              z[0] == 0 and z[1] < 0 and abs(z[2] - 2 * z[1]) < 1, json.dumps(depth))
         shot("home.png")
         act("right")
         act("right")
@@ -98,8 +99,11 @@ def main():
         bd0 = js("document.querySelector('.ob-backdrop').style.transform")
         act("down")
         time.sleep(0.5)
-        centre = js("(() => { const r = document.querySelector('.ob-channel.current').getBoundingClientRect(); return Math.abs((r.top + r.height / 2) - innerHeight / 2) / innerHeight; })()")
-        check("down changes channel, centred", foc() == "tile/1/0" and root("data-ob-index") == "1" and centre < 0.03, f"{foc()} off-centre {centre:.3f}")
+        time.sleep(0.4)
+        line = js("(() => { const t = document.querySelector('.ob-channel.current .ob-channel-title').getBoundingClientRect(); const p = document.querySelector('.ob-channel[data-ob-rank=\"1\"] .ob-channel-title').getBoundingClientRect(); return JSON.stringify({cur: t.top / innerHeight, prev: p.top / innerHeight}); })()")
+        lj = json.loads(line)
+        check("down changes channel: its title takes the title line, the previous one stacks above", foc() == "tile/1/0" and root("data-ob-index") == "1"
+              and abs(lj["cur"] - 0.256) < 0.02 and lj["prev"] < lj["cur"], f"{foc()} {line}")
         check("the backdrop moves with the channel (parallax)", js("document.querySelector('.ob-backdrop').style.transform") != bd0)
         act("up")
         check("up returns and the channel kept its tile", foc() == "tile/0/5", foc())
@@ -122,7 +126,7 @@ def main():
         page.wait_for("location.hash.startsWith('#/search')", timeout=10)
         time.sleep(2)
         check("Enter on a tile opens its page, styled by Orbit's tokens", js("window.icefinTheme.active().route") is None
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#5cb82a")
+              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#fbfef9")
         act("icefin_overlay")
         page.wait_for("!!document.querySelector('#icefin-theme-overlay .ob-guide')", timeout=5)
         check("the guide opens over a stock page too", True)

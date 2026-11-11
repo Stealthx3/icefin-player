@@ -86,7 +86,7 @@ def main():
                             "return {cols: cs.gridTemplateColumns.split(' ').length, bar: document.querySelector('.pz-bar').getBoundingClientRect().height / innerHeight, "
                             "clock: document.querySelector('.pz-clock').textContent, date: document.querySelector('.pz-date').textContent, "
                             "rounds: document.querySelectorAll('.pz-round').length}; })())"))
-        check("bottom bar with the clock, the date and two round buttons", geo["cols"] == 4 and 0.17 <= geo["bar"] <= 0.25 and geo["clock"] and geo["date"] and geo["rounds"] == 2, json.dumps(geo))
+        check("bottom bar with the clock, the date and two round buttons", geo["cols"] == 4 and abs(geo["bar"] - 304 / 1080) < 0.01 and geo["clock"] and geo["date"] and geo["rounds"] == 2, json.dumps(geo))
         check("pointer-first is on", js("document.documentElement.hasAttribute('data-icefin-pointer')") is True)
         check("focus starts on the first channel", foc() == "tile/0", foc())
         time.sleep(1)
