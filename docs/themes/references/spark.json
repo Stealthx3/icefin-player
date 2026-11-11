@@ -1,0 +1,56 @@
+{
+  "theme": "spark",
+  "target": "Fire TV home, 2026 interface (as shown February 2026), 1920x1080",
+  "sources": [
+    "YouTube, Tech Steve, \"Fire TV Just Got a MAJOR Interface Overhaul | 2026\", https://www.youtube.com/watch?v=0AkM0PWK2oI (1080p): direct-capture segments 366-396 s; home stills at 370 s and 390 s (top bar focus), a row with focus at 380-384 s, focus growing onto a tile at 373.10-373.25 s; frames read at 1/60 s steps in the browser, nothing downloaded",
+    "Measured by scanning the frame's dark gaps between tiles and edges (canvas reads of the paused video)"
+  ],
+  "measurements": {
+    "top bar": "icon entries centred on y 57 on an 88 px pitch from x 128; the focused entry a light pill (#a8b3b2 over the art) 66 x 64 with its label under it at y 106; the brand mark at the right ending x 1814",
+    "hero": "full bleed from the top to about y 590, art to the right, text block from x 99, one button (#2c3331) centred on y 513",
+    "rows": "first row tiles 330 x 186 (16:9) from x 99, top 604, 21 apart (351 pitch); an app row of 154 x ~86 tiles on a 176 pitch below at y 815",
+    "focus": "the focused tile grows about its centre to ~1.08 (357 x 201) with a light ring, in about 150-170 ms (373.10 to 373.25 s at 60 fps steps)",
+    "row scroll": "the focused tile holds the first slot (x 99) and the previous tile peeks at the left edge (0-78); the scroll's duration wasn't isolated in this source and isn't checked",
+    "background": "#0b0c0e under the rows"
+  },
+  "tolerancePx": 14,
+  "timingTolerance": 0.1,
+  "ready": "!!document.querySelector('#icefin-theme-root[data-sp-ready]') && !!document.querySelector('.sp-hero.icefin-focused')",
+  "states": [
+    {
+      "name": "home",
+      "settleMs": 1500,
+      "boxes": {
+        "top bar": {"sel": ".icefin-topbar", "x": 0, "y": 0, "w": 1920, "h": 115, "tol": 6},
+        "hero": {"sel": ".sp-hero", "x": 0, "y": 0, "w": 1920, "h": 590, "tol": 6},
+        "hero button": {"sel": ".sp-hero-btn", "x": 99, "cy": 513, "h": 46, "tol": 10},
+        "first tile": {"sel": ".sp-row-section:first-child .sp-tile", "index": 0, "x": 99, "y": 604, "w": 330, "h": 186},
+        "second tile": {"sel": ".sp-row-section:first-child .sp-tile", "index": 1, "x": 450, "y": 604}
+      },
+      "text": {
+        "brand at the right": {"sel": ".sp-brand", "right": 1814, "cy": 57},
+        "first entry": {"sel": ".sp-nav-item", "index": 0, "cy": 57}
+      }
+    },
+    {
+      "name": "row-focused",
+      "actions": ["down"],
+      "settleMs": 900,
+      "boxes": {
+        "focused tile (108%)": {"sel": ".sp-tile.icefin-focused", "x": 86, "y": 597, "w": 356, "h": 201},
+        "hero stays full": {"sel": ".sp-hero", "h": 590, "tol": 6}
+      }
+    },
+    {
+      "name": "along-the-row",
+      "actions": ["right"],
+      "settleMs": 900,
+      "boxes": {
+        "focus holds the first slot": {"sel": ".sp-tile.icefin-focused", "x": 86, "y": 597, "w": 356}
+      }
+    }
+  ],
+  "timings": [
+    {"name": "focus grow", "sel": ".sp-tile", "kind": "transition", "property": "transform", "ms": 170}
+  ]
+}

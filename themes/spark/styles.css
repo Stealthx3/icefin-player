@@ -2,49 +2,54 @@
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
 [data-sp] { --sp-step: 19vw; }
 
-/* Top bar */
-[data-sp] .icefin-topbar { display: flex; align-items: center; gap: 2.4vw; padding: 0 3.2vw; z-index: 3; position: relative;
-  background: linear-gradient(180deg, var(--icefin-color-background) 0%, transparent 100%); }
-.sp-brand { font-weight: 700; font-size: 1.5em; letter-spacing: 0.02em; color: var(--icefin-color-text); }
-.sp-nav { display: flex; gap: 0.6vw; }
-.sp-nav-item { padding: 0.45em 0.95em; border-radius: 2em; color: var(--icefin-color-textSecondary); font-size: 1.1em; outline: none; white-space: nowrap;
-  transition: background 120ms, color 120ms; }
-.sp-nav-item.current { color: var(--icefin-color-text); }
-.sp-nav-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+/* Geometry and motion follow the target's measurements (docs/themes/references/spark.json); px at 1920x1080 map to vw
+   (x/19.2) and vh (y/10.8) here. */
+[data-sp] { --sp-step: 18.28vw; }  /* 330 px tiles on a 351 px pitch */
 
-/* Hero */
-[data-sp] .icefin-content { position: relative; }
-.sp-hero { position: relative; height: 52vh; margin: 0 3.2vw; border-radius: var(--icefin-shape-cardRadius); overflow: hidden; outline: none;
-  box-shadow: 0 0 0 0.2em transparent; transition: box-shadow 150ms, transform 150ms; }
-.sp-hero.icefin-focused { box-shadow: 0 0 0 0.22em var(--icefin-color-focus); }
+/* Top bar: 115 tall, floating over the hero; entries centred on y 57 from x 116, the brand at the right edge (1814) */
+[data-sp].icefin-chromed { grid-template-rows: 1fr !important; }
+[data-sp] > .icefin-content { grid-row: 1; grid-column: 1 / -1; }
+[data-sp] .icefin-topbar { position: absolute; left: 0; right: 0; top: 0; height: 10.65vh; display: flex; align-items: center; gap: 1.2vw; padding: 0 5.52vw 0 6.04vw;
+  z-index: 3; background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 100%); box-sizing: border-box; }
+.sp-brand { order: 2; margin-left: auto; font-weight: 700; font-size: 1.25vw; letter-spacing: 0.02em; color: var(--icefin-color-text); }
+.sp-nav { display: flex; gap: 0.4vw; }
+.sp-nav-item { height: 5.93vh; line-height: 5.93vh; padding: 0 0.9vw; border-radius: 1.2vh; color: var(--icefin-color-textSecondary); font-size: 0.94vw; outline: none; white-space: nowrap;
+  transition: background 170ms, color 170ms; }
+.sp-nav-item.current { color: var(--icefin-color-text); }
+.sp-nav-item.icefin-focused { background: var(--icefin-color-focusFill); color: var(--icefin-color-onFocusFill); }
+
+/* Hero: full-bleed to y 590; the text block from x 99, its button centred on y 513 */
+[data-sp] .icefin-content { position: relative; overflow: clip !important; }
+.sp-hero { position: absolute; left: 0; right: 0; top: 0; height: 54.63vh; overflow: hidden; outline: none; transition: height 220ms ease; }
 .sp-hero-art, .sp-hero-video { position: absolute; inset: 0; background: var(--icefin-color-surface) center / cover no-repeat; }
 .sp-hero-video:empty { display: none; }
-.sp-hero-scrim { position: absolute; inset: 0; background: linear-gradient(90deg, var(--icefin-color-heroScrim) 0%, transparent 62%); }
-.sp-hero-text { position: absolute; left: 3vw; bottom: 5vh; width: 42%; }
-.sp-hero-title { font-size: 2.6em; font-weight: 700; line-height: 1.1; margin-bottom: 1vh; }
-.sp-hero-meta { color: var(--icefin-color-textSecondary); margin-bottom: 1.2vh; }
-.sp-hero-overview { line-height: 1.4; max-height: 4.2em; overflow: hidden; color: var(--icefin-color-textSecondary); }
-.sp-hero-dots { position: absolute; right: 3vw; bottom: 3vh; display: flex; gap: 0.5em; }
+.sp-hero-scrim { position: absolute; inset: 0; background: linear-gradient(90deg, var(--icefin-color-heroScrim) 0%, transparent 55%),
+  linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 30%); }
+.sp-hero-text { position: absolute; left: 5.16vw; bottom: 5vh; width: 40%; }
+.sp-hero-title { font-size: 2.3vw; font-weight: 700; line-height: 1.1; margin-bottom: 1vh; }
+.sp-hero-meta { color: var(--icefin-color-textSecondary); margin-bottom: 1.2vh; font-size: 0.94vw; }
+.sp-hero-overview { line-height: 1.4; max-height: 4.2em; overflow: hidden; color: var(--icefin-color-textSecondary); font-size: 0.94vw; margin-bottom: 2vh; }
+.sp-hero-btn { display: inline-block; height: 4.26vh; line-height: 4.26vh; padding: 0 1.5vw; border-radius: 99em; font-size: 0.94vw; font-weight: 600;
+  background: var(--icefin-color-button); color: var(--icefin-color-text); transition: background 170ms, color 170ms; }
+.sp-hero.icefin-focused .sp-hero-btn { background: var(--icefin-color-focusFill); color: var(--icefin-color-onFocusFill); }
+.sp-hero-dots { position: absolute; right: 5.52vw; bottom: 7.04vh; display: flex; gap: 0.5em; }
 .sp-dot { width: 0.55em; height: 0.55em; border-radius: 50%; background: rgba(255, 255, 255, 0.35); }
 .sp-dot.active { background: var(--icefin-color-text); }
 
-/* Rows */
-/* overflow: clip, not hidden: a hidden box is still a scroll container, and focusing a tile would scroll it. */
-.sp-rows-view { position: absolute; left: 0; right: 0; top: calc(52vh + 3vh); bottom: 0; overflow: clip; transition: top 220ms ease; }
-[data-sp] .icefin-content { overflow: clip !important; }
-/* With focus in the rows the hero shrinks to a strip and the rows move up under it, as on the target. */
+/* Rows: the first row's tiles from y 604, x 99; tiles 330 x 186, 21 apart; the focused tile grows to 108% with a light ring
+   in 170 ms. overflow: clip, not hidden: a hidden box is still a scroll container, and focusing a tile would scroll it. */
+.sp-rows-view { position: absolute; left: 0; right: 0; top: 52.69vh; bottom: 0; overflow: clip; transition: top 220ms ease; }
 .sp-in-rows .sp-hero { height: 20vh; }
-.sp-in-rows .sp-hero-overview, .sp-in-rows .sp-hero-meta { display: none; }
-.sp-in-rows .sp-rows-view { top: calc(20vh + 3vh); }
-.sp-hero { transition: box-shadow 150ms, height 220ms ease; }
+.sp-in-rows .sp-hero-overview, .sp-in-rows .sp-hero-meta, .sp-in-rows .sp-hero-btn { display: none; }
+.sp-in-rows .sp-rows-view { top: 23vh; }
 .sp-rows { transition: transform 220ms ease; }
-.sp-row-section { margin-bottom: 2.6vh; }
-.sp-row-title { margin: 0 0 1vh 3.2vw; font-size: 1.2em; font-weight: 600; }
-.sp-row-view { position: relative; height: calc(18vw * 9 / 16 + 1.4em); margin-left: 3.2vw; overflow: visible; }
-.sp-row { position: absolute; left: 0; top: 0; height: 100%; transition: transform 220ms ease; }
-.sp-tile { position: absolute; top: 0; width: 18vw; aspect-ratio: 16 / 9; border-radius: var(--icefin-shape-cardRadius); outline: none;
-  background: var(--icefin-color-surface) center / cover no-repeat; transition: transform 150ms, box-shadow 150ms; transform-origin: center; }
-.sp-tile.icefin-focused { transform: scale(1.08); box-shadow: 0 0 0 0.2em var(--icefin-color-focus); z-index: 2; }
+.sp-row-section { margin-bottom: 2.3vh; }
+.sp-row-title { margin: 0 0 1vh 5.16vw; font-size: 1.04vw; line-height: 1.6vh; height: 2.24vh; font-weight: 600; }
+.sp-row-view { position: relative; height: 17.22vh; margin-left: 5.16vw; overflow: visible; }
+.sp-row { position: absolute; left: 0; top: 0; height: 100%; transition: transform 170ms ease-out; }
+.sp-tile { position: absolute; top: 0; width: 17.19vw; height: 17.22vh; border-radius: var(--icefin-shape-cardRadius); outline: none;
+  background: var(--icefin-color-surface) center / cover no-repeat; transition: transform 170ms ease-out, box-shadow 170ms ease-out; transform-origin: center; }
+.sp-tile.icefin-focused { transform: scale(1.08); box-shadow: 0 0 0 0.16vw var(--icefin-color-focusRing), 0 0.8vh 2vh rgba(0, 0, 0, 0.6); z-index: 2; }
 .sp-tile-label { position: absolute; left: 0.6em; right: 0.6em; bottom: 0.5em; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.9); }
 .sp-progress { position: absolute; left: 0; bottom: 0; height: 0.25em; width: 0; background: var(--icefin-color-accent); }

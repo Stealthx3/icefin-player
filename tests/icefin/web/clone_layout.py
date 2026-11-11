@@ -16,7 +16,8 @@ Spec format (all keys but theme/states optional):
                "text": {"label": {"sel": "css", "index": 0, "x": 104, "cy": 288, "right": 1892}}}],
    "timings": [{"name": "...", "sel": "css", "kind": "transition", "property": "transform", "ms": 500,
                 "easing": "cubic-bezier(0.215, 0.61, 0.355, 1)", "delayMs": 0}]}
-Box keys: x, y, w, h, right, bottom, cx, cy (reference px). Text boxes measure the element's text (a DOM Range), so
+Box keys: x, y, w, h, right, bottom, cx, cy (reference px). A box must also be painted: the element (or a child) is on
+top at its centre, unless the spec marks it "covered": true. Text boxes measure the element's text (a DOM Range), so
 font padding doesn't count. A selector's index picks among matches (negative counts from the end).
 Usage: python3 clone_layout.py --app ~/build/src/icefin-player --server jf12 --theme harbor --out ~/r91/harbor
 """
@@ -41,8 +42,15 @@ MEASURE = r"""(spec => {
       if (!e) { out[label] = null; continue; }
       let r = e.getBoundingClientRect();
       if (kind === 'text') { const rg = document.createRange(); rg.selectNodeContents(e); const rr = rg.getBoundingClientRect(); if (rr.width) r = rr; }
+      // Painted, not just laid out: the element (or a child) is what's on top at its centre, when that's on screen.
+      const px = r.left + r.width / 2, py = r.top + r.height / 2;
+      let shown = null;
+      if (px >= 0 && py >= 0 && px < window.innerWidth && py < window.innerHeight) {
+        const top = document.elementFromPoint(px, py);
+        shown = !!top && (top === e || e.contains(top));
+      }
       out[label] = { x: r.left * sx, y: r.top * sy, w: r.width * sx, h: r.height * sy, right: r.right * sx, bottom: r.bottom * sy,
-                     cx: (r.left + r.width / 2) * sx, cy: (r.top + r.height / 2) * sy };
+                     cx: (r.left + r.width / 2) * sx, cy: (r.top + r.height / 2) * sy, shown };
     }
   }
   return JSON.stringify(out);
@@ -154,8 +162,9 @@ def main():
                         continue
                     tol = want.get("tol", tol_all)
                     off = {k: round(have[k] - want[k]) for k in ("x", "y", "w", "h", "right", "bottom", "cx", "cy") if k in want}
-                    check(f"{st['name']}: {label}", all(abs(v) <= tol for v in off.values()),
-                          "off by " + ", ".join(f"{k} {v:+d}" for k, v in off.items()) + f" (±{tol})")
+                    hidden = group == "boxes" and have.get("shown") is False and not want.get("covered")
+                    check(f"{st['name']}: {label}", all(abs(v) <= tol for v in off.values()) and not hidden,
+                          "off by " + ", ".join(f"{k} {v:+d}" for k, v in off.items()) + f" (±{tol})" + (", but not painted on top (clipped or covered)" if hidden else ""))
             open(os.path.join(a.out, f"{st['name']}.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
         ttol = spec.get("timingTolerance", 0.1)
         for t in spec.get("timings", []):
