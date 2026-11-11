@@ -21,8 +21,9 @@ class TestCompositing : public QObject
     return s;
   }
   static Rgb grey(double v) { return {v, v, v}; }
-  // Video at `nits`, in libplacebo's linear units.
+  // Video at `nits`, as mpv writes it: linear units (HDR outputs), or SDR-encoded relative to SDR white (SDR output).
   static Rgb videoNits(double nits) { return grey(nits / kVideoLinearWhite); }
+  static Rgb sdrVideo(double nits, double white) { return grey(encodeSdr(nits / white, true)); }
 
 private Q_SLOTS:
   void pqReferencePoints()
@@ -58,8 +59,8 @@ private Q_SLOTS:
   {
     for (UiBlend b : {UiBlend::Srgb, UiBlend::Linear}) {
       const CompositorState s = state(b, OutputEncoding::Sdr, 200);
-      QVERIFY(qAbs(composePixel(s, grey(0), 0, videoNits(200)).r - 1.0) < 1e-9);
-      const double mid = composePixel(s, grey(0), 0, videoNits(200 * 0.2)).g;
+      QVERIFY(qAbs(composePixel(s, grey(0), 0, sdrVideo(200, 200)).r - 1.0) < 1e-9);
+      const double mid = composePixel(s, grey(0), 0, sdrVideo(200 * 0.2, 200)).g;
       QVERIFY(qAbs(mid - encodeSdr(0.2, true)) < 1e-9);
     }
   }
@@ -68,7 +69,7 @@ private Q_SLOTS:
   void opaqueUiIsExact()
   {
     for (UiBlend b : {UiBlend::Srgb, UiBlend::Linear}) {
-      const Rgb out = composePixel(state(b, OutputEncoding::Sdr), {0.25, 0.5, 0.75}, 1.0, videoNits(150));
+      const Rgb out = composePixel(state(b, OutputEncoding::Sdr), {0.25, 0.5, 0.75}, 1.0, sdrVideo(150, 203));
       QVERIFY(qAbs(out.r - 0.25) < 1e-9 && qAbs(out.g - 0.5) < 1e-9 && qAbs(out.b - 0.75) < 1e-9);
     }
   }
@@ -77,8 +78,8 @@ private Q_SLOTS:
   void blackScrimMatchesInBothBlends()
   {
     for (double a : {0.2, 0.5, 0.8}) {
-      const double s = composePixel(state(UiBlend::Srgb, OutputEncoding::Sdr), grey(0), a, videoNits(203)).r;
-      const double l = composePixel(state(UiBlend::Linear, OutputEncoding::Sdr), grey(0), a, videoNits(203)).r;
+      const double s = composePixel(state(UiBlend::Srgb, OutputEncoding::Sdr), grey(0), a, sdrVideo(203, 203)).r;
+      const double l = composePixel(state(UiBlend::Linear, OutputEncoding::Sdr), grey(0), a, sdrVideo(203, 203)).r;
       QVERIFY(qAbs(s - (1 - a)) < 1e-9);  // white video under the scrim: 1 - a in the UI's encoding, as a browser
       QVERIFY(qAbs(s - l) < 1e-9);
     }
@@ -88,8 +89,8 @@ private Q_SLOTS:
   void whiteVeilDiffers()
   {
     const Rgb ui = grey(0.5);  // premultiplied white at 50%
-    const double s = composePixel(state(UiBlend::Srgb, OutputEncoding::Sdr), ui, 0.5, videoNits(0)).r;
-    const double l = composePixel(state(UiBlend::Linear, OutputEncoding::Sdr), ui, 0.5, videoNits(0)).r;
+    const double s = composePixel(state(UiBlend::Srgb, OutputEncoding::Sdr), ui, 0.5, sdrVideo(0, 203)).r;
+    const double l = composePixel(state(UiBlend::Linear, OutputEncoding::Sdr), ui, 0.5, sdrVideo(0, 203)).r;
     QVERIFY(qAbs(s - 0.5) < 1e-9);
     QVERIFY(l > 0.7 && l < 0.75);
   }
@@ -114,7 +115,7 @@ private Q_SLOTS:
 
   void noVideo()
   {
-    const Rgb out = composePixel(state(UiBlend::Srgb, OutputEncoding::Sdr), grey(0), 0, videoNits(500), false);
+    const Rgb out = composePixel(state(UiBlend::Srgb, OutputEncoding::Sdr), grey(0), 0, sdrVideo(150, 203), false);
     QCOMPARE(out.r, 0.0);
   }
 
@@ -127,7 +128,7 @@ private Q_SLOTS:
     CompositorState s = state(UiBlend::Srgb, OutputEncoding::Sdr, 200);
     MpvOptions o = mpvLinearTargetOptions(s, d);
     QCOMPARE(o.value(0), qMakePair(QByteArray("target-prim"), QByteArray("bt.709")));
-    QCOMPARE(o.value(1), qMakePair(QByteArray("target-trc"), QByteArray("linear")));
+    QCOMPARE(o.value(1), qMakePair(QByteArray("target-trc"), QByteArray("gamma2.2")));
     QCOMPARE(o.value(2), qMakePair(QByteArray("target-peak"), QByteArray("200")));
     QCOMPARE(o.value(3), qMakePair(QByteArray("hdr-reference-white"), QByteArray("200")));
     QCOMPARE(o.value(4), qMakePair(QByteArray("target-contrast"), QByteArray("auto")));
@@ -135,6 +136,7 @@ private Q_SLOTS:
     s.peak = 800;
     o = mpvLinearTargetOptions(s, d);
     QCOMPARE(o.value(0).second, QByteArray("bt.2020"));
+    QCOMPARE(o.value(1).second, QByteArray("linear"));
     QCOMPARE(o.value(2).second, QByteArray("800"));
     QCOMPARE(o.value(4).second, QByteArray("16000"));
   }
@@ -172,7 +174,7 @@ private Q_SLOTS:
   void shaderDeclaresCompositorUniforms()
   {
     const QString src = compositorShaderSource();
-    for (const char* u : {"blendMode", "outputMode", "gamma22", "referenceWhite", "videoScale", "hasVideo", "sampler2D ui", "sampler2D video"})
+    for (const char* u : {"blendMode", "outputMode", "gamma22", "referenceWhite", "videoScale", "hasVideo", "uiAlpha", "sampler2D ui", "sampler2D video"})
       QVERIFY2(src.contains(u), u);
   }
 };

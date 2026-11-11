@@ -283,7 +283,7 @@ QSGNode* VulkanVideo::updatePaintNode(QSGNode* old)
       m_composite = composite;
       QMetaObject::invokeMethod(this, &VulkanVideo::applyTarget, Qt::QueuedConnection);
     }
-    qInfo() << "Icefin video:" << (m_composite ? "linear RGBA16F for the compositor (5.4)" : "RGBA8 encoded for the display");
+    qInfo() << "Icefin video:" << (m_composite ? "RGBA16F for the compositor (5.4)" : "RGBA8 encoded for the display");
   }
   if (!ensureImage(px)) { delete node; return nullptr; }
   if (m_composite) {

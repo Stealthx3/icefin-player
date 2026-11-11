@@ -20,15 +20,15 @@ Both pins match the Flatpak manifest (`flatpak/io.github.stealthx3.IcefinPlayer.
 | `patches/0004` vo_libmpv: gpu-next Vulkan: hand the target back in target_layout | Icefin Player | Icefin's own (PLAN 5.3) |
 | `patches/0005` vo_libmpv: gpu-next: scale with libplacebo's default filters | Icefin Player | Icefin's own (PLAN 5.3) |
 | `patches/0006` vo_libmpv: gpu-next: map hardware frames through mpv's hwdec interops | Icefin Player | Icefin's own (PLAN 5.3) |
+| `patches/0007` vo_libmpv: gpu-next: apply mpv's render options | Icefin Player | Icefin's own (PLAN 5.8) |
 
 **Icefin's change to the carried diff (`0003`).** Rabert's commit builds the target colorspace only when `target-prim` or
 `target-trc` is set, ignores `target-contrast` and `hdr-reference-white`, and logs the target once through a function
 `static`. `0003` builds the target the way stock `vo_gpu_next` applies those options (each on its own, minimum
 luminance from `target-contrast`), places SDR video at `hdr-reference-white`, and logs target changes at verbose
 level. Icefin sets these options from the compositor's description (`src/icefin/render/MpvTarget`), so libplacebo
-maps to the real display instead of a guess. Known gap for 5.8: the carried backend applies none of mpv's scaler, tone-mapping or deband
-options, so it isn't at parity with stock gpu-next yet. Since `0005` it scales with libplacebo's defaults (Lanczos up,
-Hermite down) rather than `pl_filter_nearest`, which made scaled video jagged.
+maps to the real display instead of a guess. Since `0005` it scales with libplacebo's defaults rather than `pl_filter_nearest`, which made scaled video jagged, and
+since `0007` it applies mpv's own render options (below).
 
 **Icefin's change to the carried diff (`0004`).** Rabert's Vulkan backend released the host's image to libplacebo,
 rendered, destroyed the wrapper and called `pl_gpu_finish()`: the image stayed in libplacebo's last layout
@@ -45,6 +45,15 @@ hardware decoding on the Vulkan render API always fell back to copy mode. `0006`
 and maps hardware frames through `ra_hwdec_mapper` the way `vo_gpu_next` does. Icefin passes its display
 (`src/icefin/render/VulkanVideo`). Not covered: `hwdec=vulkan` (FFmpeg's Vulkan decoder needs a decode queue the
 shared device doesn't create) and the Dolby Vision enhancement layer.
+
+**Icefin's change to the carried diff (`0007`).** The carried backend rendered with libplacebo's default parameters,
+so mpv's video options had no effect and the picture differed from stock `vo_gpu_next`, whose defaults differ from
+libplacebo's (tone-mapping contrast recovery, peak-detection percentile, dither, debanding). `0007` builds a `pl_options`
+from `gl_video_opts` every frame as `vo_gpu_next`'s `update_render_options` and `map_scaler` do, and sets uploaded
+frames' colour space, rotation and chroma location as its `map_frame` does. Not mapped: the gpu-next-only options
+(tone constants, delayed peak, border, blur, corner rounding, LUTs, user shaders, ICC) and the frame mixer. With
+Icefin's compositor giving mpv stock's target for an SDR display, `tests/icefin/web/parity.py` measures the same frame
+in Icefin and in stock mpv 0.42 `--vo=gpu-next --gpu-api=vulkan` within 0.3/255 on average (lab, lavapipe).
 
 Rebase note: mpv 0.42 added `MPV_RENDER_PARAM_D3D11_INIT_PARAMS = 21` and `…_D3D11_FBO = 22`, so the new params are
 renumbered: `BACKEND = 23`, `VULKAN_INIT_PARAMS = 24`, `VULKAN_FBO = 25`, `VULKAN_SYNC = 26` (Icefin bundles its own
