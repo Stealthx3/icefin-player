@@ -1,0 +1,87 @@
+{
+  "theme": "harbor",
+  "target": "Kodi 21.2 Estuary, home with the Movies menu entry (1920x1080)",
+  "sources": [
+    "Lab capture 2026-11-11: Kodi 21.2 (Debian 13 package) in Xvfb at 1920x1080, a ten-title reference library (scripts made the .nfo files; flat-colour posters), ffmpeg x11grab stills and a 30 fps sequence of Down and Right; images kept out of the repo",
+    "skin.estuary 21 XML (GPL-2.0): Home.xml, Includes_Home.xml (WidgetGroupListCommon, WidgetListPoster, WidgetListCommon, CategoryLabel), Includes_Animations.xml"
+  ],
+  "measurements": {
+    "menu": "0..462 wide, full height; entries 95 tall from y 240; label text from x 104, cap centre on the entry centre; focused entry filled #0f85a5 with the 95 px icon cell #0a5b71; menu #0e1315 darkening to #040505 at the ends",
+    "clock": "top right, text right edge 1892, cap 35..87 (centre 61)",
+    "categories": "title at x 517, cap centre 106; tiles 277x160 at x 551 on a 310 pitch, top 140",
+    "shelves": "title x 517, cap centre 356 (second widget) and 839 (third): 483 apart; posters 250x375 at x 565 on a 310 pitch, top 395 (39 below the title's cap centre); no captions",
+    "focus": "focused poster zooms to 110% around (50%, 30%) in 200 ms sine in-out with a ~4 px #0f85a5 border fading in over 200 ms; Right from the menu enters the categories row, Down the next shelf",
+    "scroll": "group list: shelves move only as far as needed, the focused shelf's bottom no lower than ~920 (Down to the third widget moved everything up 296 px), 500 ms cubic ease-out (frames: 430-470 ms to settle at 15-30 fps); rows: focus walks the four visible slots, the list scrolls a slot at the edge, 500 ms cubic out",
+    "fades": "widgets on a section change 300 ms; fanart cross-fade 600 ms; info popup zooms from 80% with a fade, 240 ms back easing after 160 ms"
+  },
+  "tolerancePx": 12,
+  "timingTolerance": 0.1,
+  "ready": "(() => { const c = document.querySelector('.icefin-content[data-hb-ready]'); return !!c && +document.querySelector('#icefin-theme-root[data-hb]').getAttribute('data-hb-rail') > 0; })()",
+  "states": [
+    {
+      "name": "movies-menu",
+      "actions": [{"repeat": "down", "until": "(document.querySelector('.hb-rail-item.icefin-focused') || {}).textContent === 'Movies'", "max": 12}],
+      "settleMs": 2500,
+      "boxes": {
+        "menu": {"sel": ".icefin-siderail", "x": 0, "y": 0, "w": 462, "h": 1080, "tol": 6},
+        "first menu entry": {"sel": ".hb-rail-item", "index": 0, "x": 0, "y": 240, "w": 462, "h": 95, "tol": 6},
+        "second menu entry": {"sel": ".hb-rail-item", "index": 1, "y": 335, "h": 95, "tol": 6},
+        "first category tile": {"sel": ".hb-tile", "index": 0, "x": 551, "y": 140, "w": 277, "h": 160},
+        "second category tile": {"sel": ".hb-tile", "index": 1, "x": 861, "y": 140},
+        "first poster": {"sel": ".hb-shelf:not(.cats) .hb-poster", "index": 0, "x": 565, "y": 395, "w": 250, "h": 375},
+        "second poster": {"sel": ".hb-shelf:not(.cats) .hb-poster", "index": 1, "x": 875, "y": 395}
+      },
+      "text": {
+        "menu label": {"sel": ".hb-rail-item span", "index": 0, "x": 104, "cy": 288},
+        "clock": {"sel": ".hb-clock", "right": 1892, "cy": 61},
+        "categories title": {"sel": ".hb-shelf-title", "index": 0, "x": 517, "cy": 106},
+        "second shelf title": {"sel": ".hb-shelf-title", "index": 1, "x": 517, "cy": 356},
+        "third shelf title": {"sel": ".hb-shelf-title", "index": 2, "x": 517, "cy": 839}
+      }
+    },
+    {
+      "name": "poster-focused",
+      "actions": ["right", "down"],
+      "settleMs": 900,
+      "boxes": {
+        "focused poster (110%)": {"sel": ".hb-poster.icefin-focused", "x": 552, "y": 384, "w": 275, "h": 412}
+      }
+    },
+    {
+      "name": "third-shelf",
+      "actions": ["down"],
+      "settleMs": 900,
+      "boxes": {
+        "focused poster after the scroll": {"sel": ".hb-poster.icefin-focused", "x": 552, "y": 571, "w": 275, "h": 412},
+        "poster beside it": {"sel": ".hb-poster.icefin-focused + .hb-poster", "x": 875, "y": 582, "w": 250, "h": 375}
+      },
+      "text": {
+        "its title": {"sel": ".hb-shelf-title", "index": 2, "x": 517, "cy": 543}
+      }
+    },
+    {
+      "name": "along-the-row",
+      "actions": ["right"],
+      "settleMs": 900,
+      "boxes": {
+        "focus moved a slot, no scroll": {"sel": ".hb-poster.icefin-focused", "x": 862, "y": 571, "w": 275}
+      }
+    },
+    {
+      "name": "info",
+      "actions": ["enter"],
+      "settleMs": 900,
+      "boxes": {}
+    }
+  ],
+  "timings": [
+    {"name": "shelf scroll", "sel": ".hb-shelf-box", "kind": "transition", "property": "transform", "ms": 500, "easing": "cubic-bezier(0.215, 0.61, 0.355, 1)"},
+    {"name": "row scroll", "sel": ".hb-row", "kind": "transition", "property": "transform", "ms": 500, "easing": "cubic-bezier(0.215, 0.61, 0.355, 1)"},
+    {"name": "menu scroll", "sel": ".hb-rail-list", "kind": "transition", "property": "transform", "ms": 500, "easing": "cubic-bezier(0.215, 0.61, 0.355, 1)"},
+    {"name": "focus zoom", "sel": ".hb-poster", "kind": "transition", "property": "transform", "ms": 200, "easing": "cubic-bezier(0.37, 0, 0.63, 1)"},
+    {"name": "focus border fade", "sel": ".hb-poster", "kind": "transition", "property": "box-shadow", "ms": 200},
+    {"name": "section fade", "sel": ".hb-shelf-box", "kind": "animation", "animation": "hb-in", "ms": 300},
+    {"name": "fanart cross-fade", "sel": ".hb-fanart", "kind": "transition", "property": "opacity", "ms": 600},
+    {"name": "info popup", "sel": ".hb-info-box", "kind": "animation", "animation": "hb-pop", "ms": 240, "delayMs": 160, "easing": "cubic-bezier(0.175, 0.885, 0.32, 1.275)"}
+  ]
+}

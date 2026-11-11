@@ -4,13 +4,14 @@
   - Harbor is a built-in theme, offered in Client Settings → Theme;
     turning it off while Harbor is active switches the engine off;
   - Harbor's home: the persistent left menu (Home, each library, Search, Settings, Classic home) in the side-rail chrome
-    slot, about a fifth of the width; the focused section's shelves over a fanart layer;
-  - five-way navigation: up/down on the menu change section, right enters the shelves, left from a shelf's first poster
-    and Back return to the menu, up/down change shelf and each shelf keeps its column;
+    slot, 462/1920 of the width like the target; the focused section's categories row and shelves over a fanart layer;
+  - five-way navigation: up/down on the menu change section, right enters the categories row, down the shelves, left
+    from a row's first item and Back return to the menu, up/down change row and each row keeps its column;
+  - each category tile opens the matching jellyfin-web tab of the library;
   - Enter on a poster opens the info dialog (Play/Resume, More info); Back closes it and focus returns to the poster;
     More info opens jellyfin-web's details page styled by Harbor's tokens; Classic home shows the stock home;
   - transitions drop to zero under the low-motion cap.
-Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
+Layout positions and motion timings against the reference: clone_layout.py --theme harbor. Screenshots go to --out.
 Usage: python3 theme_harbor.py --app ~/build/src/icefin-player --server jf12 --out ~/r94/jf12
 """
 import argparse, base64, json, os, signal, sys, tempfile, time
@@ -78,7 +79,7 @@ def main():
         rail = json.loads(js("JSON.stringify([...document.querySelectorAll('.hb-rail-item')].map(e => e.textContent))"))
         check("menu: Home, the libraries, Search, Settings, Classic home", rail[0] == "Home" and rail[-3:] == ["Search", "Settings", "Classic home"] and len(rail) >= 5, json.dumps(rail))
         frac = js("document.querySelector('.icefin-siderail').getBoundingClientRect().width / window.innerWidth")
-        check("menu is about a fifth of the width (side-rail chrome slot)", 0.17 <= frac <= 0.21, f"{frac:.3f}")
+        check("menu is 462/1920 of the width (side-rail chrome slot)", abs(frac - 462 / 1920) < 0.005, f"{frac:.3f}")
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; "
                          "if (f.classList.contains('hb-rail-item')) return 'rail/' + f.textContent; "
                          "if (f.classList.contains('hb-button')) return 'button/' + f.textContent; "
@@ -107,20 +108,22 @@ def main():
         time.sleep(1.2)
         act("right")
         time.sleep(0.5)
-        check("right enters the shelves", foc() == "shelf/0/0", foc())
+        check("right enters the categories row", foc() == "shelf/0/0" and js("document.querySelector('.icefin-focused').classList.contains('hb-tile')") is True, foc())
+        act("down")
         time.sleep(0.6)
+        check("down moves to the first shelf", foc() == "shelf/1/0", foc())
         fan = js("document.getElementById('icefin-theme-root').getAttribute('data-hb-fanart')")
         has = js("(() => { const it = document.querySelector('.hb-poster.icefin-focused').harborItem; return !!((it.BackdropImageTags || []).length || (it.ParentBackdropImageTags || []).length); })()")
         check("fanart layer follows the focused item", fan == ("item" if has else "none"), f"{fan} (item has a backdrop: {has})")
-        row0 = js("document.querySelectorAll('.hb-shelf')[0].querySelectorAll('.hb-poster').length")
+        row0 = js("document.querySelectorAll('.hb-shelf')[1].querySelectorAll('.hb-poster').length")
         if row0 >= 2:
             act("right")
-            check("right moves along the shelf", foc() == "shelf/0/1", foc())
-        if best_n >= 2:
+            check("right moves along the shelf", foc() == "shelf/1/1", foc())
+        if best_n >= 3:
             act("down")
-            check("down moves to the next shelf", foc().startswith("shelf/1/"), foc())
+            check("down moves to the next shelf", foc().startswith("shelf/2/"), foc())
             act("up")
-            check("up returns to the column the shelf kept", foc() == ("shelf/0/1" if row0 >= 2 else "shelf/0/0"), foc())
+            check("up returns to the column the shelf kept", foc() == ("shelf/1/1" if row0 >= 2 else "shelf/1/0"), foc())
         time.sleep(0.6)
         shot("shelves.png")
         act("left")
@@ -131,7 +134,10 @@ def main():
         act("back")
         check("Back from the shelves returns to the menu", foc() == f"rail/{rail[best]}", foc())
 
-        act("right")
+        act("right")  # back into the row it left, like the target's group list
+        if foc().startswith("shelf/0/"):
+            act("down")  # a poster, not a category tile
+        opened_from = foc()
         act("enter")
         page.wait_for("document.getElementById('icefin-theme-root').getAttribute('data-hb-dialog') === 'info'", timeout=10)
         buttons = json.loads(js("JSON.stringify([...document.querySelectorAll('.hb-info .hb-button')].map(e => e.textContent))"))
@@ -144,7 +150,7 @@ def main():
         time.sleep(0.4)
         shot("info.png")
         act("back")
-        check("Back closes the dialog and returns to the poster", js("document.getElementById('icefin-theme-root').hasAttribute('data-hb-dialog')") is False and foc() == "shelf/0/0", foc())
+        check("Back closes the dialog and returns to the poster", js("document.getElementById('icefin-theme-root').hasAttribute('data-hb-dialog')") is False and foc() == opened_from, f"{foc()} (opened from {opened_from})")
         act("enter")
         page.wait_for("!!document.querySelector('.hb-info')", timeout=10)
         for _ in range(len(buttons)):
@@ -154,8 +160,41 @@ def main():
         time.sleep(3)
         check("More info opens the details page, styled by Harbor's tokens",
               js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#12b2e7")
+              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#0f85a5")
         shot("details.png")
+
+        # Each library's category tiles open the matching jellyfin-web view (Harbor's TABS against jellyfin-web 10.11, whose
+        # library pages mark the current view .Mui-selected; older pages .emby-tab-button-active).
+        names = {"Titles": "Movies", "Favourites": "Favorites", "Networks": "TV Networks"}
+        def open_section(i, label):
+            js("location.hash = '#/home'; true")
+            page.wait_for("!!document.querySelector('.icefin-content[data-hb-ready]') && !!document.querySelector('.hb-rail-item')", timeout=20)
+            time.sleep(1)
+            for _ in range(len(rail)):
+                act("up")
+            for _ in range(i):
+                act("down")
+            page.wait_for(f"document.querySelector('.icefin-content').getAttribute('data-hb-section') === {json.dumps(label)} && !!document.querySelector('.hb-tile')", timeout=15)
+            return json.loads(js("JSON.stringify([...document.querySelectorAll('.hb-tile')].map(t => t.getAttribute('aria-label')))"))
+
+        for i, label in enumerate(rail[1:-3], 1):
+            tiles = open_section(i, label)
+            if tiles == ["All items"]:
+                continue
+            bad = []
+            for k, name in enumerate(tiles):
+                if k:
+                    open_section(i, label)
+                js(f"document.querySelectorAll('.hb-tile')[{k}].click(); true")
+                try:
+                    page.wait_for("[...document.querySelectorAll('.Mui-selected, .emby-tab-button-active')].some(e => e.offsetParent) && !document.querySelector('#icefin-theme-root[data-hb]:not([hidden])')", timeout=15)
+                    time.sleep(1.5)
+                    got = js("([...document.querySelectorAll('.Mui-selected, .emby-tab-button-active')].find(e => e.offsetParent) || {}).textContent || ''").strip()
+                except Exception:  # noqa: BLE001
+                    got = "(no tabs)"
+                if got.lower() != names.get(name, name).lower():
+                    bad.append(f"{name}->{got}")
+            check(f"{label}: category tiles open the matching tabs", not bad, ", ".join(bad) or json.dumps(tiles))
 
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('.icefin-content[data-hb-ready]')", timeout=20)

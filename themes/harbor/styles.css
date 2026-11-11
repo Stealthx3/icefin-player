@@ -1,53 +1,75 @@
-/* Harbor: left menu, shelves over fanart. Proportions follow the benchmark target at 16:9; all colours from tokens. */
+/* Harbor: left menu, a categories row and shelves over fanart. Geometry and motion follow the benchmark target's
+   measurements at 1920x1080 (docs/themes/references/harbor.json); px there map to vw (x/19.2) and vh (y/10.8) here.
+   All colours from tokens. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: Roboto, "Noto Sans", "Open Sans", sans-serif; }
 
-/* Fanart layer: two full-screen images cross-fading behind everything, with a scrim for legibility. */
+/* The backdrop: a teal glow left of centre, dark at the edges; fanart cross-fades over it (600 ms). */
+[data-hb] { background: radial-gradient(ellipse 62% 58% at 38% 50%, var(--icefin-color-glow) 0%, var(--icefin-color-glowMid) 45%, var(--icefin-color-glowEdge) 80%, var(--icefin-color-background) 100%); }
 [data-hb] .hb-fanart { position: absolute; inset: 0; z-index: 0; background: center / cover no-repeat; opacity: 0;
-  transition: opacity 400ms ease; pointer-events: none; }
+  transition: opacity 600ms linear; pointer-events: none; }
 [data-hb] .hb-fanart.on { opacity: 1; }
-[data-hb] .hb-scrim { position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(90deg, var(--icefin-color-scrim) 0%, transparent 70%), linear-gradient(0deg, var(--icefin-color-scrim) 0%, transparent 60%); }
+[data-hb] .hb-scrim { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--icefin-color-scrim); }
 [data-hb] > nav, [data-hb] > .icefin-content { position: relative; z-index: 1; }
 
-/* The persistent main menu. */
-[data-hb] .icefin-siderail { background: var(--icefin-color-rail); display: flex; flex-direction: column; padding-top: 4.5vh;
-  box-shadow: 0.4em 0 1.2em rgba(0, 0, 0, 0.35); }
-.hb-brand { padding: 0 1.6vw 4vh; font-size: 1.9em; font-weight: 300; letter-spacing: 0.06em; color: var(--icefin-color-text); }
-.hb-rail-list { display: flex; flex-direction: column; }
-.hb-rail-item { padding: 1.55vh 1.6vw; font-size: 1.45em; color: var(--icefin-color-textSecondary); outline: none; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; transition: background 120ms, color 120ms; }
-.hb-rail-item.current { color: var(--icefin-color-text); }
+/* The persistent main menu: 462 px wide, items 95 px tall from y 240, text at x 104. */
+[data-hb] .icefin-siderail { position: relative; overflow: hidden;
+  background: linear-gradient(180deg, var(--icefin-color-railEdge) 0%, var(--icefin-color-rail) 16%, var(--icefin-color-rail) 86%, var(--icefin-color-railEdge) 100%); }
+.hb-brand { position: absolute; left: 4.9vw; top: 3.3vh; height: 7.4vh; display: flex; align-items: center;
+  font-size: 2.7vw; font-weight: 300; letter-spacing: 0.04em; color: var(--icefin-color-text); }
+.hb-rail-view { position: absolute; left: 0; right: 0; top: 22.22vh; bottom: 0; overflow: hidden; }
+.hb-rail-list { display: flex; flex-direction: column; transition: transform 500ms cubic-bezier(0.215, 0.61, 0.355, 1); }
+.hb-rail-item { position: relative; flex: 0 0 auto; height: 8.796vh; line-height: 8.796vh; padding: 0 1vw 0 5.42vw;
+  font-size: 1.93vw; color: var(--icefin-color-text); outline: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-rail-item > span { line-height: 1; display: inline-block; vertical-align: middle; }
 .hb-rail-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.hb-rail-item.icefin-focused::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4.95vw; background: var(--icefin-color-accentStrong); }
 
-/* Content: shelves stacked; the focused shelf scrolls to the upper line, the row scrolls to keep the poster in view. */
+/* Content: the clock top right; shelves stacked from the top, each 483 px (a categories row 250 px). */
 [data-hb] .icefin-content { position: relative; }
-.hb-clock { position: absolute; right: 2.4vw; top: 3.4vh; font-size: 1.6em; font-weight: 300; z-index: 2; }
-.hb-shelves { position: absolute; left: 2vw; right: 0; top: 30vh; bottom: 0; overflow: hidden; }
-.hb-shelf-box { transition: transform 200ms ease; }
-.hb-shelf-box.hb-fade { animation: hb-in 200ms ease; }
+.hb-clock { position: absolute; right: 1.46vw; top: 2.27vh; font-size: 3.8vw; line-height: 1; font-weight: 300; z-index: 2; color: var(--icefin-color-text); }
+.hb-shelves { position: absolute; inset: 0; overflow: hidden; }
+.hb-shelf-box { transition: transform 500ms cubic-bezier(0.215, 0.61, 0.355, 1); }
+.hb-shelf-box.hb-fade { animation: hb-in 300ms linear; }
 @keyframes hb-in { from { opacity: 0; } to { opacity: 1; } }
-html[data-icefin-motion="low"] .hb-shelf-box, html[data-icefin-motion="low"] .hb-row, html[data-icefin-motion="low"] .hb-fanart { transition-duration: 0ms; }
-html[data-icefin-motion="low"] .hb-shelf-box.hb-fade { animation: none; }
-.hb-shelf { margin-bottom: 3.2vh; }
-.hb-shelf-title { font-size: 1.25em; margin: 0 0 1.2vh 0.2vw; color: var(--icefin-color-text); }
-.hb-row { display: flex; gap: 0.9vw; transition: transform 200ms ease; }
-.hb-poster { flex: 0 0 auto; width: 9.4vw; aspect-ratio: 2 / 3; position: relative; outline: none;
-  background: var(--icefin-color-surface) center / cover no-repeat; border-radius: var(--icefin-shape-cardRadius);
-  box-shadow: 0 0 0 0.16em transparent; transition: box-shadow 120ms; }
-.hb-poster.wide { width: 18vw; aspect-ratio: 16 / 9; }
-.hb-poster.icefin-focused { box-shadow: 0 0 0 0.2em var(--icefin-color-focus); }
-.hb-caption { position: absolute; left: 0; right: 0; top: calc(100% + 0.5vh); font-size: 0.9em; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; color: var(--icefin-color-textSecondary); }
-.hb-poster.icefin-focused .hb-caption { color: var(--icefin-color-text); }
-.hb-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.3em; background: rgba(0, 0, 0, 0.5); }
-.hb-progress::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p); background: var(--icefin-color-accent); }
-.hb-empty { font-size: 1.4em; color: var(--icefin-color-textSecondary); padding-top: 4vh; }
+.hb-shelf { position: relative; height: 44.72vh; }
+.hb-shelf.cats { height: 23.15vh; }
+.hb-shelf-title { position: absolute; left: 2.865vw; top: 8.426vh; font-size: 1.5625vw; line-height: 1; white-space: nowrap; color: var(--icefin-color-text); }
+.hb-row { position: absolute; left: 5.365vw; top: 13.43vh; display: flex; gap: 3.125vw; transition: transform 500ms cubic-bezier(0.215, 0.61, 0.355, 1); }
+.hb-shelf.cats .hb-row { left: 4.635vw; top: 12.96vh; gap: 1.72vw; }
+html[data-icefin-motion="low"] .hb-shelf-box, html[data-icefin-motion="low"] .hb-row, html[data-icefin-motion="low"] .hb-rail-list,
+html[data-icefin-motion="low"] .hb-fanart, html[data-icefin-motion="low"] .hb-poster, html[data-icefin-motion="low"] .hb-tile { transition-duration: 0ms; }
+html[data-icefin-motion="low"] .hb-shelf-box.hb-fade, html[data-icefin-motion="low"] .hb-info-box { animation: none; }
 
-/* Info dialog: centred panel over a dimmed screen. */
+/* Posters 250 x 375 on a 310 px pitch; the focused one zooms to 110% (200 ms, sine) with a focus border fading in. */
+.hb-poster, .hb-tile { flex: 0 0 auto; position: relative; outline: none; transform-origin: 50% 30%;
+  transition: transform 200ms cubic-bezier(0.37, 0, 0.63, 1), box-shadow 200ms cubic-bezier(0.37, 0, 0.63, 1); }
+.hb-poster { width: 13.02vw; height: 34.72vh; background: var(--icefin-color-surface) center / cover no-repeat;
+  box-shadow: 0 0.4vh 1.2vh rgba(0, 0, 0, 0.45), 0 0 0 0.21vw transparent; }
+.hb-poster.wide { width: 26.04vw; height: 22vh; margin-top: 6.36vh; }
+.hb-poster.icefin-focused, .hb-tile.icefin-focused { transform: scale(1.1); z-index: 2;
+  box-shadow: 0 0.6vh 2vh rgba(0, 0, 0, 0.6), 0 0 0 0.21vw var(--icefin-color-focus); }
+/* No captions on the shelves, like the target; the art carries the item (its name is the tile's label for screen readers). */
+.hb-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6vh 0.5vw; font-size: 0.9vw; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; color: var(--icefin-color-text); background: linear-gradient(0deg, rgba(0, 0, 0, 0.7), transparent); }
+.hb-poster.has-art .hb-caption { display: none; }
+.hb-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.5vh; background: rgba(0, 0, 0, 0.5); }
+.hb-progress::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p); background: var(--icefin-color-accent); }
+
+/* Categories: 277 x 160 tiles on a 310 px pitch, the label low in the tile. */
+.hb-tile { width: 14.43vw; height: 14.81vh; background: var(--icefin-color-surface); box-shadow: 0 0.4vh 1.2vh rgba(0, 0, 0, 0.45), 0 0 0 0.21vw transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 2.6vh; box-sizing: border-box; }
+.hb-tile-mark { flex: 1; display: flex; align-items: center; font-size: 2.6vw; font-weight: 300; color: var(--icefin-color-textSecondary); }
+.hb-tile-label { font-size: 1.3vw; line-height: 1; color: var(--icefin-color-text); white-space: nowrap; }
+.hb-tile.icefin-focused { background: var(--icefin-color-focus); }
+.hb-tile.icefin-focused .hb-tile-mark { color: var(--icefin-color-onFocus); }
+.hb-empty { position: absolute; left: 2.865vw; top: 8.426vh; font-size: 1.5625vw; color: var(--icefin-color-textSecondary); }
+
+/* Info dialog: centred panel over a dimmed screen; opens zooming from 80% (240 ms, back) after 160 ms. */
 .hb-info { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); }
 .hb-info-box, .hb-info-title, .hb-button { color: var(--icefin-color-text); }
 .hb-info-box { display: grid; grid-template-columns: 17vw 1fr; gap: 2vw; width: 62vw; padding: 2.4vw; background: var(--icefin-color-surface);
-  border-top: 0.25em solid var(--icefin-color-accent); }
+  border-top: 0.25em solid var(--icefin-color-accent); animation: hb-pop 240ms cubic-bezier(0.175, 0.885, 0.32, 1.275) 160ms both; }
+@keyframes hb-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 .hb-info-art { aspect-ratio: 2 / 3; background: var(--icefin-color-surfaceRaised) center / cover no-repeat; }
 .hb-info-title { margin: 0 0 1vh; font-weight: 400; font-size: 2em; }
 .hb-info-meta { color: var(--icefin-color-textSecondary); margin-bottom: 1.6vh; }
