@@ -48,6 +48,11 @@ void chooseGraphicsApi();
 void fallBackToOpenGl(const QString& reason);
 // Non-empty when this start uses OpenGL because Vulkan failed before: the recorded reason.
 QString vulkanFallbackReason();
+// A usable Vulkan GPU exists (probed once, then cached): on OpenGL, the capability prompt can offer to switch (6.7).
+bool vulkanUsable();
+// Quits and starts the app again with the same command line, after this process has gone (5.7; also the
+// capability prompt's "switch to Vulkan", 6.7). Inside the Flatpak the new instance gets a sandbox of its own.
+void restartApp(const QString& why);
 
 class VulkanDevice
 {

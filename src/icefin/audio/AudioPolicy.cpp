@@ -1,4 +1,5 @@
 #include "AudioPolicy.h"
+#include "icefin/capability/CapabilityModel.h"
 #include "AudioOutput.h"
 #include "Eld.h"
 #include "Passthrough.h"
@@ -66,6 +67,13 @@ void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCode
   else if (hdmiDevice && out.card < 0 && !out.backend) eld = std::nullopt;  // "auto": card unknown, trust toggles
 
   const Decision d = decide(t, user, eld, backend);
+  // The capability model (6.7) keeps the sink this decision saw: what the receiver takes.
+  QStringList eldCodecs;
+  if (eld) for (auto it = eld->codecs.begin(); it != eld->codecs.end(); ++it) eldCodecs << codecName(it.key());
+  Capability::CapabilityModel::instance().setSink({{"device", device}, {"hdmi", hdmiDevice}, {"present", eld && eld->present},
+                                                   {"valid", eld && eld->valid}, {"stale", eld && eld->stale},
+                                                   {"name", eld ? eld->monitorName : QString()},
+                                                   {"lpcmChannels", eld ? eld->lpcmChannels : 0}, {"codecs", eldCodecs}});
   // Sound-server output: make sure the sink accepts the bitstream before mpv opens it (3.4).
   if (!d.spdif.isEmpty() && (backend == Backend::PipeWire || backend == Backend::PulseAudio)) {
     const QString sink = sinkFromDevice(device);

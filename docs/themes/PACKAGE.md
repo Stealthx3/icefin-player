@@ -85,7 +85,7 @@ and the engine absorbs that here instead of in every theme. `scripts/icefin/them
 | `icefinTheme.active()` | `{id, source, route}` of the active theme and screen, or `null` |
 | `icefinTheme.sound(event)` | Same as `ctx.sound` |
 | `icefinTheme.apiVersion` | `1` |
-| `icefinTheme.system` | Reserved for the client-side capability model (6.7): undefined until then |
+| `icefinTheme.system` | What this machine can show and play (the capability model, 6.7), read-only and frozen, `null` until it answers: `{renderer: 'vulkan'\|'opengl', hdr: {display: 'yes'\|'no'\|'unknown', output}, video: {sdr, hdr10, hlg, dolbyVision58, dolbyVision7}, audio: {receiver, passthrough[], channels}, decoders: {serverConverts[]}}`. Each `video` value is `'SDR'`, `'tone-mapped SDR'`, `'HDR output'` or `'capability prompt'`. A new snapshot replaces it on change, with an `icefin-system` event on `window` (`detail` is the snapshot). Additive within API 1 |
 
 ## Trust (user-installed themes)
 - Stylesheets are sanitized as they're served (`src/icefin/theme/CssSanitizer`):
