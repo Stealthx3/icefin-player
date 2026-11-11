@@ -1,0 +1,33 @@
+{
+  "theme": "lumen",
+  "target": "Apple TV (tvOS) home and TV app layout, per the platform's published design guidelines, 1920x1080",
+  "sources": [
+    "Apple Human Interface Guidelines, Layout, tvOS (updated September 9, 2026), https://developer.apple.com/design/human-interface-guidelines/layout: safe area 60 pt top and bottom, 80 pt sides; grids two to nine columns at 860, 560, 410, 320, 260, 217, 184, 160 pt wide with 40 pt horizontal spacing and at least 100 pt between rows (tvOS draws 1 pt as 1 px at 1080p)",
+    "Layout only: no artwork, icons, sounds, fonts or names from the target are used"
+  ],
+  "measurements": {
+    "insets": "content 80 px from the sides, 60 px from the top and bottom",
+    "poster rows": "the six-column grid: 260 px wide (2:3, 390 tall), 40 apart, from x 80",
+    "16:9 rows": "the four-column grid: 410 px wide (231 tall), 40 apart",
+    "rows": "at least 100 px between the bottom of an unfocused row and the next row's top, more for titled rows",
+    "motion": "not specified by the guidelines; not checked"
+  },
+  "tolerancePx": 12,
+  "timingTolerance": 0.1,
+  "ready": "+(document.querySelector('#icefin-theme-root') || {getAttribute: () => 0}).getAttribute('data-lm-ready') > 0",
+  "states": [
+    {
+      "name": "home",
+      "settleMs": 1500,
+      "boxes": {
+        "tab bar at the top inset": {"sel": ".lm-tabs", "y": 60, "tol": 6},
+        "first poster": {"sel": ".lm-row:not(.wide) .lm-card", "index": 0, "x": 80, "w": 260, "h": 390},
+        "second poster": {"sel": ".lm-row:not(.wide) .lm-card", "index": 1, "x": 380, "w": 260, "h": 390}
+      },
+      "text": {
+        "row title at the side inset": {"sel": ".lm-row-title", "index": 0, "x": 80}
+      }
+    }
+  ],
+  "timings": []
+}
