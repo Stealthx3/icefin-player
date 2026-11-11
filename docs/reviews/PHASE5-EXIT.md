@@ -1,6 +1,6 @@
 # Phase 5 exit review
 
-_PLAN 5.9 (D23) · written 2026-11-11 · sign-off: the user (below) before 6.7 starts_
+_PLAN 5.9 (D23) · written 2026-11-11 · signed off by the user on 2026-11-11, all five points (D26)_
 
 Phase 5 built the single-surface renderer: Qt Quick on a shared Vulkan device, mpv rendering through libplacebo into
 it, a compositor that blends the web UI over the video and encodes SDR, HDR10 or scRGB, the surface tagged as HDR on
@@ -160,3 +160,5 @@ That shares the upkeep and is the cheapest way to cut the patch count later.
 3. Secondary windows: none before 1.0. The mpv-native fallback window leaves the plan; the low-power window is revisited after 1.0.
 4. D11 (decoupling) keeps its post-1.0 timing. 10.1 merges upstream 2.1.0 when it is final.
 5. Icefin's mpv fixes are offered on mpv #16818, posted only with the user's go-ahead.
+
+**Signed off** by the user on 2026-11-11: all five points, recorded as D26. Posting on mpv #16818 (point 5) still waits for the user's go-ahead on the text.
