@@ -181,7 +181,9 @@
         // sections, for example) stays one step away.
         const stock = /[?&]icefin=stock\b/.test(location.hash);
         const screen = pkg && !stock ? screens[path] : null;
-        if (current && current.route === path && current.screen === screen) return;
+        // Same screen, same query: nothing to do. A new query (another item's details, another library's wall) mounts
+        // the screen again for it.
+        if (current && current.route === path && current.screen === screen && current.hash === location.hash) return;
         unmountScreen();
         if (!screen) return;  // jellyfin-web's own page
         if (!signedIn()) {
@@ -190,7 +192,7 @@
         }
         const r = root();
         if (!r) return;
-        current = { route: path, screen };
+        current = { route: path, screen, hash: location.hash };
         r.hidden = false;
         screenShown(true);
         sound('navigate');

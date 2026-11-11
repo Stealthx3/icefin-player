@@ -155,3 +155,11 @@
         }
     });
 })();
+
+// Details (PLAN 9.18): the engine's details screen (every feature of the stock page) in this theme's layout; the look
+// is in styles.css, "Details".
+(function () {
+    'use strict';
+    const T = window.icefinTheme;
+    if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'panel' }));
+})();

@@ -83,25 +83,20 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 .mc-poster.icefin-focused { transform: scale(1.08); }  /* the same glass lens, a smaller lift: the grid doesn't reflow */
 .mc-poster .mc-label { font-size: 2.2vh; top: calc(100% + 0.6vh); }
 
-/* Details (details.js): backdrop, shade, poster and text. */
-.mc-details-art { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; }
-.mc-details-shade { position: absolute; inset: 0;
-  background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0.86) 45%, rgb(var(--icefin-color-background-channel) / 0.35) 100%),
-              linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 40%); }
-.mc-details { position: absolute; left: 6vw; right: 30vw; top: 16vh; display: grid; grid-template-columns: 16vw 1fr; gap: 3vw;
-  opacity: 0; transform: translateY(2vh); transition: opacity var(--mc-ms, 360ms) ease-out, transform var(--mc-ms, 360ms) cubic-bezier(.2,.7,.2,1); }
-.mc-details.in { opacity: 1; transform: none; }
-.mc-details-poster { aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
-  box-shadow: 0 1em 3em rgba(0, 0, 0, 0.45); }
-.mc-details-series { opacity: 0.75; font-size: 1.2em; }
-.mc-details-title { font-weight: 300; font-size: 3em; margin: 0.1em 0 0.25em; line-height: 1.1; }
-.mc-details-facts, .mc-details-genres { color: var(--icefin-color-textSecondary); margin-bottom: 0.5em; }
-.mc-details-overview { max-width: 46em; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
-.mc-details-buttons { display: flex; gap: 1.2em; margin-top: 2em; }
-.mc-btn { padding: 0.7em 1.6em; border-radius: 2em; background: var(--icefin-color-surfaceRaised); outline: none; transition: transform 160ms, box-shadow 160ms; }
-/* The focused button is a pane of the same glass: accent fill, top gloss, bright top rim, a dark hairline outside. */
-.mc-btn.icefin-focused { transform: scale(1.05); color: var(--icefin-color-onAccent);
+/* Details (details.js, 9.18): the engine's details screen, poster beside the text over the full backdrop, light type,
+   buttons that turn into a pane of the strip's glass on focus. */
+.icefin-details .icefin-d-shade { background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0.86) 45%, rgb(var(--icefin-color-background-channel) / 0.35) 100%),
+  linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 40%); }
+.icefin-details .icefin-d-main { padding-top: 7vh; }
+.icefin-details .icefin-d-poster { width: 16vw; box-shadow: 0 1em 3em rgb(var(--icefin-color-glassEdge-channel) / 0.45); }
+.icefin-details .icefin-d-kicker { opacity: 0.75; }
+.icefin-details .icefin-d-title { font-weight: 300; font-size: 3em; }
+.icefin-details .icefin-d-section h2 { font-weight: 300; font-size: 1.8em; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { transform: scale(1.05); color: var(--icefin-color-onAccent);
   background: linear-gradient(180deg, rgb(var(--icefin-color-glass-channel) / 0.3) 0%, rgb(var(--icefin-color-glass-channel) / 0.08) 45%, rgb(var(--icefin-color-glass-channel) / 0) 55%), var(--icefin-color-accent);
   box-shadow: inset 0 0.2vh 0 rgb(var(--icefin-color-glass-channel) / 0.6), inset 0 0 0 0.1vh rgb(var(--icefin-color-focus-channel) / 0.55),
               0 0 0 0.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.6), 0 0.8vh 1.8vh rgb(var(--icefin-color-glassEdge-channel) / 0.45); }
-html[data-icefin-motion="low"] .mc-details { transition: none; }
+.icefin-details .icefin-d-card .icefin-d-img { border-radius: var(--icefin-shape-cardRadius); }
+.icefin-details .icefin-d-card.icefin-focused { transform: scale(1.1); }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: inset 0 0.2vh 0 rgb(var(--icefin-color-glass-channel) / 0.6), 0 0 0 0.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.6),
+  0 1.4vh 2.8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }

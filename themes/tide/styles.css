@@ -36,3 +36,12 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 /* With the native backdrop (8.4) the gradient, wave and shade are drawn under the page: the web layer steps aside. */
 html[data-icefin-backdrop] [data-td] { background: transparent; }
 html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { display: none; }
+
+/* Details (9.18): light text over the wave; buttons are words that glow when focused, no boxes. */
+.icefin-details .icefin-d-shade, .icefin-details .icefin-d-art { opacity: 0.35; }
+.icefin-details .icefin-d-title { font-weight: 300; }
+.icefin-details .icefin-d-actions { flex-direction: column; gap: 0.2em; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { background: transparent; padding: 0.35em 0; border-radius: 0; opacity: 0.75; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: transparent; color: var(--icefin-color-text); opacity: 1;
+  font-weight: 600; text-shadow: 0 0 0.8em rgb(var(--icefin-color-focus-channel) / 0.7); }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 1.2em 0.2em rgb(255 255 255 / 0.5); }

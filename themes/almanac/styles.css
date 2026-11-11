@@ -43,3 +43,10 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .al-guide .icefin-guide-cell.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
 .al-guide .icefin-guide-now { position: absolute; top: 5.28vh; bottom: 0; width: 0.18em; background: var(--icefin-color-nowLine); z-index: 2; pointer-events: none; }
 .al-empty { margin-top: 6vh; font-size: 1.3em; color: var(--icefin-color-textSecondary); }
+
+/* Details (9.18): an information pane on the left like the guide's, the lists beside it, lime focus rows. */
+.icefin-details .icefin-d-section h2 { text-transform: uppercase; letter-spacing: 0.08em; font-size: 1em; color: var(--icefin-color-textSecondary); }
+.icefin-details .icefin-d-actions { flex-direction: column; align-items: stretch; gap: 0.25em; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.2em; background: var(--icefin-color-surface); }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.2em; }

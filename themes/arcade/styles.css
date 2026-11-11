@@ -102,3 +102,11 @@ html[data-icefin-motion=low] .ar-qa { animation: none; }
 .icefin-osk-space { flex: 4; }
 .icefin-osk-done { background: var(--icefin-color-accentStrong); }
 .icefin-osk-key.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+
+/* Details (9.18): the art as a header band, a prominent Play button, square-cornered panels. */
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.2em; background: var(--icefin-color-panel); }
+.icefin-details .icefin-d-btn[data-action="play"], .icefin-details .icefin-d-btn[data-action="resume"] { background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); padding: 0.7em 2.6em; font-weight: 600; }
+.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { box-shadow: 0 0 0 0.15em var(--icefin-color-focusRing); background: var(--icefin-color-panel); color: var(--icefin-color-text); }
+.icefin-details .icefin-d-btn[data-action="play"].icefin-focused, .icefin-details .icefin-d-btn[data-action="resume"].icefin-focused { background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); }
+.icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.2em; }
+.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 0 0.15em var(--icefin-color-focusRing); }
