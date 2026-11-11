@@ -336,6 +336,20 @@
 
     window.addEventListener('hashchange', route_);
     window.addEventListener('popstate', route_);
+    // jellyfin-web 10.11+ and 12.x move between pages (and redirect at start-up) with history.pushState and
+    // replaceState, which fire neither hashchange nor popstate: without this a themed screen never mounted when the
+    // user reached it through jellyfin-web's own navigation, only the theme's colours showed.
+    for (const name of ['pushState', 'replaceState']) {
+        const orig = history[name];
+        if (typeof orig !== 'function' || orig.icefinRouted) continue;
+        const wrapped = function (...args) {
+            const r = orig.apply(this, args);
+            setTimeout(route_, 0);  // after the page's own handlers have seen the new URL
+            return r;
+        };
+        wrapped.icefinRouted = true;
+        history[name] = wrapped;
+    }
 
     // The capability model's theme view (6.7): deep-frozen, so a theme can't change what others see.
     let systemView = null;
