@@ -21,6 +21,7 @@ Both pins match the Flatpak manifest (`flatpak/io.github.stealthx3.IcefinPlayer.
 | `patches/0005` vo_libmpv: gpu-next: scale with libplacebo's default filters | Icefin Player | Icefin's own (PLAN 5.3) |
 | `patches/0006` vo_libmpv: gpu-next: map hardware frames through mpv's hwdec interops | Icefin Player | Icefin's own (PLAN 5.3) |
 | `patches/0007` vo_libmpv: gpu-next: apply mpv's render options | Icefin Player | Icefin's own (PLAN 5.8) |
+| `patches/0008` vo_libmpv: gpu-next: start the colour adjustment from neutral | Icefin Player | the fix patrickjquinn posted on mpv #16818 |
 
 **Icefin's change to the carried diff (`0003`).** Rabert's commit builds the target colorspace only when `target-prim` or
 `target-trc` is set, ignores `target-contrast` and `hdr-reference-white`, and logs the target once through a function

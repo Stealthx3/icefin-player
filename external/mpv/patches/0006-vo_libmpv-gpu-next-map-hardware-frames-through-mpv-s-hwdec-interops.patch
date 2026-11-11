@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Icefin Player <noreply@github.com>
 Date: Tue, 10 Nov 2026 21:30:00 +0000
-Subject: [PATCH 6/7] vo_libmpv: gpu-next: map hardware frames through mpv's
+Subject: [PATCH 6/8] vo_libmpv: gpu-next: map hardware frames through mpv's
  hwdec interops
 
 The carried backend created hwdec devices but loaded no interop, so hardware decoding on the Vulkan render API
