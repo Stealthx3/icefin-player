@@ -42,9 +42,16 @@
             st.id = 'icefin-screen-style';
             // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
             // Descendants too: jellyfin-web sets visibility: visible on some of its own (the list page's A-Z picker).
-            const hide = ['.skinHeader', '.mainDrawer', '.mainDrawerHandle', '.mainAnimatedPages', '.backgroundContainer', '#reactRoot']
+            // Server plugins add UI straight to <body> (a media bar's slides, toasts): everything at the top level except
+            // Icefin's own (the screen root, the overlay, the on-screen keyboard) and jellyfin-web's dialogs (which the
+            // capability prompt uses too) steps aside as well. A theme with a transparent screen over the native
+            // backdrop showed all of it through.
+            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(.dialogContainer)';
+            const hide = ['.skinHeader', '.mainDrawer', '.mainDrawerHandle', '.mainAnimatedPages', '.backgroundContainer', '#reactRoot', `body > ${keep}`]
                 .map((s) => `html.${SCREEN_CLASS} ${s}, html.${SCREEN_CLASS} ${s} *`).join(', ');
             st.textContent = `${hide} { visibility: hidden !important; }`
+                // the screen scrolls by itself; a page stylesheet that shows scrollbars mustn't draw one on it
+                + ` html.${SCREEN_CLASS} #${ROOT_ID} { scrollbar-width: none; } html.${SCREEN_CLASS} #${ROOT_ID}::-webkit-scrollbar { display: none; }`
                 // the hidden page's height would still show the document's scrollbar beside the screen
                 + ` html.${SCREEN_CLASS}, html.${SCREEN_CLASS} body { overflow: hidden !important; }`;
             (document.head || h).append(st);

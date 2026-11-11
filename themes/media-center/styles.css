@@ -1,6 +1,9 @@
 /* Media Center: the start strip and the field it sits on. All colours come from tokens. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); }
 
+/* The screen moves its rows itself: nothing may scroll it sideways (rows run past the right edge). */
+#icefin-theme-root[data-mc] { overflow: clip !important; }
+
 /* Ribbon field: two slow gradient bands drifting across. The native backdrop (8.4, backdrop/ribbons.frag) draws them
    under the page when the engine has it; this CSS field is the fallback. */
 .mc-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
@@ -19,14 +22,17 @@ html[data-icefin-motion="low"] .mc-ribbon { animation: none; }
 
 /* The strip: categories stacked vertically; the focused category sits at a fixed line, its row of items to the right. */
 .mc-strip { position: absolute; left: 0; right: 0; top: 0; transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
-.mc-cat { display: grid; grid-template-columns: 22vw 1fr; align-items: center; height: 26vh; }
+/* A row holds its tiles whatever the window's shape: tiles are sized by height (24vh posters, 18vh wide tiles) and grow
+   10% with a label under them when focused, inside a 30vh row. Width-sized tiles were taller than the row on a 16:9
+   screen and the rows overlapped. */
+.mc-cat { display: grid; grid-template-columns: 22vw 1fr; align-items: center; height: 30vh; }
 .mc-cat-title { padding-left: 4.5vw; font-size: 2.3em; font-weight: 300; opacity: 0.45; transition: opacity 200ms, transform 200ms; transform-origin: left center; }
 .mc-cat.current .mc-cat-title { opacity: 1; transform: scale(1.08); }
 .mc-row { display: flex; gap: 1.4vw; overflow: visible; transition: transform var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1); }
 .mc-cat:not(.current) .mc-row { opacity: 0.5; }
-.mc-tile { flex: 0 0 auto; width: 11vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
+.mc-tile { flex: 0 0 auto; height: 24vh; width: auto; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
   position: relative; transition: transform 180ms, box-shadow 180ms; outline: none; }
-.mc-tile.wide { width: 19vw; aspect-ratio: 16 / 9; }
+.mc-tile.wide { height: 18vh; aspect-ratio: 16 / 9; }
 .mc-tile .mc-label { position: absolute; left: 0; right: 0; bottom: -1.8em; font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 150ms; }
 .mc-tile.icefin-focused { transform: scale(1.1); box-shadow: 0 0 0 0.18em var(--icefin-color-focus), 0 0 2.2em 0.4em var(--icefin-color-focusGlow); z-index: 2; }
 .mc-tile.icefin-focused .mc-label { opacity: 1; }
@@ -48,7 +54,7 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 .mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 15vh; bottom: 0; overflow: hidden; }
 .mc-wall { display: grid; grid-template-columns: repeat(7, 1fr); column-gap: 1.6vw; row-gap: 4.5vh; padding: 1.2em 0.6em;
   transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
-.mc-poster { width: auto; }
+.mc-poster { width: auto; height: auto; aspect-ratio: 2 / 3; }  /* the wall sizes posters by its columns */
 
 /* Details (details.js): backdrop, shade, poster and text. */
 .mc-details-art { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; }
