@@ -100,7 +100,7 @@ def main():
             page.wait_for("!!window.api && !!document.querySelector('.skinHeader') && !!document.querySelector('.sectionTitle')", timeout=60)
             time.sleep(4)
             r = json.loads(js(PROBE))
-            js("location.hash = '#/mypreferencesmenu'; true")
+            js("location.hash = '#/mypreferencesmenu?icefin=stock'; true")
             time.sleep(4)
             r["userMenu"] = json.loads(js(MENU))
             js("location.hash = '#/home'; true")

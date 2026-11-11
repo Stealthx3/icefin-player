@@ -2,8 +2,9 @@
 """theme_manager.py — Client Settings -> Theme, the theme manager (PLAN 9.21). Lab guests only; no server needed.
 
   1. the manager replaces the section's plain drop-down: a theme list (Off + every usable theme) and a scheme list;
-  2. choosing a theme, a colour scheme or a Mode (Standard, Dark: 9.20) redraws the preview from that theme's tokens
-     and applies nothing; the Mode is a preference across themes;
+  2. choosing a theme or a colour scheme redraws the preview from that theme's tokens and applies nothing; the one
+     colour scheme list (9.25) holds the theme's own schemes and every other theme's, each also in Dark; Dark is a
+     preference across themes; another theme's colours apply over this theme's own;
   3. Cancel goes back to the active theme; Apply switches the UI to the choice (no restart);
   4. install from file (installFile, the path the file chooser hands over): a zipped package inside one folder
      installs, shows in the list as yours with Remove; installing it again updates it; a package with scripts shows
@@ -82,7 +83,7 @@ def main():
         # Drop-downs (user report: they didn't show as drop-downs): a box and a chevron each, the disabled one too, and
         # an in-page list that opens, picks with Down + Enter and closes with Escape without leaving Client Settings.
         look = json.loads(js(f"JSON.stringify([...document.querySelectorAll('{M} select')].map(s => {{ const w = s.parentElement, a = getComputedStyle(w, '::after'); return [s.className.split(' ').pop(), w.classList.contains('icefin-dd'), a.content !== 'none' && a.borderRightStyle === 'solid', getComputedStyle(s).backgroundColor !== 'rgba(0, 0, 0, 0)', getComputedStyle(s).opacity === '1']; }}))"))
-        check("every drop-down has a box and a chevron (disabled ones too)", len(look) == 3 and all(x[1] and x[2] and x[3] and x[4] for x in look), json.dumps(look))
+        check("every drop-down has a box and a chevron (disabled ones too)", len(look) == 2 and all(x[1] and x[2] and x[3] and x[4] for x in look), json.dumps(look))
         key = lambda k, code, vk: [page.send("Input.dispatchKeyEvent", type=t, key=k, code=code, windowsVirtualKeyCode=vk) for t in ("keyDown", "keyUp")]
         js(f"document.querySelector('{M}').scrollIntoView({{block: 'start'}}); true")  # in view, as for a user
         time.sleep(0.5)
@@ -118,7 +119,7 @@ def main():
         js(f"{q('.icefin-tm-preset')}.click(); true")
         time.sleep(0.3)
         check("a disabled drop-down doesn't open", not js("!!document.querySelector('.icefin-dd-list')"))
-        js(f"{q('.icefin-tm-scheme')}.click(); true")  # element.click(), as jellyfin-web's input layer does for OK
+        js(f"{q('.icefin-tm-theme')}.click(); true")  # element.click(), as jellyfin-web's input layer does for OK
         time.sleep(0.3)
         check("a click without a mouse press (the remote's OK) opens the list", js("!!document.querySelector('.icefin-dd-list')") is True)
         key("Escape", "Escape", 27)
@@ -133,21 +134,28 @@ def main():
         bg = js(f"getComputedStyle({q('.icefin-tm-preview')}).backgroundColor")
         check("choosing a theme draws its preview from its tokens", tok.get("color.background", "").lower() == "#06122b" and bg == "rgb(6, 18, 43)", bg)
         check("choosing a theme applies nothing", selection()["theme"] == before)
-        check("the scheme list offers the theme's presets", js(f"[...{q('.icefin-tm-preset')}.options].map(o => o.value)") == ["", "teal"])
-        pick(".icefin-tm-preset", "teal")
+        vals = js(f"[...{q('.icefin-tm-preset')}.options].map(o => o.value)")
+        check("the colour scheme list: this theme's schemes, each in Dark, then every other theme's", vals[:4] == ["|", "|dark", "teal|", "teal|dark"]
+              and "@mosaic|" in vals and "@mosaic|dark" in vals and "@plaza|" in vals and not any(v.startswith("@media-center") for v in vals), json.dumps(vals[:6]))
+        groups = js(f"[...{q('.icefin-tm-preset')}.querySelectorAll('optgroup')].map(g => g.label)")
+        check("the list is grouped: this theme, then From other themes", groups == ["Media Center", "From other themes"], json.dumps(groups))
+        pick(".icefin-tm-preset", "teal|")
         time.sleep(0.6)
         focus = js(f"{q('.icefin-tm-card.focused')}.style.boxShadow")
         check("choosing a scheme redraws the preview with it", "127, 240, 226" in focus or "#7ff0e2" in focus.lower(), focus)
         check("Apply is offered for a change", js(f"{q('.icefin-tm-apply')}.disabled") is False)
-        # Mode (9.20): Standard or the theme's Dark scheme, previewed before it's applied.
-        check("the Mode list offers Standard and Dark", js(f"[...{q('.icefin-tm-scheme')}.options].map(o => o.textContent)") == ["Standard", "Dark"])
-        pick(".icefin-tm-preset", "")
-        pick(".icefin-tm-scheme", "dark")
+        # Dark (9.20, now in the same list), previewed before it's applied.
+        pick(".icefin-tm-preset", "|dark")
         time.sleep(0.6)
         bg = js(f"getComputedStyle({q('.icefin-tm-preview')}).backgroundColor")
         check("choosing Dark redraws the preview with the dark scheme", bg == "rgb(2, 8, 20)", bg)
         check("choosing Dark applies nothing", selection().get("scheme", "") == "")
-        pick(".icefin-tm-scheme", "")
+        # Another theme's colours (9.25): Mosaic's light field in Media Center's preview.
+        pick(".icefin-tm-preset", "@mosaic|")
+        time.sleep(0.6)
+        bg = js(f"getComputedStyle({q('.icefin-tm-preview')}).backgroundColor")
+        check("another theme's colours redraw the preview", bg == "rgb(220, 220, 222)", bg)
+        pick(".icefin-tm-preset", "|")
 
         # 3. Cancel, then Apply (Mosaic: no backdrop, so no page reload).
         click(".icefin-tm-cancel")
@@ -160,7 +168,7 @@ def main():
         check("Apply switches the UI to the theme", selection()["theme"] == "mosaic" and js("document.documentElement.hasAttribute('data-icefin-theme')") is True,
               js(f"{q('.icefin-tm-status')}.textContent"))
         # Dark on the light theme: one Apply, the page's tokens follow, html carries the scheme.
-        pick(".icefin-tm-scheme", "dark")
+        pick(".icefin-tm-preset", "|dark")
         time.sleep(0.4)
         click(".icefin-tm-apply")
         page.wait_for("document.documentElement.getAttribute('data-icefin-scheme') === 'dark'", timeout=20)
@@ -169,14 +177,26 @@ def main():
         # The scheme is a preference across themes: another theme opens in its own Dark.
         pick(".icefin-tm-theme", "spark")
         time.sleep(0.5)
-        check("the Mode stays Dark when another theme is chosen", js(f"{q('.icefin-tm-scheme')}.value") == "dark")
+        check("Dark stays when another theme is chosen", js(f"{q('.icefin-tm-preset')}.value") == "|dark")
         pick(".icefin-tm-theme", "mosaic")
         time.sleep(0.4)
-        pick(".icefin-tm-scheme", "")
+        pick(".icefin-tm-preset", "|")
         time.sleep(0.3)
         click(".icefin-tm-apply")
         page.wait_for("!document.documentElement.hasAttribute('data-icefin-scheme')", timeout=20)
         check("Standard again restores the theme's own colours", js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase()") == "#dcdcde")
+        # Media Center's colours in Mosaic: the page takes them, Mosaic's own extra colours (its tiles) stay.
+        pick(".icefin-tm-preset", "@media-center|")
+        time.sleep(0.3)
+        click(".icefin-tm-apply")
+        page.wait_for("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase() === '#06122b'", timeout=20)
+        tile = js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-tile').trim().toLowerCase()")
+        check("another theme's colours apply over this theme's own; its extra colours stay", selection().get("preset") == "@media-center"
+              and js("window.icefinTheme.active().id") == "mosaic" and tile == "#009a00", f"tile {tile}")
+        pick(".icefin-tm-preset", "|")
+        time.sleep(0.3)
+        click(".icefin-tm-apply")
+        page.wait_for("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase() === '#dcdcde'", timeout=20)
 
         # 4. Install from file, update, scripts and trust, remove.
         z = make_package(work, "Lab Installed", "lab-installed")
