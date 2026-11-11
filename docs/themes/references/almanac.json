@@ -1,0 +1,36 @@
+{
+  "theme": "almanac",
+  "target": "TiVo grid guide (i-Guide HD style), as shown by a cable operator's guide tutorial, 1920x1080",
+  "sources": [
+    "YouTube, Access Communications, \"TiVo GRID Guide\", https://www.youtube.com/watch?v=eZY63S1peIM (1080p): the full-screen grid guide at 22 s; frames read in the browser, nothing downloaded",
+    "Layout and timing only: no logos, icons, fonts, sounds or names from the target are used; channel marks are the server's"
+  ],
+  "measurements": {
+    "info pane": "the top 350 lines: programme title from x ~302 centred on y ~110, episode and description under it; the live channel picture in the top-right corner, ~510 wide, ending x ~1872",
+    "times": "the time header centred on y ~431-435: the date over the channel column, then half-hours from x 470, 324 px apart (10.8 px a minute; ~4.3 half-hours visible)",
+    "channels": "the channel column left of x 470 (number, then the channel's mark); rows 58.6 apart from y ~464 (eight to the hint bar at y ~966)",
+    "focus": "the focused programme cell filled white with dark text",
+    "motion": "not timed from this source"
+  },
+  "tolerancePx": 14,
+  "timingTolerance": 0.1,
+  "ready": "!!document.querySelector('.al-guide .icefin-guide-cell.icefin-focused')",
+  "states": [
+    {
+      "name": "guide",
+      "settleMs": 1500,
+      "boxes": {
+        "first time column": {"sel": ".icefin-guide-time", "index": 0, "x": 470, "cy": 435, "w": 324},
+        "second time column": {"sel": ".icefin-guide-time", "index": 1, "x": 794},
+        "first channel row": {"sel": ".icefin-guide-row", "index": 0, "y": 464, "h": 59, "tol": 10},
+        "second channel row": {"sel": ".icefin-guide-row", "index": 1, "y": 523, "tol": 10},
+        "channel column": {"sel": ".icefin-guide-channel", "index": 0, "x": 0, "w": 470, "tol": 10},
+        "live preview": {"sel": ".al-preview", "right": 1872, "y": 0, "w": 510, "h": 350}
+      },
+      "text": {
+        "programme title": {"sel": ".al-title", "x": 302, "cy": 110, "tol": 16}
+      }
+    }
+  ],
+  "timings": []
+}

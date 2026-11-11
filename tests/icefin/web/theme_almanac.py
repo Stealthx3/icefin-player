@@ -80,8 +80,8 @@ def main():
         g0 = json.loads(gf())
         check("focus starts on the first channel's programme on now", g0 and g0.get("row") == 0 and not g0.get("gap") and g0["s"] <= now < g0["e"] and str(g0.get("ch")) == "1", gf())
         geo = json.loads(js("JSON.stringify((() => { const r = [...document.querySelectorAll('.icefin-guide-row')]; const p = document.querySelector('.al-preview').getBoundingClientRect(); return {rows: r.length, rowH: r[0].getBoundingClientRect().height / innerHeight, chW: document.querySelector('.icefin-guide-channel').getBoundingClientRect().width / innerWidth, prevRight: p.right / innerWidth, prevTop: p.top / innerHeight, times: document.querySelectorAll('.icefin-guide-time').length}; })())"))
-        check("layout: seven channel rows, channels about 15% wide, three half-hour columns, preview in the top-right corner",
-              geo["rows"] == 7 and 0.13 <= geo["chW"] <= 0.17 and geo["times"] == 3 and geo["prevRight"] > 0.9 and geo["prevTop"] < 0.1, json.dumps(geo))
+        check("layout: eight channel rows, the channel column 470/1920, four half-hour columns, preview in the top-right corner",
+              geo["rows"] == 8 and abs(geo["chW"] - 470 / 1920) < 0.01 and geo["times"] == 4 and geo["prevRight"] > 0.9 and geo["prevTop"] < 0.1, json.dumps(geo))
         ratio = json.loads(js("JSON.stringify((() => { const r = [...document.querySelectorAll('.icefin-guide-cell')].filter(c => !c.className.includes('cut') && !c.classList.contains('icefin-guide-gap')).map(c => c.getBoundingClientRect().width / (c.guideProgramme.end - c.guideProgramme.start)); return r.length ? [r.length, Math.max(...r) / Math.min(...r)] : [0, 0]; })())"))
         check("programme cells sized by duration (same width per minute)", ratio[0] >= 3 and ratio[1] < 1.04, json.dumps(ratio))
         check("a now line", js("!!document.querySelector('.al-guide .icefin-guide-now')"))
@@ -105,9 +105,9 @@ def main():
         g2 = json.loads(gf())
         check("down moves to the next channel at the same time; the preview follows the channel", g2.get("row") == 1 and g2["s"] < g1["e"] and g2["e"] > g1["s"]
               and js(f"{R}.dataset.alPreview || ''") == "", f"{g1} -> {g2}")
-        for _ in range(7):
+        for _ in range(8):
             act("down")
-        check("past the last visible row the guide scrolls by channel", json.loads(gf()).get("row") == 8 and int(js("document.querySelector('.al-guide').dataset.top")) >= 2, gf())
+        check("past the last visible row the guide scrolls by channel", json.loads(gf()).get("row") == 9 and int(js("document.querySelector('.al-guide').dataset.top")) >= 2, gf())
         for _ in range(12):
             act("right")
         w = js("+document.querySelector('.al-guide .icefin-guide-times').dataset.start")
