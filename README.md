@@ -2,9 +2,9 @@
 
 [![Icefin Player 1.0 progress. Click for the full tracker.](docs/progress/progress-bar.svg)](https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU)
 
-A themeable, HTPC-first Jellyfin client for Linux. Icefin Player is a fork of [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) (v2.0.0). It adds a full theme engine, true HDR output, reliable HDMI audio passthrough and first-class controller support, and ships as a Flatpak.
+A themeable, HTPC-first Jellyfin client for Linux. Icefin Player is a fork of [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) (v2.0.0). It adds a full theme engine, improves HDR output and HDMI audio passthrough, a new vulkan renderer layer, applies GPU acceleration to more places to provide for a smoother experience, provides in-app diagnostics of target hardware so you know what your system is capable of before configuring it, first-class controller support, and ships as a Flatpak.
 
-> **Status:** pre-alpha. Planning is complete and development is starting. Nothing here is ready for daily use yet. Track progress in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status:** alpha ([v0.1.0-alpha.1](https://github.com/Stealthx3/icefin-player/releases/tag/v0.1.0-alpha.1)). The features are in, tested in the virtual lab; real hardware hasn't been tried by testers yet, and some themes are still being finished. Expect rough edges. Track progress in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## What it will look like
 
