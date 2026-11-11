@@ -12,7 +12,7 @@ osd.* tokens. For every bundled theme with a script (all but Baseline), while a 
 With the theme off the attribute is gone (stock controls).
 Usage: python3 theme_osd.py --app ~/build-mpv/src/icefin-player --server jf12 --out ~/rosd
 """
-import argparse, base64, json, os, signal, sys, tempfile, time
+import argparse, base64, json, os, signal, subprocess, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -94,7 +94,9 @@ def main():
             js(osd_helper)
             js(f"window.icefinPlaybackManager.play({{ids: ['{clip}'], serverId: {api}.serverId()}}); true")
             page.wait_for("location.hash.startsWith('#/video') && !!window.__osd().querySelector('.videoOsdBottom') && !!window.icefinPlaybackManager.getCurrentPlayer()", timeout=45)
-            time.sleep(1.5)
+            # Let jellyfin-web's controls finish starting (the position moving) before pausing: pausing within the
+            # first second or so sometimes left them unable to come up.
+            page.wait_for("(() => { const pm = window.icefinPlaybackManager; const t = pm.currentTime(); return t > 1500; })()", timeout=20)
             # Paused: the clip is short, and paused controls stay up.
             js("window.icefinPlaybackManager.pause(); true")
             page.wait_for("window.icefinPlaybackManager.paused()", timeout=10)
@@ -134,9 +136,7 @@ def main():
             if not switch(tid):
                 check(f"{tid}: theme switched", False)
                 continue
-            # A fresh page per theme, as a session would have. Without it, playing within seconds of a theme switch
-            # sometimes left jellyfin-web's controls unable to come up (lab, 2026-11-11; not seen without a switch:
-            # six plays in a row in one theme were fine). Tracked in the PR.
+            # A fresh page per theme, as a session would have.
             js("location.hash = '#/home'; location.reload(); true")
             time.sleep(6)
             page.reconnect()
@@ -147,8 +147,9 @@ def main():
                     play()
                     show_osd()
                 except Exception:  # noqa: BLE001
-                    # Seen in the lab: right after a theme switch the controls sometimes don't come up for the first
-                    # play (a different theme each run). One retry, reported, so a theme that never shows them fails.
+                    # Seen in the lab when the test paused within the first second of playback (now it waits for the
+                    # position to move first): jellyfin-web's controls then stayed down. One retry, reported, so a theme
+                    # that never shows them still fails.
                     print(f"theme_osd: note {tid}: controls didn't come up on the first play; retrying once", flush=True)
                     stop()
                     play()
@@ -184,6 +185,12 @@ def main():
             fill = js("getComputedStyle(window.__osd().querySelector('.btnPause')).backgroundColor")
             wfill = probe("backgroundColor", "var(--icefin-osd-focusFill, var(--icefin-color-focus))")
             check(f"{tid}: the focused button in the theme's focus fill", fill == wfill, f"{fill} vs {wfill}")
+            # Scrims fade out past the bars instead of ending at their edge (user report: a hard cut-off).
+            show_osd()
+            sc = json.loads(js("JSON.stringify((() => { const h = [...document.querySelectorAll('.skinHeader.osdHeader')].find(x => x.getClientRects().length) || document.querySelector('.skinHeader.osdHeader'); const hb = h.getBoundingClientRect(), hs = getComputedStyle(h, '::before'); const b = window.__osd().querySelector('.videoOsdBottom'), bb = b.getBoundingClientRect(), bs = getComputedStyle(b, '::before'); return {header: [getComputedStyle(h).backgroundImage, hs.backgroundImage.endsWith('transparent 100%)') || /rgba\\([^)]*, 0\\) 100%\\)$/.test(hs.backgroundImage), parseFloat(hs.bottom)], bar: [getComputedStyle(b).backgroundImage, bs.backgroundImage.endsWith('transparent 100%)') || /rgba\\([^)]*, 0\\) 100%\\)$/.test(bs.backgroundImage), parseFloat(bs.top)]}; })())"))
+            check(f"{tid}: the title bar's scrim fades out below the bar", sc["header"][0] == "none" and sc["header"][1] and sc["header"][2] < 0, json.dumps(sc["header"][1:]))
+            if EXPECT[tid][0] != "panel":
+                check(f"{tid}: the controls' scrim fades out above the bar", sc["bar"][0] == "none" and sc["bar"][1] and sc["bar"][2] < 0, json.dumps(sc["bar"][1:]))
             if EXPECT[tid][0] == "panel":
                 show_osd()
                 r = json.loads(js("JSON.stringify(window.__osd().querySelector('.videoOsdBottom').getBoundingClientRect())"))
@@ -191,7 +198,33 @@ def main():
                 side = {"right": r["right"] < W - 5 and r["left"] > W * 0.2, "left": r["left"] > 5 and r["right"] < W * 0.8, "center": abs((r["left"] + r["right"]) / 2 - W / 2) < 8}[EXPECT[tid][1]]
                 check(f"{tid}: the panel floats inside the window on its side", r["width"] < W - 10 and r["left"] >= 0 and r["right"] <= W and side, json.dumps({k: round(v) for k, v in r.items() if k in ('left', 'right', 'width')}))
             show_osd()
+            # The page is transparent over the native video: composite over black, or scrims lose their alpha in the shot.
+            page.send("Emulation.setDefaultBackgroundColorOverride", color={"r": 0, "g": 0, "b": 0, "a": 1})
             open(os.path.join(a.out, f"{tid}-osd.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
+            page.send("Emulation.setDefaultBackgroundColorOverride")
+            # What reaches the screen (the window composited over the native video), from the X display itself: the
+            # DevTools screenshot above drops the page's alpha, so scrims look solid there whatever they do.
+            shot_png = os.path.join(a.out, f"{tid}-screen.png")
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", "1920x1080", "-i", os.environ.get("DISPLAY", ":99"),
+                            "-frames:v", "1", shot_png], timeout=20)
+            # The scrims fade: down columns of the picture (the test card's red bar), brightness changes
+            # gradually through the title bar's scrim and the controls' scrim, with no edge (user report: a hard
+            # cut-off). Text and the seek bar are skipped by checking only the scrim zones.
+            # Three columns in the red bar: a scrim's edge runs across all of them at the same height; the test card's
+            # moving diagonal crosses only one.
+            cols = [subprocess.run(["ffmpeg", "-loglevel", "error", "-i", shot_png, "-vf", f"crop=1:720:{x}:0", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+                                   capture_output=True, timeout=20).stdout for x in (40, 110, 180)]
+            if all(len(c) == 720 for c in cols):
+                col = None
+                hb = int(js("Math.round(([...document.querySelectorAll('.skinHeader.osdHeader')].find(x => x.getClientRects().length) || {getBoundingClientRect: () => ({bottom: 60})}).getBoundingClientRect().bottom)"))
+                bt = int(js("Math.round(window.__osd().querySelector('.osdControls').getBoundingClientRect().top)"))
+                zones = [(hb - 20, min(719, hb + 80))]
+                if EXPECT[tid][0] != "panel":
+                    zones.append((max(0, bt - 130), bt - 25))
+                jump = max(max(min(abs(c[y + 4] - c[y]) for c in cols) for y in range(z0, z1 - 4, 4)) for z0, z1 in zones)
+                check(f"{tid}: on screen the scrims fade with no edge", jump <= 24, f"largest step {jump} in zones {zones}")
+            else:
+                check(f"{tid}: on screen the scrims fade with no edge", False, f"no screen capture ({[len(c) for c in cols]} bytes)")
             # The subtitles menu opens over the video, in the theme's menu colour.
             show_osd()
             js("window.__osd().querySelector('.btnSubtitles').click(); true")
