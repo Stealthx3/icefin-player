@@ -6,6 +6,9 @@
 #include "icefin/theme/CssSanitizer.h"
 #include "icefin/theme/ThemeScheme.h"
 #include "icefin/theme/Backdrop.h"
+#include "icefin/theme/UiSounds.h"
+#include <QtEndian>
+#include <cstring>
 #include <QTemporaryDir>
 
 using namespace Icefin::Theme;
@@ -27,6 +30,19 @@ static QString backdropPackage(const QString& dir, const char* shaderFile, const
   QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", dir + "/tokens.json");
   writeFile(dir + "/" + shaderFile, shader);
   return dir;
+}
+
+
+// A RIFF/WAVE file: fmt (format tag, channels, rate, bits) and a data chunk.
+static QByteArray wav(quint16 tag, quint16 channels, quint32 rate, quint16 bits, const QByteArray& pcm)
+{
+  QByteArray b;
+  auto u16 = [&b](quint16 v) { char c[2]; qToLittleEndian(v, c); b.append(c, 2); };
+  auto u32 = [&b](quint32 v) { char c[4]; qToLittleEndian(v, c); b.append(c, 4); };
+  b.append("RIFF"); u32(36 + pcm.size()); b.append("WAVE");
+  b.append("fmt "); u32(16); u16(tag); u16(channels); u32(rate); u32(rate * channels * bits / 8); u16(channels * bits / 8); u16(bits);
+  b.append("data"); u32(pcm.size()); b.append(pcm);
+  return b;
 }
 
 class TestTheme : public QObject
@@ -279,6 +295,37 @@ private slots:
     meta.replace("bd/a.frag", "../a.frag");
     writeFile(d3.path() + "/theme.json", meta);
     QVERIFY(loadPackage(d3.path(), Source::Bundled).errors.join(" ").contains("is not a file in the package"));
+  }
+  // Theme UI sounds (8.5): any common WAV decodes to 48 kHz stereo float.
+  void uiSoundsDecodeWav()
+  {
+    QVector<float> out;
+    QString err;
+    QByteArray s16;
+    for (qint16 v : {qint16(16384), qint16(-16384), qint16(0), qint16(32767)}) { char c[2]; qToLittleEndian(v, c); s16.append(c, 2); }
+    QVERIFY2(UiSounds::decodeWav(wav(1, 2, 48000, 16, s16), &out, &err), qPrintable(err));
+    QCOMPARE(out.size(), 4);
+    QCOMPARE(out[0], 0.5f);
+    QCOMPARE(out[1], -0.5f);
+    // 8-bit mono at 24 kHz: both sides, twice the frames.
+    QVERIFY2(UiSounds::decodeWav(wav(1, 1, 24000, 8, QByteArray("\xc0\xc0\xc0\xc0", 4)), &out, &err), qPrintable(err));
+    QCOMPARE(out.size(), 16);
+    QCOMPARE(out[0], out[1]);
+    QCOMPARE(out[0], 0.5f);
+    // 32-bit float and 24-bit PCM.
+    QByteArray f32(8, 0);
+    const float a = 0.25f, b2 = -1.0f;
+    std::memcpy(f32.data(), &a, 4);
+    std::memcpy(f32.data() + 4, &b2, 4);
+    QVERIFY2(UiSounds::decodeWav(wav(3, 2, 48000, 32, f32), &out, &err), qPrintable(err));
+    QCOMPARE(out[0], 0.25f);
+    QCOMPARE(out[1], -1.0f);
+    QVERIFY2(UiSounds::decodeWav(wav(1, 1, 48000, 24, QByteArray("\x00\x00\x40", 3)), &out, &err), qPrintable(err));
+    QCOMPARE(out[0], 0.5f);
+    // Not a WAV, and a compressed WAV, are refused with a reason.
+    QVERIFY(!UiSounds::decodeWav("OggS....", &out, &err));
+    QVERIFY(!UiSounds::decodeWav(wav(2, 1, 48000, 4, QByteArray(8, 0)), &out, &err));
+    QVERIFY(err.contains("unsupported"));
   }
 };
 

@@ -10,11 +10,11 @@
 #pragma once
 #include "core/ComponentManager.h"
 #include "ThemePackage.h"
+#include "UiSounds.h"
 #include <QHash>
 #include <QVariantList>
 #include <QVariantMap>
 
-class QSoundEffect;
 
 namespace Icefin::Theme
 {
@@ -132,7 +132,7 @@ private:
   class SchemeHandler* m_scheme = nullptr;
   QString m_user;
   bool m_mirroring = false;
-  QHash<QString, QSoundEffect*> m_sounds;
+  UiSounds* m_uiSounds = nullptr;  // created with the first sound
   QVariantMap m_soundState{{"played", 0}, {"suppressed", 0}};
   void soundNote(bool played, const QString& event, const QString& reason);
   void prepareBackdrop();
