@@ -47,6 +47,6 @@
     }
   ],
   "timings": [
-    {"name": "focus frame moves at once", "sel": ".pl-tile .pl-art", "kind": "transition", "property": "outline", "ms": 0}
+    {"name": "focus frame glides (user feedback 2026-11-11 asked for motion; the target's frame jumps)", "sel": ".pl-frame", "kind": "transition", "property": "transform", "ms": 190}
   ]
 }

@@ -62,7 +62,8 @@
         c.tabIndex = -1;
         c.orbitTile = t;
         const face = el('div', 'ob-face');
-        if (t.art) face.style.backgroundImage = `url("${t.art}")`;
+        // With art, the name sits on a dark band at the tile's foot; without, once in the middle.
+        if (t.art) { face.style.backgroundImage = `url("${t.art}")`; c.classList.add('has-art'); }
         else face.append(el('div', 'ob-face-title', t.label));
         c.append(face, el('div', 'ob-label', t.label), el('div', 'ob-sub', t.sub || ''));
         c.addEventListener('click', () => t.go());
@@ -83,7 +84,7 @@
             // The target's ring: the front tile flat at the left, the next ones further back on the right (scale 0.745,
             // 0.593), no tilt, 370 ms a step. Depth and perspective are px, so they follow the window's height.
             const k = window.innerHeight / 1080;
-            const carousel = ui.carousel3d(ring, ch.tiles, { render: tile, spacing: 116.5, depth: Math.round(411 * k), tilt: 0.001, visible: 4, ms: 370,
+            const carousel = ui.carousel3d(ring, ch.tiles, { render: tile, dim: true, spacing: 116.5, depth: Math.round(411 * k), tilt: 0.001, visible: 4, ms: 370,
                 perspective: `${Math.round(1200 * k)}px` });
             return { el: row, carousel, cells: [...ring.querySelectorAll('.ob-tile')], last: 0 };
         });

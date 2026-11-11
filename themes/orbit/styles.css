@@ -41,11 +41,19 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
   border: 0.25em solid transparent; box-sizing: border-box; }
 .ob-face-title { font-size: 2.2vw; font-weight: 300; color: var(--icefin-color-accentStrong); }
 .ob-tile.icefin-focused .ob-face { border-color: var(--icefin-color-focus); }
-/* The name in the tile's lower left, like the target's tile captions. */
-.ob-label { position: absolute; left: 1.4vw; bottom: 4.2vh; font-size: 1.35vw; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; max-width: 80%; opacity: 0; text-shadow: 0 0 0.4em rgba(0, 0, 0, 0.5); }
-.ob-sub { position: absolute; left: 1.4vw; bottom: 1.8vh; font-size: 0.94vw; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; max-width: 80%; opacity: 0; }
+/* The focused tile's name in its lower left, like the target's captions, on a dark band so it reads over any art
+   (user feedback 2026-11-11: the captions were unreadable over the art). Tiles without art show their name once, in the
+   middle, and only their sub-line here; the tiles behind stay solid (carousel dim), so nothing shows through them. */
+.ob-tile.has-art .ob-face::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 42%; border-radius: inherit;
+  background: linear-gradient(180deg, transparent 0%, rgb(var(--icefin-color-guide-channel) / 0.55) 45%, rgb(var(--icefin-color-guide-channel) / 0.85) 100%);
+  opacity: 0; transition: opacity 200ms ease; }
+.ob-tile.has-art.icefin-focused .ob-face::after { opacity: 1; }
+.ob-label { position: absolute; left: 1.4vw; right: 1.4vw; bottom: 4.6vh; font-size: 1.35vw; line-height: 1.2; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; opacity: 0; transition: opacity 200ms ease; }
+.ob-sub { position: absolute; left: 1.4vw; right: 1.4vw; bottom: 2.2vh; font-size: 0.94vw; line-height: 1.2; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; opacity: 0; transition: opacity 200ms ease; }
+.ob-tile:not(.has-art) .ob-label { display: none; }
+.ob-tile:not(.has-art) .ob-sub { color: var(--icefin-color-onFocus); }
 .ob-tile.icefin-focused .ob-label, .ob-tile.icefin-focused .ob-sub { opacity: 1; }
 
 /* Count under the ring (x 143, y 883), the hint lower left (y 973), the clock top right (ending x 1660, y 120). */

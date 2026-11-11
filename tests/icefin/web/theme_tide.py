@@ -135,7 +135,9 @@ def main():
             act("enter")
             page.wait_for("location.hash.startsWith('#/details')", timeout=15)
             time.sleep(2)
-            check("Enter opens the item's details, styled by Tide's tokens", js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True)
+            page.wait_for("!!(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details-ready')", timeout=20)
+            check("Enter opens Tide's themed details screen (9.18)", js("window.icefinTheme.active().route") == "#/details"
+                  and js("document.querySelector('.icefin-details').dataset.layout") == "panel")
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
         check("turning the theme off restores the stock UI, palette dropped", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False

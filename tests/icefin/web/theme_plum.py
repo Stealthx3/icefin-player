@@ -9,7 +9,7 @@
     at the grid's right edge, left from the first column and Back return to the menu;
   - Enter on a library tile opens that library in the grid and moves the menu with it; Enter on an item opens
     jellyfin-web's details page styled by Plum's tokens;
-  - low motion: the theme caps motion while its screen is up (html[data-icefin-motion=low], transitions at most 80 ms)
+  - motion (user feedback 2026-11-11): rows and one focus frame glide (no theme motion cap; the target's frame jumps)
     and lifts the cap when the screen goes; a long grid steps a row at a time with the focused row on screen, and
     art is requested only near the visible rows (lowest-spec HTPC budget).
 Layout positions and timings against reference captures stay with 9.1. Screenshots go to --out.
@@ -88,7 +88,9 @@ def main():
         check("header band 185/1080 with the clock; the focused menu widens to 470/1920 (210 collapsed)",
               abs(geo["rail"] - 470 / 1920) < 0.01 and abs(geo["bar"] - 185 / 1080) < 0.01 and bool(geo["clock"]), json.dumps(geo))
         dur = js("parseFloat(getComputedStyle(document.querySelector('.pl-grid')).transitionDuration)")
-        check("the theme caps motion low while its screen is up", motion() == "low" and dur <= 0.08, f"{motion()} {dur}s")
+        # User feedback 2026-11-11: motion instead of the target's still frame. Rows glide, the focus frame glides.
+        frame = js("parseFloat(getComputedStyle(document.querySelector('.pl-frame')).transitionDuration)")
+        check("rows and the focus frame glide (no motion cap)", motion() == "normal" and 0.2 <= dur <= 0.4 and 0.15 <= frame <= 0.25, f"{motion()} grid {dur}s frame {frame}s")
 
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; "
                          "if (f.classList.contains('pl-menu-item')) return 'menu/' + f.textContent; "
@@ -198,7 +200,7 @@ def main():
               and js("[...document.querySelectorAll('.sectionTitle')].filter(e => e.offsetParent).length") > 0)
 
         sounds = js("new Promise(r => window.api.theme.soundState(r))")
-        check("Plum ships no sounds", sounds.get("played", 0) == 0, json.dumps(sounds)[:120])
+        check("Plum plays its interface sounds (theme-sounds.py; user feedback 2026-11-11)", sounds.get("played", 0) > 0, json.dumps(sounds)[:120])
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
         check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)

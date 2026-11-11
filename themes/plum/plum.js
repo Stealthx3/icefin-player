@@ -1,8 +1,9 @@
 // Plum (benchmark theme, PLAN 9.6; its target is named in docs/PLAN.md). Built from the engine's generic capabilities only:
 // the top-bar chrome slot holds a slim header with the clock, the side-rail slot holds the menu column, and the screen
 // fills the content area with a grid of large tiles for the focused menu entry: three across on Home, four across in
-// a library. The theme caps motion low (ui.motion.cap): the focus frame jumps, rows step without gliding. Every other
-// route is jellyfin-web's own page, styled by this theme's tokens.
+// a library. Motion (user feedback 2026-11-11): one focus frame glides from tile to tile, a highlight glides along the
+// menu, rows glide, the info panel cross-fades and tiles fade in when a section opens; all of it falls back to instant
+// under the user's reduced motion. Every other route is jellyfin-web's own page, styled by this theme's tokens.
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -81,6 +82,7 @@
         collapsedWidth: '10.94vw',
         async mount(rail) {
             const list = el('div', 'pl-menu');
+            list.append(el('div', 'pl-menu-glow'));  // the highlight that glides to the focused entry
             rail.append(list);
             const views = await T.ui.userViews();
             const client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
@@ -158,7 +160,12 @@
         S.grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
         S.grid.classList.toggle('pl-wide', wide);
         S.grid.style.transform = 'none';
-        S.cells = tiles.map((t) => { const c = cell(t, wide); S.grid.append(c); return c; });
+        S.cells = tiles.map((t, k) => { const c = cell(t, wide); c.style.setProperty('--pl-i', String(Math.min(k, 11))); S.grid.append(c); return c; });
+        // Tiles fade in, staggered, when a section opens (styles.css: pl-in).
+        S.grid.classList.remove('pl-in');
+        void S.grid.offsetWidth;
+        S.grid.classList.add('pl-in');
+        if (S.frame) S.frame.classList.remove('on');
         S.index = 0;
         S.topRow = 0;
         if (!S.cells.length) S.grid.append(el('div', 'pl-empty', 'Nothing here yet'));
@@ -202,17 +209,39 @@
         S.content.setAttribute('data-pl-top', String(S.topRow));
         loadArt();
         T.ctx.focus(S.cells[i]);
+        moveFrame(S.cells[i]);
         showInfo(S.cells[i].plumTile);
         S.count.textContent = `${i + 1} of ${S.cells.length}`;
     }
 
-    // The right-hand panel: the focused tile's art, name and summary (where the target shows a featured item).
+    // The focus frame: one ring that glides to the focused tile's art (where the grid will be once it has glided too).
+    function moveFrame(cellEl) {
+        if (!S.frame || !cellEl) return;
+        const art = cellEl.querySelector('.pl-art') || cellEl;
+        const x = cellEl.offsetLeft + art.offsetLeft, y = cellEl.offsetTop + art.offsetTop - S.topRow * rowHeight();
+        S.frame.style.transform = `translate(${x}px, ${y}px)`;
+        S.frame.style.width = `${art.offsetWidth}px`;
+        S.frame.style.height = `${art.offsetHeight}px`;
+        S.frame.classList.add('on');
+    }
+
+    // The right-hand panel: the focused tile's art, name and summary (where the target shows a featured item). It fades
+    // out, takes the new tile and fades back in.
     function showInfo(tile) {
         if (!S || !tile) return;
-        S.infoArt.style.backgroundImage = tile.art ? `url("${tile.art}")` : 'none';
-        S.infoTitle.textContent = tile.label || '';
-        S.infoSub.textContent = tile.sub || '';
-        S.infoText.textContent = (tile.item && tile.item.Overview) || '';
+        const set = () => {
+            if (!S) return;
+            S.infoArt.style.backgroundImage = tile.art ? `url("${tile.art}")` : 'none';
+            S.infoTitle.textContent = tile.label || '';
+            S.infoSub.textContent = tile.sub || '';
+            S.infoText.textContent = (tile.item && tile.item.Overview) || '';
+            S.info.classList.remove('swap');
+        };
+        clearTimeout(S.infoTimer);
+        const ms = ui.motion.duration(110);
+        if (!ms) { set(); return; }
+        S.info.classList.add('swap');
+        S.infoTimer = setTimeout(set, ms);
     }
 
     function enterGrid() {
@@ -228,6 +257,10 @@
         S.menuIndex = i;
         T.ctx.focus(S.menu[i]);
         S.menu.forEach((b, k) => b.classList.toggle('current', k === i));
+        if (S.frame) S.frame.classList.remove('on');
+        // The menu's highlight glides to the entry.
+        const glow = S.menu[i].parentElement && S.menu[i].parentElement.querySelector('.pl-menu-glow');
+        if (glow) { glow.style.transform = `translateY(${S.menu[i].offsetTop}px)`; glow.style.height = `${S.menu[i].offsetHeight}px`; glow.classList.add('on'); }
         clearTimeout(S.sectionTimer);
         if (S.section !== S.menu[i].plum) S.sectionTimer = setTimeout(() => renderSection(S.menu[i].plum), ui.motion.duration(250));
     }
@@ -274,7 +307,6 @@
         },
         mount(root, ctx) {
             root.setAttribute('data-pl', 'home');
-            ui.motion.cap('low');
             S = { client: T.ctx.apiClient(), root, menu: null, views: [], cells: [], cols: 3, index: 0, topRow: 0, menuIndex: 0, zone: 'menu' };
             const content = ui.chrome.frame(root, ctx);
             S.content = content;
@@ -289,7 +321,8 @@
             content.append(S.count, S.info);
             S.gridView = el('div', 'pl-grid-view');
             S.grid = el('div', 'pl-grid');
-            S.gridView.append(S.grid);
+            S.frame = el('div', 'pl-frame');
+            S.gridView.append(S.grid, S.frame);
             content.append(S.gridView);
             S.ready = () => {
                 root.setAttribute('data-pl-menu', String(S.menu.length));
@@ -301,7 +334,7 @@
             if (!S) return;
             clearInterval(S.clockTimer);
             clearTimeout(S.sectionTimer);
-            ui.motion.cap('normal');
+            clearTimeout(S.infoTimer);
             S = null;
         }
     });

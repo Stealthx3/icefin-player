@@ -19,6 +19,13 @@
     },
     "fps": 30
   },
+  "sounds": {
+    "focus": "sounds/focus.wav",
+    "select": "sounds/select.wav",
+    "back": "sounds/back.wav",
+    "navigate": "sounds/navigate.wav",
+    "error": "sounds/error.wav"
+  },
   "schemes": {
     "dark": {
       "name": "Dark",
