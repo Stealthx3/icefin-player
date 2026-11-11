@@ -70,6 +70,13 @@ def main():
         page.wait_for("+(document.querySelector('#icefin-theme-root[data-mc-ready]') || {dataset: {}}).dataset.mcReady > 0 || +((document.querySelector('#icefin-theme-root') || {}).getAttribute && document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=30)
         cats = js("JSON.stringify([...document.querySelectorAll('.mc-cat-title')].map(e => e.textContent))")
         check("start strip: one row per library, plus More", json.loads(cats)[-1] == "More" and len(json.loads(cats)) >= 3, cats)
+        # jellyfin-web's own navigation (history.pushState, no hashchange) must mount and unmount themed screens: before
+        # the fix only the theme's colours showed when the user reached Home that way.
+        js("location.hash = '#/mypreferencesmenu'; true")
+        page.wait_for("!document.querySelector('#icefin-theme-root') || document.querySelector('#icefin-theme-root').hidden", timeout=20)
+        js("Dashboard.navigate('home'); true")
+        page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root'); return !!r && !r.hidden && +r.getAttribute('data-mc-ready') > 0; })()", timeout=30)
+        check("jellyfin-web's own navigation (pushState) mounts the themed home", js("window.icefinTheme.active().route") == "#/home")
         foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); return f ? (f.closest('.mc-cat').querySelector('.mc-cat-title').textContent + '/' + (f.textContent || '')) : ''; })()")
         time.sleep(1.2)
         shot("start.png")
