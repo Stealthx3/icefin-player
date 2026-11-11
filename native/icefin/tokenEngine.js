@@ -51,6 +51,11 @@
             attach();
             watch();
         });
+        // The colour scheme (9.20) on <html>, for theme CSS that adjusts more than tokens: html[data-icefin-scheme="dark"].
+        if (api.theme.activeScheme) api.theme.activeScheme((sc) => {
+            if (sc) document.documentElement.setAttribute('data-icefin-scheme', sc);
+            else document.documentElement.removeAttribute('data-icefin-scheme');
+        });
     }
 
     window.icefinTokenEngine = {

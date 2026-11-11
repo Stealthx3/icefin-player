@@ -7,5 +7,23 @@
   "styles": "styles.css",
   "scripts": [
     "arcade.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#06090d",
+          "surface": "#0e141b",
+          "surfaceRaised": "#171d25",
+          "bar": "#08090b",
+          "panel": "#1c2026",
+          "pill": "#1d2125",
+          "onAccent": "#04121f",
+          "onFocus": "#04121f",
+          "scrim": "rgba(4, 6, 9, 0.8)"
+        }
+      }
+    }
+  }
 }

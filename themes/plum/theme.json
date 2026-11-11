@@ -7,5 +7,21 @@
   "styles": "styles.css",
   "scripts": [
     "plum.js"
-  ]
+  ],
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#0a0f38",
+          "surface": "#24093d",
+          "surfaceRaised": "#331257",
+          "rail": "#0a0f38",
+          "header": "#0e0638",
+          "headerMid": "#2c0f63",
+          "panel": "#101224"
+        }
+      }
+    }
+  }
 }
