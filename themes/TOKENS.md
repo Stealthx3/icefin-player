@@ -9,6 +9,11 @@ variables directly, so a jellyfin-web update only changes the engine's adapter (
 - A leaf is a string or number, or `{"$value": …, "$description": …}`.
 - `"{group.name}"` refers to another token. References are resolved before use, and cycles are refused.
 - `theme.json` `presets` override any tokens: `{"presets": {"green": {"color": {"accent": "#…"}}}}`.
+- `osd.*` tokens style the player controls (9.19, with `ui.osd.set({layout, align})`): `barBackground`,
+  `headerBackground`, `panelBackground`, `panelRadius`, `panelBlur`, `buttonRadius`, `buttonSize`, `buttonBackground`,
+  `focusFill`, `focusText`, `focusRing`, `progress`, `progressTrack`, `progressHeight`, `marker`, `titleSize`,
+  `titleWeight`, `titleTransform`, `text`, `textSecondary`, `menuBackground`, `menuRadius`. All optional, with defaults
+  from the colour tokens (`native/icefin/osdLayout.js`). Over video, scrims should stay dark even in a light theme.
 - `theme.json` `schemes` are colour schemes the user picks in the theme manager's *Mode* list (9.20), on top of the
   preset: `{"schemes": {"dark": {"name": "Dark", "tokens": {…}, "presets": {"green": {…}}}}}`. Order: base, preset,
   scheme `tokens`, the scheme's override for that preset. The choice carries across themes: a theme without that
