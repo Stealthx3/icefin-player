@@ -85,8 +85,8 @@ def main():
         geo = json.loads(js("JSON.stringify({rail: document.querySelector('.icefin-siderail').getBoundingClientRect().width / innerWidth, "
                             "bar: document.querySelector('.icefin-topbar').getBoundingClientRect().height / innerHeight, "
                             "clock: document.querySelector('.pl-clock').textContent})"))
-        check("two panes under a slim header: menu about 27% wide, header about 11% high with the clock",
-              0.25 <= geo["rail"] <= 0.29 and 0.09 <= geo["bar"] <= 0.13 and bool(geo["clock"]), json.dumps(geo))
+        check("header band 185/1080 with the clock; the focused menu widens to 470/1920 (210 collapsed)",
+              abs(geo["rail"] - 470 / 1920) < 0.01 and abs(geo["bar"] - 185 / 1080) < 0.01 and bool(geo["clock"]), json.dumps(geo))
         dur = js("parseFloat(getComputedStyle(document.querySelector('.pl-grid')).transitionDuration)")
         check("the theme caps motion low while its screen is up", motion() == "low" and dur <= 0.08, f"{motion()} {dur}s")
 
@@ -95,7 +95,7 @@ def main():
                          "return 'cell/' + [...document.querySelectorAll('.pl-tile')].indexOf(f); })()")
         cols = lambda: int(attr("data-pl-cols") or 0)
         ncells = lambda: int(attr("data-pl-ready") or 0)
-        check("Home focused first; its grid is three wide tiles across, the libraries first",
+        check("Home focused first; its grid is three 4:3 tiles across, the libraries first",
               foc() == "menu/Home" and attr("data-pl-section") == "Home" and cols() == 3
               and js("[...document.querySelectorAll('.pl-tile')].slice(0, %d).every(t => t.classList.contains('library'))" % nlib) is True
               and js("document.querySelector('.pl-grid').classList.contains('pl-wide')") is True, f"{foc()} cols={cols()} cells={ncells()}")
@@ -103,6 +103,10 @@ def main():
 
         act("right")
         check("right enters the grid at its first tile", foc() == "cell/0", foc())
+        time.sleep(0.4)
+        check("in the grid the menu folds to its marks (210/1920) and the count reads 1 of n",
+              abs(js("document.querySelector('.icefin-siderail').getBoundingClientRect().width / innerWidth") - 210 / 1920) < 0.01
+              and js("document.querySelector('.pl-count').textContent").startswith("1 of "), js("document.querySelector('.pl-count').textContent"))
         n = ncells()
         if n >= 2:
             act("right")

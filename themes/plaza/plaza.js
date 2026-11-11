@@ -148,14 +148,23 @@
         const slots = [...list];
         while (slots.length % PER_PAGE || !slots.length) slots.push(null);  // empty channel slots, like the target
         S.grid = ui.pagedGrid(S.pages, slots, {
-            cols: 4, rows: 3, gap: '2.2vh 1.6vw', render: (ch) => tile(ch),
+            cols: 4, rows: 3, gap: '1.48vh 0.65vw', render: (ch) => tile(ch),  // 16 and 12.5 px of 1080 lines (plaza.json)
             onPage: (p) => {
                 if (!S) return;
+                // The page slides in from the side it comes from (the target's 370 ms turn); the engine swaps it at once.
+                const page = S.pages.querySelector('.icefin-grid-page');
+                if (page && S.lastPage != null && p !== S.lastPage) {
+                    page.classList.remove('pz-from-left', 'pz-from-right');
+                    void page.offsetWidth;
+                    page.classList.add(p > S.lastPage ? 'pz-from-right' : 'pz-from-left');
+                }
+                S.lastPage = p;
                 S.root.setAttribute('data-pz-page', `${p + 1}/${S.grid ? S.grid.pages() : 1}`);
                 S.arrows[0].classList.toggle('pz-hidden', p === 0);
                 S.arrows[1].classList.toggle('pz-hidden', !S.grid || p >= S.grid.pages() - 1);
             }
         });
+        S.lastPage = S.grid.page();
         S.root.setAttribute('data-pz-page', `${S.grid.page() + 1}/${S.grid.pages()}`);
         S.arrows[1].classList.toggle('pz-hidden', S.grid.pages() <= 1);
         S.root.setAttribute('data-pz-ready', String(list.length));
