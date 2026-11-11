@@ -138,7 +138,7 @@ script while it loads, or from a screen's `mount()`. They all reset when the the
 | `ui.chrome.set('topBar' \| 'sideRail', {height \| width, mount(el)})`, then `ui.chrome.frame(root)` in a screen | Persistent navigation chrome around the screen. `frame()` returns the content element to fill |
 | `ui.pivot(el, [{title, mount(el)}])` | Pivot headers. Left/right at a section's edge slides to the next one, headers with it |
 | `ui.pagedGrid(el, items, {cols, rows, render})` | A grid in pages with indicators. Arrows past the edge turn the page |
-| `ui.carousel3d(el, items, {render, spacing, depth, tilt})` | A perspective carousel with the focused item in front. Left/right step through it |
+| `ui.carousel3d(el, items, {render, spacing, depth, tilt, visible, dim})` | A perspective carousel with the focused item in front. Left/right step through it. Items behind fade, or with `dim: true` stay solid and darken (for items that overlap) |
 | `ui.liveTile(el, {fetch, render, interval})` | Cycling content, frozen under reduced or low motion |
 | `ui.mutedPreview(el, {itemId \| src})` | A muted SDR preview in the page's own `<video>` (a small VP8 server transcode). Never mpv, never the passthrough device |
 | `ui.userViews()` | The signed-in user's libraries (a promise of view items). Waits for the session on a cold start and retries a failed or empty answer; use it instead of calling `getUserViews` at mount |
