@@ -28,7 +28,7 @@ public:
   const char* componentName() override { return "theme"; }
   bool componentExport() override { return true; }
 
-  // [{id, name, version, source, presets[], ok, errors[]}]
+  // [{id, name, version, description, source, presets[], ok, errors[], hasScripts, trusted}]
   Q_INVOKABLE QVariantList themes();
   Q_INVOKABLE QString activeTheme() const { return m_active; }
   Q_INVOKABLE QString activePreset() const { return m_preset; }
@@ -56,6 +56,17 @@ public:
   Q_INVOKABLE bool setTrusted(const QString& id, bool trusted);
   Q_INVOKABLE bool isTrusted(const QString& id) const;
   Q_INVOKABLE QString trustWarning() const;
+
+  // Theme manager (9.21, native/icefin/themeManager.js). previewTokens: any theme's resolved tokens with a preset,
+  // for the preview area, without applying it ({} when it can't be resolved).
+  Q_INVOKABLE QVariantMap previewTokens(const QString& id, const QString& preset) const;
+  // Install from file: pickPackage() opens the file chooser (the desktop portal in the Flatpak) and installs what the
+  // user picks; the result comes with installFinished. installFile() installs a path directly (tests, drag and drop).
+  // Result: {ok, id, name, replaced, hasScripts, errors[]} (ThemeInstall.h).
+  Q_INVOKABLE void pickPackage();
+  Q_INVOKABLE QVariantMap installFile(const QString& path);
+  // Remove a user-installed theme (not the active one). {ok, errors[]}
+  Q_INVOKABLE QVariantMap removePackage(const QString& id);
   // Called from webview.qml (ICEFIN-HOOK) with the view's WebEngineProfile: serve icefin-theme: on it.
   Q_INVOKABLE void installSchemeHandler(QObject* profile);
 
@@ -89,6 +100,8 @@ Q_SIGNALS:
   void backdropChanged();
   void grabRequested(const QString& path);
   void webRepaintRequested(const QString& mode);
+  void installFinished(const QVariantMap& result);
+  void packagesChanged();
 
 private:
   ThemeComponent() = default;
