@@ -122,8 +122,18 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   ```
 - **Watching:** the client has no display. `avsim.sh console` shows its serial log, and the commands run
   through `lab-run`, so they show on `lab-icefin-main`'s console in virt-manager.
-- **HDR half (PLAN 5.10):** headless Weston with color management in the client or `lab-icefin-htpcsim`,
-  a protocol log of the image description per routing row. Debian 13's Weston 14 is too old (SPEC: 15.0).
+- **HDR half (PLAN 5.10): the virtual HDR display.** A headless Weston 16 with color management
+  (`tests/icefin/hdr/build-weston.sh` builds it into `~/weston-16`; Debian 13's Weston 14 predates the protocol) stands in
+  for the display, as an HDR output (PQ, BT.2020) or an SDR one. `tests/icefin/web/hdr_protocol.py` runs Icefin's
+  Flatpak on it with the Vulkan renderer (Flatpak Mesa's lavapipe offers HDR10 on Wayland) and a Wayland protocol log,
+  and checks per routing row what Icefin tells the compositor: the HDR10 swapchain and the PQ / BT.2020 surface tag,
+  the HDR10 film's mastering metadata, MaxCLL and MaxFALL (the values `make-media.sh` wrote), HLG, an SDR display and
+  HDR Output off. Run it on every HDR change:
+  ```
+  scripts/lab.sh run 'bash tests/icefin/hdr/build-weston.sh'            # once
+  scripts/lab.sh run 'python3 tests/icefin/web/hdr_protocol.py'          # the installed Flatpak, server jf12
+  ```
+  It shows what Icefin sends; whether a TV switches to HDR stays on the HTPC (5.8).
 - **Limits:** no real decoder behind the sink, so no lip sync, no receiver display, no CEC, no HDCP, and no
   check of how a real receiver treats a borderline stream. Those rows stay on the HTPC.
 
