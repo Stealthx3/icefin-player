@@ -97,6 +97,7 @@ modules:
               - ../external/mpv/patches/0005-vo_libmpv-gpu-next-scale-with-libplacebo-s-default-filters.patch
               - ../external/mpv/patches/0006-vo_libmpv-gpu-next-map-hardware-frames-through-mpv-s-hwdec-interops.patch
               - ../external/mpv/patches/0007-vo_libmpv-gpu-next-apply-mpv-s-render-options.patch
+              - ../external/mpv/patches/0008-vo_libmpv-gpu-next-start-the-colour-adjustment-from-neutral.patch
 
         modules:
           - name: luajit
