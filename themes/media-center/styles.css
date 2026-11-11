@@ -39,3 +39,33 @@ html[data-icefin-motion="low"] .mc-ribbon { animation: none; }
 .mc-now small { display: block; opacity: 0.7; }
 
 html[data-icefin-backdrop] .mc-field { display: none; }
+
+/* Poster wall (wall.js): seven across; the grid slides so the focused row stays near the top. */
+.mc-wall-head { position: absolute; left: 4.5vw; right: 4.5vw; top: 4vh; display: flex; align-items: baseline; gap: 1.2em; }
+.mc-wall-title { font-size: 2.4em; font-weight: 300; }
+.mc-wall-count, .mc-wall-sort { opacity: 0.6; }
+.mc-wall-sort { margin-left: auto; }
+.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 15vh; bottom: 0; overflow: hidden; }
+.mc-wall { display: grid; grid-template-columns: repeat(7, 1fr); column-gap: 1.6vw; row-gap: 4.5vh; padding: 1.2em 0.6em;
+  transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
+.mc-poster { width: auto; }
+
+/* Details (details.js): backdrop, shade, poster and text. */
+.mc-details-art { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; }
+.mc-details-shade { position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgba(6, 18, 43, 0.86) 45%, rgba(6, 18, 43, 0.35) 100%),
+              linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 40%); }
+.mc-details { position: absolute; left: 6vw; right: 30vw; top: 16vh; display: grid; grid-template-columns: 16vw 1fr; gap: 3vw;
+  opacity: 0; transform: translateY(2vh); transition: opacity var(--mc-ms, 360ms) ease-out, transform var(--mc-ms, 360ms) cubic-bezier(.2,.7,.2,1); }
+.mc-details.in { opacity: 1; transform: none; }
+.mc-details-poster { aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface) center / cover no-repeat;
+  box-shadow: 0 1em 3em rgba(0, 0, 0, 0.45); }
+.mc-details-series { opacity: 0.75; font-size: 1.2em; }
+.mc-details-title { font-weight: 300; font-size: 3em; margin: 0.1em 0 0.25em; line-height: 1.1; }
+.mc-details-facts, .mc-details-genres { color: var(--icefin-color-textSecondary); margin-bottom: 0.5em; }
+.mc-details-overview { max-width: 46em; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.mc-details-buttons { display: flex; gap: 1.2em; margin-top: 2em; }
+.mc-btn { padding: 0.7em 1.6em; border-radius: 2em; background: var(--icefin-color-surfaceRaised); outline: none; transition: transform 160ms, box-shadow 160ms; }
+.mc-btn.icefin-focused { transform: scale(1.06); background: var(--icefin-color-accent); color: var(--icefin-color-onAccent);
+  box-shadow: 0 0 0 0.15em var(--icefin-color-focus), 0 0 1.8em 0.3em var(--icefin-color-focusGlow); }
+html[data-icefin-motion="low"] .mc-details { transition: none; }

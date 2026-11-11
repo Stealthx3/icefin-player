@@ -38,7 +38,7 @@
         for (const v of views.Items || []) {
             try {
                 const latest = await client.getLatestItems({ userId: uid, parentId: v.Id, Limit: 12, Fields: 'PrimaryImageAspectRatio' });
-                if (latest.length) cats.push({ title: v.Name, items: latest, wide: false });
+                if (latest.length) cats.push({ title: v.Name, items: latest, wide: false, view: v });
             } catch (e) { console.warn('Media Center: latest', v.Name, e); }
         }
         cats.push({ title: 'More', links: [
@@ -49,6 +49,8 @@
         return cats;
     }
 
+    // Libraries the poster wall shows (wall.js); Live TV keeps its own guide page.
+    const WALL = new Set(['movies', 'tvshows', 'music', 'musicvideos', 'homevideos', 'boxsets']);
     let grid = null;  // rows of tiles, for structured navigation
     let lastCol = [];  // each row remembers where its focus was
 
@@ -98,6 +100,8 @@
                 const row = el('div', 'mc-row');
                 if (c.links) c.links.forEach(([label, go]) => row.append(textTile(label, go)));
                 else c.items.forEach((it) => row.append(tile(client, it, c.wide)));
+                // The whole library on the poster wall (wall.js).
+                if (c.view && WALL.has(c.view.CollectionType)) row.append(textTile(`All ${c.view.Name}`, () => T.ctx.navigate(`#/list?parentId=${c.view.Id}&serverId=${client.serverId()}`)));
                 cat.append(row);
                 strip.append(cat);
                 return { cat, row };

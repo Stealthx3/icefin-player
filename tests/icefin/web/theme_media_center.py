@@ -3,7 +3,9 @@
 
   - bundled and usable; the start strip replaces the home route with one row per library (+ Continue, + More);
   - remote navigation: down moves between categories and keeps the focused one on its line, right moves along a row,
-    Enter opens the item's details page (jellyfin-web's own, themed by tokens);
+    Enter opens the item's themed details screen (Play/Resume, Favourite); a series keeps jellyfin-web's page;
+  - each library row ends in "All ...", which opens the poster wall: seven across, art near the view, Enter opens details;
+  - turning the theme off restores the stock UI without a restart;
   - "Classic home" (?icefin=stock) shows the stock home with plugin sections;
   - other routes are jellyfin-web's, styled by the theme's tokens;
   - UI sounds play; the ribbons stop under the low-motion cap;
@@ -98,9 +100,58 @@ def main():
             act("up")  # back to the first row: a media tile
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
+        time.sleep(4)
+        kind = js("(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-mc')")
+        if kind == "details":
+            check("Enter opens the themed details screen", js("!!document.querySelector('.mc-details-title') && document.querySelector('.mc-details-title').textContent.length > 0") is True)
+            btns = js("JSON.stringify([...document.querySelectorAll('.mc-btn')].map(b => b.textContent))")
+            check("details: Play (or Resume) and Favourite", "Favourite" in btns and ("Play" in btns or "Resume" in btns), btns)
+            check("details: a button has focus", js("!!document.querySelector('.mc-btn.icefin-focused')") is True)
+            act("right")
+            time.sleep(0.3)
+            check("details: right moves along the buttons", js("[...document.querySelectorAll('.mc-btn')].indexOf(document.querySelector('.mc-btn.icefin-focused'))") == 1)
+            shot("details.png")
+        else:
+            # The first row held a series or a folder: those keep jellyfin-web's page (?icefin=stock).
+            check("a series or folder falls back to jellyfin-web's page", js("location.hash.includes('icefin=stock')") is True
+                  and js("window.icefinTheme.active().route") is None)
+        # A series always falls back to jellyfin-web (no Back loop: the themed entry is replaced).
+        series = js("new Promise(r => window.icefinTheme.ctx.apiClient().getItems(window.icefinTheme.ctx.apiClient().getCurrentUserId(), {IncludeItemTypes: 'Series', Recursive: true, Limit: 1}).then(x => r((x.Items[0] || {}).Id || '')))")
+        if series:
+            js(f"location.hash = '#/details?id={series}&serverId=' + window.icefinTheme.ctx.apiClient().serverId(); true")
+            page.wait_for("location.hash.includes('icefin=stock')", timeout=20)
+            check("a series details page is jellyfin-web's, with the theme's tokens", js("window.icefinTheme.active().route") is None
+                  and js("document.documentElement.classList.contains('icefin-themed')") is True)
+        # The poster wall: the start strip's "All ..." tile opens it.
+        js("location.hash = '#/home'; true")
+        page.wait_for("+(document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=20)
+        js("[...document.querySelectorAll('.mc-tile.text')].find(t => t.textContent.startsWith('All ')).click(); true")
+        page.wait_for("location.hash.startsWith('#/list') && (document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === '1'", timeout=30)
+        n = js("+document.querySelector('#icefin-theme-root').getAttribute('data-mc-count')")
+        check("All opens the poster wall with the library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "wall" and n > 0,
+              f"{n} posters, {js('document.querySelector(\'.mc-wall-title\').textContent')}")
+        first_id = js("document.querySelector('.mc-poster.icefin-focused').dataset.id")
+        act("right")
+        time.sleep(0.4)
+        moved = js("document.querySelector('.mc-poster.icefin-focused').dataset.id")
+        check("wall: right moves to the next poster", n < 2 or moved != first_id)
+        if n > 7:
+            act("down")
+            time.sleep(0.5)
+            check("wall: down moves a row (seven across)", js("[...document.querySelectorAll('.mc-poster')].indexOf(document.querySelector('.mc-poster.icefin-focused'))") == 8)
+        time.sleep(1)
+        check("wall: posters near the view have art, far ones wait", js("[...document.querySelectorAll('.mc-poster')].slice(0, 7).some(p => p.style.backgroundImage)") is True)
+        shot("wall.png")
+        check("wall: jellyfin-web's own list page stays hidden (its A-Z picker too)",
+              js("[...document.querySelectorAll('.mainAnimatedPages *')].every(e => getComputedStyle(e).visibility === 'hidden')") is True)
+        act("enter")
+        page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
-        check("Enter opens the details page (stock, themed by tokens)", js("window.icefinTheme.active().route") is None
-              and js("document.documentElement.classList.contains('icefin-themed')") is True)
+        # Movies are playable on their own: the themed details screen, whatever the start strip's first row held.
+        check("wall: Enter opens the themed details screen", js("location.hash.startsWith('#/details')") is True
+              and js("(document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc')") == "details"
+              and js("!!document.querySelector('.mc-btn.icefin-focused')") is True,
+              js("JSON.stringify([...document.querySelectorAll('.mc-btn')].map(b => b.textContent))"))
         shot("details.png")
         js("location.hash = '#/home?icefin=stock'; true")
         page.wait_for("!!document.querySelector('.sectionTitle')", timeout=20)
@@ -111,7 +162,11 @@ def main():
         page.wait_for("+(document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=20)
         js("window.icefinTheme.ui.motion.cap('low'); true")
         check("ribbons stop under the low-motion cap", js("getComputedStyle(document.querySelector('.mc-ribbon')).animationName") == "none")
+        # Turning the theme off restores the stock UI with no restart (Icefin's checklist row).
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+        time.sleep(3)
+        check("theme off restores the stock UI, no restart", js("document.documentElement.classList.contains('icefin-themed')") is False
+              and js("!window.icefinTheme.active()") is True and js("!document.querySelector('#icefin-theme-root') || document.querySelector('#icefin-theme-root').hidden") is True)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
