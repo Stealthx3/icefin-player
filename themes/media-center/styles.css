@@ -86,7 +86,7 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 /* Details (details.js): backdrop, shade, poster and text. */
 .mc-details-art { position: absolute; inset: 0; background: var(--icefin-color-background) center / cover no-repeat; }
 .mc-details-shade { position: absolute; inset: 0;
-  background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgba(6, 18, 43, 0.86) 45%, rgba(6, 18, 43, 0.35) 100%),
+  background: linear-gradient(90deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0.86) 45%, rgb(var(--icefin-color-background-channel) / 0.35) 100%),
               linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 40%); }
 .mc-details { position: absolute; left: 6vw; right: 30vw; top: 16vh; display: grid; grid-template-columns: 16vw 1fr; gap: 3vw;
   opacity: 0; transform: translateY(2vh); transition: opacity var(--mc-ms, 360ms) ease-out, transform var(--mc-ms, 360ms) cubic-bezier(.2,.7,.2,1); }

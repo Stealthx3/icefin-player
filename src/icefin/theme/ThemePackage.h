@@ -16,6 +16,15 @@ namespace Icefin::Theme
 {
 enum class Source { Bundled, User, Development };
 
+// A colour scheme (9.20): token overrides applied after the preset, with its own overrides per preset.
+//   theme.json "schemes": {"dark": {"name": "Dark", "tokens": {...}, "presets": {"teal": {...}}}}
+struct Scheme
+{
+  QString name;
+  TokenMap tokens;
+  QMap<QString, TokenMap> presets;
+};
+
 struct Package
 {
   QString dir;
@@ -23,6 +32,7 @@ struct Package
   Source source = Source::User;
   TokenMap tokens;                  // flattened, unresolved
   QMap<QString, TokenMap> presets;  // name -> flattened overrides
+  QMap<QString, Scheme> schemes;    // id (dark, ...) -> scheme
   QString styles;                   // relative path, or empty
   QList<QVariantMap> fonts;         // {family, file, weight, style}
   QStringList scripts;              // relative paths
@@ -32,8 +42,10 @@ struct Package
   QStringList errors;               // empty when the package can be used
   bool ok() const { return errors.isEmpty(); }
 
-  // Tokens with a preset and user overrides applied, references resolved and checked. Errors go to errors.
-  TokenMap resolved(const QString& preset, const TokenMap& overrides, QStringList* errs) const;
+  // Tokens with a preset, a scheme and user overrides applied (in that order: base, preset, scheme, the scheme's
+  // override for that preset, overrides), references resolved and checked. Errors go to errs. A scheme the package
+  // doesn't have is ignored: the scheme is a user preference across themes.
+  TokenMap resolved(const QString& preset, const TokenMap& overrides, QStringList* errs, const QString& scheme = QString()) const;
 };
 
 Package loadPackage(const QString& dir, Source source);

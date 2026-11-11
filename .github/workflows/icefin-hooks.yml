@@ -23,6 +23,8 @@ jobs:
         run: scripts/icefin/hook-count.sh --summary "$GITHUB_STEP_SUMMARY"
       - name: Theme engine stays theme-agnostic
         run: scripts/icefin/theme-lint.sh
+      - name: Theme colour contrast (every theme, preset and scheme)
+        run: python3 scripts/icefin/theme-contrast.py
       - name: Theme packages match the shared schemas
         run: |
           python3 -m venv /tmp/schema-venv

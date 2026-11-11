@@ -18,5 +18,105 @@
       "speed": 0.35
     },
     "fps": 30
+  },
+  "schemes": {
+    "dark": {
+      "name": "Dark",
+      "tokens": {
+        "color": {
+          "background": "#0b1a33",
+          "surface": "rgba(255, 255, 255, 0.06)",
+          "surfaceRaised": "rgba(8, 12, 22, 0.9)",
+          "waveTop": "#163a70",
+          "waveBottom": "#050c1a"
+        },
+        "palettes": {
+          "m1": {
+            "color": {
+              "waveTop": "#5c6268",
+              "waveBottom": "#1e2024",
+              "background": "#1e2024"
+            }
+          },
+          "m2": {
+            "color": {
+              "waveTop": "#796117",
+              "waveBottom": "#251d06",
+              "background": "#251d06"
+            }
+          },
+          "m3": {
+            "color": {
+              "waveTop": "#395f23",
+              "waveBottom": "#0e1d09",
+              "background": "#0e1d09"
+            }
+          },
+          "m4": {
+            "color": {
+              "waveTop": "#814c61",
+              "waveBottom": "#26111b",
+              "background": "#26111b"
+            }
+          },
+          "m5": {
+            "color": {
+              "waveTop": "#4a7336",
+              "waveBottom": "#12200d",
+              "background": "#12200d"
+            }
+          },
+          "m6": {
+            "color": {
+              "waveTop": "#563b74",
+              "waveBottom": "#160e22",
+              "background": "#160e22"
+            }
+          },
+          "m7": {
+            "color": {
+              "waveTop": "#1c6260",
+              "waveBottom": "#071c1b",
+              "background": "#071c1b"
+            }
+          },
+          "m8": {
+            "color": {
+              "waveTop": "#1c437d",
+              "waveBottom": "#081228",
+              "background": "#081228"
+            }
+          },
+          "m9": {
+            "color": {
+              "waveTop": "#492f6e",
+              "waveBottom": "#130b20",
+              "background": "#130b20"
+            }
+          },
+          "m10": {
+            "color": {
+              "waveTop": "#76531a",
+              "waveBottom": "#221806",
+              "background": "#221806"
+            }
+          },
+          "m11": {
+            "color": {
+              "waveTop": "#533623",
+              "waveBottom": "#180e08",
+              "background": "#180e08"
+            }
+          },
+          "m12": {
+            "color": {
+              "waveTop": "#73221a",
+              "waveBottom": "#220906",
+              "background": "#220906"
+            }
+          }
+        }
+      }
+    }
   }
 }
