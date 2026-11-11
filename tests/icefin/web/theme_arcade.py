@@ -83,10 +83,20 @@ def main():
         if n0 >= 2:
             act("right")
             check("right moves along the shelf", foc().startswith("shelf/0/") and js("document.querySelectorAll('.ar-shelf')[0].querySelectorAll('.ar-cap')[1].classList.contains('icefin-focused')"), foc())
-        if js("document.querySelectorAll('.ar-shelf').length") >= 2:
+        if js("document.querySelectorAll('.ar-pill').length") >= 1:
             act("down")
-            check("down moves to the next shelf", foc().startswith("shelf/1/"), foc())
+            check("down moves to the feed pills", js("!!document.querySelector('.ar-pill.icefin-focused.current')") is True, foc())
+            if js("document.querySelectorAll('.ar-pill').length") >= 2:
+                first_card = js("(document.querySelector('.ar-cap.card') || {arcadeItem: {}}).arcadeItem.Id")
+                act("right")
+                check("a pill chooses its feed", js("document.querySelectorAll('.ar-pill')[1].classList.contains('current')") is True
+                      and js("(document.querySelector('.ar-cap.card') || {arcadeItem: {}}).arcadeItem.Id") != first_card)
+                act("left")
+            act("down")
+            check("down from the pills moves to the cards", foc().startswith("shelf/1/"), foc())
             act("up")
+            act("up")
+            check("up returns to the recent row's capsule", foc().startswith("shelf/0/"), foc())
         act("up")
         check("up from the first shelf reaches the top bar", foc() == "ui/Home", foc())
         # quick access from the top bar

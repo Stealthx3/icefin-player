@@ -4,41 +4,70 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 [data-ar] { color: var(--icefin-color-text); overflow: hidden !important; display: flex; flex-direction: column;
   background: radial-gradient(ellipse at 30% 0%, var(--icefin-color-surface) 0%, var(--icefin-color-background) 70%); }
 
-/* Top bar and button hints */
-.ar-top { display: flex; align-items: center; gap: 1.2vw; height: 8vh; padding: 0 2.6vw; flex: none; }
-.ar-tab { padding: 0.4em 1em; border-radius: var(--icefin-shape-cardRadius); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.95em;
+/* Geometry and motion follow the target's measurements (docs/themes/references/arcade.json): handheld layout units (1280x800)
+   scaled by height to 1080 lines; px at 1920x1080 map to vw (x/19.2) and vh (y/10.8) here. */
+
+/* Top bar (58 px) and the bottom bar of button hints (56 px) */
+.ar-top { display: flex; align-items: center; gap: 1.2vw; height: 5.37vh; padding: 0 2.97vw; flex: none; position: relative; z-index: 2; }
+.ar-tab { padding: 0.35em 0.9em; border-radius: var(--icefin-shape-cardRadius); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.83vw;
   color: var(--icefin-color-textSecondary); outline: none; white-space: nowrap; }
 .ar-tab.current { color: var(--icefin-color-text); }
 .ar-tab.icefin-focused, .ar-btn.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
 .ar-spacer { flex: 1; }
-.ar-clock { color: var(--icefin-color-textSecondary); font-weight: 600; }
-.ar-btn { padding: 0.4em 0.9em; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised); outline: none; white-space: nowrap; }
-.ar-hints { position: fixed; left: 0; right: 0; bottom: 0; height: 6vh; display: flex; justify-content: flex-end; align-items: center; gap: 2vw; padding: 0 2.6vw;
-  background: linear-gradient(0deg, var(--icefin-color-background) 0%, transparent 100%); font-size: 0.9em; color: var(--icefin-color-textSecondary); z-index: 5; }
+.ar-clock { color: var(--icefin-color-text); font-size: 1.04vw; font-weight: 500; }
+.ar-btn { padding: 0.35em 0.8em; border-radius: var(--icefin-shape-cardRadius); outline: none; white-space: nowrap; font-size: 0.83vw; color: var(--icefin-color-text); }
+.ar-hints { position: fixed; left: 0; right: 0; bottom: 0; height: 5.19vh; display: flex; justify-content: flex-end; align-items: center; gap: 1.6vw; padding: 0 3.54vw 0 2.55vw;
+  background: var(--icefin-color-bar); font-size: 0.83vw; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--icefin-color-text); z-index: 5; }
 .ar-hint { display: flex; align-items: center; gap: 0.45em; }
 .ar-hint svg { width: 1.5em; height: 1.5em; color: var(--icefin-color-text); }
 
-/* Home: a large hero capsule beside a shelf of portrait capsules, then more shelves */
+/* Home: the focused capsule's art faintly behind the top half */
+.ar-backdrop { position: absolute; left: 0; right: 0; top: 0; height: 62vh; background: center 20% / cover no-repeat; opacity: 0.32; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 100%); mask-image: linear-gradient(180deg, #000 30%, transparent 100%); transition: background-image 320ms ease-in-out; }
 .ar-body { flex: 1; min-height: 0; overflow: hidden; position: relative; }
-.ar-scroll { transition: transform 260ms ease; padding-bottom: 8vh; }
-.ar-shelf { margin: 1.5vh 0 3vh; }
-.ar-shelf-title { margin: 0 2.6vw 1.2vh; font-size: 1.05em; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--icefin-color-textSecondary); }
-.ar-track { display: flex; gap: 1vw; padding: 0.6vh 2.6vw; transition: transform 220ms ease; align-items: flex-end; }
-.ar-cap { flex: none; width: 11vw; aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
-  outline: none; position: relative; transition: transform 140ms ease, box-shadow 140ms ease; }
-.ar-cap.hero { width: 40vw; aspect-ratio: 16 / 9; }
-.ar-cap.icefin-focused { transform: scale(1.06); box-shadow: 0 0 0 0.2em var(--icefin-color-focus), 0 0.8em 2em var(--icefin-color-scrim); z-index: 2; }
+.ar-scroll { position: absolute; inset: 0; }
+[data-ar=home] .ar-body { position: absolute; inset: 0; }
+
+/* Recent row: from y 135, capsules 347 tall; the hero 734 wide, portraits 231 (2:3), 17 apart, from x 57 */
+.ar-shelf { position: relative; }
+.ar-recent { position: absolute; left: 0; right: 0; top: 11.3vh; height: 40vh; overflow: hidden; }
+.ar-track { display: flex; gap: 0.885vw; padding: 0 2.97vw; transition: transform 320ms cubic-bezier(0, 0.73, 0.48, 1); align-items: flex-start; }
+.ar-recent .ar-track { padding-top: 1.2vh; }
+.ar-cap { flex: none; width: 12.03vw; height: 32.13vh; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
+  outline: none; position: relative; transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out; }
+.ar-cap.hero { width: 38.23vw; }
+.ar-cap.icefin-focused { transform: scale(1.05); box-shadow: 0 0 0 0.16vw var(--icefin-color-focusRing), 0 0.8em 2em var(--icefin-color-scrim); z-index: 2; }
 .ar-cap-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.5em 0.6em; font-size: 0.85em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: linear-gradient(0deg, var(--icefin-color-scrim) 0%, transparent 100%); }
-.ar-cap.hero .ar-cap-name { font-size: 1.3em; padding: 1em; }
+.ar-cap.has-art .ar-cap-name { display: none; }
+.ar-recent .ar-cap-name { display: none; }
+.ar-focus-name { position: absolute; left: 2.55vw; top: 34.77vh; font-size: 1.3vw; line-height: 1; font-weight: 700; color: var(--icefin-color-text); white-space: nowrap; }
+.ar-focus-sub { position: absolute; left: 2.55vw; top: 37.69vh; font-size: 0.83vw; line-height: 1; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--icefin-color-textSecondary); white-space: nowrap; }
 .ar-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.25em; background: var(--icefin-color-divider); }
 .ar-progress > i { display: block; height: 100%; background: var(--icefin-color-accent); }
+
+/* Pills: centred on y 612, 40 tall */
+.ar-pills { position: absolute; left: 0; right: 0; top: 54.81vh; height: 3.7vh; display: flex; justify-content: center; gap: 0.6vw; }
+.ar-pill { height: 3.7vh; line-height: 3.7vh; padding: 0 1.1vw; border-radius: 99em; font-size: 0.83vw; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--icefin-color-text); outline: none; white-space: nowrap; transition: background-color 200ms ease-in-out; }
+.ar-pill.current { background: var(--icefin-color-pill); }
+.ar-pill.icefin-focused { background: var(--icefin-color-focusRing); color: var(--icefin-color-background); }
+
+/* Cards: from y 693, 404 wide, art 227 tall over a caption panel, 17 apart; a label above at y 675 */
+.ar-feed { position: absolute; left: 0; right: 0; top: 61.2vh; bottom: 0; overflow: hidden; }
+.ar-card-label { position: absolute; left: 2.76vw; top: 0.55vh; font-size: 0.83vw; line-height: 1; color: var(--icefin-color-textSecondary); }
+.ar-cards { position: absolute; left: 0; top: 2.97vh; padding-left: 2.76vw; }
+.ar-cap.card { width: 21.04vw; height: 30.65vh; background: var(--icefin-color-panel); display: flex; flex-direction: column; overflow: hidden; }
+.ar-card-art { height: 21.02vh; flex: none; background: var(--icefin-color-surfaceRaised) center / cover no-repeat; }
+.ar-card-text { padding: 1.6vh 0.55vw 0; font-size: 0.98vw; line-height: 1.3; color: var(--icefin-color-text); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+html[data-icefin-motion=low] .ar-track, html[data-icefin-motion=low] .ar-cap, html[data-icefin-motion=low] .ar-pill, html[data-icefin-motion=low] .ar-backdrop { transition-duration: 0ms; }
 
 /* Library grid */
 .ar-lib-bar { display: flex; align-items: center; gap: 0.8vw; padding: 1vh 2.6vw 1.6vh; flex: none; }
 .ar-count { color: var(--icefin-color-textSecondary); margin-left: auto; }
 .ar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1.4vw 1vw; padding: 0.6vh 2.6vw 9vh; transition: transform 220ms ease; }
-.ar-grid .ar-cap { width: auto; }
+.ar-grid .ar-cap { width: auto; height: auto; aspect-ratio: 2 / 3; }
 
 /* Dialogs (sort, filter) */
 .ar-dialog-scrim { position: absolute; inset: 0; background: var(--icefin-color-scrim); z-index: 6; display: flex; align-items: center; justify-content: center; }
