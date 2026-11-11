@@ -30,7 +30,10 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
 - Live TV (9.15): `python3 tests/icefin/servers/livetv.py tests/icefin/servers/servers.json` gives both servers 24 M3U channels (the lab clips over HTTP, a lab API key) and an XMLTV guide from 6 h ago to 2 days ahead. Run it again before guide tests: it moves the guide to now.
 - Client harness: `tests/icefin/web/session_play.py` drives a build over DevTools (Xvfb), plays by remote command and records what the server saw; `compare_runs.py` diffs two runs.
 
-## HTPC tier (D16): the user's Bazzite HTPC runs the hardware tests
+## HTPC tier (D16): retired by D28
+> **Retired (D28, 2026-11-11):** no automated tests run on the HTPC any more; real hardware is covered by beta testers
+> with `docs/BETA-CHECKLIST.md`. The section below is kept as history.
+
 The VM builds; the HTPC runs everything that needs a real GPU, HDR TV, receiver or controllers.
 `scripts/icefin/htpc.sh` (config `tests/icefin/htpc/htpc.env`, from `htpc.env.example`, git-ignored):
 

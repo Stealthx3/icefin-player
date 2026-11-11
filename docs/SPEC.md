@@ -630,7 +630,7 @@ Twelve phases, about 42 weeks for one developer. The Phase 2 spikes settle the s
 
 ## Testing, CI and hardware lab
 
-Testing runs in four tiers. CI catches logic and protocol errors on every commit, VMs build and cover the desktop matrix, a virtual TV and receiver in a nested guest check what Icefin sends over HDMI (D18), and the user's Bazzite HTPC with a real TV and receiver is the primary runtime environment: every hardware test runs there over SSH, and it gates each release (D16, `docs/LAB.md` *HTPC tier*).
+Testing runs in four tiers. CI catches logic and protocol errors on every commit, VMs build and cover the desktop matrix, a virtual TV and receiver in a nested guest check what Icefin sends over HDMI (D18), and simulated hardware stands in where it can be built (`docs/dev/HARDWARE-SIMULATION.md`). Real hardware is covered by human testers on a beta Flatpak, from `docs/BETA-CHECKLIST.md` (D28, which replaced the HTPC tier of D16).
 
 **CI (every commit, inside the Flatpak build)**
 
@@ -653,9 +653,9 @@ Testing runs in four tiers. CI catches logic and protocol errors on every commit
 - Sink profiles mirror the unit-test ELD fixtures and the HTPC's real chain; the kernel's ELD text must match the fixtures, so the parser is tested against what a driver really reports.
 - Bitstreams are checked burst by burst against `ffmpeg -f spdif` of the same track; Icefin's per-track decision runs against every profile.
 - The HDR half is the Weston protocol test above, run as a virtual HDR display per routing row.
-- It shows what Icefin sends. What the TV and receiver do with it stays on the hardware lab.
+- It shows what Icefin sends. What the TV and receiver do with it is checked by beta testers (D28).
 
-**Hardware lab (release gate)**
+**Hardware covered by the beta (D28)**: what the beta testers' machines should span between them
 
 | Dimension | Targets |
 | --- | --- |
@@ -667,7 +667,7 @@ Testing runs in four tiers. CI catches logic and protocol errors on every commit
 | Media | HDR10, HLG, Dolby Vision profiles 5, 7 and 8, the audio formats above, and Kodi's freely usable HDR samples (listed on the Arch Wiki) |
 | Remotes and reference captures | A five-way Bluetooth or IR remote, a Wii Remote with a sensor bar, and reference captures of each clone target (Kodi in a VM; the hardware or recordings for the other five) |
 
-**Release checklist.** Every acceptance row passes; there are no dropped frames in a 10-minute 4K HDR run per GPU; receiver display confirmed per format; the controller run covers all screens, inside and outside Steam.
+**Release checklist.** Every acceptance row the lab can run passes; `docs/BETA-CHECKLIST.md` has been run by beta testers and its findings are fixed or documented in the compatibility table (`docs/INSTALL.md`); no open P1 bugs (D28).
 
 ## Long-term roadmap (after 1.0)
 
