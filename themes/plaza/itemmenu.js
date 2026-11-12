@@ -57,9 +57,10 @@
         const body = el('div', 'pz-sheet-body');
         card.append(body);
         host.append(dim, card);
-        spec.render(body, sheet);
-        const f = body.querySelector('[data-icefin-focus]');
-        if (f) T.ctx.focus(f);
+        // focus the first thing in the card, once it has loaded (some cards fetch their lists first)
+        const focusFirst = () => { if (!card.isConnected || body.querySelector('.icefin-focused')) return; const f = body.querySelector('[data-icefin-focus]'); if (f) T.ctx.focus(f); };
+        Promise.resolve(spec.render(body, sheet)).then(focusFirst, focusFirst);
+        focusFirst();
     }
     // building blocks
     const row = (label, opts = {}) => {
