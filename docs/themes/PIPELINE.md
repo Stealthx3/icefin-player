@@ -7,10 +7,14 @@ decision D31).
 
 ## Rules
 - **One theme at a time** (the user, 2026-11-12). `scripts/icefin/theme-pipeline.json` holds the queue: `active`
-  (in a pass now), `queue` (next, alphabetical by the user's choice), `done`, `control`. `theme-pass.sh start`
+  (in a pass now), `queue` (next, alphabetical by the user's choice), `done`, `control` (themes never refined; none today). `theme-pass.sh start`
   refuses a theme while another is active; `--force` only on the user's word. The user says when the next pass starts.
-- **Control themes are never refined.** Baseline is the stock look with every engine layer on, the control for
-  plugin runs (D10, PLAN 8.1); refining it would defeat it. It is not walked and not in the coverage matrix.
+- **Jellyfin-Web is the control; Baseline is the reference** (the user, 2026-11-12). The stock web client (the
+  Jellyfin-Web choice, the engine off) is the pure control and is never changed. Baseline re-implements that stock
+  layout with the theme engine and its capabilities; it goes through its own pass like the other themes, and it is
+  where every plugin's themed UI is built first: because Baseline's layout is the stock one, Baseline against
+  Jellyfin-Web shows whether the engine's version of a plugin works and loses nothing. Only then is the plugin carried
+  to the other themes (see *Plugins* below).
 - **Walks and theme tests run on the workstation** (the user, 2026-11-12), against the installed Icefin Player
   Flatpak, the user's own profile and their own server (`tests/icefin/web/host.py`):
   - **the player is updated from the test repository before every run** (the user), and the run records the version
@@ -45,6 +49,15 @@ decision D31).
 
 `theme-pass.sh status` shows the queue and, for every theme, its branch against `main`, its worktree and its last walk.
 
+## Plugins
+Plugin UI a themed screen must draw (MediaSegments and Intro Skipper skips, up next, SyncPlay, Home Screen Sections,
+and whatever else the 9.45 archive or the theme API gains) follows its own track:
+1. Engine: what the theme needs from the plugin, through the theme API (a `feat/` branch into `main`).
+2. **Baseline first**, on `theme/baseline`: the plugin drawn in the stock layout, then walked and compared with the
+   Jellyfin-Web choice (the control) screen by screen: the same functions, in the same places.
+3. The other themes: in each theme's pass (or a short `theme/<id>` follow-up for themes already done), the plugin in
+   that theme's look. `screens.json` gains the plugin's entries so every walk covers them.
+
 ## The walk
 `tests/icefin/web/theme_walk.py` visits every entry of `tests/icefin/web/screens.json` (home, libraries, details of
 every type, settings, sign-in, the dashboard, music, the item menu and its dialogs, pickers, header menus, player
@@ -61,7 +74,10 @@ controls and their menus) and records what draws each one:
 | `skipped` | nothing in the library to fill it (no books, say) | no; listed |
 
 Every drawn entry also runs the checks every theme owes everywhere: something has focus (a controller can start),
-nothing focusable runs past the window's sides, and no script errors. A screen the inventory lacks is added to
+nothing focusable runs past the window's sides. Script errors are listed as warnings (the server and its plugins
+throw too). A dialog opens by the engine's own control first, then the theme's control by its readable name (text or
+`aria-label` matching the entry's `text`), then jellyfin-web's: **a theme's entry points carry a readable name**, so a
+control the walk can't name is `missing`, which is a real finding (screen readers can't name it either). A screen the inventory lacks is added to
 `screens.json` (every theme's next walk then covers it).
 
 ## Coverage

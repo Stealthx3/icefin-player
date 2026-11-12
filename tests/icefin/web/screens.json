@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "about": "Every user-facing screen, dialog and player state a bundled theme must draw (PLAN 9.45, docs/themes/PIPELINE.md). theme_walk.py visits them in order. Placeholders: {sid}, {user}, {view:<collectionType>} (a library; 'mixed' for one without a type), {item:<ItemType>}, {person}, {genre}, {musicgenre}, {studio}, {artist}, {channel}. Placeholders are filled from the user's own library on the workstation (host.py); an entry with nothing to fill it is skipped and says so. Nothing is saved, created or deleted: dialogs are opened and closed, Delete is never opened. target: 'theme' (the theme draws it: D30, no jellyfin-web left) or 'dashboard' (stays jellyfin-web's own). needs: 'music' or 'video' (something playing first).",
+  "about": "Every user-facing screen, dialog and player state a bundled theme must draw (PLAN 9.45, docs/themes/PIPELINE.md). theme_walk.py visits them in order. Placeholders: {sid}, {user}, {view:<collectionType>} (a library; 'mixed' for one without a type), {item:<ItemType>}, {person}, {genre}, {musicgenre}, {studio}, {artist}, {channel}. Placeholders are filled from the user's own library on the workstation (host.py); an entry with nothing to fill it is skipped and says so. Nothing is saved, created or deleted: dialogs are opened and closed, Delete is never opened. target: 'theme' (the theme draws it: D30, no jellyfin-web left) or 'dashboard' (stays jellyfin-web's own). needs: 'music' or 'video' (something playing first). Opening a dialog: 'engine' (the engine's own control, any theme), then 'text' (a regular expression on the theme's control's aria-label, title or text: entry points must carry a readable name, PIPELINE.md), then 'selector' (jellyfin-web's).",
   "screens": [
     {"id": "home", "group": "Home", "name": "Home", "hash": "#/home"},
     {"id": "home-favourites", "group": "Home", "name": "Home: Favourites tab", "hash": "#/home?tab=1"},
@@ -69,8 +69,8 @@
     {"id": "menu-editimages", "group": "Item menu", "name": "Edit images", "from": "details-movie", "open": "menu", "menuId": "editimages", "label": "images"},
     {"id": "menu-editsubtitles", "group": "Item menu", "name": "Find subtitles", "from": "details-movie", "open": "menu", "menuId": "editsubtitles", "label": "subtitles"},
     {"id": "menu-identify", "group": "Item menu", "name": "Identify", "from": "details-movie", "open": "menu", "menuId": "identify", "label": "identify"},
-    {"id": "picker-audio", "group": "Details pickers", "name": "Audio track picker", "from": "details-movie", "open": "find", "text": "audio", "selector": ".selectAudio"},
-    {"id": "picker-subtitles", "group": "Details pickers", "name": "Subtitle picker", "from": "details-movie", "open": "find", "text": "subtitle", "selector": ".selectSubtitles"},
+    {"id": "picker-audio", "group": "Details pickers", "name": "Audio track picker", "from": "details-movie", "open": "find", "engine": ".icefin-d-select[data-option=\"audio\"]", "text": "^audio\\b", "selector": ".selectAudio"},
+    {"id": "picker-subtitles", "group": "Details pickers", "name": "Subtitle picker", "from": "details-movie", "open": "find", "engine": ".icefin-d-select[data-option=\"subtitles\"]", "text": "^subtitles?\\b", "selector": ".selectSubtitles"},
     {"id": "sort-filter", "group": "Libraries", "name": "Sort and filter", "from": "lib-movies", "open": "find", "text": "sort|filter", "selector": ".btnSort"},
     {"id": "play-on", "group": "Header", "name": "Play on (cast to a device)", "from": "home", "open": "find", "text": "play on", "selector": ".headerCastButton"},
     {"id": "syncplay", "group": "Header", "name": "Watch together (SyncPlay)", "from": "home", "open": "find", "text": "watch together|syncplay", "selector": ".headerSyncButton"},

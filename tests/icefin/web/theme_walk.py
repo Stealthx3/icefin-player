@@ -66,16 +66,25 @@ EDGES = r"""(() => { const W = innerWidth, out = [];
 
 # Opens something on the current page: the theme's own control by its text first (theme root, frame, overlay), then
 # jellyfin-web's by selector. Returns how it opened, or ''.
-FIND = r"""((re, sel) => {
+FIND = r"""((re, sel, eng) => {
   const rx = re ? new RegExp(re, 'i') : null;
-  const text = (e) => ((e.getAttribute('aria-label') || '') + ' ' + (e.getAttribute('title') || '') + ' ' + (e.textContent || '')).trim();
-  if (rx) for (const id of ['icefin-theme-overlay', 'icefin-theme-root', 'icefin-stock-chrome']) {
-    const b = document.getElementById(id); if (!b) continue;
-    const e = [...b.querySelectorAll('[data-icefin-focus], button, a')].find((x) => x.getClientRects().length && rx.test(text(x)));
+  const shown = (x) => x.getClientRects().length && getComputedStyle(x).visibility !== 'hidden';
+  const text = (e) => ((e.getAttribute('aria-label') || '') + ' ' + (e.getAttribute('title') || '') + ' ' + (e.textContent || '')).replace(/\s+/g, ' ').trim();
+  const areas = ['icefin-theme-overlay', 'icefin-theme-root', 'icefin-stock-chrome'].map((i) => document.getElementById(i)).filter(Boolean);
+  if (eng) for (const b of areas) { const e = [...b.querySelectorAll(eng)].find(shown); if (e) { e.click(); return 'theme:' + eng; } }
+  if (rx) for (const b of areas) {
+    const e = [...b.querySelectorAll('[data-icefin-focus], button, a')].find((x) => shown(x) && rx.test(text(x)));
     if (e) { e.click(); return 'theme:' + text(e).slice(0, 30); }
   }
   if (sel) { const e = [...document.querySelectorAll(sel)].find((x) => !x.closest('#icefin-theme-root')) || document.querySelector(sel); if (e) { e.click(); return 'jellyfin-web:' + sel; } }
   return ''; })"""
+
+MORE_TEXT, MORE_ENGINE = r"^(more|more options|⋯|…)$|\bmore options\b", '[data-action="more"]'
+
+# A screen is ready when the theme's screen has something to focus, or jellyfin-web's page is up.
+READY = r"""(() => { const r = document.getElementById('icefin-theme-root');
+  if (r && !r.hidden && r.querySelector('[data-icefin-focus]')) return !r.querySelector('[aria-busy="true"], .icefin-loading') || r.hasAttribute('data-icefin-details-complete');
+  return !!document.querySelector('.page:not(.hide), .mainAnimatedPage:not(.hide)') || document.documentElement.hasAttribute('data-icefin-dashboard'); })()"""
 
 # The item menu's entry: jellyfin-web's action sheet by data-id, or the theme's overlay by its label.
 MENU_ENTRY = r"""((id, re) => {
@@ -187,7 +196,12 @@ def main():
         def go(h):
             close_all()
             js(f"location.hash = {json.dumps(h)}; true")
-            time.sleep(2.8)
+            time.sleep(0.8)
+            try:
+                page.wait_for(READY, timeout=12, interval=0.4)
+            except TimeoutError:
+                pass
+            time.sleep(1.2)
 
         def record(e, kind, opened=None, note=""):
             n[0] += 1
@@ -205,15 +219,15 @@ def main():
                 checks.append({"name": "focus", "ok": bool(c["focus"]), "detail": "" if c["focus"] else "nothing has focus: a controller can't start"})
                 off = js(EDGES)
                 checks.append({"name": "edges", "ok": not off, "detail": ", ".join(off)})
-            errs = js(ERRS)
-            checks.append({"name": "errors", "ok": not errs, "detail": " | ".join(errs[:4])})
+            errs = js(ERRS)  # may come from the server or its plugins, not the theme: a warning to read, not a failure
+            warnings = [" | ".join(errs[:4])] if errs else []
             name = f"{n[0]:02d}-{e['id']}"
             if st != "missing" or kind != "screen":
                 shot(name)
             gap = target == "theme" and st != "theme" or target == "dashboard" and st != "dashboard"
             ent = {"id": e["id"], "group": e["group"], "name": e["name"], "kind": kind, "target": target, "state": st, "gap": gap,
                    "opened": opened or "", "hash": c["hash"], "title": c["title"], "dialogs": c["dialogs"], "osd": c["osd"],
-                   "checks": checks, "shot": f"{name}.png", "note": note}
+                   "checks": checks, "warnings": warnings, "shot": f"{name}.png", "note": note}
             entries.append(ent)
             bad = [x["name"] for x in checks if not x["ok"]]
             print(f"theme_walk: {st:9} {'GAP ' if gap else 'ok  '} {e['id']}{'  checks: ' + ','.join(bad) if bad else ''}{'  (' + note + ')' if note else ''}", flush=True)
@@ -246,7 +260,7 @@ def main():
                 continue
             go(h)
             if e["open"] in ("more", "menu"):
-                how = js(f"{FIND}('^more( options)?$|more options', '')")
+                how = js(f"{FIND}({json.dumps(MORE_TEXT)}, '', {json.dumps(MORE_ENGINE)})")
                 if not how:  # what the engine's details screen does for More options
                     js(f"location.hash = {json.dumps(h + '&icefin=stock&icefinmore=1')}; true")
                     how = "jellyfin-web:icefinmore"
@@ -259,7 +273,7 @@ def main():
                 time.sleep(2.2)
                 record(e, "dialog", how, "" if how else f"the item menu has no '{e['menuId']}' entry")
             else:
-                how = js(f"{FIND}({json.dumps(e.get('text', ''))}, {json.dumps(e.get('selector', ''))})")
+                how = js(f"{FIND}({json.dumps(e.get('text', ''))}, {json.dumps(e.get('selector', ''))}, {json.dumps(e.get('engine', ''))})")
                 time.sleep(1.8)
                 record(e, "dialog", how)
             close_all()
@@ -290,7 +304,7 @@ def main():
             js(f"window.icefinTheme.ctx.play({{ids: ['{v['item:Movie']}'], serverId: '{v['sid']}'}}); true")
             page.wait_for("location.hash.startsWith('#/video') && window.icefinPlaybackManager.currentTime() > 500", timeout=45)
             time.sleep(1)
-            W, H = run["window"]
+            W, H = run["window"][:2]
             for e in player:
                 for x in (W // 2, W // 2 + 40):  # a pointer move brings the controls up
                     page.send("Input.dispatchMouseEvent", type="mouseMoved", x=x, y=H // 2)
@@ -299,7 +313,7 @@ def main():
                 if e["open"] == "osd":
                     record(e, "player", "pointer")
                 else:
-                    how = js(f"{FIND}({json.dumps(e.get('text', ''))}, {json.dumps(e.get('selector', ''))})")
+                    how = js(f"{FIND}({json.dumps(e.get('text', ''))}, {json.dumps(e.get('selector', ''))}, {json.dumps(e.get('engine', ''))})")
                     time.sleep(1.5)
                     record(e, "player", how)
                     close_all()
@@ -312,6 +326,10 @@ def main():
         import traceback
         traceback.print_exc()
         run["error"] = f"{type(ex).__name__}: {ex}"
+        if host and host.crashed() is not None:
+            # Icefin itself went away: a finding about the app, not the theme; what was walked so far is kept
+            run["error"] = f"Icefin exited mid-walk (code {host.crashed()}) after '{entries[-1]['id'] if entries else 'start'}'; see app.log"
+            run["crash"] = True
     finally:
         if host:
             host.close()

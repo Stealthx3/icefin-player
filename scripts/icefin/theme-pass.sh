@@ -22,7 +22,7 @@ wt_of() {
   local w; w="$(git -C "$ROOT" worktree list --porcelain | awk -v b="refs/heads/theme/$1" '/^worktree /{w=$2} $0=="branch " b {print w; exit}')"
   echo "${w:-$PARENT/icefin-wt-$1}"
 }
-check_theme() { [ -n "${1:-}" ] || die "name a theme: $(themes | tr '\n' ' ')"; themes | grep -qx "$1" || die "no theme '$1' (themes/: $(themes | tr '\n' ' '))"; }
+check_theme() { [ -n "${1:-}" ] || die "name a theme: $(themes | tr '\n' ' ')"; case " $(themes | tr "\n" " ") " in *" $1 "*) ;; *) die "no theme '$1' (themes/: $(themes | tr "\n" " "))" ;; esac; }
 port_of() { local i=0 t; for t in $(themes); do [ "$t" = "$1" ] && { echo $((9391 + i)); return; }; i=$((i + 1)); done; }
 
 cmd="${1:-}"; shift || true

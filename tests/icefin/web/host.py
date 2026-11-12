@@ -126,15 +126,37 @@ class Host:
                 os.remove(path)
             return f"discarded ({e})"
 
+    def crashed(self):
+        """The app's exit code if it has gone (a crash mid-run), else None."""
+        return self.app.poll()
+
+    def _restore(self, page):
+        o = self.original
+        page.eval(f"new Promise(r => window.api.theme.select({json.dumps(o.get('theme') or '')}, {json.dumps(o.get('preset') or '')}, {json.dumps(o.get('scheme') or '')}, r))")
+        time.sleep(2)
+        print("host: your theme choice is back:", json.dumps(page.eval("new Promise(r => window.api.theme.selection(r))")), flush=True)
+
     def close(self):
-        try:
-            if self.original is not None:
-                o = self.original
-                self.page.eval(f"new Promise(r => window.api.theme.select({json.dumps(o.get('theme') or '')}, {json.dumps(o.get('preset') or '')}, {json.dumps(o.get('scheme') or '')}, r))")
-                time.sleep(2)
-                print("host: your theme choice is back:", json.dumps(self.page.eval("new Promise(r => window.api.theme.selection(r))")), flush=True)
-        except Exception as e:  # noqa: BLE001
-            print(f"host: COULD NOT put your theme back ({e}); it was {json.dumps(self.original)}", flush=True)
+        if self.original is not None:
+            try:
+                if self.crashed() is not None:
+                    raise ConnectionError(f"Icefin exited ({self.crashed()})")
+                self._restore(self.page)
+            except Exception as e:  # noqa: BLE001
+                # the app went away mid-run: start it again, plainly, just long enough to put the user's choice back
+                print(f"host: Icefin is gone ({e}); starting it again to put your theme back", flush=True)
+                try:
+                    os.killpg(self.app.pid, signal.SIGTERM)
+                except Exception:  # noqa: BLE001
+                    pass
+                again = subprocess.Popen(["flatpak", "run", "--user", APP, f"--remote-debugging-port={self.port}"], stdout=self.log, stderr=subprocess.STDOUT, start_new_session=True)
+                try:
+                    p = Page(self.port, timeout=120)
+                    p.wait_for("!!window.api && !!window.api.theme && !!window.ApiClient && !!window.ApiClient.getCurrentUserId && !!window.ApiClient.getCurrentUserId()", timeout=150)
+                    self._restore(p)
+                except Exception as e2:  # noqa: BLE001
+                    print(f"host: COULD NOT put your theme back ({e2}); it was {json.dumps(self.original)}", flush=True)
+                self.app = again
         try:
             os.killpg(self.app.pid, signal.SIGTERM)
             self.app.wait(20)
