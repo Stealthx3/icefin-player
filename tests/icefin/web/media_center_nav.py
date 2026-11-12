@@ -9,7 +9,7 @@ With Media Center active:
   - details: from Play, Up and Left reach Back or Home;
   - More options: jellyfin-web's details page stays hidden under the item menu, and closing the menu returns to Media
     Center's details;
-  - the player: from the controls, Up reaches Back.
+  - the player: Up from the transport row goes to Back (with no Skip showing).
 Usage: python3 media_center_nav.py --app ~/build/src/icefin-player --server jf12 --out ~/rmcn
 """
 import argparse, base64, json, os, signal, subprocess, sys, tempfile, time
@@ -155,8 +155,10 @@ def main():
         page.wait_for("location.hash.startsWith('#/video') && !!document.querySelector('#icefin-theme-root.mc-player.mc-p-up')", timeout=60)
         time.sleep(3)
         key("enter", 0.6)  # shows the controls (and pauses)
-        ok, trail = reach_nav(("up", "left"), 6)
-        check("player: from the controls, the arrows reach Back", ok, " > ".join(trail))
+        js("window.icefinTheme.ctx.focus(document.querySelector('#icefin-theme-root .mc-tb-big')); true")
+        key("up")
+        f = js(FOCUSED)
+        check("player: Up from the transport row goes to Back", "mc-round-back" in f, f)
         shot("player.png")
         js("window.icefinPlaybackManager.stop(); true")
         time.sleep(2)
