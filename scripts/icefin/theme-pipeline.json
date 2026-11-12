@@ -1,0 +1,7 @@
+{
+  "about": "The theme pipeline's queue (docs/themes/PIPELINE.md, D31): one theme in its pass at a time. 'active' are the themes in a pass now (theme-pass.sh start refuses another while one is listed; theme-pass.sh done <theme> takes it off). 'queue' is the order after them (the user: alphabetical). 'control' themes are never refined: Baseline is the stock look with every engine layer on, the control for plugin runs (D10, PLAN 8.1).",
+  "active": ["plaza", "media-center"],
+  "queue": ["tide", "almanac", "arcade", "harbor", "lumen", "marquee", "mosaic", "orbit", "plum", "spark"],
+  "done": [],
+  "control": ["baseline"]
+}

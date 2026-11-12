@@ -20,6 +20,7 @@ Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If t
 ## Working setup
 - Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).
 - Agents: `.claude/agents/` (scout, runner, implementer, reviewer). The usage plan is dropped (D20).
+- Theme passes (D29, D31): `docs/themes/PIPELINE.md`, driven by `scripts/icefin/theme-pass.sh` (one theme at a time; walks and theme tests on the workstation's installed Icefin, updated first).
 - Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, republish to the same URL after each task).
 - Hardware (D28): no automated HTPC testing (the HTPC tier of D16 is retired; `scripts/icefin/htpc.sh` stays as history). Simulated hardware: `docs/dev/HARDWARE-SIMULATION.md`; real hardware: beta testers with `docs/BETA-CHECKLIST.md`.
 - Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
