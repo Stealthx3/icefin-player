@@ -9,7 +9,10 @@ InputComponent -> inputPlugin.js -> the theme runtime's focus engine. Checks:
   - button prompts: <html data-icefin-glyphs="xbox">, icefinTheme.glyph('south') draws "A";
   - the page's Gamepad API shows no pads;
   - Client Settings -> Controllers lists the pad;
-  - a Nintendo-style pad (reported only: SDL needs its mapping for evdev pads).
+  - a Nintendo-style pad (reported only: SDL needs its mapping for evdev pads);
+  - Steam Input (7.4): run with the environment Steam gives a game (its virtual pad allowed, a DualSense in the
+    ignore list), a Steam Virtual Gamepad (28de:11ff) shows PlayStation glyphs; Steam's desktop layout: a keyboard
+    arrow and the same D-pad press a few ms apart move focus once, while the keyboard alone still moves it.
 Usage: python3 gamepad_input.py --app ~/build-sdl3/src/icefin-player --server jf12
 """
 import argparse, json, os, signal, subprocess, sys, tempfile, time
@@ -62,7 +65,9 @@ def main():
     srv.wait()
     xv = start_x()
     cfgdir = tempfile.mkdtemp(prefix="icefin-pad-")
-    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8", ICEFIN_THEME_PATH=THEMES)
+    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8", ICEFIN_THEME_PATH=THEMES,
+               # What Steam sets for a game it launches: its virtual pads allowed, the physical pads it took over hidden.
+               SDL_GAMECONTROLLER_ALLOW_STEAM_VIRTUAL_GAMEPAD="1", SDL_GAMECONTROLLER_IGNORE_DEVICES="0x054c/0x0ce6")
     log = open(os.path.join(cfgdir, "app.log"), "w")
     app = subprocess.Popen([os.path.expanduser(a.app), f"--config-dir={cfgdir}", "--windowed", "--tv", "--disable-gpu",
                             f"--remote-debugging-port={a.port}", "--log-level=info"], env=env, stdout=log, stderr=subprocess.STDOUT,
@@ -140,8 +145,38 @@ def main():
         press(ui, e.BTN_SOUTH)
         check("reset: south selects again", js("window.labScreens.clicks.length") == clicks0 + 1)
 
+        # 7.4: Steam's desktop layout sends a key for the same press. Start at the first tile with the keyboard.
+        key = lambda k: subprocess.run(["xdotool", "key", "--clearmodifiers", k], env=env, capture_output=True, timeout=10)
+        for _ in range(3):
+            key("Left")
+            time.sleep(0.4)
+        f0 = foc()
+        key("Right")
+        time.sleep(0.6)
+        f1 = foc()
+        check("keyboard alone moves focus (never filtered)", f1 != f0, f"{f0} -> {f1}")
+        key("Left")
+        time.sleep(0.6)
+        kb = subprocess.Popen(["xdotool", "key", "--clearmodifiers", "Right"], env=env)
+        hat(ui, e.ABS_HAT0X, 1)
+        kb.wait(10)
+        time.sleep(0.6)
+        log.flush()
+        guard = "duplicate guard on" in open(log.name, errors="replace").read()
+        check("key + D-pad together move focus once", foc() == f1, f"focused={foc()} (one step: {f1})")
+        check("the guard says so in the log", guard)
+
         ui.close()
         ui = None
+        page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 0)))", timeout=15)
+
+        sv = pad("Steam Virtual Gamepad", 0x28DE, 0x11FF)
+        try:
+            page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 1)))", timeout=15)
+            fam = js("new Promise(r => window.api.gamepads.list(r))")[0]["family"]
+            check("Steam Virtual Gamepad: family of the pad Steam took over", fam == "playstation", f"family={fam}")
+        finally:
+            sv.close()
         page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 0)))", timeout=15)
         check("hotplug: pad removed", True)
 
