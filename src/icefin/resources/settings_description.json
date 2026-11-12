@@ -146,6 +146,12 @@
         "default": true
       },
       {
+        "value": "force_transcode_dovi",
+        "display_name": "Force Transcode Dolby Vision",
+        "help": "If set, the server always converts Dolby Vision profile 5 video before it plays. The default is off: the Vulkan renderer shows Dolby Vision itself, and where this renderer can't, Icefin asks at play time (play anyway, or ask the server for an HDR10 or SDR version).",
+        "default": false
+      },
+      {
         "value": "icefin_osd_size",
         "display_name": "Player Controls Size",
         "help": "How big the controls over a playing video are: the seek bar, buttons, title, menus and skip buttons. Subtitles are not changed.\n\n- Auto: sized by the screen's height, so they look the same on a 1080p and a 4K screen (twice the size on 4K), and larger again in Couch Mode.\n- A percentage: that much of the Auto size.",

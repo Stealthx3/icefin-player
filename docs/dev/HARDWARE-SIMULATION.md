@@ -25,9 +25,10 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 - **Cost:** a day or two; no host changes.
 
 ### M. Synthetic HDR10+ and Dolby Vision media (PLAN 6.6, 5.8's media rows)
-- **How:** in the lab, x265 writes HDR10+ dynamic metadata from a JSON file; `dovi_tool` (open source) generates
-  and injects RPUs for Dolby Vision profiles 5, 8.1 and a profile 7 dual layer. `make-media.sh` gains these
-  clips next to its SDR, HDR10 and HLG films.
+- **Built (6.6):** `make-hdr-media.sh` injects HDR10+ dynamic metadata with `hdr10plus_tool` (Debian's x265 drops
+  it at encode time) and generated Dolby Vision 5 and 8.1 RPUs with `dovi_tool`, next to `make-media.sh`'s SDR,
+  HDR10 and HLG films. No profile 7: `dovi_tool` generates single-layer RPUs only, so that row stays with H6.
+  `routing_rows.py` runs the SDR-display rows, `hdr_protocol.py` the HDR-display ones.
 - **Proves:** detection, routing (the capability prompt for DV 5 on OpenGL), the metadata Icefin passes on, and
   playback reports against upstream, row by row.
 - **Can't show:** what a TV makes of it; the look of a real DV grade.
