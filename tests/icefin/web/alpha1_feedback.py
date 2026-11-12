@@ -193,6 +193,43 @@ def main():
               js("document.activeElement && document.activeElement.className"))
         act("down")
         check("Down returns to the controls", js("!!document.activeElement.closest('.videoOsdBottom')") is True)
+        # ---- size: Auto by screen height, Couch Mode, Player Controls Size ----
+        setv = lambda k, v: js("new Promise(r => window.api.settings.setValue('video', %s, %s, () => r(true)))" % (json.dumps(k), json.dumps(v)))
+        osd = lambda: json.loads(js("JSON.stringify((() => { const b = document.querySelector('#videoOsdPage .videoOsdBottom').getBoundingClientRect(); const k = document.querySelector('.skip-button').getBoundingClientRect(); "
+                                    "const z = +getComputedStyle(document.documentElement).getPropertyValue('--icefin-osd-scale'); "
+                                    "return {scale: z, h: b.height * z / innerHeight, w: b.width * z / innerWidth, top: b.top * z, skipBottom: k.bottom, "
+                                    "couch: document.documentElement.hasAttribute('data-icefin-couch'), sys: window.icefinTheme.system && window.icefinTheme.system.couch}; })())"))
+        def wake():
+            for i in range(3):
+                page.send("Input.dispatchMouseEvent", type="mouseMoved", x=500 + i * 40, y=320)
+                time.sleep(0.15)
+            time.sleep(0.7)
+        page.send("Emulation.setDeviceMetricsOverride", width=1920, height=1080, deviceScaleFactor=1, mobile=False)
+        wake()
+        hd = osd()
+        check("1080p: controls at their own size, Couch Mode off on a desk display", abs(hd["scale"] - 1) < 0.01 and not hd["couch"], json.dumps(hd))
+        page.send("Emulation.setDeviceMetricsOverride", width=3840, height=2160, deviceScaleFactor=1, mobile=False)
+        wake()
+        uhd = osd()
+        check("4K: Auto doubles the controls, so they keep their share of the screen", abs(uhd["scale"] - 2) < 0.01 and abs(uhd["h"] - hd["h"]) < 0.02 and uhd["w"] <= 0.75,
+              f"1080p {hd['h']:.3f} of the height, 4K {uhd['h']:.3f}; {json.dumps(uhd)}")
+        shot("controls-4k.png")
+        setv("icefin_couch_mode", True)
+        time.sleep(0.5)
+        wake()
+        couch = osd()
+        check("Couch Mode: larger again, and marked for themes; the skip button just above the controls", abs(couch["scale"] - 2.6) < 0.01 and couch["couch"] and couch["w"] <= 0.75
+              and couch["top"] - 200 <= couch["skipBottom"] <= couch["top"] + 1, json.dumps(couch))
+        shot("controls-4k-couch.png")
+        setv("icefin_couch_mode", False)
+        setv("icefin_osd_size", "150")
+        time.sleep(0.5)
+        wake()
+        big = osd()
+        check("Player Controls Size 150%: half again the Auto size", abs(big["scale"] - 3) < 0.01, json.dumps(big))
+        setv("icefin_osd_size", "auto")
+        page.send("Emulation.clearDeviceMetricsOverride")
+        time.sleep(0.5)
         js("document.querySelector('.skip-button').remove(); window.icefinPlaybackManager.stop(); true")
         time.sleep(2)
 

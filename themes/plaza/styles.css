@@ -293,6 +293,8 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
   background: var(--icefin-color-textSecondary); color: var(--icefin-color-surface); font-size: 0.85em; font-weight: 700; }
 /* Controller hints only while a remote or controller drives the screen (9.28). */
 html[data-pz-input="pointer"] .pz-mhint-keys, html[data-pz-input="keys"] .pz-mhint-keys { display: none; }
+/* Couch Mode (the engine's html[data-icefin-couch]): the hints stay, whatever was used last. */
+html[data-icefin-couch] .pz-mhint-keys { display: inline !important; }
 
 /* Paged grids: cells at their own size, as many columns as fit, centred. */
 .pz-grid { position: absolute; inset: 0; }

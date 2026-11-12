@@ -1,6 +1,10 @@
 #include "CapabilityModel.h"
 #include <QCoreApplication>
 #include <QDebug>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QWindow>
+#include <cmath>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
 #include "icefin/gpu/HardwareComponent.h"
@@ -60,7 +64,16 @@ QVariantMap snapshot(const Inputs& in)
                              {"interop", in.hwdecInterop}, {"current", in.hwdecCurrent}}},
     {"audio", in.sink},
     {"versions", in.versions},
+    {"screen", in.screen},
   };
+}
+
+QVariantMap couchDisplay(const QVariantMap& screen)
+{
+  if (screen.value("gamescope").toBool()) return {{"couch", true}, {"reason", "gamescope"}};
+  const double inches = screen.value("diagonalInches").toDouble();
+  if (inches >= 40.0) return {{"couch", true}, {"reason", QString("display %1 in").arg(std::lround(inches))}};
+  return {{"couch", false}, {"reason", inches > 0 ? QString("display %1 in").arg(std::lround(inches)) : QString("display size unknown")}};
 }
 
 QVariantMap themeView(const QVariantMap& s)
@@ -78,6 +91,8 @@ QVariantMap themeView(const QVariantMap& s)
     {"audio", QVariantMap{{"receiver", audio.value("valid").toBool()}, {"passthrough", audio.value("codecs").toStringList()},
                           {"channels", audio.value("lpcmChannels").toInt()}}},
     {"decoders", QVariantMap{{"serverConverts", s.value("decoders").toMap().value("transcode").toStringList()}}},
+    // Couch Mode's detection: is this a TV across the room (and why). The setting itself is the page's to read.
+    {"couch", couchDisplay(s.value("screen").toMap())},
   };
 }
 
@@ -126,6 +141,12 @@ void CapabilityModel::attach()
   connect(&RouterComponent::Get(), &RouterComponent::compositorChanged, this, &CapabilityModel::refresh, Qt::QueuedConnection);
   connect(&Gpu::HardwareComponent::Get(), &Gpu::HardwareComponent::finished, this, &CapabilityModel::refresh, Qt::QueuedConnection);
   connect(&SettingsComponent::Get(), &SettingsComponent::sectionValueUpdate, this, &CapabilityModel::refresh, Qt::QueuedConnection);
+  // Couch Mode's detection follows the window to another display.
+  connect(qApp, &QGuiApplication::screenAdded, this, &CapabilityModel::refresh, Qt::QueuedConnection);
+  connect(qApp, &QGuiApplication::screenRemoved, this, &CapabilityModel::refresh, Qt::QueuedConnection);
+  connect(qApp, &QGuiApplication::primaryScreenChanged, this, &CapabilityModel::refresh, Qt::QueuedConnection);
+  for (QWindow* w : QGuiApplication::topLevelWindows())
+    connect(w, &QWindow::screenChanged, this, &CapabilityModel::refresh, Qt::QueuedConnection);
   QMetaObject::invokeMethod(this, &CapabilityModel::refresh, Qt::QueuedConnection);
 }
 
@@ -146,6 +167,22 @@ Inputs CapabilityModel::gather() const
   in.hwdecSetting = SettingsComponent::Get().value(SETTINGS_SECTION_VIDEO, "hardwareDecoding").toString();
   in.sink = m_sink;
   in.versions = {{"icefin", QCoreApplication::applicationVersion()}, {"qt", QString::fromLatin1(qVersion())}};
+  // The window's display (the first visible top-level window's), else the primary one.
+  QScreen* scr = nullptr;
+  for (QWindow* w : QGuiApplication::topLevelWindows())
+    if (w->isVisible() && w->screen()) { scr = w->screen(); break; }
+  if (!scr) scr = QGuiApplication::primaryScreen();
+  const bool gamescope = qEnvironmentVariableIsSet("GAMESCOPE_WAYLAND_DISPLAY") || qEnvironmentVariable("SteamGamepadUI") == "1"
+                         || qEnvironmentVariable("SteamDeck") == "1";
+  if (scr) {
+    const QSizeF mm = scr->physicalSize();
+    // Some outputs report nothing, or a placeholder (a few mm, or a size from an aspect ratio): only trust a real size.
+    const double inches = mm.width() > 100 && mm.height() > 50 ? std::hypot(mm.width(), mm.height()) / 25.4 : 0.0;
+    in.screen = {{"name", scr->name()}, {"diagonalInches", std::round(inches * 10) / 10}, {"gamescope", gamescope},
+                 {"width", scr->size().width()}, {"height", scr->size().height()}, {"dpr", scr->devicePixelRatio()}};
+  } else {
+    in.screen = {{"gamescope", gamescope}};
+  }
   if (m_mpv) {
     in.hwdecInterop = m_mpv->getProperty("hwdec-interop").toString();
     in.hwdecCurrent = m_mpv->getProperty("hwdec-current").toString();

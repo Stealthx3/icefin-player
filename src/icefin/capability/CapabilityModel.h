@@ -35,7 +35,14 @@ struct Inputs
   QString hwdecSetting, hwdecInterop, hwdecCurrent;
   QVariantMap sink;              // the HDMI sink last seen by the passthrough decision
   QVariantMap versions;
+  // The display the window is on: name, diagonalInches (from the size it reports, 0 if unknown), and the session
+  // (gamescope: Steam's Big Picture / Gamescope). Feeds Couch Mode's detection.
+  QVariantMap screen;
 };
+
+// A couch display: watched from across the room (alpha feedback, 4K controls too small). A TV-sized display (40 inches
+// and up, from the physical size it reports) or a Gamescope / Steam Big Picture session. {couch, reason}.
+QVariantMap couchDisplay(const QVariantMap& screen);
 
 // The router's view of this system.
 Render::System routerSystem(const Inputs& in);
