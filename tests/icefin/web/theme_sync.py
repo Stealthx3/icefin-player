@@ -119,7 +119,7 @@ def main():
         # Give the server copy the newest timestamp again, so B takes it when B turns sync on.
         p = srv.call("GET", f"/DisplayPreferences/usersettings?{q}")
         sc = json.loads(p["CustomPrefs"]["icefin.theme"])
-        sc["timestamp"] = int(time.time() * 1000) + 60000
+        sc["timestamp"] = int(time.time() * 1000) + 1  # newer than B's last change, older than its next pick
         p["CustomPrefs"]["icefin.theme"] = json.dumps(sc)
         srv.call("POST", f"/DisplayPreferences/usersettings?{q}", p)
         sync_on(pb)

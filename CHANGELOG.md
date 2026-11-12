@@ -4,6 +4,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ## [Unreleased]
 
+### Changed
+- The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
+
 ## [0.1.0-alpha.2] - 2026-11-12
 
 ### Added
