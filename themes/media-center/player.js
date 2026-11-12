@@ -326,6 +326,13 @@
                 return true;
             }
             if (action === 'up' && f && V.top.contains(f)) return true;  // nothing above the top row
+            // up from the transport row: Skip when it shows, else Back at the top left (spatial focus wandered into the
+            // chapter strip and the seek bar's neighbours on films with chapters: the host walk)
+            if (action === 'up' && f && f.closest('.mc-p-transport')) {
+                ctx.sound('focus');
+                ctx.focus(!V.skip.hidden ? V.skip : V.chrome.back);
+                return true;
+            }
             return false;  // spatial focus between the controls; Enter clicks
         },
         onBack() {

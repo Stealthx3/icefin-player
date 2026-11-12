@@ -25,6 +25,11 @@ Rows:
                             the bursts bit for bit (the pin set-up is the kernel's, recorded)
   icefin/unplug             the receiver unplugged mid-track and the next track played while unplugged: both play
                             to the end or the never-silent fallback steps in; nothing stalls
+  icefin/fallback-default   another program holds the HDMI device (as a sound server that won't let go does): the
+                            output fails, the fallback retries as PCM, then on the default device (a null device
+                            here), and the track plays to the end without the last step (3.6)
+  icefin/fallback-silent    the HDMI device held and no other device: all three steps, the on-screen notice, and
+                            the track still plays to the end silently instead of stalling
 """
 import json, os, subprocess, sys, time
 
@@ -337,6 +342,22 @@ def rows(M, app, codecs):
         fallback = [l for l in (log1 + log2).splitlines() if "Icefin audio fallback" in l]
         out.append(M.row("icefin/unplug", ended1 and ended2, ended_mid_track_unplug=ended1, ended_while_unplugged=ended2,
                          line_unplugged=line2[-300:], fallback=fallback[-3:]))
+        # Never silent (3.6) with the HDMI device held by another program.
+        def held_play(default_null):
+            M.client("rm -f ~/.asoundrc" + ("; printf 'pcm.!default { type null }\\n' > ~/.asoundrc" if default_null else ""))
+            M.client(f"nohup setsid timeout 60 aplay -q -D {dev} -f S16_LE -r 48000 -c 2 /dev/zero >/dev/null 2>&1 </dev/null & sleep 1; true")
+            try:
+                ended, line, new, seg = ice.play("ac3", timeout=45)
+            finally:
+                M.client("pkill -x aplay; rm -f ~/.asoundrc; true")
+                time.sleep(1)
+            steps = [l for l in new.splitlines() if "Icefin audio fallback" in l]
+            return ended, steps, new
+        ended, steps, new = held_play(True)
+        has = lambda n: any(f"fallback {n}/3" in l for l in steps)
+        out.append(M.row("icefin/fallback-default", ended and has(1) and has(2) and not has(3), ended=ended, steps=[l[-160:] for l in steps]))
+        ended, steps, new = held_play(False)
+        out.append(M.row("icefin/fallback-silent", ended and has(1) and has(2) and has(3), ended=ended, steps=[l[-160:] for l in steps]))
     finally:
         try:
             os.makedirs(M.RESULTS, exist_ok=True)

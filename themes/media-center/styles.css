@@ -67,16 +67,15 @@ html[data-icefin-motion="low"] .mc-tile, html[data-icefin-motion="low"] .mc-tile
 .mc-now { position: absolute; right: 4.5vw; bottom: 5vh; display: flex; gap: 1em; align-items: center; padding: 0.8em 1.2em;
   border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised); box-shadow: 0 0 1.5em var(--icefin-color-focusGlow); }
 .mc-now[hidden] { display: none; }
-.mc-now small { display: block; opacity: 0.7; }
+.mc-now small { display: block; opacity: 0.7; font-size: 1.7vh; letter-spacing: 0.04em; }
 
 html[data-icefin-backdrop] .mc-field { display: none; }
 
 /* Poster wall (wall.js): seven across; the grid slides so the focused row stays near the top. */
-.mc-wall-head { position: absolute; left: 4.5vw; right: 4.5vw; top: 4vh; display: flex; align-items: baseline; gap: 1.2em; }
-.mc-wall-title { font-size: 2.4em; font-weight: 300; }
+.mc-wall-head { position: absolute; left: 21.67vh; right: 4.06vw; top: 14.4vh; display: flex; align-items: baseline; gap: 1.2em; font-size: 2.5vh; font-weight: 300; }
 .mc-wall-count, .mc-wall-sort { opacity: 0.6; }
 .mc-wall-sort { margin-left: auto; }
-.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 15vh; bottom: 0; overflow: hidden; }
+.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 19vh; bottom: 0; overflow: hidden; }
 .mc-wall { display: grid; grid-template-columns: repeat(7, 1fr); column-gap: 1.6vw; row-gap: 4.5vh; padding: 1.2em 0.6em;
   transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
 .mc-poster { width: auto; height: auto; aspect-ratio: 2 / 3; transition-property: transform, opacity, box-shadow; }  /* the wall sizes posters by its columns */
@@ -301,12 +300,12 @@ html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playin
 html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog .formDialogHeader { background: transparent !important; color: var(--icefin-color-text); }
 html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog .formDialogHeaderTitle { font-size: 4.2vh; font-weight: 300; }
 /* questions (confirm, alert, prompt): a band across the screen */
-html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet) {
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet):not(.slideshowDialog):not(#bookPlayer):not(#pdfPlayer):not(#comicsPlayer) {
   position: fixed !important; left: 0 !important; right: 0 !important; top: 50% !important; transform: translateY(-50%) !important; width: 100vw !important; max-width: none !important; margin: 0 !important;
   border-radius: 0 !important; padding: 5vh 6vw 5vh 21.67vh !important; box-sizing: border-box; color: var(--icefin-color-text);
   background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.96), rgb(var(--icefin-color-surface-channel) / 0.96)) !important;
   border-top: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); border-bottom: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); box-shadow: 0 0 11vh rgb(var(--icefin-color-glassEdge-channel) / 0.7) !important; }
-html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet) h2 { font-size: 5.3vh; font-weight: 300; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet):not(.slideshowDialog):not(#bookPlayer):not(#pdfPlayer):not(#comicsPlayer) h2 { font-size: 5.3vh; font-weight: 300; }
 html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogBackdrop { background: rgb(var(--icefin-color-glassEdge-channel) / 0.55) !important; }
 /* notices (toasts): bottom right, glass */
 html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !important; right: 4.06vw !important; bottom: 5vh !important; border-radius: 0 !important; font-size: 2.6vh; font-weight: 300;
@@ -349,3 +348,294 @@ html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !import
 .mc-lib-info-facts { font-size: 2.5vh; opacity: 0.78; margin-top: 0.6vh; }
 .mc-count { position: absolute; right: 4.06vw; bottom: 3.6vh; font-size: 2.8vh; opacity: 0.7; }
 html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-lib-tile { transition-duration: 0ms !important; }
+
+/* ---- Live TV (tv.js, 9.46): the guide on ui.guideGrid, the programme under it with the channel's picture ---- */
+#icefin-theme-root[data-mc="livetv"] { overflow: clip !important; }
+.mc-tv-body { position: absolute; left: 21.67vh; right: 4.06vw; top: 21vh; bottom: 3vh; overflow: hidden; }
+.mc-tv-body[data-tab="guide"] { left: 4.06vw; }
+.mc-tv-guide { position: relative; height: 54vh; }
+.mc-tv-guide .icefin-guide-channel { background: rgb(var(--icefin-color-glass-channel) / 0.05); font-size: 2.4vh; display: flex; align-items: center; gap: 1.2vh; padding-left: 1vh; }
+.mc-tv-chno { font-weight: 400; opacity: 0.7; min-width: 3.5vh; }
+.mc-tv-guide .icefin-guide-cell { background: rgb(var(--icefin-color-accentStrong-channel) / 0.35); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.15); font-size: 2.4vh; font-weight: 300;
+  padding: 0 1.4vh; display: flex; align-items: center; gap: 1vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-cell.icefin-focused {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%);
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); outline: none; }
+.mc-tv-guide .icefin-guide-now { background: var(--icefin-color-focus); box-shadow: 0 0 1.1vh var(--icefin-color-focus); width: 0.28vh; }
+.mc-tv-rec { width: 1.4vh; height: 1.4vh; border-radius: 50%; background: var(--icefin-color-error); display: inline-block; flex: none; }
+.mc-tv-rec.series { width: 2.4vh; border-radius: 0.7vh; }
+.mc-tv-under { display: flex; gap: 2.8vh; margin-top: 2.5vh; }
+.mc-tv-inset { width: 33vh; height: 18.8vh; flex: none; background: var(--icefin-color-surface) center / contain no-repeat; box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.5); }
+.mc-tv-info-title { font-size: 3.4vh; }
+.mc-tv-info-when { font-size: 2.2vh; opacity: 0.75; margin-top: 0.4vh; }
+.mc-tv-info-text { font-size: 2.2vh; opacity: 0.88; margin-top: 0.8vh; line-height: 1.45; max-height: 6.4vh; overflow: hidden; }
+.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; scrollbar-width: none; }
+.mc-tv-channel, .mc-tv-rec-tile { cursor: pointer; outline: none; opacity: 0.85; transition: transform 180ms; }
+.mc-tv-logo, .mc-tv-rec-art { position: relative; height: 14.6vh; background: rgb(var(--icefin-color-glass-channel) / 0.06) center / contain no-repeat; display: flex; align-items: center; justify-content: center; font-size: 2.4vh; border-radius: 0.14vh; }
+.mc-tv-rec-art { background-size: cover; }
+.mc-tv-channel.icefin-focused, .mc-tv-rec-tile.icefin-focused { transform: scale(1.08); opacity: 1; }
+.mc-tv-channel.icefin-focused .mc-tv-logo, .mc-tv-rec-tile.icefin-focused .mc-tv-rec-art { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-tv-channel-name, .mc-tv-rec-name { font-size: 2.3vh; margin-top: 0.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-tv-channel-now, .mc-tv-rec-when { font-size: 1.9vh; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-tv-new { position: absolute; right: 0.8vh; top: 0.8vh; font-style: normal; font-size: 1.6vh; font-weight: 600; padding: 0.1vh 0.8vh; background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); border-radius: 0.28vh; }
+.mc-tv-list { max-width: 64vw; overflow: auto; max-height: 100%; scrollbar-width: none; }
+.mc-tv-time { width: 14vh; font-size: 2.3vh; opacity: 0.75; flex: none; }
+
+/* ---- Search (browse.js): the field and keypad at the left, results grouped at the right ---- */
+.mc-search-left { position: absolute; left: 21.67vh; top: 16.7vh; width: 42vh; }
+.mc-search-label { display: block; font-size: 2.5vh; opacity: 0.75; margin-bottom: 1.1vh; }
+.mc-search-input { width: 100%; height: 6.9vh; box-sizing: border-box; padding: 0 1.9vh; font: inherit; font-size: 3.3vh; color: var(--icefin-color-text); outline: none;
+  background: rgb(var(--icefin-color-glass-channel) / 0.08); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.5); border-radius: 0; }
+.mc-search-input.icefin-focused, .mc-search-input:focus { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass); box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); }
+.mc-keypad { display: grid; grid-template-columns: repeat(3, 9.2vh); gap: 1.1vh; margin-top: 3vh; }
+.mc-key { height: 7.2vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font: inherit; color: var(--icefin-color-text); cursor: pointer;
+  background: rgb(var(--icefin-color-glass-channel) / 0.06); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.2); border-radius: 0.28vh; }
+.mc-key-main { font-size: 3vh; line-height: 1; }
+.mc-key small { font-size: 1.5vh; letter-spacing: 0.06em; opacity: 0.6; margin-top: 0.3vh; text-transform: uppercase; }
+.mc-key.icefin-focused, .mc-key:hover { background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96), rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96));
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); outline: none; }
+.mc-search-results { position: absolute; left: calc(21.67vh + 42vh + 6vh); right: 4.06vw; top: 16.4vh; bottom: 4vh; overflow: auto; scrollbar-width: none; }
+
+/* ---- Favourites (browse.js): a row per kind; the current row bright, the others dim ---- */
+#icefin-theme-root[data-mc="favorites"] { overflow: clip !important; }
+.mc-fav { position: absolute; left: 21.67vh; right: 0; top: 16vh; bottom: 0; overflow: auto; scrollbar-width: none; padding-bottom: 20vh; }
+.mc-fav-row { display: flex; align-items: center; gap: 2vh; min-height: 22vh; opacity: 0.55; transition: opacity 200ms; }
+.mc-fav-row.current { opacity: 1; }
+.mc-fav-title { width: 26vh; flex: none; font-size: 4.2vh; }
+.mc-fav-clip { flex: 1; overflow: hidden; padding: 2.5vh 1.5vh; }
+.mc-fav-strip { display: flex; gap: 2.2vh; transition: transform 300ms cubic-bezier(.2,.7,.2,1); width: max-content; }
+.mc-fav-strip .mc-lib-art { transform-origin: center; }
+.mc-fav-strip.mc-lib-poster .mc-lib-art { width: 12.5vh; height: 18.8vh; }
+.mc-fav-strip.mc-lib-square .mc-lib-art { width: 14.5vh; height: 14.5vh; }
+.mc-fav-strip.mc-lib-wide .mc-lib-art { width: 24vh; height: 13.5vh; }
+.mc-fav-strip .mc-lib-name { font-size: 2vh; max-width: 18vh; }
+/* the guide's geometry (ui.guideGrid leaves sizes to the theme): the canvas's 50 px rows and 150 px channel column at 720 */
+.mc-tv-guide .icefin-guide-times { position: relative; height: 4.7vh; margin-left: 21vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-time { top: 0; bottom: 0; padding-left: 0.8vh; line-height: 4.7vh; font-size: 2.2vh; opacity: 0.8; }
+.mc-tv-guide .icefin-guide-row { display: flex; height: 6.9vh; margin-bottom: 0.42vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-channel { width: 20.6vh; flex: none; margin-right: 0.42vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-lane { flex: 1; position: relative; }
+.mc-tv-guide .icefin-guide-cell { height: 100%; }
+.mc-tv-guide .icefin-guide-now { top: 4.7vh; bottom: 0; }
+.mc-tv-guide { height: 54.5vh; }
+
+/* ---- Now playing and lyrics (np.js, 9.46) ---- */
+.mc-np-actions { position: absolute; left: 21.67vh; top: 18vh; width: 32vh; display: flex; flex-direction: column; gap: 0.97vh; }
+.mc-np-art { position: absolute; left: calc(21.67vh + 36vh); top: 18vh; width: 45.8vh; height: 45.8vh; background: var(--icefin-color-surface) center / cover no-repeat;
+  box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.4), 0 2.2vh 5.5vh rgb(var(--icefin-color-glassEdge-channel) / 0.55); }
+.mc-np-info { position: absolute; left: calc(21.67vh + 36vh + 51vh); right: 4.06vw; top: 18.5vh; }
+.mc-np-title { font-size: 4.7vh; line-height: 1.2; }
+.mc-np-artist { font-size: 2.9vh; opacity: 0.85; margin-top: 1.1vh; }
+.mc-np-album { font-size: 2.5vh; opacity: 0.7; margin-top: 0.3vh; }
+.mc-np-next { font-size: 2.6vh; opacity: 0.8; line-height: 1.6; }
+.mc-np-bar { position: absolute; left: calc(21.67vh + 36vh); right: 4.06vw; top: 70vh; }
+.mc-np-transport { position: absolute; left: calc(21.67vh + 36vh); top: 76vh; display: flex; gap: 1.4vh; align-items: center; }
+.mc-np-empty { position: absolute; left: 21.67vh; top: 22vh; display: flex; flex-direction: column; gap: 2vh; align-items: flex-start; }
+#icefin-theme-root[data-mc="lyrics"] { overflow: clip !important; }
+.mc-ly-side { position: absolute; left: 21.67vh; top: 18vh; width: 36vh; }
+.mc-ly-side .mc-ly-art { position: static; width: 30.5vh; height: 30.5vh; }
+.mc-ly-side .mc-np-title { font-size: 3vh; margin-top: 2vh; }
+.mc-ly-side .mc-np-artist { font-size: 2.3vh; }
+.mc-ly-side .mc-p-track { margin-top: 2vh; width: 30.5vh; }
+.mc-ly-side .mc-p-times { width: 30.5vh; justify-content: flex-start; }
+.mc-ly-back { margin-top: 3vh; }
+.mc-ly-lines { position: absolute; left: calc(21.67vh + 44vh); right: 4.06vw; top: 0; transition: transform 500ms cubic-bezier(.2,.7,.2,1); }
+.mc-ly-line { font-size: 4.2vh; line-height: 1.25; margin: 0 0 2.5vh; color: rgb(var(--icefin-color-text-channel) / 0.38); transition: color 300ms, font-size 300ms; }
+.mc-ly-line.now { color: var(--icefin-color-text); font-size: 5.3vh; text-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); }
+.mc-ly-lines .mc-note { margin-top: 20vh; font-size: 3vh; }
+
+/* ---- Connecting and signing in (account.js, 9.46) and the queue (np.js) ---- */
+.mc-acc-col { position: absolute; left: 21.67vh; top: 20vh; width: 36vh; display: flex; flex-direction: column; gap: 1.4vh; }
+.mc-acc-col.mc-acc-low, .mc-acc-right.mc-acc-low { top: 60vh; }
+.mc-acc-right { position: absolute; left: calc(21.67vh + 44vh); top: 20vh; width: 70vh; }
+.mc-acc-field { margin-bottom: 2.5vh; }
+.mc-acc-field[hidden] { display: none; }
+.mc-acc-list { position: absolute; left: calc(21.67vh + 44vh); right: 4.06vw; top: 19.4vh; display: flex; flex-direction: column; gap: 0.8vh; }
+.mc-acc-server { min-height: 10.8vh; display: flex; flex-direction: column; justify-content: center; padding: 0 3vh; cursor: pointer; border: 0.14vh solid transparent; border-radius: 0.28vh; }
+.mc-acc-server b { font-weight: 300; font-size: 3.9vh; }
+.mc-acc-server span { font-size: 2.2vh; opacity: 0.7; }
+.mc-acc-server.icefin-focused { background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96), rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96));
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); outline: none; }
+.mc-acc-users { position: absolute; left: 21.67vh; top: 22vh; right: 4.06vw; display: flex; align-items: center; gap: 4vh; }
+.mc-acc-user { text-align: center; cursor: pointer; outline: none; opacity: 0.65; transition: transform 180ms, opacity 180ms; }
+.mc-acc-face { width: 16.7vh; height: 16.7vh; display: flex; align-items: center; justify-content: center; font-size: 6.7vh; background: var(--icefin-color-surface) center / cover no-repeat;
+  border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.3); box-sizing: border-box; }
+.mc-acc-plus { background: rgb(var(--icefin-color-glass-channel) / 0.06); }
+.mc-acc-uname { font-size: 2.4vh; margin-top: 1.4vh; }
+.mc-acc-user.on, .mc-acc-user.icefin-focused { opacity: 1; }
+.mc-acc-user.icefin-focused { transform: scale(1.2); }
+.mc-acc-user.icefin-focused .mc-acc-face { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-note.bad { color: var(--icefin-color-error); opacity: 1; }
+.mc-q-list { position: absolute; left: calc(21.67vh + 40vh); right: 4.06vw; top: 18vh; bottom: 9vh; overflow: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 0.3vh; }
+.mc-q-n { width: 3.6vh; font-weight: 300; opacity: 0.6; flex: none; }
+.mc-q-row.now { background: rgb(var(--icefin-color-focus-channel) / 0.14); border-left: 0.42vh solid var(--icefin-color-focus); }
+.mc-q-row.now .mc-q-n { color: var(--icefin-color-focus); opacity: 1; }
+
+/* ---- Settings (settings.js, 9.46): the canvas's "settings", "playback settings" and "Client Settings" boards at
+   1280x720, in vh. ---- */
+.mc-crumb { position: absolute; left: 21.67vh; top: 14.4vh; font-size: 2.5vh; font-weight: 300; color: var(--icefin-color-textSecondary); z-index: 2; white-space: nowrap; }
+/* the hub: the list at the left, the focused entry described at the right */
+#icefin-theme-root[data-mc="settings"] .mc-set-list { position: absolute; left: 20.28vh; top: 15.56vh; width: 58.3vh; }
+#icefin-theme-root[data-mc="settings"] .mc-set-entry { min-height: 5.83vh; font-size: 3.6vh; font-weight: 300; padding: 0 2.2vh; }
+.mc-set-sep { height: 0.14vh; background: rgb(var(--icefin-color-glass-channel) / 0.14); margin: 0.97vh 2.2vh; }
+.mc-set-about { position: absolute; left: 88.9vh; top: 17.5vh; width: 77.8vh; padding: 3.33vh 3.9vh; box-sizing: border-box; font-weight: 300;
+  background: rgb(var(--icefin-color-background-channel) / 0.45); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.25); }
+.mc-set-about-name { font-size: 3.9vh; }
+.mc-set-about-text { font-size: 2.5vh; line-height: 1.6; opacity: 0.85; margin-top: 1.4vh; }
+.mc-set-about-note { font-size: 2.2vh; line-height: 1.6; opacity: 0.6; margin-top: 1.9vh; }
+.mc-set-about-note:empty { display: none; }
+.mc-set-foot { position: absolute; left: 88.9vh; top: 56.9vh; width: 77.8vh; font-size: 2.08vh; line-height: 1.5; opacity: 0.55; font-weight: 300; }
+
+/* spinners: ‹ value › */
+.mc-spin { background: none; border: 0; padding: 0 0.8vh; margin: 0; font: inherit; font-size: 3.2vh; line-height: 1; color: inherit; opacity: 0.8; cursor: pointer; flex: none; }
+.mc-spin:hover, .mc-spin:focus { opacity: 1; outline: none; color: var(--icefin-color-focus); text-shadow: 0 0 1.5vh var(--icefin-color-focusGlow); }
+
+/* This device: the engine's Client Settings page (ui.settings.screen) in the chrome; sections at the left, rows at
+   the right, the help under a row while it has focus */
+#icefin-theme-root[data-mc="client"] .icefin-settings .icefin-d-nav, #icefin-theme-root[data-mc="client"] .icefin-settings .icefin-s-title { display: none; }
+#icefin-theme-root[data-mc="client"] .icefin-settings { font-size: 2.64vh; font-weight: 300; }
+#icefin-theme-root[data-mc="client"] .icefin-settings .icefin-s-body { inset: 20.8vh 4.06vw 4vh 20.28vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-page { grid-template-columns: 34.7vh minmax(0, 1fr); gap: 4.7vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail { gap: 0; padding: 0; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail .icefin-d-btn { min-height: 5.83vh; display: flex; align-items: center; padding: 0 2.2vh; font-size: 3.6vh; font-weight: 300;
+  background: transparent; border: 0.14vh solid transparent; border-radius: 0.28vh; box-shadow: none; color: var(--icefin-color-text); text-shadow: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail .icefin-d-btn.icefin-cs-here { background: rgb(var(--icefin-color-focus-channel) / 0.14); border-left: 0.42vh solid var(--icefin-color-focus); }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail .icefin-d-btn.icefin-focused,
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer:has(.icefin-focused),
+#icefin-theme-root[data-mc="client"] .icefin-cs-host div.inputContainer:has(> .icefin-dd .icefin-focused),
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .raised.icefin-focused,
+html[data-icefin-stock] .page[data-mc-form] .selectContainer:focus-within,
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"]:focus-within {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%) !important;
+  border-color: rgb(var(--icefin-color-glass-channel) / 0.9) !important; box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow) !important; color: var(--icefin-color-onAccent) !important;
+  text-shadow: 0 0.14vh 0.28vh rgb(var(--icefin-color-glassEdge-channel) / 0.65); outline: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host > .dialog { background: transparent !important; border-radius: 0 !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .formDialogContent { padding: 0 1vh 6vh 0 !important; scrollbar-width: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset { border: 0; margin: 0 0 2.5vh; padding: 0; min-width: 0; max-width: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset > legend { padding: 0; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset > legend h2 { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.5; margin: 1.67vh 0 0.4vh 1.94vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer,
+#icefin-theme-root[data-mc="client"] .icefin-cs-host div.inputContainer:has(> .icefin-dd) {
+  display: flex !important; flex-wrap: wrap; align-items: center; gap: 0 1.94vh; min-height: 6.4vh; margin: 0; padding: 0 1.94vh; box-sizing: border-box; border: 0.14vh solid transparent; border-radius: 0.28vh; font-size: 2.64vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .inputLabel { flex: 1; font-size: inherit; margin: 0; color: inherit; opacity: 1; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .mc-spin-prev { order: 2; margin-left: auto; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .inputLabel { order: 1; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd { order: 3; width: auto !important; flex: none !important; margin: 0 !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd::after { display: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .mc-spin-next { order: 4; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer select { appearance: none; background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none !important;
+  color: inherit; font: inherit; font-size: 2.5vh; min-height: 0; height: 5vh; width: auto; max-width: 42vh; padding: 0 0.4vh !important; text-align: right; text-align-last: right; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer select option { color: var(--icefin-color-text); background: var(--icefin-color-surface); }
+/* ticks: a glass square ahead of the text, the accent with a check when on */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox] { order: -1; appearance: none; width: 3.6vh; height: 3.6vh; margin: 0; flex: none; position: relative;
+  border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.7); border-radius: 0.28vh; background: rgb(var(--icefin-color-glass-channel) / 0.06); outline: none !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox]:checked { background: var(--icefin-color-accent); border-color: var(--icefin-color-glass); }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox]:checked::after { content: ""; position: absolute; inset: 0.3vh; background: var(--icefin-color-text);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12l5 5 9-10' fill='none' stroke='black' stroke-width='3.4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12l5 5 9-10' fill='none' stroke='black' stroke-width='3.4'/%3E%3C/svg%3E") center / contain no-repeat; }
+/* help: hidden until its row has focus, then a line under it */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .tooltip { order: 9; flex-basis: 100%; padding: 0 0 0.8vh 5.5vh; box-sizing: border-box; display: none; position: static; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer:has(.icefin-focused) .tooltip { display: block; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .tooltip .material-icons { display: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .tooltip .tooltip-text { position: static !important; visibility: visible !important; opacity: 0.85 !important; display: block; width: auto !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; transform: none !important; font-size: 2.08vh; line-height: 1.35; color: inherit; text-align: left; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .fieldDescription { font-size: 2.08vh; opacity: 0.6; padding: 0 1.94vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .raised { font: inherit; font-size: 2.9vh; font-weight: 300; text-transform: none; color: var(--icefin-color-text); min-height: 6.4vh; padding: 0 3.3vh; margin: 0.7vh 1vh 0.7vh 0;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.18); border-radius: 0.28vh; box-shadow: none; outline: none !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .icefin-focused { outline: none !important; }
+
+/* jellyfin-web's account pages (settings.js adapts them): the page's buttons in a column at the left with Cancel, the
+   rows at the right; a drop-down shows its value as ‹ value ›, a tick sits ahead of its text */
+html[data-icefin-stock] .page[data-mc-form] { padding-top: 20.3vh !important; padding-left: 58.3vh !important; }
+html[data-icefin-stock] .page[data-mc-form] > .mc-crumb { position: fixed; }
+html[data-icefin-stock] .page[data-mc-form] > div:not(.mc-form-col):not(.mc-crumb) { max-width: 111vh; padding: 0 0 8vh !important; margin: 0 !important; }
+.mc-form-col { position: fixed; left: 21.67vh; top: 22.2vh; width: 30.6vh; display: flex; flex-direction: column; gap: 1.39vh; z-index: 2; }
+html[data-icefin-stock] .page[data-mc-form] .mc-form-col > button { width: 100%; margin: 0 !important; justify-content: flex-start; text-align: left; min-height: 6.4vh; font-size: 2.9vh; }
+html[data-icefin-stock] .page[data-mc-form] .sectionTitle, html[data-icefin-stock] .page[data-mc-form] .verticalSection > h2 {
+  font-size: 1.8vh !important; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.5; margin: 1.67vh 0 0.4vh 1.94vh !important; }
+html[data-icefin-stock] .page[data-mc-form] .verticalSection { margin: 0 0 1.4vh !important; padding: 0 !important; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.2vh; min-height: 6.4vh; margin: 0 !important; padding: 0 1.94vh;
+  box-sizing: border-box; border: 0.14vh solid transparent; border-radius: 0.28vh; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer > div:not(.selectArrowContainer):not(.fieldDescription) { display: contents; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .selectLabel { position: static; transform: none; flex: 1; margin: 0; font-size: 2.78vh; opacity: 1; color: inherit; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .mc-spin-prev { order: 2; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer select { order: 3; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .mc-spin-next { order: 4; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .selectArrowContainer { display: none; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .fieldDescription { order: 9; flex-basis: 100%; padding: 0 0 0.8vh; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer select, html[data-icefin-stock] .page[data-mc-form] .selectContainer select:focus {
+  appearance: none; background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none; color: inherit; font-size: 2.64vh; min-height: 0; height: 5vh;
+  width: auto; max-width: 42vh; padding: 0 0.4vh; text-align: right; text-align-last: right; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer select option { color: var(--icefin-color-text); background: var(--icefin-color-surface); }
+html[data-icefin-stock] .page[data-mc-form] .checkboxContainer { margin: 0 !important; }
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"] { display: flex !important; align-items: center; width: 100%; min-height: 6.4vh; box-sizing: border-box; padding-left: 7.2vh !important;
+  border: 0.14vh solid transparent; border-radius: 0.28vh; }
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"] .checkboxLabel { font-size: 2.78vh; }
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"] .checkboxOutline { left: 1.94vh !important; top: 50% !important; transform: translateY(-50%); width: 3.6vh; height: 3.6vh; }
+html[data-icefin-stock] .page[data-mc-form] .checkboxFieldDescription { padding: 0 0 0.8vh 7.2vh !important; margin: 0 !important; }
+html[data-icefin-stock] .page[data-mc-form] .inputContainer { margin: 0 0 2vh !important; }
+
+/* ---- The slide show (viewers.js, the canvas's "slide show"): the picture with a slow pan and zoom; while the controls
+   are up, the name and "date · album · 12 of 204" at the bottom left, round glass buttons at the bottom right ---- */
+@keyframes mc-kb { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.08) translate(-1.5%, -1%); } }
+.slideshowDialog[data-mc-ss] .swiper-slide-active .swiper-slide-img { animation: mc-kb 9s ease-in-out infinite alternate; }
+html[data-icefin-motion="low"] .slideshowDialog[data-mc-ss] .swiper-slide-active .swiper-slide-img { animation: none; }
+.slideshowDialog[data-mc-ss] .mc-ss-scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 20.8vh; pointer-events: none; z-index: 1;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0), rgb(var(--icefin-color-background-channel) / 0.88) 45%); transition: opacity 0.4s; }
+.slideshowDialog[data-mc-ss] .mc-ss-info { position: absolute; left: 21.67vh; top: 84.7vh; z-index: 2; color: var(--icefin-color-text); font-weight: 300; pointer-events: none; transition: opacity 0.4s; }
+.slideshowDialog[data-mc-ss] .mc-ss-name { font-size: 3.6vh; }
+.slideshowDialog[data-mc-ss] .mc-ss-line { font-size: 2.2vh; opacity: 0.8; }
+.slideshowDialog[data-mc-ss]:has(.slideshowBottomBar.hide) .mc-ss-info, .slideshowDialog[data-mc-ss]:has(.slideshowBottomBar.hide) .mc-ss-scrim { opacity: 0; }
+.slideshowDialog[data-mc-ss] .slideshowBottomBar { position: absolute !important; left: auto !important; right: 7.2vh !important; top: 85vh !important; bottom: auto !important; width: auto !important;
+  display: flex; gap: 1.39vh; padding: 0 !important; margin: 0; background: none !important; z-index: 2; }
+.slideshowDialog[data-mc-ss] .slideshowBottomBar .btnSlideshowPrevious, .slideshowDialog[data-mc-ss] .slideshowBottomBar .btnSlideshowNext {
+  display: flex !important; position: static !important; transform: none !important; margin: 0 !important; }
+.slideshowDialog[data-mc-ss] .btnDownload, .slideshowDialog[data-mc-ss] .btnFullscreen, .slideshowDialog[data-mc-ss] .btnFullscreenExit { display: none !important; }
+.slideshowDialog[data-mc-ss] .slideshowBottomBar .slideshowButton, .slideshowDialog[data-mc-ss] .btnSlideshowExit,
+#bookPlayer[data-mc-reader] .bookOsd .paper-icon-button-light, #pdfPlayer[data-mc-reader] .bookOsd .paper-icon-button-light, #comicsPlayer[data-mc-reader] .bookOsd .paper-icon-button-light {
+  width: 6.94vh; height: 6.94vh; padding: 0; margin: 0; border-radius: 50%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: var(--icefin-color-text);
+  border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.65);
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-glass-channel) / 0.42), rgb(var(--icefin-color-accentStrong-channel) / 0.35) 55%, rgb(var(--icefin-color-background-channel) / 0.75)); }
+.slideshowDialog[data-mc-ss] .slideshowButtonIcon, #bookPlayer[data-mc-reader] .bookOsd .material-icons, #pdfPlayer[data-mc-reader] .bookOsd .material-icons, #comicsPlayer[data-mc-reader] .bookOsd .material-icons { font-size: 3.1vh; }
+.slideshowDialog[data-mc-ss] .slideshowButton:focus, .slideshowDialog[data-mc-ss] .slideshowButton:hover,
+#bookPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:focus, #bookPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:hover,
+#pdfPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:focus, #comicsPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:focus {
+  outline: none; color: var(--icefin-color-onAccent); box-shadow: 0 0 0 0.28vh var(--icefin-color-glass), 0 0 3vh 0.55vh var(--icefin-color-focusGlow);
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-focus-channel) / 0.95), rgb(var(--icefin-color-accent-channel) / 0.9) 55%, rgb(var(--icefin-color-accentStrong-channel) / 0.95)); }
+/* Back: the exit button, round at the top left */
+.slideshowDialog[data-mc-ss] .topActionButtons { position: absolute !important; left: 2.92vh !important; top: 5vh !important; right: auto !important; padding: 0 !important; z-index: 2; }
+.slideshowDialog[data-mc-ss] .btnSlideshowExit { width: 6.4vh; height: 6.4vh; }
+.slideshowDialog[data-mc-ss] .btnSlideshowExit .slideshowButtonIcon { display: none; }
+.slideshowDialog[data-mc-ss] .btnSlideshowExit::before { content: ""; width: 2.8vh; height: 2.8vh; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 5l-7 7 7 7' fill='none' stroke='black' stroke-width='2.6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 5l-7 7 7 7' fill='none' stroke='black' stroke-width='2.6'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+/* ---- The book reader (viewers.js): the title where a page title goes, Back at the top left, the reader's buttons along
+   the bottom right. The rows slide in with a transform, so the title is placed from its row (2.92vh in). ---- */
+#bookPlayer[data-mc-reader] .bookOsdRow, #pdfPlayer[data-mc-reader] .bookOsdRow, #comicsPlayer[data-mc-reader] .bookOsdRow { background: none !important; }
+#bookPlayer[data-mc-reader] .bookOsdRow:first-child, #pdfPlayer[data-mc-reader] .bookOsdRow:first-child, #comicsPlayer[data-mc-reader] .bookOsdRow:first-child {
+  position: fixed !important; left: 2.92vh; top: 5vh; right: auto; bottom: auto; padding: 0 !important; z-index: 5; }
+#bookPlayer[data-mc-reader] .bookOsdRow:first-child .paper-icon-button-light, #pdfPlayer[data-mc-reader] .bookOsdRow:first-child .paper-icon-button-light,
+#comicsPlayer[data-mc-reader] .bookOsdRow:first-child .paper-icon-button-light { width: 6.4vh; height: 6.4vh; }
+#bookPlayer[data-mc-reader] .bookOsdTitle, #pdfPlayer[data-mc-reader] .bookOsdTitle, #comicsPlayer[data-mc-reader] .bookOsdTitle {
+  position: absolute; left: 18.75vh; top: 0.2vh; font-size: 4.6vh; font-weight: 300; color: var(--icefin-color-text); white-space: nowrap;
+  padding: 0.4vh 2vh; border-radius: 0.28vh; background: rgb(var(--icefin-color-background-channel) / 0.75); }
+#bookPlayer[data-mc-reader] .bookOsdRow:nth-child(2), #pdfPlayer[data-mc-reader] .bookOsdRow:nth-child(2), #comicsPlayer[data-mc-reader] .bookOsdRow:nth-child(2) {
+  position: fixed !important; left: auto; right: 7.2vh; bottom: 6vh; top: auto; width: auto !important; display: flex; gap: 1.39vh; padding: 0 !important; z-index: 5; }
+#bookPlayer[data-mc-reader] .bookOsdSpacer, #pdfPlayer[data-mc-reader] .bookOsdSpacer, #comicsPlayer[data-mc-reader] .bookOsdSpacer { display: none; }
+
+/* ---- From the host walk (9.46) ---- */
+/* the frame's Back and Home take keyboard focus on jellyfin-web's pages (kit.js) */
+#icefin-stock-chrome .mc-round:focus { box-shadow: 0 0 0 0.3vh var(--icefin-color-focus), 0 0 2.4vh 0.6vh var(--icefin-color-focusGlow); outline: none; }
+/* More options: jellyfin-web's details page stays out of sight under the item menu */
+html[data-mc-more] .mainAnimatedPage, html[data-mc-more] .page { visibility: hidden !important; }
+html[data-mc-more] #icefin-stock-chrome .mc-title { visibility: hidden; }
+/* the player's side panel covers the top right: the clock steps aside while it is open */
+#icefin-theme-root:has(.mc-p-panel) .mc-clock { visibility: hidden; }
+/* long help and about lines wrap in Client Settings */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .fieldDescription { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+/* jellyfin-web's pages arrive a moment after their frame: they fade in rather than pop */
+/* opacity only: a transform would move the pages' fixed button column while it runs */
+@keyframes mc-page-in { from { opacity: 0; } to { opacity: 1; } }
+html[data-icefin-stock]:not([data-icefin-dashboard]) .mainAnimatedPage:not(.hide) { animation: mc-page-in 0.24s ease-out both; }
+html[data-icefin-stock][data-icefin-motion="low"] .mainAnimatedPage:not(.hide) { animation: none; }

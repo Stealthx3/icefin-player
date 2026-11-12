@@ -12,6 +12,8 @@ With the lab-player fixture (tests/icefin/themes) active, while a clip plays:
   - the web fallback: a plugin adding its own button to jellyfin-web's player makes this session fall back to
     jellyfin-web's controls, with a notice saying why;
   - the next play session gets the theme's controls again;
+  - a slow start (a live channel tuning, the position 0 for seconds): a plugin's button added just after the first frame
+    is part of the player, not an injection; one added later still falls back;
   - ui.brand(): the server's name, and every image it returns comes from the server.
 Usage: python3 theme_player.py --app ~/build/src/icefin-player --server jf12 --out ~/rplayer
 """
@@ -144,6 +146,32 @@ def main():
         page.wait_for(f"window.labPlayer.mounts > {mounts} && !!document.querySelector('#icefin-theme-root[data-icefin-player]')", timeout=45)
         check("the next session gets the theme's controls again", js("window.icefinTheme.ui.player.status().fallback") is None)
         js("window.icefinPlaybackManager.stop(); true")
+        page.wait_for("!location.hash.startsWith('#/video')", timeout=20)
+        time.sleep(2)
+
+        # ---- a slow start (a live channel tuning): the grace window counts from the first frame ----
+        # The position stays 0 for 4 s, as while a tuner locks on; then a plugin adds its button to every video just after
+        # the picture moves (as the in-player episode preview does). That is the player page, not an injection.
+        js("(() => { const m = window.icefinPlaybackManager; window.labHold = true; window.labCt = m.currentTime;"
+           " m.currentTime = function (p) { return window.labHold ? 0 : window.labCt.call(m, p); }; return true; })()")
+        mounts = js("window.labPlayer.mounts")
+        play()
+        page.wait_for(f"window.labPlayer.mounts > {mounts}", timeout=45)
+        time.sleep(4)
+        js("window.labHold = false; true")
+        time.sleep(0.8)
+        js("(() => { const p = [...document.querySelectorAll('#videoOsdPage')].pop(); const row = p.querySelector('.videoOsdBottom .buttons') || p;"
+           " const b = document.createElement('button'); b.id = 'labPreviewButton'; b.textContent = 'Preview'; row.append(b); return true; })()")
+        time.sleep(2)
+        check("slow start: a plugin's button just after the first frame is part of the player", js("window.icefinTheme.ui.player.status().fallback") is None,
+              js("window.icefinTheme.ui.player.status().fallback"))
+        check("slow start: the theme's controls stay", js("window.icefinTheme.active().route") == "#/video")
+        time.sleep(1.5)
+        js("(() => { const p = [...document.querySelectorAll('#videoOsdPage')].pop(); const row = p.querySelector('.videoOsdBottom .buttons') || p;"
+           " const b = document.createElement('button'); b.className = 'labLateButton'; b.textContent = 'Late'; row.append(b); return true; })()")
+        page.wait_for("!!window.icefinTheme.ui.player.status().fallback", timeout=5)
+        check("slow start: a button added later still falls back", "labLateButton" in (js("window.icefinTheme.ui.player.status().fallback") or ""))
+        js("window.icefinPlaybackManager.currentTime = window.labCt; window.icefinPlaybackManager.stop(); true")
         time.sleep(2)
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
     except Exception as e:  # noqa: BLE001
