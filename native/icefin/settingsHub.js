@@ -216,7 +216,7 @@
                 entry('client', 'Client settings', 'This player: theme and colours, video, audio, subtitles and controllers.',
                     () => T.ctx.navigate('#/mypreferencesmenu?pane=client'));
                 entry('classic', 'Classic View', 'The standard Jellyfin look, now, for this session. Your theme comes back next time, or from Client settings.',
-                    () => api().then((a) => a.theme.setClassic(true, () => { location.hash = '#/home'; })));
+                    () => classic());
                 body.append(entries);
                 const more = el('div', 'icefin-s-more');
                 const link = (id, label, hash) => {
@@ -248,5 +248,9 @@
         };
     }
 
-    T.ui.settings = { screen };
+    // Classic View on its own, for a theme that draws its own settings area around the same entries (9.46): the stock
+    // look now, for this session; the saved theme comes back at the next start or from Client Settings -> Theme.
+    const classic = () => api().then((a) => new Promise((resolve) => a.theme.setClassic(true, () => { location.hash = '#/home'; resolve(true); })));
+
+    T.ui.settings = { screen, classic };
 })();
