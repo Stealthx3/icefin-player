@@ -9,7 +9,8 @@ With Media Center active:
   - details: from Play, Up and Left reach Back or Home;
   - More options: jellyfin-web's details page stays hidden under the item menu, and closing the menu returns to Media
     Center's details;
-  - the player: Up from the transport row goes to Back (with no Skip showing).
+  - leaving that page, it never shows under the settings again (it lingered a few frames);
+  - the player: Up from the transport row goes to Back (with no Skip showing); the panel leaves the times clear.
 Usage: python3 media_center_nav.py --app ~/build/src/icefin-player --server jf12 --out ~/rmcn
 """
 import argparse, base64, json, os, signal, subprocess, sys, tempfile, time
@@ -146,8 +147,15 @@ def main():
         check("playback: the arrows reach the frame's Back or Home", ok, " > ".join(trail[-4:]))
         shot("playback.png")
         key("down", 0.5)
-        key("back", 1.5)
+        # every frame while it goes back: once the route has left the page, the page is never on top again
+        js("""(() => { window.__mcLeave = []; const t0 = performance.now(); const tick = () => {
+            const p = document.querySelector('.page[data-mc-form]'); const e = document.elementFromPoint(innerWidth * 0.6, innerHeight * 0.5);
+            window.__mcLeave.push([Math.round(performance.now() - t0), location.hash.split('?')[0], !!(p && e && p.contains(e))]);
+            if (performance.now() - t0 < 1500) requestAnimationFrame(tick); }; requestAnimationFrame(tick); return true; })()""")
+        key("back", 1.6)
         check("playback: Backspace goes back to the settings", js("location.hash").startswith("#/mypreferencesmenu"), js("location.hash"))
+        late = js("window.__mcLeave.filter(f => f[1] === '#/mypreferencesmenu' && f[2]).length")
+        check("playback: leaving it, the page doesn't show under the settings", late == 0, f"{late} frame(s)")
 
         # ---- the player ----
         clip = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, searchTerm: 'H264 AAC', Limit: 1}).then(r => (r.Items[0] || {}).Id || '')")
@@ -158,7 +166,14 @@ def main():
         js("window.icefinTheme.ctx.focus(document.querySelector('#icefin-theme-root .mc-tb-big')); true")
         key("up")
         f = js(FOCUSED)
-        check("player: Up from the transport row goes to Back", "mc-round-back" in f, f)
+        state = js("JSON.stringify({up: document.querySelector('#icefin-theme-root').classList.contains('mc-p-up'), status: window.icefinTheme.ui.player.status()})")
+        check("player: Up from the transport row goes to Back", "mc-round-back" in f, f + ("" if "mc-round-back" in f else " " + state))
+        js("document.querySelector('#icefin-theme-root [aria-label=\"Audio, subtitles and settings\"]').click(); true")
+        time.sleep(1)
+        gap = js("(() => { const p = document.querySelector('#icefin-theme-root .mc-p-panel'); const t = document.querySelector('#icefin-theme-root .mc-p-times'); if (!p || !t) return null; return Math.round(p.getBoundingClientRect().left - t.getBoundingClientRect().right); })()")
+        check("player: with the panel open, the times end before it", gap is not None and gap > 0, f"{gap}px")
+        shot("player-panel.png")
+        key("back", 0.6)
         shot("player.png")
         js("window.icefinPlaybackManager.stop(); true")
         time.sleep(2)
