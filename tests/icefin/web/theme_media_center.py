@@ -204,7 +204,7 @@ def main():
         page.wait_for("location.hash.startsWith('#/list') && (document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === '1'", timeout=30)
         n = js("+document.querySelector('#icefin-theme-root').getAttribute('data-mc-count')")
         check("#/list opens the poster wall with the library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "wall" and n > 0,
-              f"{n} posters, {js('document.querySelector(\'.mc-wall-title\').textContent')}")
+              f"{n} posters, {js('document.querySelector(\'#icefin-theme-root .mc-title\').textContent')}")
         first_id = js("document.querySelector('.mc-poster.icefin-focused').dataset.id")
         act("right")
         time.sleep(0.4)

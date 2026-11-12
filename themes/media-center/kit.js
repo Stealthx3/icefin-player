@@ -143,6 +143,84 @@
             for (const h of M.stockHooks) { try { h(info); } catch (e) { console.error('media-center: stock page', e); } }
         }
     });
+    // ---- the keyboard in desktop mode (9.46, the host walk) ----
+    // In TV mode the remote's keys never reach the page: the engine and jellyfin-web's focus navigation take them. In
+    // desktop mode keys go to the page, where a themed screen that leaves Back to the engine, and jellyfin-web's own
+    // pages, did nothing with them. Here, only keys nothing else used (defaultPrevented): Backspace and Escape go back
+    // (not while typing, not on the video); on a framed jellyfin-web page the arrows move focus
+    // between its controls and the frame's Back and Home, and Enter ticks a tick box. Over a jellyfin-web dialog or a
+    // viewer, Back closes it.
+    const isText = (e) => !!e && ((e.tagName === 'INPUT' && /^(text|search|password|email|url|tel|number|)$/i.test(e.type || '')) || e.tagName === 'TEXTAREA' || e.isContentEditable);
+    const shown = (e) => { const r = e.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return false; for (let p = e; p && p !== document.documentElement; p = p.parentElement) { const cs = getComputedStyle(p); if (cs.display === 'none' || cs.visibility === 'hidden') return false; } return true; };
+    const overlayUp = () => [...document.querySelectorAll('.dialogContainer .dialog, .slideshowDialog, #bookPlayer, #pdfPlayer, #comicsPlayer')].some((d) => d.getClientRects().length);
+    const framed = () => { const h = document.documentElement; return h.hasAttribute('data-icefin-stock') && !h.hasAttribute('data-icefin-dashboard'); };
+    // a tick box's input is hidden: its label is what shows, the input what takes focus
+    const rectOf = (e) => (e.type === 'checkbox' ? (e.closest('label') || e) : e).getBoundingClientRect();
+    function targets() {
+        const page = [...document.querySelectorAll('.mainAnimatedPage:not(.hide), .page:not(.hide)')].find((p) => p.getClientRects().length && p.getBoundingClientRect().height > 100);
+        const all = [...document.querySelectorAll('#icefin-stock-chrome .mc-nav button')];
+        if (page) all.push(...page.querySelectorAll('button, select, input:not([type=hidden]):not([type=file]), textarea, a[href]'));
+        return all.filter((e) => !e.disabled && shown(e.type === 'checkbox' ? (e.closest('label') || e) : e));
+    }
+    function moveIn(dir) {
+        const list = targets();
+        if (!list.length) return;
+        const cur = list.includes(document.activeElement) ? document.activeElement : null;
+        if (!cur) { const first = list.find((e) => !e.closest('#icefin-stock-chrome')) || list[0]; first.focus(); first.scrollIntoView({ block: 'nearest' }); return; }
+        const a = rectOf(cur), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+        let best = null, score = Infinity;
+        for (const e of list) {
+            if (e === cur) continue;
+            const b = rectOf(e), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+            const along = { up: ay - by, down: by - ay, left: ax - bx, right: bx - ax }[dir];
+            const across = dir === 'up' || dir === 'down' ? Math.abs(bx - ax) : Math.abs(by - ay);
+            if (along <= 4) continue;
+            const s = along + across * 2;
+            if (s < score) { score = s; best = e; }
+        }
+        if (best) { best.focus(); best.scrollIntoView({ block: 'nearest' }); T.ctx.sound('focus'); }
+    }
+    const ARROWS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+    if (!window.icefinMediaCenterKeys) {
+        window.icefinMediaCenterKeys = true;
+        window.addEventListener('keydown', (e) => {
+            const K = window.icefinMediaCenter;
+            if (!K || !K.keys || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+            K.keys(e);
+        });
+    }
+    M.keys = (e) => {
+        if (!T.active() || T.active().id !== 'media-center' || window.icefinMediaCenter !== M) return;
+        if (e.key === 'Backspace' || e.key === 'Escape') {
+            if ((e.key === 'Backspace' && isText(e.target)) || M.band.open) return;
+            // a jellyfin-web dialog, the slide show or a reader: in desktop mode its own keys don't reach it while focus
+            // is elsewhere; it closes when history goes back (dialogs without a history entry the engine closes itself)
+            if (overlayUp()) {
+                const d = [...document.querySelectorAll('.dialogContainer .dialog, .slideshowDialog, #bookPlayer, #pdfPlayer, #comicsPlayer')].find((x) => x.getClientRects().length);
+                if (d && d.contains(document.activeElement) && e.key === 'Backspace') return;
+                e.preventDefault();
+                T.ctx.sound('back');
+                history.back();
+                return;
+            }
+            if (document.documentElement.hasAttribute('data-icefin-dashboard') || /^#\/video\b/.test(location.hash)) return;
+            e.preventDefault();
+            T.ctx.sound('back');
+            if (history.length > 1) history.back(); else T.ctx.navigate('#/home');
+            return;
+        }
+        if (!framed() || overlayUp()) return;
+        const dir = ARROWS[e.key];
+        if (dir) {
+            if (isText(e.target) && (dir === 'left' || dir === 'right')) return;
+            e.preventDefault();  // a closed drop-down would change its value with up and down
+            moveIn(dir);
+        } else if (e.key === 'Enter' && e.target && e.target.type === 'checkbox') {
+            e.preventDefault();
+            e.target.click();
+        }
+    };
+
     const STOCK_TITLES = {
         login: 'sign in', selectserver: 'choose a server', forgotpassword: 'forgot password', userprofile: 'profile',
         mypreferencesdisplay: 'display', mypreferenceshome: 'start screen', mypreferencesplayback: 'playback',

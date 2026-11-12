@@ -65,6 +65,7 @@
             const step = { left: -1, right: 1, up: -COLS, down: COLS }[action];
             if (step === undefined) return false;  // Enter clicks; Back is the engine's
             if ((action === 'left' && i % COLS === 0) || (action === 'right' && i % COLS === COLS - 1)) return true;
+            if (action === 'up' && i < COLS) return false;  // the top row: up reaches Back and Home
             let n = i + step;
             if (action === 'down' && n >= W.tiles.length) n = W.done ? W.tiles.length - 1 : i;  // the last row is short
             if (n >= 0 && n < W.tiles.length && n !== i) focusAt(n, ctx);
@@ -77,14 +78,19 @@
             root.setAttribute('data-mc', 'wall');
             const views = await ui.userViews();
             const view = (views || []).find((v) => v.Id === parentId);
+            // Live TV has its own screen (tv.js); a wall of its folder is empty
+            if (view && view.CollectionType === 'livetv') { location.replace('#/livetv'); return; }
             W = { root, parentId, client: T.ctx.apiClient(), tiles: [], loading: false, done: false, total: 0,
                   types: view ? TYPES[view.CollectionType] : null };
             const field = el('div', 'mc-field');
             field.append(el('div', 'mc-ribbon one'), el('div', 'mc-ribbon two'));
+            // the page chrome (Back, Home, the title in lower case, the clock); the count and order under the title
+            const M = window.icefinMediaCenter;
+            W.chrome = M ? M.chrome(root, view ? view.Name.toLowerCase() : '') : null;
+            const title = W.chrome ? W.chrome.head : el('div');
             const head = el('div', 'mc-wall-head');
-            const title = el('div', 'mc-wall-title', view ? view.Name : '');
             W.count = el('div', 'mc-wall-count');
-            head.append(title, W.count, el('div', 'mc-wall-sort', 'A to Z'));
+            head.append(W.count, el('div', 'mc-wall-sort', 'A to Z'));
             const body = el('div', 'mc-wall-body');
             W.grid = el('div', 'mc-wall');
             W.grid.style.setProperty('--mc-ms', `${ui.motion.duration(300)}ms`);
@@ -100,7 +106,7 @@
                 }
             }, { root: body, rootMargin: '60% 0px' });
             if (!view) {
-                try { title.textContent = (await W.client.getItem(W.client.getCurrentUserId(), parentId)).Name || ''; } catch (e) { /* a name is optional */ }
+                try { title.textContent = ((await W.client.getItem(W.client.getCurrentUserId(), parentId)).Name || '').toLowerCase(); } catch (e) { /* a name is optional */ }
             }
             await more();
             if (!W || W.root !== root) return;
@@ -109,6 +115,7 @@
         },
         unmount() {
             if (W && W.io) W.io.disconnect();
+            if (W && W.chrome) W.chrome.stop();
             W = null;
         }
     });

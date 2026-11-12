@@ -118,10 +118,11 @@ def main():
             spun: r.querySelectorAll('.icefin-cs-host select[data-mc-spin]').length, engineNav: !!(r.querySelector('.icefin-settings .icefin-d-nav') || {}).offsetParent}; })()""")
         check("this device: Media Center's chrome around Client Settings", cs["mc"] == "client" and cs["title"] == "this device" and not cs["engineNav"], json.dumps(cs))
         check("this device: sections at the left, a spinner on every drop-down", cs["rail"] >= 5 and cs["sel"] > 0 and cs["sel"] == cs["spun"], json.dumps(cs))
-        res = js("""(() => { const s = [...document.querySelectorAll('#icefin-theme-root .icefin-cs-host select[data-mc-spin]')].find(x => x.offsetParent && x.options.length > 2 && x.selectedIndex < x.options.length - 1 && !x.closest('#icefin-theme-manager'));
+        res = js("""(() => { const s = [...document.querySelectorAll('#icefin-theme-root .icefin-cs-host select[data-mc-spin]')].find(x => x.offsetParent && x.options.length > 2 && x.selectedIndex < x.options.length - 1 && /subtitles/i.test(((x.closest('fieldset') || {}).querySelector ? (x.closest('fieldset').querySelector('legend') || {}).textContent : '') || ''));
             if (!s) return null; s.scrollIntoView({block: 'center'}); window.icefinTheme.ctx.focus(s); const before = s.selectedIndex;
             window.icefinTheme.handleAction('right'); const after = s.selectedIndex; window.icefinTheme.handleAction('left');
             return [before, after, s.selectedIndex, (s.closest('.inputContainer') || {}).textContent.trim().slice(0, 30)]; })()""")
+        # a subtitle drop-down: some others (the app's Theme, the renderer) reload the app when they change
         check("this device: Right steps a drop-down, Left puts it back", bool(res) and res[1] == res[0] + 1 and res[2] == res[0], json.dumps(res))
         shot("client.png")
         js("location.hash = '#/mypreferencesmenu?pane=client&section=theme'; true")

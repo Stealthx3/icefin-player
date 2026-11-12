@@ -67,16 +67,15 @@ html[data-icefin-motion="low"] .mc-tile, html[data-icefin-motion="low"] .mc-tile
 .mc-now { position: absolute; right: 4.5vw; bottom: 5vh; display: flex; gap: 1em; align-items: center; padding: 0.8em 1.2em;
   border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised); box-shadow: 0 0 1.5em var(--icefin-color-focusGlow); }
 .mc-now[hidden] { display: none; }
-.mc-now small { display: block; opacity: 0.7; }
+.mc-now small { display: block; opacity: 0.7; font-size: 1.7vh; letter-spacing: 0.04em; }
 
 html[data-icefin-backdrop] .mc-field { display: none; }
 
 /* Poster wall (wall.js): seven across; the grid slides so the focused row stays near the top. */
-.mc-wall-head { position: absolute; left: 4.5vw; right: 4.5vw; top: 4vh; display: flex; align-items: baseline; gap: 1.2em; }
-.mc-wall-title { font-size: 2.4em; font-weight: 300; }
+.mc-wall-head { position: absolute; left: 21.67vh; right: 4.06vw; top: 14.4vh; display: flex; align-items: baseline; gap: 1.2em; font-size: 2.5vh; font-weight: 300; }
 .mc-wall-count, .mc-wall-sort { opacity: 0.6; }
 .mc-wall-sort { margin-left: auto; }
-.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 15vh; bottom: 0; overflow: hidden; }
+.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 19vh; bottom: 0; overflow: hidden; }
 .mc-wall { display: grid; grid-template-columns: repeat(7, 1fr); column-gap: 1.6vw; row-gap: 4.5vh; padding: 1.2em 0.6em;
   transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
 .mc-poster { width: auto; height: auto; aspect-ratio: 2 / 3; transition-property: transform, opacity, box-shadow; }  /* the wall sizes posters by its columns */
@@ -517,13 +516,15 @@ html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"]:focus
 #icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset > legend h2 { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.5; margin: 1.67vh 0 0.4vh 1.94vh; }
 #icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer,
 #icefin-theme-root[data-mc="client"] .icefin-cs-host div.inputContainer:has(> .icefin-dd) {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.94vh; min-height: 6.4vh; margin: 0; padding: 0 1.94vh; box-sizing: border-box; border: 0.14vh solid transparent; border-radius: 0.28vh; font-size: 2.64vh; }
+  display: flex !important; flex-wrap: wrap; align-items: center; gap: 0 1.94vh; min-height: 6.4vh; margin: 0; padding: 0 1.94vh; box-sizing: border-box; border: 0.14vh solid transparent; border-radius: 0.28vh; font-size: 2.64vh; }
 #icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .inputLabel { flex: 1; font-size: inherit; margin: 0; color: inherit; opacity: 1; }
 #icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .mc-spin-prev { order: 2; margin-left: auto; }
-#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd { order: 3; width: auto; flex: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .inputLabel { order: 1; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd { order: 3; width: auto !important; flex: none !important; margin: 0 !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd::after { display: none; }
 #icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .mc-spin-next { order: 4; }
 #icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer select { appearance: none; background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none !important;
-  color: inherit; font: inherit; font-size: 2.5vh; min-height: 0; height: 5vh; width: auto; max-width: 42vh; padding: 0 0.4vh; text-align: right; text-align-last: right; }
+  color: inherit; font: inherit; font-size: 2.5vh; min-height: 0; height: 5vh; width: auto; max-width: 42vh; padding: 0 0.4vh !important; text-align: right; text-align-last: right; }
 #icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer select option { color: var(--icefin-color-text); background: var(--icefin-color-surface); }
 /* ticks: a glass square ahead of the text, the accent with a check when on */
 #icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox] { order: -1; appearance: none; width: 3.6vh; height: 3.6vh; margin: 0; flex: none; position: relative;
@@ -622,3 +623,19 @@ html[data-icefin-motion="low"] .slideshowDialog[data-mc-ss] .swiper-slide-active
 #bookPlayer[data-mc-reader] .bookOsdRow:nth-child(2), #pdfPlayer[data-mc-reader] .bookOsdRow:nth-child(2), #comicsPlayer[data-mc-reader] .bookOsdRow:nth-child(2) {
   position: fixed !important; left: auto; right: 7.2vh; bottom: 6vh; top: auto; width: auto !important; display: flex; gap: 1.39vh; padding: 0 !important; z-index: 5; }
 #bookPlayer[data-mc-reader] .bookOsdSpacer, #pdfPlayer[data-mc-reader] .bookOsdSpacer, #comicsPlayer[data-mc-reader] .bookOsdSpacer { display: none; }
+
+/* ---- From the host walk (9.46) ---- */
+/* the frame's Back and Home take keyboard focus on jellyfin-web's pages (kit.js) */
+#icefin-stock-chrome .mc-round:focus { box-shadow: 0 0 0 0.3vh var(--icefin-color-focus), 0 0 2.4vh 0.6vh var(--icefin-color-focusGlow); outline: none; }
+/* More options: jellyfin-web's details page stays out of sight under the item menu */
+html[data-mc-more] .mainAnimatedPage, html[data-mc-more] .page { visibility: hidden !important; }
+html[data-mc-more] #icefin-stock-chrome .mc-title { visibility: hidden; }
+/* the player's side panel covers the top right: the clock steps aside while it is open */
+#icefin-theme-root:has(.mc-p-panel) .mc-clock { visibility: hidden; }
+/* long help and about lines wrap in Client Settings */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .fieldDescription { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+/* jellyfin-web's pages arrive a moment after their frame: they fade in rather than pop */
+/* opacity only: a transform would move the pages' fixed button column while it runs */
+@keyframes mc-page-in { from { opacity: 0; } to { opacity: 1; } }
+html[data-icefin-stock]:not([data-icefin-dashboard]) .mainAnimatedPage:not(.hide) { animation: mc-page-in 0.24s ease-out both; }
+html[data-icefin-stock][data-icefin-motion="low"] .mainAnimatedPage:not(.hide) { animation: none; }

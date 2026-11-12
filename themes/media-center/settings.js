@@ -39,9 +39,24 @@
     }
     // asButtons: real buttons (jellyfin-web's pages, where its own focus navigation reaches them); otherwise marks the
     // pointer can press, while the remote's left and right step the focused drop-down itself.
+    // A drop-down as wide as its value, so ‹ and › sit beside it (Chromium 122 has no field-sizing): measured again
+    // when it changes, gets focus, or the page fills it in.
+    let ruler = null;
+    function fit(select) {
+        const o = select.options[select.selectedIndex];
+        const cs = getComputedStyle(select);
+        if (!ruler) ruler = document.createElement('canvas').getContext('2d');
+        ruler.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const w = ruler.measureText(o ? o.text : '').width + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 6;
+        if (w > 6) select.style.width = `${Math.ceil(w)}px`;
+    }
     function spinner(select, asButtons) {
-        if (select.hasAttribute('data-mc-spin') || select.multiple) return;
+        if (select.multiple) return;
+        if (select.hasAttribute('data-mc-spin')) { fit(select); return; }
         select.setAttribute('data-mc-spin', '');
+        select.addEventListener('change', () => fit(select));
+        select.addEventListener('focus', () => fit(select));
+        requestAnimationFrame(() => fit(select));
         const anchor = select.closest('.icefin-dd') || select;
         const mark = (dir, text) => {
             const b = el(asButtons ? 'button' : 'span', 'mc-spin mc-spin-' + (dir < 0 ? 'prev' : 'next'), text);
