@@ -33,7 +33,7 @@
         if (v.CollectionType === 'boxsets') return `#/boxsets?${q}&name=${encodeURIComponent(v.Name || '')}`;
         return `#/home?pz=library&id=${v.Id}&kind=${P.kindOf(v.CollectionType)}&name=${encodeURIComponent(v.Name || '')}`;
     }
-    function channels(views, favourites) {
+    function channels(views, favourites, hasPlaylists) {
         const c = P.client(), uid = P.uid();
         const list = views.map((v) => ({
             id: 'library-' + v.Id, kind: P.kindOf(v.CollectionType), label: v.Name, view: v, menu: libraryMenu(v),
@@ -50,6 +50,10 @@
                 fetch: () => P.safe(c.getResumableItems(uid, { Limit: 6, MediaTypes: 'Video', Fields: P.FIELDS })).then(P.items) },
             { id: 'nextup', kind: 'nextup', label: 'Next Up', menu: '#/home?pz=nextup',
                 fetch: () => P.safe(c.getNextUpEpisodes({ UserId: uid, Limit: 6, Fields: P.FIELDS })).then(P.items) });
+        // Playlists: a channel of its own whenever there are playlists and no Playlists library shows them (9.44)
+        if (hasPlaylists && !views.some((v) => v.CollectionType === 'playlists'))
+            list.push({ id: 'playlists', kind: 'playlists', label: 'Playlists', menu: `#/playlists?serverId=${P.sid()}`,
+                fetch: () => P.safe(c.getItems(uid, { IncludeItemTypes: 'Playlist', Recursive: true, SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 6, Fields: P.FIELDS })).then(P.items) });
         for (const f of favourites) list.push({ id: 'fav-' + f.Id, kind: 'favourite', label: f.Name, play: f, items: [f] });
         return list;
     }
@@ -487,6 +491,9 @@
                 info.append(el('div', 'pz-meta', `${P.time(now.StartDate)} – ${P.time(now.EndDate)}`));
                 const s = Date.parse(now.StartDate), e = Date.parse(now.EndDate);
                 info.append(bar(Math.max(0, Math.min(1, (Date.now() - s) / (e - s || 1)))));
+                const nx = P.items(await P.safe(c.getLiveTvPrograms({ UserId: uid, ChannelIds: chan.Id, MinStartDate: now.EndDate, Limit: 1, SortBy: 'StartDate', EnableImages: false, EnableUserData: false })))[0];
+                if (!live()) return;
+                if (nx) info.append(el('div', 'pz-kicker pz-next-kicker', 'NEXT'), el('div', 'pz-line', `${P.time(nx.StartDate)} ${nx.Name}`));
             }
             body.append(info);
             return;
@@ -516,12 +523,16 @@
         }
         const v = ch.view;
         if (kind === 'tvshows' && v) {
-            const r = await P.safe(c.getItems(uid, { ParentId: v.Id, IncludeItemTypes: 'Series', Recursive: true, SortBy: 'DateLastContentAdded,DateCreated', SortOrder: 'Descending', Limit: 1, Fields: P.FIELDS }));
-            const series = P.items(r)[0];
+            // the show to put up: the one whose next episode is due (it has a "Next:" line), else the newest
+            const nu = P.items(await P.safe(c.getNextUpEpisodes({ UserId: uid, ParentId: v.Id, Limit: 1, Fields: P.FIELDS })))[0];
+            if (!live()) return;
+            let series = nu && nu.SeriesId ? await P.safe(c.getItem(uid, nu.SeriesId)) : null;
+            if (!series || !series.Id) {
+                const r = await P.safe(c.getItems(uid, { ParentId: v.Id, IncludeItemTypes: 'Series', Recursive: true, SortBy: 'DateLastContentAdded,DateCreated', SortOrder: 'Descending', Limit: 1, Fields: P.FIELDS }));
+                series = P.items(r)[0];
+            }
             if (!live()) return;
             if (!series) { body.append(textBlock('pz-centre-info', [['pz-big', 'No shows yet']])); return; }
-            const nu = P.items(await P.safe(c.getNextUpEpisodes({ UserId: uid, SeriesId: series.Id, Limit: 1, Fields: P.FIELDS })))[0];
-            if (!live()) return;
             const tv = el('div', 'pz-tv pz-tv-plain');
             const screen = el('div', 'pz-tv-screen');
             P.bg(screen, P.wideArt(series, 1000));
@@ -615,7 +626,28 @@
             }
             return false;
         },
-        onBack() { if (S && S.drag) { drop(null); return true; } return closeCard(); },
+        onBack() {
+            if (S && S.drag) { drop(null); return true; }
+            if (closeCard()) return true;
+            // nothing left to go back to: offer to quit (9.44)
+            if (T.ctx.exit && P.sheet) {
+                P.sheet.show({
+                    title: 'Icefin', kind: 'livetv',
+                    render(body) {
+                        body.append(el('div', 'pz-sheet-question', 'Exit Icefin?'), el('div', 'pz-sheet-note', 'Anything playing stops.'));
+                        const f = el('div', 'pz-panel-foot');
+                        const stay = P.focusable(el('div', 'pz-tab pz-tab-on', 'Cancel'));
+                        stay.addEventListener('click', () => P.sheet.close());
+                        const go = P.focusable(el('div', 'pz-tab', 'Exit'));
+                        go.addEventListener('click', () => T.ctx.exit());
+                        f.append(stay, go);
+                        body.append(f);
+                    }
+                });
+                return true;
+            }
+            return false;
+        },
         mount(root) {
             root.setAttribute('data-pz', 'home');
             ui.pointerFirst(true);
@@ -648,7 +680,24 @@
             };
             tick();
             S.clockTimer = setInterval(tick, 15000);
-            barEl.append(clock, date, settings, search);
+            // the server's status: a small card beside the icefin button (the walk's mock-up); a dot says whether it answers
+            const srv = el('div', 'pz-srv');
+            srv.innerHTML = '<svg viewBox="0 0 40 52" aria-hidden="true"><rect x="5" y="6" width="30" height="13" rx="3" fill="currentColor"/><rect x="5" y="24" width="30" height="13" rx="3" fill="currentColor" opacity=".7"/><circle cx="11" cy="12.5" r="2" fill="#fff"/><circle cx="11" cy="30.5" r="2" fill="#fff"/></svg>';
+            const dot = el('span', 'pz-srv-dot');
+            srv.append(dot);
+            const ping = () => {
+                const c = P.client();
+                const name = (c.serverInfo && c.serverInfo() && c.serverInfo().Name) || 'Server';
+                Promise.resolve(c.getPublicSystemInfo ? c.getPublicSystemInfo() : null).then((i) => {
+                    const ok = !!i;
+                    srv.classList.toggle('pz-srv-down', !ok);
+                    srv.setAttribute('aria-label', `${(i && i.ServerName) || name}: ${ok ? 'connected' : 'not answering'}`);
+                    srv.title = srv.getAttribute('aria-label');
+                }, () => { srv.classList.add('pz-srv-down'); srv.setAttribute('aria-label', `${name}: not answering`); srv.title = srv.getAttribute('aria-label'); });
+            };
+            ping();
+            S.srvTimer = setInterval(ping, 60000);
+            barEl.append(clock, date, settings, srv, search);
             root.append(stage, barEl);
             // Music playing: its capsule over the top of the page (P.miniPlayer, menus.js); up from the channels reaches it.
             if (P.miniPlayer) S.mini = P.miniPlayer(root, 'pz-mini');
@@ -668,10 +717,11 @@
 
             const mine = S;
             Promise.all([ui.userViews(), P.safe(P.client().getItems(P.uid(), { Filters: 'IsFavorite', Recursive: true, Limit: 24, SortBy: 'SortName',
-                IncludeItemTypes: 'Movie,Series,Episode,MusicAlbum,MusicVideo,Video,BoxSet,Playlist,Audio', Fields: P.FIELDS })).then(P.items)])
-                .then(([views, favs]) => {
+                IncludeItemTypes: 'Movie,Series,Episode,MusicAlbum,MusicVideo,Video,BoxSet,Playlist,Audio', Fields: P.FIELDS })).then(P.items),
+                P.safe(P.client().getItems(P.uid(), { IncludeItemTypes: 'Playlist', Recursive: true, Limit: 1 })).then((r) => P.items(r).length > 0)])
+                .then(([views, favs, hasPlaylists]) => {
                     if (S !== mine) return;
-                    fill(channels(views, favs));
+                    fill(channels(views, favs, hasPlaylists));
                     const reopen = P.reopen && S.list.find((x) => x.id === P.reopen);
                     P.reopen = null;
                     const t = reopen ? S.tiles.find((x) => x.plazaChannel === reopen) : S.tiles[0];
@@ -686,6 +736,7 @@
             if (S.press) clearTimeout(S.press.timer);
             if (S.drag && S.drag.edge) clearTimeout(S.drag.edge.timer);
             clearInterval(S.clockTimer);
+            clearInterval(S.srvTimer);
             if (S.mini) S.mini.stop();
             window.removeEventListener('resize', S.onResize);
             window.removeEventListener('pointermove', drag);
