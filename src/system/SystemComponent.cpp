@@ -610,6 +610,7 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/icefin/detailsScreen.js",  // ICEFIN-HOOK: themed details screens (PLAN 9.18)
     ":/web-client/extension/icefin/settingsHub.js",  // ICEFIN-HOOK: themed settings area (PLAN 9.24)
     ":/web-client/extension/icefin/osdLayout.js",  // ICEFIN-HOOK: themed player controls (PLAN 9.19)
+    ":/web-client/extension/icefin/liveConnect.js",  // ICEFIN-HOOK: Live TV connecting dialog and error notice
     ":/web-client/extension/icefin/themeSync.js",  // ICEFIN-HOOK: per-user theme choice (PLAN 8.5)
     ":/web-client/extension/icefin/hardwarePage.js",  // ICEFIN-HOOK: Client Settings -> Hardware (PLAN 4.1)
     ":/web-client/extension/icefin/themeManager.js",  // ICEFIN-HOOK: Client Settings -> Theme manager (PLAN 9.21)
