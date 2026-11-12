@@ -96,6 +96,8 @@ def main():
         check("themed controls mount over the video", js("window.icefinTheme.active().route") == "#/video")
         check("jellyfin-web's own controls are hidden under them",
               js("(() => { const p = [...document.querySelectorAll('#videoOsdPage')].pop(); return !p || getComputedStyle(p).visibility === 'hidden'; })()") is True)
+        bg = js("JSON.stringify([getComputedStyle(document.documentElement).backgroundColor, getComputedStyle(document.body).backgroundColor])")
+        check("nothing of the page paints over the video", all(c in ("rgba(0, 0, 0, 0)", "transparent") for c in json.loads(bg)), bg)
         check("state: title, duration, tracks and speeds", bool(s["title"]) and s["duration"] > 1000 and s["audio"] >= 1 and s["speeds"] >= 2, st)
         p0 = s["position"]
         time.sleep(2)
