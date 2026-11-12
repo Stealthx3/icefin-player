@@ -6,7 +6,7 @@
     is open; the focused item swells into a glass lens; the current title stays on its line as categories change;
   - remote navigation: down moves between categories and keeps the focused one on its line, right moves along a row,
     Enter opens the item's themed details screen (Play/Resume, Favourite); a series has one too (seasons);
-  - each library row ends in "All ...", which opens the poster wall: seven across, art near the view, Enter opens details;
+  - each library row ends in "All ...", which opens the library screen (9.46): pivots, a sideways grid, genres as stacks, Enter opens details;
   - turning the theme off restores the stock UI without a restart;
   - "Classic home" (?icefin=stock) shows the stock home with plugin sections;
   - other routes are jellyfin-web's, styled by the theme's tokens;
@@ -149,13 +149,60 @@ def main():
             page.wait_for(f"(document.querySelector('#icefin-theme-root') || {{getAttribute: () => null}}).getAttribute('data-icefin-details-complete') === '{series}'", timeout=20)
             check("a series opens the themed details with its seasons", js("!!document.querySelector('[data-section=seasons] .icefin-d-card')") is True
                   and not js("location.hash.includes('icefin=stock')"))
-        # The poster wall: the start strip's "All ..." tile opens it.
+        # The library screen (9.46): the start strip's "All Movies" tile opens it.
         js("location.hash = '#/home'; true")
         page.wait_for("+(document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=20)
-        js("[...document.querySelectorAll('.mc-tile.text')].find(t => t.textContent.startsWith('All ')).click(); true")
+        js("[...document.querySelectorAll('.mc-tile.text')].find(t => /^All Movies/.test(t.textContent)).click(); true")
+        page.wait_for("location.hash.startsWith('#/movies') && (document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === '1'", timeout=30)
+        n = js("document.querySelectorAll('.mc-lib-tile').length")
+        check("All Movies opens the movie library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "library" and n > 0
+              and js("document.querySelector('#icefin-theme-root .mc-title').textContent") == "movie library", f"{n} tiles")
+        check("library: the count reads item | total", "|" in (js("document.querySelector('.mc-count').textContent") or ""))
+        first = js("document.querySelector('.mc-lib-tile.icefin-focused').mcItem.Id")
+        act("right")
+        time.sleep(0.4)
+        check("library: right moves along the grid", n < 3 or js("document.querySelector('.mc-lib-tile.icefin-focused').mcItem.Id") != first)
+        check("library: the focused item's name under the grid", len(js("document.querySelector('.mc-lib-info-name').textContent") or "") > 0)
+        time.sleep(1)
+        check("library: art near the view", js("[...document.querySelectorAll('.mc-lib-art')].slice(0, 4).some(a => a.style.backgroundImage)") is True)
+        shot("library.png")
+        check("library: jellyfin-web's own page stays hidden",
+              js("[...document.querySelectorAll('.mainAnimatedPages *')].every(e => getComputedStyle(e).visibility === 'hidden')") is True)
+        js("[...document.querySelectorAll('.mc-lib-pivot .mc-pivot-item')].find(p => p.textContent === 'genre').click(); true")
+        page.wait_for("document.querySelector('.mc-lib-grid').dataset.group === '1' && (document.querySelectorAll('.mc-lib-tile').length > 0 || !!document.querySelector('.mc-lib-empty'))", timeout=15)
+        if js("document.querySelectorAll('.mc-lib-group').length") > 0:
+            check("library: the genre pivot shows genres as stacks", js("!!document.querySelector('.mc-lib-group .mc-lib-stack')") is True)
+            shot("library-genres.png")
+            js("document.querySelector('.mc-lib-group').click(); true")
+            page.wait_for("document.querySelector('.mc-lib-grid').dataset.group !== '1' && document.querySelector('.mc-lib-crumb').textContent.length > 0", timeout=15)
+            check("library: a genre filters the grid, named before the pivot", len(js("document.querySelector('.mc-lib-crumb').textContent") or '') > 0)
+            act("back")
+            time.sleep(1)
+            check("library: Back clears the genre", js("document.querySelector('.mc-lib-grid').dataset.group") == "1")
+        else:
+            check("library: a library without genres says so", js("!!document.querySelector('.mc-lib-empty')") is True)
+        js("[...document.querySelectorAll('.mc-lib-pivot .mc-pivot-item')].find(p => p.textContent === 'title').click(); true")
+        page.wait_for("document.querySelector('.mc-lib-grid').dataset.group !== '1' && !!document.querySelector('.mc-lib-tile.icefin-focused')", timeout=15)
+        act("enter")
+        page.wait_for("location.hash.startsWith('#/details')", timeout=15)
+        time.sleep(3)
+        check("library: Enter opens the themed details screen", js("location.hash.startsWith('#/details')") is True
+              and js("!!(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details')") is True
+              and js("!!document.querySelector('.icefin-d-btn.icefin-focused')") is True,
+              js("JSON.stringify([...document.querySelectorAll('.icefin-d-btn')].map(b => b.dataset.action))"))
+        shot("details.png")
+        # A series has its own themed details too (9.18): seasons and episodes, no fallback to jellyfin-web's page.
+        series = js("new Promise(r => window.icefinTheme.ctx.apiClient().getItems(window.icefinTheme.ctx.apiClient().getCurrentUserId(), {IncludeItemTypes: 'Series', Recursive: true, Limit: 1}).then(x => r((x.Items[0] || {}).Id || '')))")
+        if series:
+            js(f"location.hash = '#/details?id={series}&serverId=' + window.icefinTheme.ctx.apiClient().serverId(); true")
+            page.wait_for(f"(document.querySelector('#icefin-theme-root') || {{getAttribute: () => null}}).getAttribute('data-icefin-details-complete') === '{series}'", timeout=20)
+            check("a series opens the themed details with its seasons", js("!!document.querySelector('[data-section=seasons] .icefin-d-card')") is True
+                  and not js("location.hash.includes('icefin=stock')"))
+        # The poster wall: a library's #/list (collections and other lists open it).
+        js("window.icefinTheme.ui.userViews().then(v => { const m = v.find(x => x.CollectionType === 'movies') || v[0]; location.hash = '#/list?parentId=' + m.Id + '&serverId=' + window.ApiClient.serverId(); return true; })")
         page.wait_for("location.hash.startsWith('#/list') && (document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === '1'", timeout=30)
         n = js("+document.querySelector('#icefin-theme-root').getAttribute('data-mc-count')")
-        check("All opens the poster wall with the library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "wall" and n > 0,
+        check("#/list opens the poster wall with the library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "wall" and n > 0,
               f"{n} posters, {js('document.querySelector(\'.mc-wall-title\').textContent')}")
         first_id = js("document.querySelector('.mc-poster.icefin-focused').dataset.id")
         act("right")

@@ -9,6 +9,7 @@
     "kit.js",
     "start.js",
     "wall.js",
+    "library.js",
     "details.js",
     "player.js"
   ],
