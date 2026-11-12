@@ -188,8 +188,73 @@
     const filtered = (parent, type, field, item) => T.ctx.navigate(`#/home?pz=items&parent=${parent || ''}&type=${type}&${field}=${item.Id}&name=${encodeURIComponent(item.Name || '')}`);
 
     // ---- a library menu: tabs over grids, a sort pill ----
+    // The sort and filter panel (9.42): sort pills, the order, and "show only" switches, applied as they change.
+    const FILTERS = [{ id: 'IsUnplayed', label: 'Not watched yet' }, { id: 'IsFavorite', label: 'Favourites' }, { id: 'IsResumable', label: 'In progress' }];
+    function sortPanel(F, state, apply) {
+        const panel = el('div', 'pz-panel');
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Sort and filter');
+        const dim = el('div', 'pz-dim pz-on');
+        const card = el('div', 'pz-panel-card');
+        card.append(el('div', 'pz-dlg-tab', 'Sort and filter'));
+        const btn = (label, cls, go) => { const b = P.focusable(el('div', 'pz-tab ' + (cls || ''), label)); b.addEventListener('click', go); return b; };
+        const sorts = el('div', 'pz-panel-pills');
+        const drawSorts = () => { sorts.textContent = ''; ITEM_SORTS.forEach((x, k) => sorts.append(btn(x.label, k === state.sort ? 'pz-tab-on' : '', () => { state.sort = k; state.flip = false; drawSorts(); orderEl.textContent = orderText(); apply(); T.ctx.focus(sorts.children[k]); }))); };
+        const orderText = () => { const x = ITEM_SORTS[state.sort]; const asc = (x.SortOrder === 'Ascending') !== !!state.flip; return x.id === 'name' ? (asc ? 'A to Z' : 'Z to A') : (asc ? 'Oldest or lowest first' : 'Newest or highest first'); };
+        const orderEl = el('span', 'pz-stepper-val', '');
+        const order = P.focusable(el('div', 'pz-stepper'));
+        order.append(el('span', 'pz-stepper-arrow pz-l'), orderEl, el('span', 'pz-stepper-arrow pz-r'));
+        order.addEventListener('click', () => { state.flip = !state.flip; orderEl.textContent = orderText(); apply(); });
+        order.plazaStep = () => order.click();
+        const rows = FILTERS.map((f) => {
+            const r = P.focusable(el('div', 'pz-setrow'));
+            const sw = el('span', 'pz-switch');
+            r.append(el('span', 'pz-setrow-label', f.label), sw);
+            const draw = () => sw.classList.toggle('pz-on', state.filters.has(f.id));
+            r.addEventListener('click', () => { if (state.filters.has(f.id)) state.filters.delete(f.id); else state.filters.add(f.id); draw(); apply(); });
+            draw();
+            return r;
+        });
+        const foot = el('div', 'pz-panel-foot');
+        const done = btn('Done', 'pz-panel-done', () => close());
+        foot.append(done, btn('Reset', '', () => { state.sort = 0; state.flip = false; state.filters.clear(); close(); apply(); }));
+        card.append(el('div', 'pz-panel-label', 'Sort by'), sorts, el('div', 'pz-panel-label', 'Order'), order, el('div', 'pz-panel-label', 'Show only'), ...rows, foot);
+        panel.append(dim, card);
+        dim.addEventListener('click', () => close());
+        F.root.append(panel);
+        drawSorts();
+        orderEl.textContent = orderText();
+        F.root.setAttribute('data-pz-panel', 'sort');
+        T.ctx.focus(sorts.children[state.sort]);
+        T.ctx.sound('select');
+        const close = () => {
+            if (!panel.isConnected) return;
+            panel.remove();
+            F.root.removeAttribute('data-pz-panel');
+            const t = F.tab('sort');
+            if (t) { t.textContent = sortLabel(state); T.ctx.focus(t); }
+            T.ctx.sound('back');
+        };
+        return {
+            el: card, close,
+            action(a, ctx) {
+                if (a === 'back') { close(); return true; }
+                if ((a === 'left' || a === 'right') && ctx.focused() === order) { order.click(); return true; }
+                if (['up', 'down', 'left', 'right'].includes(a)) { ctx.move(a, card); return true; }
+                return a !== 'enter' && a !== 'select';
+            }
+        };
+    }
+    const sortLabel = (state) => `${ITEM_SORTS[state.sort].label}${state.flip ? ' ↑' : ''}${state.filters.size ? ` · ${state.filters.size} filter${state.filters.size > 1 ? 's' : ''}` : ''} ▾`;
+    const sortOf = (state) => {
+        const x = ITEM_SORTS[state.sort];
+        const order = state.flip ? (x.SortOrder === 'Ascending' ? 'Descending' : 'Ascending') : x.SortOrder;
+        return { id: x.id, label: x.label, SortBy: x.SortBy, SortOrder: order, Filters: [...state.filters].join(',') };
+    };
+
     function libraryMenu(spec) {
-        let F = null, grid = null, sort = 0, tab = null;
+        let F = null, grid = null, tab = null, panel = null;
+        const state = { sort: 0, flip: false, filters: new Set() };
         const screen = {
             mount(root) {
                 ui.pointerFirst(true);
@@ -197,27 +262,31 @@
                 const parent = spec.parent ? spec.parent(p) : p.get('topParentId') || p.get('id');
                 F = frame(root, { view: spec.view, kind: spec.kind(p), name: spec.name(p), hints: spec.hints });
                 const tabs = spec.tabs(parent, p).map((t) => Object.assign({}, t));
-                if (spec.sortable) tabs.push({ id: 'sort', label: `${ITEM_SORTS[sort].label} ▾`, cls: 'pz-tab-sort', go: () => { sort = (sort + 1) % ITEM_SORTS.length; F.tab('sort').textContent = `${ITEM_SORTS[sort].label} ▾`; show(tab, false); } });
+                if (spec.sortable) tabs.push({ id: 'sort', label: sortLabel(state), cls: 'pz-tab-sort', go: () => { panel = sortPanel(F, state, () => show(tab, false)); } });
                 const show = (id, focusGrid) => {
                     tab = id;
                     const t = tabs.find((x) => x.id === id);
                     if (grid) grid.destroy();
                     F.focusText('');
-                    grid = pageGrid(F.body, Object.assign({ frame: F, takeFocus: focusGrid, empty: t.empty }, t.grid(ITEM_SORTS[sort])));
+                    grid = pageGrid(F.body, Object.assign({ frame: F, takeFocus: focusGrid, empty: t.empty }, t.grid(sortOf(state), parent, p)));
+                    screen.grid = grid;
                 };
                 F.setTabs(tabs, tabs[0].id, (id) => show(id, false));
-                if (spec.after) spec.after(F, parent);
+                if (spec.after) spec.after(F, parent, p, screen);
                 show(tabs[0].id, true);
                 screen.relayout = () => { if (grid) grid.relayout(); };
                 window.addEventListener('resize', screen.relayout);
             },
             onAction(a, ctx) {
                 P.sawAction();
+                if (panel && panel.el.isConnected) return panel.action(a, ctx);
+                if (spec.action && spec.action(a, ctx, screen)) return true;
                 if (grid && grid.action(a)) return true;
                 return common(a, ctx);
             },
-            onBack() { goBack(); return true; },
-            unmount() { if (F) F.stop(); window.removeEventListener('resize', screen.relayout); ui.pointerFirst(false); if (spec.unmount) spec.unmount(); F = null; grid = null; }
+            onBack() { if (panel && panel.el.isConnected) { panel.close(); return true; } if (spec.back && spec.back(screen)) return true; goBack(); return true; },
+            frame: () => F,
+            unmount() { if (F) F.stop(); window.removeEventListener('resize', screen.relayout); ui.pointerFirst(false); if (spec.unmount) spec.unmount(); F = null; grid = null; panel = null; }
         };
         return screen;
     }
@@ -227,7 +296,8 @@
         return false;
     }
 
-    const posterGrid = (q, extra) => (s) => Object.assign({ shape: 'poster', fetch: itemsQuery(Object.assign({ SortBy: s.SortBy, SortOrder: s.SortOrder }, q)),
+    const withSort = (s, q) => { const o = Object.assign({ SortBy: s.SortBy, SortOrder: s.SortOrder }, q); if (s.Filters) o.Filters = [q.Filters, s.Filters].filter(Boolean).join(','); return o; };
+    const posterGrid = (q, extra) => (s) => Object.assign({ shape: 'poster', fetch: itemsQuery(withSort(s, q)),
         art: (it) => P.posterArt(it, 400), name: (it) => it.Name, focus: (it) => [it.Name, P.meta(it)].filter(Boolean).join(' · '),
         select: P.open, play: (it) => P.play(it), menu: P.details }, extra || {});
     const nameGrid = (path, q, onPick) => () => ({ shape: 'wide', fetch: namedQuery(path, q),
@@ -254,6 +324,47 @@
         ]
     });
 
+    // What's playing (music): a capsule with the record, the title, the progress and the transport. The Music menu shows
+    // it under its grid, and the home above the bar (9.42), while music plays. Returns {stop()}.
+    P.miniPlayer = (host, cls) => {
+        const np = el('div', 'pz-nowplaying' + (cls ? ' ' + cls : ''));
+        const rec = el('div', 'pz-np-record'), text = el('div', 'pz-np-text'), bar = el('div', 'pz-progress pz-np-bar'), fillEl = el('div');
+        bar.append(fillEl);
+        // drawn icons: the transport symbols aren't in every font
+        const ICON = {
+            prev: '<path d="M6 5v14M19 5 9 12l10 7z"/>', next: '<path d="M18 5v14M5 5l10 7-10 7z"/>',
+            playpause: '<path d="M4 5l8 7-8 7z"/><path d="M14 5h2.5v14H14zM19 5h2.5v14H19z"/>', open: '<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/>'
+        };
+        const btn = (icon, aria, go) => {
+            const b = P.focusable(el('div', 'pz-np-btn'));
+            b.innerHTML = `<svg viewBox="0 0 24 24" width="60%" height="60%" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">${ICON[icon]}</svg>`;
+            b.setAttribute('aria-label', aria);
+            b.addEventListener('click', go);
+            return b;
+        };
+        const pm = () => T.ctx.nowPlaying();
+        const ctl = (fn) => { const n = pm(); if (n && n.player) try { fn(n.player); } catch (e) { /* the player went away */ } };
+        const open = btn('open', 'Now playing', () => T.ctx.navigate('#/queue'));
+        np.append(rec, text, bar, btn('prev', 'Previous', () => ctl((p) => p.previousTrack && p.previousTrack())),
+            btn('playpause', 'Play or pause', () => ctl((p) => (p.paused && p.paused() ? p.unpause() : p.pause()))), btn('next', 'Next', () => ctl((p) => p.nextTrack && p.nextTrack())), open);
+        host.append(np);
+        const tick = () => {
+            const n = pm();
+            const it = n && n.item;
+            const on = !!(it && it.MediaType === 'Audio');
+            np.classList.toggle('pz-on', on);
+            if (host.setAttribute) host.toggleAttribute('data-pz-music', on);
+            if (!it) return;
+            text.textContent = '';
+            text.append(el('b', '', it.Name || ''), document.createTextNode(` — ${(it.Artists || [])[0] || it.AlbumArtist || ''}`));
+            P.bg(rec, P.posterArt(it, 200));
+            try { const pos = n.player.currentTime ? n.player.currentTime() : 0, dur = n.player.duration ? n.player.duration() : 0; fillEl.style.width = dur ? `${Math.min(100, pos / dur * 100)}%` : '0%'; } catch (e) { fillEl.style.width = '0%'; }
+        };
+        tick();
+        const timer = setInterval(tick, 1000);
+        return { el: np, stop() { clearInterval(timer); np.remove(); } };
+    };
+
     // Music: albums, artists, songs, playlists and genres, with what is playing in a bar under the grid.
     let nowTimer = null;
     const squareGrid = (q, extra) => (s) => Object.assign(posterGrid(q)(s), { shape: 'square', art: (it) => P.posterArt(it, 400),
@@ -269,30 +380,8 @@
             { id: 'playlists', label: 'Playlists', grid: squareGrid({ IncludeItemTypes: 'Playlist', MediaTypes: 'Audio' }), empty: 'No playlists yet' },
             { id: 'genres', label: 'Genres', grid: nameGrid('MusicGenres', { ParentId: parent }, (g) => filtered(parent, 'MusicAlbum', 'genre', g)) }
         ],
-        after(F) {
-            const np = el('div', 'pz-nowplaying');
-            const rec = el('div', 'pz-np-record'), text = el('div', 'pz-np-text'), bar = el('div', 'pz-progress pz-np-bar'), fillEl = el('div');
-            bar.append(fillEl);
-            const btn = (label, aria, go) => { const b = P.focusable(el('div', 'pz-np-btn', label)); b.setAttribute('aria-label', aria); b.addEventListener('click', go); return b; };
-            const pm = () => T.ctx.nowPlaying();
-            const ctl = (fn) => { const n = pm(); if (n && n.player) try { fn(n.player); } catch (e) { /* the player went away */ } };
-            np.append(rec, text, bar, btn('⏮', 'Previous', () => ctl((p) => p.previousTrack && p.previousTrack())),
-                btn('⏯', 'Play or pause', () => ctl((p) => (p.paused && p.paused() ? p.unpause() : p.pause()))), btn('⏭', 'Next', () => ctl((p) => p.nextTrack && p.nextTrack())));
-            F.menu.append(np);
-            const tick = () => {
-                const n = pm();
-                const it = n && n.item;
-                np.classList.toggle('pz-on', !!(it && it.MediaType === 'Audio'));
-                if (!it) return;
-                text.textContent = '';
-                text.append(el('b', '', it.Name || ''), document.createTextNode(` — ${(it.Artists || [])[0] || it.AlbumArtist || ''}`));
-                P.bg(rec, P.posterArt(it, 200));
-                try { const pos = n.player.currentTime ? n.player.currentTime() : 0, dur = n.player.duration ? n.player.duration() : 0; fillEl.style.width = dur ? `${Math.min(100, pos / dur * 100)}%` : '0%'; } catch (e) { fillEl.style.width = '0%'; }
-            };
-            tick();
-            nowTimer = setInterval(tick, 1000);
-        },
-        unmount() { clearInterval(nowTimer); nowTimer = null; }
+        after(F) { nowTimer = P.miniPlayer(F.menu); },
+        unmount() { if (nowTimer) nowTimer.stop(); nowTimer = null; }
     });
 
     // Any other library: its folders and items as they are on disk; folders open in place.
@@ -674,6 +763,192 @@
     }
 
     // The menus on #/home?pz=… (plaza.js asks for them by name) and on jellyfin-web's own routes.
+
+    // ---- 9.42: the routes jellyfin-web links to that Plaza draws itself ----
+    // jellyfin-web's list page (#/list): a genre's, a studio's, a person's or a tag's items, and every "more" link.
+    const LIST_KEYS = [['genreId', 'GenreIds'], ['musicGenreId', 'GenreIds'], ['studioId', 'StudioIds'], ['personId', 'PersonIds'], ['artistId', 'ArtistIds'],
+        ['albumArtistId', 'AlbumArtistIds'], ['tag', 'Tags'], ['parentId', 'ParentId'], ['type', 'IncludeItemTypes'], ['IsFavorite', 'IsFavorite']];
+    function listQuery(p) {
+        const q = {};
+        for (const [k, f] of LIST_KEYS) if (p.get(k)) q[f] = p.get(k);
+        if (p.get('musicGenreId') && !q.IncludeItemTypes) q.IncludeItemTypes = 'MusicAlbum';
+        if (!q.IncludeItemTypes && !q.ParentId) q.IncludeItemTypes = 'Movie,Series,MusicAlbum,MusicVideo,Video,BoxSet,Book';
+        return q;
+    }
+    const listKind = (p) => {
+        const t = (p.get('type') || '').split(',')[0];
+        return p.get('musicGenreId') || t === 'MusicAlbum' || t === 'Audio' ? 'music' : t === 'Series' || t === 'Episode' ? 'tvshows' : t === 'Movie' || p.get('genreId') ? 'movies' : 'folder';
+    };
+    async function playAll(q, shuffle) {
+        const r = await P.safe(P.client().getItems(P.uid(), Object.assign({ Recursive: true, Limit: 300, SortBy: shuffle ? 'Random' : 'SortName', MediaTypes: 'Video,Audio' }, q, { IncludeItemTypes: undefined })));
+        const ids = P.items(r).filter((x) => !x.IsFolder).map((x) => x.Id);
+        if (ids.length) T.ctx.play({ ids, serverId: P.sid() });
+        else T.ctx.sound('error');
+    }
+    const LIST = libraryMenu({
+        view: 'list', kind: listKind, name: (p) => p.get('name') || '', sortable: true, parent: () => null,
+        hints: 'Ⓐ Open · ▶ Play · ≡ Details · ◀▶ Page',
+        tabs: (parent, p) => {
+            const q = listQuery(p);
+            const square = /MusicAlbum|Audio/.test(q.IncludeItemTypes || '');
+            return [
+                { id: 'all', label: 'All', grid: square ? squareGrid(q) : posterGrid(q), empty: 'Nothing here yet' },
+                { id: 'playall', label: 'Play all', go: () => playAll(q, false) },
+                { id: 'shuffle', label: 'Shuffle', go: () => playAll(q, true) }
+            ];
+        },
+        after(F, parent, p) {
+            // The pill shows the genre's, studio's or person's own name.
+            const id = p.get('genreId') || p.get('musicGenreId') || p.get('studioId') || p.get('personId') || p.get('artistId') || p.get('albumArtistId') || p.get('parentId');
+            if (id && !p.get('name')) P.safe(P.client().getItem(P.uid(), id)).then((it) => { if (it && it.Name) F.setName(it.Name); });
+            else if (p.get('tag')) F.setName(p.get('tag'));
+        }
+    });
+
+    // Playlists (#/playlists): each as a square of its art with a count; the last cell makes a new one.
+    function newPlaylist(F, made) {
+        const panel = el('div', 'pz-panel');
+        const dim = el('div', 'pz-dim pz-on');
+        const card = el('div', 'pz-panel-card pz-panel-narrow');
+        card.append(el('div', 'pz-dlg-tab', 'New playlist'));
+        const label = el('label', 'pz-field');
+        const input = el('input', 'pz-input');
+        input.type = 'text';
+        input.placeholder = 'Name';
+        P.focusable(input);
+        label.append(el('span', 'pz-field-label', 'Name'), input);
+        const foot = el('div', 'pz-panel-foot');
+        const make = P.focusable(el('div', 'pz-tab pz-panel-done', 'Create'));
+        const cancel = P.focusable(el('div', 'pz-tab', 'Cancel'));
+        foot.append(make, cancel);
+        card.append(label, foot);
+        panel.append(dim, card);
+        F.root.append(panel);
+        const close = () => { panel.remove(); T.ctx.sound('back'); };
+        cancel.addEventListener('click', close);
+        dim.addEventListener('click', close);
+        make.addEventListener('click', async () => {
+            const name = input.value.trim();
+            if (!name) { T.ctx.focus(input); T.ctx.sound('error'); return; }
+            const c = P.client();
+            try {
+                await c.ajax({ type: 'POST', url: c.getUrl('Playlists'), data: JSON.stringify({ Name: name, UserId: P.uid(), Ids: [] }), contentType: 'application/json', dataType: 'json' });
+                panel.remove();
+                T.ctx.sound('select');
+                made();
+            } catch (e) { T.ctx.sound('error'); }
+        });
+        T.ctx.focus(input);
+        return {
+            el: card, close,
+            action(a, ctx) {
+                if (a === 'back') { close(); return true; }
+                if (['up', 'down', 'left', 'right'].includes(a)) { ctx.move(a, card); return true; }
+                return false;
+            }
+        };
+    }
+    let plPanel = null;
+    const playlistGrid = (mediaType) => (s) => {
+        const q = { IncludeItemTypes: 'Playlist' };
+        if (mediaType) q.MediaTypes = mediaType;
+        const base = itemsQuery(withSort(s, q));
+        return {
+            shape: 'square',
+            // one more cell than the server has: "New playlist", at the end
+            fetch: async (start, limit) => { const r = await base(start, limit); const total = (r.total || 0) + 1; const items = r.items.slice(); if (start + items.length === total - 1 && items.length < limit) items.push({ Id: '', pzNew: true, Name: 'New playlist' }); return { items, total }; },
+            art: (it) => (it.pzNew ? '' : P.posterArt(it, 400)), name: (it) => it.Name,
+            caption: (it) => (it.pzNew ? '' : `${it.ChildCount || 0} item${it.ChildCount === 1 ? '' : 's'}`),
+            decorate: (c, it) => { if (it.pzNew) c.classList.add('pz-cell-new'); else if (it.ChildCount != null) c.append(el('div', 'pz-count', String(it.ChildCount))); },
+            focus: (it) => (it.pzNew ? 'New playlist' : `${it.Name} · ${it.ChildCount || 0} items`),
+            select: (it, c) => { if (it.pzNew) { const F = PLAYLISTS.frame(); plPanel = newPlaylist(F, () => PLAYLISTS.grid && PLAYLISTS.grid.relayout()); return; } P.details(it); },
+            play: (it) => { if (!it.pzNew) P.play(it, true); }, menu: (it) => { if (!it.pzNew) P.details(it); },
+            empty: 'No playlists yet'
+        };
+    };
+    const PLAYLISTS = libraryMenu({
+        view: 'playlists', kind: () => 'playlists', name: () => 'Playlists', sortable: true, parent: () => null,
+        hints: 'Ⓐ Open · ▶ Play · ≡ Details · ◀▶ Page',
+        tabs: () => [
+            { id: 'all', label: 'All', grid: playlistGrid('') },
+            { id: 'music', label: 'Music', grid: playlistGrid('Audio') },
+            { id: 'video', label: 'Video', grid: playlistGrid('Video') }
+        ],
+        action(a, ctx) { if (plPanel && plPanel.el.isConnected) return plPanel.action(a, ctx); return false; },
+        back() { if (plPanel && plPanel.el.isConnected) { plPanel.close(); return true; } return false; },
+        unmount() { plPanel = null; }
+    });
+
+    // Photos and home videos (#/homevideos, #/photos): newest first with the day on the first photo of each day; a photo
+    // opens jellyfin-web's viewer on this page's photos (slideshow included), a video plays.
+    const day = (it) => { const d = it.DateCreated || it.PremiereDate; return d ? new Date(d).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''; };
+    const photoGrid = (q, byDate) => (s) => {
+        let pageItems = [];
+        const base = itemsQuery(withSort(byDate ? Object.assign({}, s, { SortBy: 'DateCreated,SortName', SortOrder: s.id === 'added' || s.id === 'name' ? 'Descending' : s.SortOrder }) : s,
+            Object.assign({ Fields: P.FIELDS + ',DateCreated' }, q)));
+        return {
+            shape: 'square',
+            fetch: async (start, limit) => { const r = await base(start, limit); pageItems = r.items; return r; },
+            art: (it) => P.posterArt(it, 400) || P.wideArt(it, 400), name: (it) => it.Name,
+            decorate: (c, it, art) => {
+                const i = pageItems.indexOf(it);
+                if (byDate && day(it) && (i === 0 || day(pageItems[i - 1]) !== day(it))) c.append(el('div', 'pz-day', day(it)));
+                if (it.Type === 'Video' || it.MediaType === 'Video') art.append(el('div', 'pz-play-badge'));
+                if (it.IsFolder) c.classList.add('pz-cell-folder');
+            },
+            focus: (it) => [it.Name, day(it)].filter(Boolean).join(' · '),
+            select: (it) => {
+                if (it.IsFolder) return T.ctx.navigate(`#/home?pz=library&id=${it.Id}&kind=photos&name=${encodeURIComponent(it.Name || '')}`);
+                if (it.MediaType === 'Photo' || it.Type === 'Photo') {
+                    const photos = pageItems.filter((x) => x.MediaType === 'Photo' || x.Type === 'Photo');
+                    return T.ctx.play({ items: photos, startIndex: Math.max(0, photos.indexOf(it)) });
+                }
+                return P.play(it, true);
+            },
+            play: (it) => P.play(it, true), menu: P.details, empty: 'No photos here yet'
+        };
+    };
+    const PHOTOS = libraryMenu({
+        view: 'photos', kind: () => 'photos', name: (p) => p.get('name') || 'Photos', sortable: true,
+        hints: 'Ⓐ View · ▶ Slideshow · ≡ Details · ◀▶ Page',
+        tabs: (parent) => [
+            { id: 'date', label: 'By date', grid: photoGrid({ ParentId: parent, IncludeItemTypes: 'Photo,Video', Recursive: true }, true) },
+            { id: 'albums', label: 'Albums', grid: photoGrid({ ParentId: parent, Recursive: false, IsFolder: true }, false), empty: 'No albums here' },
+            { id: 'videos', label: 'Videos', grid: photoGrid({ ParentId: parent, IncludeItemTypes: 'Video', Recursive: true }, true), empty: 'No videos here' },
+            { id: 'favourites', label: 'Favourites', grid: photoGrid({ ParentId: parent, Filters: 'IsFavorite', Recursive: true }, true), empty: 'No favourites here yet' }
+        ],
+        action(a, ctx, screen) {
+            // Play on a photo: the slideshow from it.
+            if (a !== 'play_pause' || !screen.grid) return false;
+            const f = screen.grid.focused();
+            if (!f || !f.plazaItem || f.plazaItem.IsFolder) return false;
+            f.click();
+            return true;
+        }
+    });
+
+    // Books (#/books): covers; A opens the reader, Menu the book's page.
+    const read = (it) => T.ctx.play({ ids: [it.Id], serverId: P.sid() });
+    const BOOKS = libraryMenu({
+        view: 'books', kind: () => 'books', name: (p) => p.get('name') || 'Books', sortable: true,
+        hints: 'Ⓐ Read · ≡ Details · ◀▶ Page',
+        tabs: (parent) => [
+            { id: 'all', label: 'All', grid: posterGrid({ ParentId: parent, IncludeItemTypes: 'Book' }, { select: read, play: read }), empty: 'No books here yet' },
+            { id: 'reading', label: 'Reading', grid: posterGrid({ ParentId: parent, IncludeItemTypes: 'Book', Filters: 'IsResumable' }, { select: read, play: read }), empty: 'Nothing in progress' },
+            { id: 'favourites', label: 'Favourites', grid: posterGrid({ ParentId: parent, IncludeItemTypes: 'Book', Filters: 'IsFavorite' }, { select: read, play: read }), empty: 'No favourite books yet' }
+        ]
+    });
+
+    // Music videos, collections and mixed libraries: their items, folders opening in place.
+    const plainLibrary = (view, kind, label, types) => libraryMenu({
+        view, kind: () => kind, name: (p) => p.get('name') || label, sortable: true,
+        hints: 'Ⓐ Open · ▶ Play · ≡ Details · ◀▶ Page',
+        tabs: (parent) => [
+            { id: 'all', label: 'All', grid: posterGrid(Object.assign({ ParentId: parent }, types ? { IncludeItemTypes: types } : { Recursive: false })) },
+            { id: 'favourites', label: 'Favourites', grid: posterGrid({ ParentId: parent, Filters: 'IsFavorite' }), empty: 'No favourites here yet' }
+        ]
+    });
+
     const VIEWS = { library: () => LIBRARY, items: () => ITEMS, series, resume, nextup: () => NEXTUP };
     P.menus = { screen: (name) => (VIEWS[name] || VIEWS.library)() };
     T.registerScreen('#/movies', MOVIES);
@@ -681,4 +956,12 @@
     T.registerScreen('#/music', MUSIC);
     T.registerScreen('#/livetv', liveTv());
     T.registerScreen('#/search', search());
+    T.registerScreen('#/list', LIST);
+    T.registerScreen('#/playlists', PLAYLISTS);
+    T.registerScreen('#/homevideos', PHOTOS);
+    T.registerScreen('#/photos', PHOTOS);
+    T.registerScreen('#/books', BOOKS);
+    T.registerScreen('#/musicvideos', plainLibrary('musicvideos', 'music', 'Music videos', 'MusicVideo'));
+    T.registerScreen('#/boxsets', plainLibrary('boxsets', 'boxsets', 'Collections', 'BoxSet'));
+    T.registerScreen('#/mixed', plainLibrary('mixed', 'folder', 'Library', ''));
 })();
