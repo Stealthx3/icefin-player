@@ -36,6 +36,26 @@
         return true;
     }
 
+    // More options (the engine opens jellyfin-web's item menu on its own details page, ?icefinmore=1): that page stays
+    // out of sight under the menu (styles.css, html[data-mc-more]), and once the menu and anything it opened have closed
+    // without going anywhere, Back to Media Center's details (the host walk left people on jellyfin-web's page).
+    if (M && M.stockHooks) {
+        let watch = null;
+        const more = () => /[?&]icefinmore=1\b/.test(location.hash);
+        const open = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length);
+        M.stockHooks.push(() => {
+            document.documentElement.toggleAttribute('data-mc-more', more());
+            if (!more() || watch) return;
+            const at = location.hash;
+            let seen = false, quiet = 0;
+            watch = setInterval(() => {
+                if (location.hash !== at) { clearInterval(watch); watch = null; document.documentElement.removeAttribute('data-mc-more'); return; }
+                if (open()) { seen = true; quiet = 0; return; }
+                if (seen && ++quiet >= 3) { clearInterval(watch); watch = null; history.back(); }
+            }, 250);
+        });
+    }
+
     T.registerScreen('#/details', Object.assign({}, base, {
         mount(root, ctx) {
             const r = base.mount.call(this, root, ctx);
