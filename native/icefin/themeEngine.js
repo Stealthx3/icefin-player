@@ -196,7 +196,8 @@
         if (current && current.route === path && current.screen === screen && current.hash === location.hash) return;
         unmountScreen();
         if (!screen) return;  // jellyfin-web's own page
-        if (!signedIn()) {
+        // A screen waits for a signed-in session, except one made for signing in (beforeSignIn: sign-in, servers, 9.44)
+        if (!signedIn() && !screen.beforeSignIn) {
             if (!signInWait) signInWait = setTimeout(() => { signInWait = null; route_(); }, 250);
             return;
         }
