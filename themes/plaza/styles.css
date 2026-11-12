@@ -1136,6 +1136,16 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 .pz-pl-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0) 30%, rgb(0 0 0 / 0) 55%, rgb(0 0 0 / 0.55)); }
 .pz-pl-name { position: absolute; left: 0; top: calc(33 * var(--pz)); height: calc(87 * var(--pz)); max-width: 70vw; white-space: nowrap; overflow: hidden; }
 .pz-pl-name .pz-mname-text { overflow: hidden; text-overflow: ellipsis; }
+/* Back at the title pill's left end, a round of its own inside the pill; jellyfin-web's header stays hidden under it */
+.pz-pl-name { padding-left: calc(15 * var(--pz)); }
+.pz-pl-back { flex: none; display: flex; align-items: center; gap: calc(6 * var(--pz)); height: calc(63 * var(--pz)); padding: 0 calc(24 * var(--pz)) 0 calc(15 * var(--pz)); margin-right: calc(3 * var(--pz));
+  border-radius: 999px; background: rgb(255 255 255 / 0.22); box-shadow: inset 0 0 0 calc(3 * var(--pz)) rgb(255 255 255 / 0.45); font-size: calc(26 * var(--pz)); font-weight: 700; cursor: pointer; outline: none;
+  transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease; }
+.pz-pl-back svg { width: calc(30 * var(--pz)); height: calc(30 * var(--pz)); }
+.pz-pl-back:hover { background: rgb(255 255 255 / 0.32); }
+.pz-pl-back.icefin-focused { transform: scale(1.06); background: var(--icefin-color-surface); color: var(--icefin-color-text); box-shadow: inset 0 0 0 calc(4 * var(--pz)) rgb(var(--icefin-color-focus-channel)), 0 0 calc(10 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.7); }
+.pz-pl-name .pz-mname-text { padding-left: 0; }
+html.pz-pl-up .skinHeader, html.pz-pl-up .videoOsdHeader { visibility: hidden !important; }
 .pz-pl-shade, .pz-pl-name, .pz-pl-cap { transition: opacity 0.25s ease, transform 0.25s ease; }
 .pz-pl:not(.pz-pl-shown) .pz-pl-shade, .pz-pl:not(.pz-pl-shown) .pz-pl-name, .pz-pl:not(.pz-pl-shown) .pz-pl-cap { opacity: 0; pointer-events: none; }
 .pz-pl:not(.pz-pl-shown) .pz-pl-cap { transform: translateY(calc(40 * var(--pz))); }
@@ -1320,3 +1330,55 @@ html[data-icefin-stock^="mypreferences"] .page .checkboxContainer > label { flex
 html[data-icefin-stock^="mypreferences"] .page .checkboxContainer > label > span:not(.checkboxOutline) { flex: 1; font-size: calc(24 * var(--pz)); color: var(--icefin-color-text); padding-left: 0 !important; }
 html[data-icefin-stock^="mypreferences"] .page .checkboxContainer > label > .checkboxOutline { order: 3; position: relative !important; margin-left: auto; }
 html[data-icefin-stock^="mypreferences"] .page .checkboxContainer .fieldDescription { margin-top: 0; }
+/* switch rows: their description on the left like the rest */
+html[data-icefin-stock^="mypreferences"] .page .checkboxContainer .fieldDescription { text-align: left; padding-left: 0 !important; }
+html[data-icefin-stock^="mypreferences"] .page .checkboxContainer > label { padding-left: 0 !important; }
+/* the Display page is jellyfin-web's React page (MUI form controls): the same rows */
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root {
+  position: relative; display: flex !important; flex-direction: row !important; flex-wrap: wrap; align-items: center; gap: 0 calc(24 * var(--pz)); width: 100%; margin: 0 0 calc(12 * var(--pz)) !important;
+  padding: calc(12 * var(--pz)) calc(18 * var(--pz)) calc(12 * var(--pz)) calc(30 * var(--pz)); border-radius: calc(24 * var(--pz)); background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); box-sizing: border-box; min-height: calc(84 * var(--pz)); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root:focus-within { box-shadow: var(--pz-glow); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root > .MuiInputLabel-root, html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root > .MuiFormLabel-root {
+  position: static !important; transform: none !important; flex: 1 1 0; min-width: 0; max-width: none; font-family: var(--pz-font); font-size: calc(24 * var(--pz)); color: var(--icefin-color-text) !important; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root > .MuiInputBase-root { flex: none; width: calc(480 * var(--pz)); margin: 0 !important; font-family: var(--pz-font); font-size: calc(24 * var(--pz));
+  border-radius: 999px; background: var(--icefin-color-surface); box-shadow: var(--pz-ring); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root .MuiSelect-select { text-align: center; padding: calc(14 * var(--pz)) calc(54 * var(--pz)) !important; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root .MuiOutlinedInput-notchedOutline, html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root .MuiSelect-icon { display: none; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root::before, html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root::after {
+  content: ""; position: absolute; top: calc(42 * var(--pz)); margin-top: calc(-10 * var(--pz)); border-top: calc(10 * var(--pz)) solid transparent; border-bottom: calc(10 * var(--pz)) solid transparent; pointer-events: none; z-index: 1; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root:has(.MuiSelect-select)::before { right: calc(462 * var(--pz)); border-right: calc(14 * var(--pz)) solid var(--icefin-color-accent); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControl-root:has(.MuiSelect-select)::after { right: calc(36 * var(--pz)); border-left: calc(14 * var(--pz)) solid var(--icefin-color-accent); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormHelperText-root { flex-basis: 100%; order: 3; margin: calc(4 * var(--pz)) 0 0 !important; font-family: var(--pz-font); font-size: calc(18 * var(--pz)); color: var(--icefin-color-textSecondary); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControlLabel-root { width: 100%; margin: 0 !important; justify-content: space-between; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiTypography-root { font-family: var(--pz-font); }
+/* ==== Profile and Quick Connect approve (9.44): the design canvas's Profile and QuickConnectApprove ==== */
+.pz-off { opacity: 0.45; }
+.pz-pf { position: absolute; inset: 0; }
+.pz-pf-side { position: absolute; left: calc(210 * var(--pz)); top: calc(183 * var(--pz)); width: calc(330 * var(--pz)); display: flex; flex-direction: column; align-items: center; gap: calc(18 * var(--pz)); }
+.pz-pf-pic { width: calc(324 * var(--pz)); height: calc(324 * var(--pz)); margin-bottom: calc(12 * var(--pz)); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, var(--pz-ch-a), var(--pz-ch-b)) center / cover no-repeat;
+  box-shadow: inset 0 0 0 calc(4 * var(--pz)) rgb(255 255 255 / 0.85), var(--pz-lift); color: var(--pz-ink-on); font-family: var(--pz-font); font-size: calc(120 * var(--pz)); font-weight: 700; }
+.pz-pf-pic[style*="background-image"] { background-size: cover; }
+.pz-pf-btn { width: 100%; justify-content: center; height: calc(72 * var(--pz)); font-size: calc(24 * var(--pz)); font-weight: 700; }
+.pz-pf-main { position: absolute; left: calc(660 * var(--pz)); top: calc(183 * var(--pz)); width: calc(780 * var(--pz)); display: flex; flex-direction: column; }
+.pz-pf-name { font-size: calc(54 * var(--pz)); font-weight: 700; line-height: 1.2; }
+.pz-pf-where { min-height: calc(36 * var(--pz)); margin: calc(9 * var(--pz)) 0 calc(18 * var(--pz)); font-size: calc(27 * var(--pz)); color: var(--icefin-color-textSecondary); }
+.pz-pf-form { display: flex; flex-direction: column; gap: calc(15 * var(--pz)); }
+.pz-pf-form .pz-input { height: calc(75 * var(--pz)); }
+.pz-pf-form .pz-si-row { margin-top: calc(12 * var(--pz)); }
+.pz-pf-form .pz-si-row .pz-tab { height: calc(72 * var(--pz)); min-width: calc(330 * var(--pz)); justify-content: center; font-size: calc(28 * var(--pz)); }
+.pz-qa { position: absolute; inset: 0; }
+.pz-qa-left { position: absolute; left: calc(210 * var(--pz)); top: calc(180 * var(--pz)); width: calc(780 * var(--pz)); display: flex; flex-direction: column; align-items: flex-start; }
+.pz-qa-title { font-size: calc(48 * var(--pz)); font-weight: 700; }
+.pz-qa-note { margin: calc(18 * var(--pz)) 0 calc(48 * var(--pz)); max-width: calc(735 * var(--pz)); font-size: calc(27 * var(--pz)); line-height: 1.5; color: var(--icefin-color-textSecondary); }
+.pz-qa-digits { display: flex; gap: calc(18 * var(--pz)); margin-bottom: calc(60 * var(--pz)); }
+.pz-qa-digit { width: calc(90 * var(--pz)); height: calc(117 * var(--pz)); border-radius: calc(18 * var(--pz)); display: flex; align-items: center; justify-content: center; font-size: calc(60 * var(--pz)); font-weight: 700;
+  color: var(--icefin-color-accentStrong); background: var(--icefin-color-surface); box-shadow: var(--pz-ring); }
+.pz-qa-digit.pz-qa-at { box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent); }
+.pz-qa-go { width: calc(300 * var(--pz)); height: calc(75 * var(--pz)); justify-content: center; font-size: calc(27 * var(--pz)); font-weight: 700; }
+.pz-qa-msg { margin-top: calc(24 * var(--pz)); }
+.pz-qa-pad { position: absolute; left: calc(1200 * var(--pz)); top: calc(165 * var(--pz)); display: grid; grid-template-columns: repeat(3, calc(129 * var(--pz))); grid-auto-rows: calc(96 * var(--pz)); gap: calc(15 * var(--pz)) calc(15 * var(--pz)); }
+.pz-qa-key { border-radius: calc(18 * var(--pz)); display: flex; align-items: center; justify-content: center; font-size: calc(39 * var(--pz)); cursor: pointer; outline: none;
+  background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); box-shadow: var(--pz-ring), var(--pz-lift); transition: transform 120ms ease, box-shadow 120ms ease; }
+.pz-qa-key.pz-qa-del { font-size: calc(22 * var(--pz)); }
+.pz-qa-key:hover { box-shadow: var(--pz-glow); }
+.pz-qa-key.icefin-focused { transform: scale(1.04); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 0 calc(18 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.55); }

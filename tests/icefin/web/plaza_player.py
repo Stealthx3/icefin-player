@@ -10,7 +10,8 @@ While a clip plays with Plaza active (the repository's themes, ICEFIN_THEME_PATH
     jellyfin-web's own controls;
   - a skip prompt (jellyfin-web's MediaSegment button) shows as Plaza's pill and takes focus while the controls are
     hidden; OK presses it;
-  - Back hides the controls while playing; Back again leaves the video.
+  - Back sits at the title pill's left end, jellyfin-web's header hidden under the controls;
+  - Back hides the controls while playing; Back again (the controls hidden) leaves the video.
 Usage: python3 theme_player.py --app ~/build/src/icefin-player --server jf12 --out ~/rplaza-player
 """
 import argparse, base64, json, os, signal, sys, tempfile, time
@@ -80,9 +81,14 @@ def main():
               js("(() => { const p = [...document.querySelectorAll('#videoOsdPage')].pop(); return !p || getComputedStyle(p).visibility === 'hidden'; })()") is True)
         nm = js("document.querySelector('.pz-pl-name').textContent")
         check("the name pill: what plays and when it ends", 'Ends at' in nm, nm)
+        bk = js("(() => { const b = document.querySelector('.pz-pl-name .pz-pl-back'); const h = document.querySelector('.skinHeader');"
+                " return [b ? b.textContent : null, !h || getComputedStyle(h).visibility === 'hidden']; })()")
+        check("Back at the title pill's left end; jellyfin-web's header hidden", bk[0] == "Back" and bk[1] is True, bk)
+        shot("controls.png")
         t0 = pos(); time.sleep(2.2); t1 = pos()
         check("the time line moves", t0 != t1, f"{t0} -> {t1}")
         check("play/pause has focus when the controls come up", js("document.querySelector('.pz-pl-pp').classList.contains('icefin-focused')") is True)
+        act("up"); time.sleep(0.5)  # the controls fade after a few seconds of playing: bring them back first
         act("enter"); time.sleep(2.5)
         check("OK pauses", js("document.querySelector('.pz-pl').classList.contains('pz-pl-paused')") is True)
         time.sleep(5)
@@ -94,6 +100,7 @@ def main():
         t0 = pos(); act("left"); time.sleep(1.5); t1 = pos()
         check("hidden, ◀ goes back 10 s and brings them back", js(shownq) is True and tosec(t0) - tosec(t1) >= 6, f"{t0} -> {t1}")
         # Audio and More
+        js("window.icefinPlaybackManager.seekPercent(2, window.icefinPlaybackManager.getCurrentPlayer()); true"); time.sleep(1)  # the lab clip is short: back near the start
         js("document.querySelector('.pz-pl-tools .pz-pl-pill:not([hidden])').click(); true"); time.sleep(0.8)
         check("a picker opens as a Plaza card over the video", js("!!document.querySelector('.pz-pl-host .pz-sheet-card .pz-sheet-row')") is True)
         shot("picker.png")
@@ -105,9 +112,11 @@ def main():
         shot("more.png")
         act("back"); time.sleep(0.6)
         # Back
+        js("window.icefinPlaybackManager.seekPercent(2, window.icefinPlaybackManager.getCurrentPlayer()); true"); time.sleep(1)  # the lab clip is short: back near the start
         act("up"); time.sleep(0.6)
         check("Back hides the controls while playing", js(shownq) is True and (act("back"), time.sleep(0.6), js(shownq))[2] is False)
         # a skip prompt
+        js("window.icefinPlaybackManager.seekPercent(2, window.icefinPlaybackManager.getCurrentPlayer()); true"); time.sleep(1)  # the lab clip is short: back near the start
         js("(() => { const c = document.createElement('div'); c.className = 'skip-button-container'; c.innerHTML = '<button class=\"skip-button\">Skip Intro</button>';"
            " document.body.append(c); c.querySelector('button').addEventListener('click', () => { window.labSkipped = true; }); return true; })()")
         time.sleep(5.5)
@@ -117,7 +126,10 @@ def main():
         check("OK presses it", js("window.labSkipped === true") is True)
         shot("skip.png")
         js("document.querySelector('.skip-button-container').remove(); true")
-        act("back"); time.sleep(3)
+        # Back the screen doesn't use goes on to jellyfin-web, as the input pipeline does (inputPlugin.js)
+        back = "window.icefinTheme.handleAction('back') || window.icefinInputManager.handleCommand('back'); true"
+        if js(shownq): js(back); time.sleep(0.6)   # OK on the pill brought the controls up: the first Back hides them
+        js(back); time.sleep(3)
         check("Back again leaves the video", not js("location.hash").startswith('#/video'), js("location.hash"))
         js("window.icefinPlaybackManager.stop(); true")
     except Exception as e:  # noqa: BLE001

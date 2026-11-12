@@ -18,6 +18,7 @@
     function frameFor(root, name, hints) {
         const F = P.frame(root, { view: 'signin', kind: 'livetv', name, hints });
         F.home.hidden = true;   // nowhere to go home to before signing in
+        F.home.style.display = 'none';
         return F;
     }
 
@@ -217,7 +218,8 @@
         return S;
     }
 
-    const wrap = (make) => ({ mount(r, c) { return (this.s = make()).mount(r, c); }, onAction(a, c) { return this.s.onAction(a, c); },
+    // beforeSignIn: these screens are up while nobody is signed in (the engine waits for a session for the rest)
+    const wrap = (make) => ({ beforeSignIn: true, mount(r, c) { return (this.s = make()).mount(r, c); }, onAction(a, c) { return this.s.onAction(a, c); },
         onBack() { return this.s.onBack(); }, unmount() { if (this.s) this.s.unmount(); this.s = null; } });
     T.registerScreen('#/login', wrap(login));
     T.registerScreen('#/selectserver', wrap(() => servers(false)));
