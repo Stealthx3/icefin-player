@@ -199,7 +199,8 @@ def main():
             check("a series opens the themed details with its seasons", js("!!document.querySelector('[data-section=seasons] .icefin-d-card')") is True
                   and not js("location.hash.includes('icefin=stock')"))
         # The poster wall: a library's #/list (collections and other lists open it).
-        js("window.icefinTheme.ui.userViews().then(v => { const m = v.find(x => x.CollectionType === 'movies') || v[0]; location.hash = '#/list?parentId=' + m.Id + '&serverId=' + window.ApiClient.serverId(); return true; })")
+        mv = js("window.icefinTheme.ui.userViews().then(v => (v.find(x => x.CollectionType === 'movies') || v[0]).Id)")
+        js(f"location.hash = '#/list?parentId={mv}&serverId=' + window.ApiClient.serverId(); true")
         page.wait_for("location.hash.startsWith('#/list') && (document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === '1'", timeout=30)
         n = js("+document.querySelector('#icefin-theme-root').getAttribute('data-mc-count')")
         check("#/list opens the poster wall with the library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "wall" and n > 0,
