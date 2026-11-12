@@ -2,14 +2,15 @@
   "schema": 1,
   "id": "plaza",
   "name": "Plaza",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Pages of rounded channels in three rows (more columns on wider screens, the neighbouring pages peeking at the sides with page arrows), each library an animated illustration under its name, Continue Watching a turning disc printed with the item's art, Next Up, and each favourite as a channel of its own. A curved bottom bar holds the clock in a notch, the date and two round buttons (settings, search). Selecting a channel zooms it into a framed preview card; Open leads to the channel's full menu (library grids, a Live TV guide, a disc rack, a seasons screen, search with an on-screen keyboard). Light grey and white with blue accents, pointer-first.",
   "styles": "styles.css",
   "scripts": [
     "kit.js",
     "art.js",
     "plaza.js",
-    "menus.js"
+    "menus.js",
+    "stock.js"
   ],
   "sounds": {
     "focus": "sounds/focus.wav",

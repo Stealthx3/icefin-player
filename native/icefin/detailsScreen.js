@@ -95,6 +95,9 @@
 .icefin-d-row.list { flex-direction: column; overflow: visible; gap: 0.2em; }
 .icefin-d-track { display: grid; grid-template-columns: 3em 1fr auto; gap: 1em; padding: 0.55em 1em; border-radius: 0.3em; outline: none; cursor: pointer; }
 .icefin-d-track .n, .icefin-d-track .t { color: inherit; opacity: 0.75; }
+.icefin-d-row[data-icefin-reorder] .icefin-d-track { grid-template-columns: 3em 1fr auto 2em; }
+.icefin-d-track .h { opacity: 0.6; cursor: grab; text-align: center; }
+.icefin-d-track.icefin-d-moving { background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); box-shadow: 0 0.4em 1em rgb(var(--icefin-color-background-channel) / 0.45); transform: scale(1.02); }
 .icefin-d-picker { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgb(var(--icefin-color-background-channel) / 0.7); }
 .icefin-d-picker-box { min-width: 30vw; max-width: 60vw; max-height: 70vh; overflow-y: auto; padding: 1.4em; border-radius: 0.6em; background: var(--icefin-color-surfaceRaised, var(--icefin-color-surface)); scrollbar-width: none; }
 .icefin-d-picker h2 { margin: 0 0 0.8em; font-size: 1.3em; font-weight: 500; }
@@ -479,16 +482,96 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 }
             } else if (item.Type === 'MusicAlbum' || item.Type === 'Playlist') {
                 let tracks = [];
-                try { tracks = (await client.getItems(uid, { ParentId: item.Id, SortBy: item.Type === 'Playlist' ? '' : 'ParentIndexNumber,IndexNumber,SortName', Fields: 'UserData', Limit: 500 })).Items || []; } catch (e) { /* none */ }
+                try {
+                    // a playlist's own endpoint gives each entry its PlaylistItemId (moving needs it)
+                    tracks = (item.Type === 'Playlist'
+                        ? await client.getJSON(client.getUrl(`Playlists/${item.Id}/Items`, { UserId: uid, Fields: 'UserData', Limit: 500 }))
+                        : await client.getItems(uid, { ParentId: item.Id, SortBy: 'ParentIndexNumber,IndexNumber,SortName', Fields: 'UserData', Limit: 500 })).Items || [];
+                } catch (e) { /* none */ }
                 if (tracks.length) {
                     const row = section('tracks', item.Type === 'Playlist' ? 'Items' : 'Tracks', 'list');
+                    // A playlist's items move (9.42): Menu on one (or its handle) lifts it, up/down carry it, OK or Menu
+                    // places it, Back puts it back.
+                    const movable = item.Type === 'Playlist' && tracks.every((t) => t.PlaylistItemId);
+                    if (movable) row.setAttribute('data-icefin-reorder', '');
+                    const order = () => [...row.querySelectorAll('.icefin-d-track')];
                     tracks.forEach((t, i) => {
                         const r = focusable(el('div', 'icefin-d-track'));
                         r.dataset.id = t.Id;
-                        r.append(el('span', 'n', t.IndexNumber != null ? String(t.IndexNumber) : String(i + 1)), el('span', '', t.Name), el('span', 't', t.RunTimeTicks ? clock(t.RunTimeTicks) : ''));
-                        r.addEventListener('click', () => { const m = pm(); if (m) m.play({ ids: tracks.map((x) => x.Id), startIndex: i, serverId: sid }); });
+                        r.icefinTrack = t;
+                        r.append(el('span', 'n', t.IndexNumber != null && item.Type !== 'Playlist' ? String(t.IndexNumber) : String(i + 1)), el('span', '', t.Name), el('span', 't', t.RunTimeTicks ? clock(t.RunTimeTicks) : ''));
+                        if (movable) {
+                            const h = el('span', 'h', '≡');
+                            h.setAttribute('aria-label', 'Move');
+                            h.addEventListener('click', (e) => { e.stopPropagation(); if (!S) return; if (!S.moving) lift(r); else drop(); });
+                            r.append(h);
+                        }
+                        r.addEventListener('click', () => {
+                            if (S && S.moving) { placeAt(r); drop(); return; }
+                            const rows = order(), m = pm();
+                            if (m) m.play({ ids: rows.map((x) => x.dataset.id), startIndex: rows.indexOf(r), serverId: sid });
+                        });
                         row.append(r);
                     });
+                    const renumber = () => order().forEach((x, k) => { x.querySelector('.n').textContent = String(k + 1); });
+                    const lift = (r) => {
+                        S.moving = { row: r, from: order().indexOf(r), list: row };
+                        r.classList.add('icefin-d-moving');
+                        row.setAttribute('data-icefin-moving', '');
+                        T.ctx.focus(r);
+                        T.ctx.sound('select');
+                    };
+                    const placeAt = (target) => {
+                        const m = S.moving, rows = order();
+                        if (!m || target === m.row) return;
+                        if (rows.indexOf(target) > rows.indexOf(m.row)) target.after(m.row); else target.before(m.row);
+                        renumber();
+                    };
+                    const step = (dir) => {
+                        const m = S.moving, rows = order(), k = rows.indexOf(m.row) + dir;
+                        if (k < 0 || k >= rows.length) return;
+                        placeAt(rows[k]);
+                        T.ctx.focus(m.row);
+                        T.ctx.sound('focus');
+                    };
+                    const drop = async (cancel) => {
+                        const m = S.moving;
+                        if (!m) return;
+                        S.moving = null;
+                        m.row.classList.remove('icefin-d-moving');
+                        row.removeAttribute('data-icefin-moving');
+                        const to = order().indexOf(m.row);
+                        if (cancel) {
+                            const rows = order().filter((x) => x !== m.row);
+                            if (rows[m.from]) rows[m.from].before(m.row); else row.append(m.row);
+                            renumber();
+                            T.ctx.focus(m.row);
+                            T.ctx.sound('back');
+                            return;
+                        }
+                        T.ctx.sound('select');
+                        if (to === m.from) return;
+                        try {
+                            await client.ajax({ type: 'POST', url: client.getUrl(`Playlists/${item.Id}/Items/${m.row.icefinTrack.PlaylistItemId}/Move/${to}`) });
+                            row.setAttribute('data-icefin-moved', String(Date.now()));
+                        } catch (e) {
+                            console.error('icefinTheme: playlist move', e);
+                            T.ctx.sound('error');
+                        }
+                    };
+                    if (movable) {
+                        S.reorder = (action) => {
+                            const f = T.ctx.focused();
+                            if (S.moving) {
+                                if (action === 'up' || action === 'down') { step(action === 'up' ? -1 : 1); return true; }
+                                if (action === 'enter' || action === 'select' || action === 'menu') { drop(); return true; }
+                                if (action === 'back') { drop(true); return true; }
+                                return true;
+                            }
+                            if (action === 'menu' && f && f.parentNode === row) { lift(f); return true; }
+                            return false;
+                        };
+                    }
                 }
             } else if (item.Type === 'MusicArtist') {
                 let albums = [];
@@ -539,12 +622,13 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
 
         return {
             onAction(action, ctx) {
+                if (S && S.reorder && S.reorder(action)) return true;
                 if (!S || !S.picker) return false;
                 if (action === 'up' || action === 'down') { ctx.move(action, S.picker.el); return true; }
                 if (action === 'left' || action === 'right') return true;  // a list: nothing beside it
                 return false;  // enter clicks the option; back closes the picker (onBack)
             },
-            onBack() { return closePicker(); },
+            onBack() { if (S && S.moving && S.reorder) return S.reorder('back'); return closePicker(); },
             async mount(root) {
                 ensureStyle();
                 const params = new URLSearchParams(location.hash.split('?')[1] || '');

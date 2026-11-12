@@ -26,6 +26,11 @@
         if (v.CollectionType === 'tvshows') return `#/tv?${q}`;
         if (v.CollectionType === 'music') return `#/music?${q}`;
         if (v.CollectionType === 'livetv') return `#/livetv?serverId=${sid}`;
+        if (v.CollectionType === 'homevideos' || v.CollectionType === 'photos') return `#/homevideos?${q}&name=${encodeURIComponent(v.Name || '')}`;
+        if (v.CollectionType === 'books') return `#/books?${q}&name=${encodeURIComponent(v.Name || '')}`;
+        if (v.CollectionType === 'playlists') return `#/playlists?serverId=${sid}`;
+        if (v.CollectionType === 'musicvideos') return `#/musicvideos?${q}&name=${encodeURIComponent(v.Name || '')}`;
+        if (v.CollectionType === 'boxsets') return `#/boxsets?${q}&name=${encodeURIComponent(v.Name || '')}`;
         return `#/home?pz=library&id=${v.Id}&kind=${P.kindOf(v.CollectionType)}&name=${encodeURIComponent(v.Name || '')}`;
     }
     function channels(views, favourites) {
@@ -34,8 +39,10 @@
             id: 'library-' + v.Id, kind: P.kindOf(v.CollectionType), label: v.Name, view: v, menu: libraryMenu(v),
             fetch: () => (v.CollectionType === 'livetv' ? Promise.resolve([])
                 // Collections: a random handful of the collections themselves, new each time (user feedback).
+                // (those with art first; a server whose collections have none still shows them)
                 : v.CollectionType === 'boxsets' ? P.safe(c.getItems(uid, { ParentId: v.Id, IncludeItemTypes: 'BoxSet', Recursive: true, SortBy: 'Random',
-                    ImageTypes: 'Primary', Limit: 6, Fields: P.FIELDS })).then(P.items)
+                    ImageTypes: 'Primary', Limit: 6, Fields: P.FIELDS })).then(P.items).then((items) => (items.length ? items
+                    : P.safe(c.getItems(uid, { ParentId: v.Id, IncludeItemTypes: 'BoxSet', Recursive: true, SortBy: 'Random', Limit: 6, Fields: P.FIELDS })).then(P.items)))
                 : P.safe(c.getLatestItems({ userId: uid, parentId: v.Id, Limit: 6, Fields: P.FIELDS })).then(P.items))
         }));
         list.push(
@@ -640,6 +647,8 @@
             S.clockTimer = setInterval(tick, 15000);
             barEl.append(clock, date, settings, search);
             root.append(stage, barEl);
+            // Music playing: its capsule over the top of the page (P.miniPlayer, menus.js); up from the channels reaches it.
+            if (P.miniPlayer) S.mini = P.miniPlayer(root, 'pz-mini');
             S.onResize = () => {
                 if (!S || !S.slots) return;
                 if (S.drag) drop(null);
@@ -674,6 +683,7 @@
             if (S.press) clearTimeout(S.press.timer);
             if (S.drag && S.drag.edge) clearTimeout(S.drag.edge.timer);
             clearInterval(S.clockTimer);
+            if (S.mini) S.mini.stop();
             window.removeEventListener('resize', S.onResize);
             window.removeEventListener('pointermove', drag);
             window.removeEventListener('pointerup', release);

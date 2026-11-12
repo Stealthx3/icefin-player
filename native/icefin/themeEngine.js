@@ -24,6 +24,7 @@
     let current = null;       // {route, screen}
     let actionHooks = [];     // engine capabilities (capabilities.js) that take actions first: (action) => handled
     let resetHooks = [];      // called when the theme changes, so capabilities drop their state
+    let routeHooks = [];      // called after every routing decision (themed screen or jellyfin-web's page)
 
     function route() {
         const h = (location.hash || '#/').split('?')[0];
@@ -176,6 +177,10 @@
     let signInWait = null;
 
     function route_() {
+        routeOnce();
+        for (const fn of routeHooks) { try { fn({ route: route(), screen: !!current, theme: !!pkg }); } catch (e) { console.error('icefinTheme: route hook', e); } }
+    }
+    function routeOnce() {
         const path = route();
         // "?icefin=stock" on any route shows jellyfin-web's own page, so plugin UI a themed screen replaces (home
         // sections, for example) stays one step away.
@@ -450,7 +455,9 @@
             hasScreen: () => !!current,
             sound: (n) => sound(n),
             addActionHook(fn) { actionHooks.push(fn); return () => { actionHooks = actionHooks.filter((f) => f !== fn); }; },
-            onReset(fn) { resetHooks.push(fn); }
+            onReset(fn) { resetHooks.push(fn); },
+            // After every routing decision: {route, screen (a themed screen is up), theme (one is active)}
+            onRoute(fn) { routeHooks.push(fn); }
         },
         stoodDown: () => !!window.icefinPluginRuntime,
         screens: () => Object.keys(screens)
