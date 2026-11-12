@@ -117,11 +117,23 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   `hotplug`, `transport/<codec>` (AC-3, E-AC-3, DTS, TrueHD bit-exact with the right non-audio/HBR/channel
   format), `pcm/ac3` (decoded control). Results in `~/avsim/results/`. DTS-HD MA has no free encoder: drop a
   sample at `~/avsim/samples/dtshd.mka` to add its row.
+- **Icefin in the client (PLAN 3.9, `icefin.py`):** `matrix.py --player icefin --app APP` runs the native lab
+  build inside the client (Xvfb, ALSA to the HDMI output, every passthrough format on), driven over DevTools
+  through an SSH tunnel, and plays each sample through Icefin's own player and per-track decision. Rows:
+  `icefin/<profile>/<codec>` for every `expect` entry (the capture bit-exact or PCM as expected, Icefin's
+  decision line agreeing, the track playing to the end), `icefin/hotplug-reread` (each decision used the new
+  receiver's ELD, without a restart), `icefin/standby` (invalid ELD: the remembered one, marked stale, still
+  bitstreams) and `icefin/unplug` (unplugged mid-track and for a whole track: nothing stalls). The client needs
+  Icefin's runtime packages: `avsim.sh icefin-image APP` makes a second base disk with them (once per
+  dependency change), and `AVSIM_BASE=avsim-icefin` starts the client from it.
 - **Run:**
   ```
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh build'     # once, ~10 min
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh image'     # once: download, verify, provision
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh up && bash tests/icefin/avsim/avsim.sh matrix; bash tests/icefin/avsim/avsim.sh down'
+  # Icefin's own rows (3.9): the Icefin disk once, then the client from it with more memory for Qt WebEngine
+  scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh icefin-image ~/build/src/icefin-player'
+  scripts/lab.sh run 'export AVSIM_MEM_MB=4096 AVSIM_BASE=avsim-icefin; bash tests/icefin/avsim/avsim.sh up && bash tests/icefin/avsim/avsim.sh matrix --player icefin --app ~/build/src/icefin-player; bash tests/icefin/avsim/avsim.sh down'
   ```
 - **Watching:** the client has no display. `avsim.sh console` shows its serial log, and the commands run
   through `lab-run`, so they show on `lab-icefin-main`'s console in virt-manager.

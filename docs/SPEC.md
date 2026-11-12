@@ -236,7 +236,7 @@ The audio work makes passthrough decisions from what the receiver actually suppo
 2. Read `/proc/asound/card<N>/eld#<D>.<P>` (readable inside the Flatpak) and parse `eld_valid`, `monitor_name` and the short audio descriptors: coding types AC-3, DTS, E-AC-3, DTS-HD and MLP (TrueHD), plus LPCM channel count.
 3. Re-read when mpv's `audio-device-list` changes, when Settings opens, and before each playback. If `eld_valid` is 0 (receiver off or in standby), keep the last known result and mark it stale in Settings.
 
-**Per-track decision at load.** A track's codec is passed through only if all of these hold: the user enabled it, the receiver's ELD lists it, and the backend can carry it. Otherwise:
+**Per-track decision at load.** A track's codec is passed through only if all of these hold: the user enabled it, the receiver's ELD lists it, the HDMI output can open its carrier, and the backend can carry it. The carrier check exists because Linux opens an HDMI PCM only at the rates and channel count the ELD's audio descriptors list. AC-3 and DTS need 48 kHz stereo, E-AC-3 needs 192 kHz stereo, and TrueHD and DTS-HD need 192 kHz on eight channels (HBR). A soundbar that lists E-AC-3 but nothing above 48 kHz can't take an E-AC-3 bitstream, and mpv stalls on the refused open instead of failing (found in the Virtual AV tier, PLAN 3.9). Otherwise:
 
 - DTS-HD MA on a receiver without DTS-HD sends the DTS core (mpv's `dts` instead of `dts-hd`).
 - TrueHD or DTS-HD the backend can't carry decodes to multichannel LPCM (up to 7.1 if the ELD allows).
