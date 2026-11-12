@@ -81,7 +81,7 @@ def main():
             return page.send("Runtime.evaluate", expression=expr, userGesture=True, returnByValue=True).get("result", {}).get("value")
 
         def fullscreen():
-            # the window itself (jmpInfo's main.fullscreen setting is not reliable: it does not go back to false)
+            # the window itself (jmpInfo's main.fullscreen follows it too since the WindowManager fix; fullscreen_setting.py)
             return bool(js("new Promise(r => window.api.window.isFullScreen(r))"))
 
         def log_since(pos):
