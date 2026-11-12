@@ -98,6 +98,31 @@ def main():
         check("favourites: Enter opens its details", True)
         js(f"window.ApiClient.updateFavoriteStatus(window.ApiClient.getCurrentUserId(), '{movie}', false).then(() => true)")
 
+        # ---- now playing and lyrics (ui.player.controls) ----
+        song = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Audio', Recursive: true, Limit: 1}).then(r => (r.Items[0] || {}).Id || '')")
+        if song:
+            js(f"window.icefinTheme.ctx.play({{ids: ['{song}'], serverId: window.ApiClient.serverId()}}); true")
+            time.sleep(4)
+            js("location.hash = '#/queue'; true")
+            page.wait_for("(document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc') === 'nowplaying' && document.querySelector('#icefin-theme-root').hasAttribute('data-mc-ready')", timeout=20)
+            time.sleep(1)
+            check("now playing: the song's title", len(js("document.querySelector('.mc-np-title').textContent") or "") > 0)
+            check("now playing: progress moves", float(js("parseFloat(document.querySelector('.mc-np-bar .mc-p-fill').style.width) || 0")) > 0)
+            r0 = js("[...document.querySelectorAll('.mc-np-actions .mc-btn')].find(b => b.textContent.startsWith('Repeat')).textContent")
+            js("[...document.querySelectorAll('.mc-np-actions .mc-btn')].find(b => b.textContent.startsWith('Repeat')).click(); true")
+            time.sleep(0.8)
+            r1 = js("[...document.querySelectorAll('.mc-np-actions .mc-btn')].find(b => b.textContent.startsWith('Repeat')).textContent")
+            check("now playing: Repeat steps", r0 != r1, f"{r0} -> {r1}")
+            js("window.icefinTheme.ui.player.controls().setRepeat('RepeatNone'); true")
+            shot("nowplaying.png")
+            js("location.hash = '#/lyrics'; true")
+            page.wait_for("(document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc') === 'lyrics'", timeout=15)
+            time.sleep(3)
+            check("lyrics: lines or a note", js("document.querySelectorAll('.mc-ly-line').length > 0 || !!document.querySelector('.mc-ly-lines .mc-note')") is True,
+                  f"{js('document.querySelectorAll(\'.mc-ly-line\').length')} lines")
+            shot("lyrics.png")
+            js("window.icefinPlaybackManager.stop(); true")
+            time.sleep(2)
         # ---- Live TV ----
         js("location.hash = '#/livetv'; true")
         page.wait_for("(document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === 'guide'", timeout=30)

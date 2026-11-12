@@ -237,7 +237,9 @@
     const player = {
         state: () => snapshot(),
         // fn(state) on every change of position or state, about four times a second while the controls are mounted
-        on(fn) { subs.add(fn); return () => subs.delete(fn); },
+        // (subscriptions made by the controls over video end with them; ones made elsewhere, ui.player.controls(), last
+        // until their unsubscribe is called)
+        on(fn) { subs.add(fn); if (mounted) mounted.subs.add(fn); return () => subs.delete(fn); },
         playPause: () => run((m, p) => m.playPause(p)),
         play: () => run((m, p) => m.unpause(p)),
         pause: () => run((m, p) => m.pause(p)),
@@ -295,7 +297,7 @@
     // ---- the screen over #/video ----
     let last = '';
     function tick() {
-        if (!mounted) return;
+        if (!subs.size) return;
         const s = snapshot();
         const sig = JSON.stringify([s.active, s.paused, Math.round(s.position / 250), s.duration, s.itemId, s.audio.map((t) => t.selected), s.subtitleIndex,
             s.rate, s.aspect, s.volume, s.muted, s.repeat, s.archive.map((x) => x.id + (x.label || x.countdown || '')), s.segments.length, s.subtitleOffset]);
@@ -303,6 +305,7 @@
         last = sig;
         for (const fn of [...subs]) safe(() => fn(s));
     }
+    setInterval(tick, 250);
     function sessionKey() {
         const m = pm(), p = cur();
         if (!m || !p) return null;
@@ -347,7 +350,7 @@
             // are up. jellyfin-web's video page, which normally keeps its own ground clear, is hidden under the screen,
             // so the document's own background (and a theme's body ground) would show instead of the picture.
             transparent(true);
-            mounted = { el: root, timer: setInterval(tick, 250) };
+            mounted = { el: root, subs: new Set() };
             last = '';
             try {
                 spec.mount(root, player, ctx);
@@ -361,9 +364,8 @@
         unmount() {
             transparent(false);
             if (!mounted) return;
-            clearInterval(mounted.timer);
+            for (const fn of mounted.subs) subs.delete(fn);
             mounted = null;
-            subs.clear();
             safe(() => spec && spec.unmount && spec.unmount());
         },
         onAction: (action, ctx) => !!(spec && spec.onAction && safe(() => spec.onAction(action, player, ctx), false)),
@@ -383,6 +385,9 @@
             return E.registerScreen('#/video', screen);
         },
         // For tests and diagnostics: is the theme drawing the controls, and if not, why
+        // The same player, anywhere (a theme's now playing page, a music bar): state(), on(fn) and the commands; null-state
+        // ({active: false}) while nothing plays. The web fallback applies only to the controls over video.
+        controls: () => player,
         status: () => ({ themed: !!spec, session: session ? session.key : null, fallback: session && session.fallback ? session.fallback.reason : null }),
         archive: () => ARCHIVE.map((a) => ({ id: a.id, kind: a.kind }))
     };
