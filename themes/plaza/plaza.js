@@ -4,6 +4,9 @@
 // clock, the date under it, and two round buttons (settings, search). Channels: each library (an animated illustration
 // of its kind under its name, with its newest art coming through like a banner), Continue Watching (a turning disc
 // printed with the item's art), Next Up, then each favourite as a channel of its own, then empty slots.
+// Channels move like on the target (user request 2026-11-11): hold a channel (or drag it) with the pointer, or press Menu
+// on it with a controller; it lifts and follows, the page edges turn the page, and dropping it on a slot moves it there
+// (swapping with the channel already there). Back cancels. The order, gaps included, is kept per user on this device.
 // Selecting a channel zooms it into a framed card, its preview (pz-card): Home goes back, Open goes to the channel's
 // full menu (menus.js), and a favourite's Play starts it. Geometry is in px at 1080 lines (var(--pz)), from the
 // user's own reference walk of the target (docs/themes/references/plaza.json).
@@ -44,6 +47,36 @@
         return list;
     }
 
+    // ---- the order: slot ids (null for an empty slot) per user, on this device ----
+    const orderKey = () => 'icefin.plaza.order.' + P.uid();
+    function loadOrder() {
+        try { const v = JSON.parse(localStorage.getItem(orderKey()) || 'null'); return Array.isArray(v) ? v : null; } catch (e) { return null; }
+    }
+    function saveOrder(slots) {
+        const ids = slots.map((c) => (c ? c.id : null));
+        while (ids.length && ids[ids.length - 1] === null) ids.pop();
+        try { localStorage.setItem(orderKey(), JSON.stringify(ids)); } catch (e) { /* the order just isn't kept */ }
+    }
+    // Saved slots first; a channel the order doesn't know yet (a new library or favourite) takes the first empty slot.
+    function arrange(list) {
+        const order = loadOrder();
+        if (!order) return [...list];
+        const byId = new Map(list.map((c) => [c.id, c]));
+        const used = new Set();
+        const slots = order.map((id) => {
+            const c = id && byId.get(id);
+            if (!c || used.has(c)) return null;
+            used.add(c);
+            return c;
+        });
+        for (const c of list) {
+            if (used.has(c)) continue;
+            const k = slots.indexOf(null);
+            if (k >= 0) slots[k] = c; else slots.push(c);
+        }
+        return slots;
+    }
+
     let S = null;  // the home while it is up
 
     // ---- tiles ----
@@ -51,7 +84,7 @@
         const t = el('div', 'pz-tile' + (ch ? ' pz-k-' + ch.kind : ' empty'));
         t.plazaChannel = ch || null;
         t.addEventListener('click', () => {
-            if (!S || S.card || S.busy) return;
+            if (!S || S.card || S.busy || S.drag || Date.now() - (S.dropped || 0) < 400) return;
             const page = Number(t.getAttribute('data-pz-page'));
             if (page !== S.page) { turn(page); return; }  // a channel peeking from the next page turns to it
             if (!ch) return;
@@ -59,6 +92,7 @@
             select(t);
         });
         if (!ch) { t.append(el('div', 'pz-tile-mark', 'icefin')); return t; }
+        t.addEventListener('pointerdown', (e) => press(t, e));
         t.setAttribute('data-pz-channel', ch.id);
         t.setAttribute('aria-label', ch.label);
         const screen = el('div', 'pz-screen');
@@ -106,11 +140,16 @@
         drawBar(ref);
     }
     function fill(list) {
-        S.list = list;
+        S.channels = list;
+        place(arrange(list));
+    }
+    // Draws the slots (channels and gaps) page by page.
+    function place(slots) {
         layout();
         const per = S.cols * ROWS;
-        const slots = [...list];
         while (slots.length % per || !slots.length) slots.push(null);  // empty slots, like the target
+        S.slots = slots;
+        S.list = slots.filter(Boolean);
         S.pages = slots.length / per;
         S.track.textContent = '';
         S.tiles = [];
@@ -120,12 +159,14 @@
             for (const ch of slots.slice(p * per, p * per + per)) {
                 const t = tile(ch);
                 t.setAttribute('data-pz-page', String(p));
+                t.setAttribute('data-pz-slot', String(S.tiles.length));
                 S.tiles.push(t);
                 page.append(t);
             }
             S.track.append(page);
         }
-        S.root.setAttribute('data-pz-ready', String(list.length));
+        S.root.setAttribute('data-pz-ready', String(S.list.length));
+        if (S.drag && S.tiles[S.drag.from]) S.tiles[S.drag.from].classList.add('pz-lifted');
         show(Math.min(S.page || 0, S.pages - 1), false);
     }
     // Only the current page's channels take focus: arrows past its edge turn the page (onAction).
@@ -146,12 +187,120 @@
         S.arrows[1].classList.toggle('pz-hidden', p >= S.pages - 1);
     }
     function turn(p, focusIndex) {
+        if (S && S.drag && p === S.pages) place(S.slots.concat(new Array(S.cols * ROWS).fill(null)));  // a fresh page to move onto
         if (!S || p < 0 || p >= S.pages || p === S.page) return false;
         show(p, true);
         T.ctx.sound('navigate');
         const t = S.tiles[p * S.cols * ROWS + (focusIndex || 0)];
         if (t) T.ctx.focus(t);
         return true;
+    }
+
+    // ---- moving a channel ----
+    const HOLD_MS = 450, SLOP = 12, EDGE_MS = 650;
+    function press(t, e) {
+        if (!S || S.card || S.busy || S.drag || e.button !== 0) return;
+        if (Number(t.getAttribute('data-pz-page')) !== S.page) return;
+        const i = S.tiles.indexOf(t);
+        const pt = { x: e.clientX, y: e.clientY };
+        S.press = { i, pt, timer: setTimeout(() => { if (S && S.press) { S.press = null; lift(i, 'pointer', pt); } }, HOLD_MS) };
+    }
+    function lift(i, mode, pt) {
+        const t = S.tiles[i], ch = S.slots[i];
+        if (!t || !ch || S.card || S.busy || S.drag) return false;
+        const r = t.getBoundingClientRect(), base = S.root.getBoundingClientRect();
+        const ghost = t.cloneNode(true);
+        ghost.className = t.className.replace(/\b(icefin-focused|pz-off-page)\b/g, '') + ' pz-ghost pz-ghost-' + mode;
+        ghost.removeAttribute('data-icefin-focus');
+        ghost.removeAttribute('data-pz-slot');
+        ghost.setAttribute('aria-hidden', 'true');
+        Object.assign(ghost.style, { left: `${r.left - base.left}px`, top: `${r.top - base.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+        const hint = el('div', 'pz-move-hint');
+        hint.append(el('span', 'pz-move-name', ch.label),
+            el('span', '', mode === 'pad' ? 'Arrows move it · OK places it · Back cancels' : 'Drop it on a slot · the sides turn the page'));
+        S.root.append(ghost, hint);
+        t.classList.add('pz-lifted');
+        S.root.setAttribute('data-pz-moving', ch.id);
+        S.drag = { from: i, ch, ghost, hint, mode, over: i, dx: pt ? pt.x - r.left : r.width / 2, dy: pt ? pt.y - r.top : r.height / 2, edge: null };
+        T.ctx.sound('select');
+        if (mode === 'pad') follow();
+        return true;
+    }
+    function target(i) {
+        for (const x of S.tiles) x.classList.toggle('pz-drop', S.tiles.indexOf(x) === i && i !== S.drag.from);
+        S.drag.over = i;
+    }
+    // Controller: the lifted channel rides over the focused slot.
+    function follow() {
+        const d = S && S.drag;
+        if (!d) return;
+        const t = T.ctx.focused();
+        const i = S.tiles.indexOf(t);
+        if (i < 0) return;
+        const r = t.getBoundingClientRect(), base = S.root.getBoundingClientRect();
+        Object.assign(d.ghost.style, { left: `${r.left - base.left}px`, top: `${r.top - base.top}px` });
+        target(i);
+    }
+    // Pointer: the channel follows it; held at a side, the page turns.
+    function drag(e) {
+        if (!S) return;
+        if (S.press && !S.drag && Math.hypot(e.clientX - S.press.pt.x, e.clientY - S.press.pt.y) > SLOP) {
+            const p = S.press; clearTimeout(p.timer); S.press = null;
+            lift(p.i, 'pointer', p.pt);
+        }
+        const d = S.drag;
+        if (!d || d.mode !== 'pointer') return;
+        const base = S.root.getBoundingClientRect();
+        Object.assign(d.ghost.style, { left: `${e.clientX - d.dx - base.left}px`, top: `${e.clientY - d.dy - base.top}px` });
+        const under = document.elementsFromPoint(e.clientX, e.clientY).find((x) => x.classList && x.classList.contains('pz-tile') && !x.classList.contains('pz-ghost'));
+        const i = under && Number(under.getAttribute('data-pz-page')) === S.page ? S.tiles.indexOf(under) : -1;
+        target(i);
+        const side = (e.clientX - base.left) / base.width;
+        const dir = side < 0.07 ? -1 : side > 0.93 ? 1 : 0;
+        if (dir !== (d.edge && d.edge.dir)) {
+            if (d.edge) clearTimeout(d.edge.timer);
+            d.edge = dir ? { dir, timer: setTimeout(function again() {
+                if (!S || S.drag !== d || !d.edge || d.edge.dir !== dir) return;
+                if (turn(S.page + dir)) d.edge.timer = setTimeout(again, EDGE_MS + 450);
+            }, EDGE_MS) } : null;
+        }
+    }
+    function release() {
+        if (!S) return;
+        if (S.press) { clearTimeout(S.press.timer); S.press = null; }
+        const d = S.drag;
+        if (!d || d.mode !== 'pointer') return;
+        S.dropped = Date.now();
+        drop(d.over);
+    }
+    function endDrag() {
+        const d = S.drag;
+        if (!d) return null;
+        if (d.edge) clearTimeout(d.edge.timer);
+        d.ghost.remove();
+        d.hint.remove();
+        for (const x of S.tiles) x.classList.remove('pz-lifted', 'pz-drop');
+        S.root.removeAttribute('data-pz-moving');
+        S.drag = null;
+        return d;
+    }
+    // Drops the channel on slot j: an empty slot takes it, a channel there swaps with it. Elsewhere it goes back.
+    function drop(j) {
+        const d = endDrag();
+        if (!d) return;
+        const slots = S.slots.slice();
+        const moved = j != null && j >= 0 && j !== d.from && j < slots.length;
+        if (moved) { slots[d.from] = slots[j] || null; slots[j] = d.ch; }
+        while (slots.length && !slots[slots.length - 1]) slots.pop();  // pages opened for the move and left empty go again
+        place(slots);
+        if (moved) saveOrder(S.slots);
+        const at = S.tiles[moved ? j : d.from];
+        if (at) {
+            const pg = Number(at.getAttribute('data-pz-page'));
+            if (pg !== S.page) show(pg, false);
+            T.ctx.focus(at);
+        }
+        T.ctx.sound(moved ? 'select' : 'back');
     }
 
     // ---- the bottom bar: a flat top that dips into a centred notch for the clock; the notch keeps its size ----
@@ -418,6 +567,25 @@
             P.sawAction();
             if (action === 'search') { ctx.navigate('#/search'); return true; }
             if (S.busy) return true;
+            if (S.drag) {
+                const d = S.drag;
+                if (action === 'enter' || action === 'select' || action === 'menu') { drop(d.mode === 'pad' ? S.tiles.indexOf(ctx.focused()) : d.over); return true; }
+                if (action === 'back' || action === 'home') { drop(null); return true; }
+                if (['up', 'down', 'left', 'right'].includes(action)) {
+                    const i = S.tiles.indexOf(ctx.focused()), per = S.cols * ROWS;
+                    const k = i % per, col = k % S.cols, row = Math.floor(k / S.cols);
+                    if (action === 'left' && col === 0 && S.page > 0) turn(S.page - 1, row * S.cols + S.cols - 1);
+                    else if (action === 'right' && col === S.cols - 1) turn(S.page + 1, row * S.cols);
+                    else if (i >= 0) ctx.move(action, S.tiles[i].parentNode);
+                    follow();
+                    setTimeout(follow, ui.motion.duration(470));  // after a page turn settles
+                }
+                return true;
+            }
+            if (action === 'menu' && !S.card) {
+                const i = S.tiles.indexOf(ctx.focused());
+                if (i >= 0 && S.slots[i]) { lift(i, 'pad'); return true; }
+            }
             if (S.card) {
                 const btns = S.card.buttons || [];
                 const i = btns.indexOf(ctx.focused());
@@ -437,7 +605,7 @@
             }
             return false;
         },
-        onBack() { return closeCard(); },
+        onBack() { if (S && S.drag) { drop(null); return true; } return closeCard(); },
         mount(root) {
             root.setAttribute('data-pz', 'home');
             ui.pointerFirst(true);
@@ -473,12 +641,16 @@
             barEl.append(clock, date, settings, search);
             root.append(stage, barEl);
             S.onResize = () => {
-                if (!S || !S.list) return;
+                if (!S || !S.slots) return;
+                if (S.drag) drop(null);
                 const idx = S.tiles.indexOf(T.ctx.focused());
-                fill(S.list);
+                place(S.slots.slice());
                 if (idx >= 0 && S.tiles[idx]) T.ctx.focus(S.tiles[idx]);
             };
             window.addEventListener('resize', S.onResize);
+            window.addEventListener('pointermove', drag);
+            window.addEventListener('pointerup', release);
+            window.addEventListener('pointercancel', release);
             root.plazaFill = (list) => fill(list);
             layout();
 
@@ -499,8 +671,13 @@
         unmount() {
             if (!S) return;
             if (S.card && S.card.preview) S.card.preview.stop();
+            if (S.press) clearTimeout(S.press.timer);
+            if (S.drag && S.drag.edge) clearTimeout(S.drag.edge.timer);
             clearInterval(S.clockTimer);
             window.removeEventListener('resize', S.onResize);
+            window.removeEventListener('pointermove', drag);
+            window.removeEventListener('pointerup', release);
+            window.removeEventListener('pointercancel', release);
             ui.pointerFirst(false);
             S = null;
         }
