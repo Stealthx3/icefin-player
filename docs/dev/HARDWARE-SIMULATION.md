@@ -51,6 +51,10 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 - **Can't show:** the TV's response. Needs checking first: Mutter's headless HDR support, and that Gamescope's
   headless backend runs under the lab's software Vulkan.
 - **Cost:** two or three days, most of it finding out what each compositor supports headless.
+- **Checked 2026-11-12:** Mutter 48.7 (Debian 13) headless with `--virtual-monitor` offers that monitor only the
+  default colour mode (`supported-color-modes` [0], no BT.2100), so a Mutter HDR display can't be simulated with
+  it; Mutter's protocol support was probed in spike 2.3. Gamescope isn't packaged in Debian 13: it needs a build
+  from Valve's source in the lab, which waits on the user's OK.
 
 ### V. A VA-API device for the DMA-BUF import path (PLAN 5.3)
 The lab's virtual GPU has no video decoder, so Icefin's VA-API zero-copy path (AMD and Intel) can't run there.

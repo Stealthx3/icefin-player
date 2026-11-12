@@ -39,8 +39,16 @@ Icefin reads controllers through SDL3 (Client Settings → Controllers shows wha
   `steam-devices` package (Fedora, Bazzite, Arch, Debian and Ubuntu all have it), or Steam's udev rules.
 - **Xbox Wireless Adapter (USB dongle)**: needs the `xone` driver on the host. Xbox pads over USB or Bluetooth work
   with the kernel's own drivers.
-- **Steam Deck** and **Steam Input**: when Icefin runs from Steam, Steam takes the physical pad and offers a virtual
-  one, and each press should arrive once. Steam handling is still being finished (PLAN 7.4).
+- **Steam Deck** and **Steam Input**: when Icefin runs from Steam (game mode, or a non-Steam shortcut on the
+  desktop), Steam takes the physical pad and offers a virtual one, so each press arrives once. Button prompts follow
+  the pad Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes).
+- **Steam running on the desktop, Icefin started from the app menu**: Steam's desktop layout also turns pad presses
+  into keys (D-pad to arrows, A to Enter, B to Escape). Icefin notices a key and the same pad press arriving together
+  and drops the second one, so nothing happens twice; typing on a keyboard is never affected.
+- **Recommended Steam layout** for Icefin as a non-Steam game: in its controller settings, pick Steam's *Gamepad with
+  Mouse Trackpad* template (the Deck's right trackpad becomes the mouse), then bind the back grips: L4 to **View**
+  (Home in Icefin; hold it for the theme's overlay panel) and R4 to **X** (the menu, with the item's details and
+  options). Leave the Steam/Guide button to Steam.
 - **Wii Remote**: meant to work as a pointer through the kernel's `hid-wiimote` driver. Not tested yet.
 
 ## Audio passthrough to a receiver
@@ -103,5 +111,6 @@ so they test logic and the web UI, not picture or sound. "HTPC" means the real-h
 | Exclusive ALSA | Lab: device reservation against PipeWire. Receiver: pending (PLAN 3.8) |
 | Xbox-style controllers | Lab: virtual pad through SDL3 |
 | PlayStation, Nintendo, Steam Deck controllers | Not tested yet (PLAN 7.6) |
+| Steam Input (virtual pad glyphs, desktop-layout guard) | Lab: virtual Steam pad and simulated desktop layout; real Steam in the beta (C2, C3, C5) |
 | Plugins: Playback Reporting, Home Screen Sections, Plugin Pages, JavaScript Injector, File Transformation, Intro Skipper, Trakt, LDAP | Lab: present and unchanged with the theme engine off, Baseline, and a styled theme |
 | SSO Authentication | Lab on 10.11; no build for 12.4 yet |
