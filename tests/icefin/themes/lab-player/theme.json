@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "lab-player",
+  "name": "Lab Player (test fixture)",
+  "version": "1.0.0",
+  "description": "Draws minimal theme-native player controls through ui.player (D30, PLAN 9.45) so tests can drive them. Not a real theme.",
+  "scripts": ["player.js"]
+}
