@@ -342,16 +342,18 @@
         ]
     });
 
-    // What's playing (music): a capsule with the record, the title, the progress and the transport. The Music menu shows
-    // it under its grid, and the home above the bar (9.42), while music plays. Returns {stop()}.
+    // What's playing (music): one wide capsule, on the home (9.44; every other screen has the Now playing pill in its
+    // head): the record, the title and the transport, with the progress as a glowing line along its foot from the
+    // record's left edge. Pointing at the line shows the grabber; a click or a drag seeks. Returns {el, stop()}.
     P.miniPlayer = (host, cls) => {
         const np = el('div', 'pz-nowplaying' + (cls ? ' ' + cls : ''));
-        const rec = el('div', 'pz-np-record'), text = el('div', 'pz-np-text'), bar = el('div', 'pz-progress pz-np-bar'), fillEl = el('div');
-        bar.append(fillEl);
-        // drawn icons: the transport symbols aren't in every font
+        const rec = el('div', 'pz-np-record'), text = el('div', 'pz-np-text');
+        const line = el('div', 'pz-np-line'), fillEl = el('div', 'pz-np-fill'), dot = el('div', 'pz-np-dot');
+        line.append(fillEl, dot);
         const ICON = {
             prev: '<path d="M6 5v14M19 5 9 12l10 7z"/>', next: '<path d="M18 5v14M5 5l10 7-10 7z"/>',
-            playpause: '<path d="M4 5l8 7-8 7z"/><path d="M14 5h2.5v14H14zM19 5h2.5v14H19z"/>', open: '<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/>'
+            playpause: '<path d="M4 5l8 7-8 7z"/><path d="M14 5h2.5v14H14zM19 5h2.5v14H19z"/>', open: '<ellipse cx="6.2" cy="17.6" rx="3.2" ry="2.4" transform="rotate(-22 6.2 17.6)" stroke="none"/><ellipse cx="17.2" cy="15.4" rx="3.2" ry="2.4" transform="rotate(-22 17.2 15.4)" stroke="none"/>'
+                + '<path d="M8.9 16.8V6.4M19.9 14.6V4.2" fill="none" stroke-width="1.9" stroke-linecap="round"/><path d="M8.9 5.9 19.9 3.6v3.4L8.9 9.3z" stroke="none"/>'
         };
         const btn = (icon, aria, go) => {
             const b = P.focusable(el('div', 'pz-np-btn'));
@@ -363,9 +365,19 @@
         const pm = () => T.ctx.nowPlaying();
         const ctl = (fn) => { const n = pm(); if (n && n.player) try { fn(n.player); } catch (e) { /* the player went away */ } };
         const open = btn('open', 'Now playing', () => T.ctx.navigate('#/queue'));
-        np.append(rec, text, bar, btn('prev', 'Previous', () => ctl((p) => p.previousTrack && p.previousTrack())),
-            btn('playpause', 'Play or pause', () => ctl((p) => (p.paused && p.paused() ? p.unpause() : p.pause()))), btn('next', 'Next', () => ctl((p) => p.nextTrack && p.nextTrack())), open);
+        np.append(rec, text, btn('prev', 'Previous', () => ctl((p) => p.previousTrack && p.previousTrack())),
+            btn('playpause', 'Play or pause', () => ctl((p) => (p.paused && p.paused() ? p.unpause() : p.pause()))), btn('next', 'Next', () => ctl((p) => p.nextTrack && p.nextTrack())), open, line);
         host.append(np);
+        let dur = 0, dragging = false;
+        const show = (f) => { const pc = `${Math.max(0, Math.min(1, f)) * 100}%`; fillEl.style.width = pc; dot.style.left = pc; };
+        // seeking: the line (with a taller zone to point at) takes clicks and drags
+        const frac = (e) => { const r = line.getBoundingClientRect(); return (e.clientX - r.left) / r.width; };
+        const seek = (f) => ctl((p) => { if (dur && p.currentTime) p.currentTime(Math.max(0, Math.min(1, f)) * dur); });
+        line.addEventListener('pointerdown', (e) => { if (!dur) return; dragging = true; line.setPointerCapture(e.pointerId); np.classList.add('pz-np-seeking'); show(frac(e)); e.preventDefault(); });
+        line.addEventListener('pointermove', (e) => { if (dragging) show(frac(e)); });
+        const end = (e) => { if (!dragging) return; dragging = false; np.classList.remove('pz-np-seeking'); seek(frac(e)); T.ctx.sound('select'); };
+        line.addEventListener('pointerup', end);
+        line.addEventListener('pointercancel', () => { dragging = false; np.classList.remove('pz-np-seeking'); });
         const tick = () => {
             const n = pm();
             const it = n && n.item;
@@ -376,10 +388,14 @@
             text.textContent = '';
             text.append(el('b', '', it.Name || ''), document.createTextNode(` — ${(it.Artists || [])[0] || it.AlbumArtist || ''}`));
             P.bg(rec, P.posterArt(it, 200));
-            try { const pos = n.player.currentTime ? n.player.currentTime() : 0, dur = n.player.duration ? n.player.duration() : 0; fillEl.style.width = dur ? `${Math.min(100, pos / dur * 100)}%` : '0%'; } catch (e) { fillEl.style.width = '0%'; }
+            let paused = false;
+            try { paused = !!(n.player.paused && n.player.paused()); } catch (e) { /* the player went away */ }
+            np.classList.toggle('pz-np-paused', paused);
+            if (dragging) return;
+            try { const pos = n.player.currentTime ? n.player.currentTime() : 0; dur = (n.player.duration ? n.player.duration() : 0) || 0; show(dur ? pos / dur : 0); } catch (e) { show(0); }
         };
         tick();
-        const timer = setInterval(tick, 1000);
+        const timer = setInterval(tick, 500);
         return { el: np, stop() { clearInterval(timer); np.remove(); } };
     };
 
@@ -442,8 +458,7 @@
         return b;
     };
 
-    // Music: albums, artists, songs, playlists and genres, with what is playing in a bar under the grid.
-    let nowTimer = null;
+    // Music: albums, artists, songs, playlists and genres (what is playing shows in the head's Now playing pill).
     const squareGrid = (q, extra) => (s) => Object.assign(posterGrid(q)(s), { shape: 'square', art: (it) => P.posterArt(it, 400),
         focus: (it) => [it.Name, it.AlbumArtist || (it.Artists || [])[0], it.ProductionYear].filter(Boolean).join(' · ') }, extra || {});
     const MUSIC = libraryMenu({
@@ -457,8 +472,6 @@
             { id: 'playlists', label: 'Playlists', grid: squareGrid({ IncludeItemTypes: 'Playlist', MediaTypes: 'Audio' }), empty: 'No playlists yet' },
             { id: 'genres', label: 'Genres', grid: nameGrid('MusicGenres', { ParentId: parent }, (g) => filtered(parent, 'MusicAlbum', 'genre', g)) }
         ],
-        after(F) { nowTimer = P.miniPlayer(F.menu); },
-        unmount() { if (nowTimer) nowTimer.stop(); nowTimer = null; }
     });
 
     // Any other library: its folders and items as they are on disk; folders open in place.
