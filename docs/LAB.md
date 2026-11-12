@@ -122,8 +122,10 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   through an SSH tunnel, and plays each sample through Icefin's own player and per-track decision. Rows:
   `icefin/<profile>/<codec>` for every `expect` entry (the capture bit-exact or PCM as expected, Icefin's
   decision line agreeing, the track playing to the end), `icefin/hotplug-reread` (each decision used the new
-  receiver's ELD, without a restart), `icefin/standby` (invalid ELD: the remembered one, marked stale, still
-  bitstreams) and `icefin/unplug` (unplugged mid-track and for a whole track: nothing stalls). The client needs
+  receiver's ELD, without a restart), `icefin/standby` (invalid ELD: PCM until it wakes, D32),
+  `icefin/standby-wake` and `icefin/standby-flap` (the bitstream 4 s after the wake, the wait starting over when it
+  drops back to standby), `icefin/standby-pcm` and `icefin/standby-bitstream` (the two override settings) and
+  `icefin/unplug` (unplugged mid-track and for a whole track: nothing stalls). The client needs
   Icefin's runtime packages: `avsim.sh icefin-image APP` makes a second base disk with them (once per
   dependency change), and `AVSIM_BASE=avsim-icefin` starts the client from it.
 - **Run:**

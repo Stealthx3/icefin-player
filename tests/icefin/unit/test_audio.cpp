@@ -206,6 +206,54 @@ private slots:
     QVERIFY(selectedAudioTrack(3, {}, list).isEmpty());
     QCOMPARE(selectedAudioTrack(1, QVariantMap{{"codec", "eac3"}}, list).value("codec").toString(), QString("eac3"));  // mpv knows
   }
+  void receiverNotReady()
+  {
+    // PLAN 3.9, the user's choice: an ELD that was read but isn't valid means PCM, then the bitstream when it wakes;
+    // audio.icefin_standby can pick PCM for the whole track or the bitstream straight away.
+    using Icefin::Audio::Standby;
+    const QSet<Codec> all{Codec::AC3, Codec::DTS, Codec::EAC3, Codec::DTSHD, Codec::TrueHD};
+    const Track truehd{"truehd", "", 8};
+    auto standby = fixture("standby.txt");                       // never seen awake
+    Decision w = Icefin::Audio::decide(truehd, all, standby, Backend::Alsa, Standby::Wake);
+    QCOMPARE(int(w.mode), int(Decision::Pcm));
+    QVERIFY(w.waitForReceiver);
+    QCOMPARE(w.pcmChannels, 8);
+    QVERIFY2(w.reason.contains("until it wakes"), qPrintable(w.reason));
+    Decision p = Icefin::Audio::decide(truehd, all, standby, Backend::Alsa, Standby::Pcm);
+    QVERIFY(p.mode == Decision::Pcm && !p.waitForReceiver);
+    Decision b = Icefin::Audio::decide(truehd, all, standby, Backend::Alsa, Standby::Bitstream);
+    QVERIFY(b.mode == Decision::Passthrough && b.spdif == "truehd");  // toggles trusted, as before
+
+    EldMonitor mon;                                               // remembered from a full receiver, now stale
+    mon.update("k", fixture("receiver_full.txt"));
+    auto stale = mon.update("k", standby);
+    QVERIFY(stale && stale->stale);
+    Decision sw = Icefin::Audio::decide(truehd, all, stale, Backend::Alsa);
+    QVERIFY(sw.mode == Decision::Pcm && sw.waitForReceiver && sw.reason.endsWith("truehd"));
+    QCOMPARE(Icefin::Audio::decide(truehd, all, stale, Backend::Alsa, Standby::Bitstream).spdif, QString("truehd"));
+    // Nothing to wait for: the codec isn't enabled, or the receiver is ready.
+    QVERIFY(!Icefin::Audio::decide(truehd, {Codec::AC3}, standby, Backend::Alsa).waitForReceiver);
+    QVERIFY(!Icefin::Audio::decide(truehd, all, fixture("receiver_full.txt"), Backend::Alsa).waitForReceiver);
+    // Settings values.
+    QCOMPARE(int(Icefin::Audio::standbyForSetting("pcm")), int(Standby::Pcm));
+    QCOMPARE(int(Icefin::Audio::standbyForSetting("bitstream")), int(Standby::Bitstream));
+    QCOMPARE(int(Icefin::Audio::standbyForSetting("")), int(Standby::Wake));
+  }
+  void wakeGateWaitsAndRestarts()
+  {
+    Icefin::Audio::WakeGate g(4000);
+    QVERIFY(!g.update(false, 0) && !g.waiting());
+    QVERIFY(!g.update(true, 1000) && g.waiting());                // woke at 1 s
+    QVERIFY(!g.update(true, 4999));
+    QVERIFY(g.update(true, 5000));                                // ready for 4 s
+    g.reset();
+    QVERIFY(!g.update(true, 10000));
+    QVERIFY(!g.update(false, 12000) && !g.waiting());             // back to standby inside the delay
+    QVERIFY(!g.update(true, 13000));
+    QVERIFY(!g.update(true, 16999));
+    QVERIFY(g.update(true, 17000));                               // 4 s from the second wake
+    QCOMPARE(Icefin::Audio::kWakeDelayMs, 4000);
+  }
   void userToggleWins()
   {
     Decision d = Icefin::Audio::decide({"truehd", "", 8}, {Codec::AC3}, fixture("receiver_full.txt"), Backend::PipeWire);

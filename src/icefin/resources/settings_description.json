@@ -14,6 +14,17 @@
           [ "alsa", "ALSA" ],
           [ "jack", "JACK" ]
         ]
+      },
+      {
+        "value": "icefin_standby",
+        "display_name": "Receiver in Standby",
+        "help": "What Icefin sends over HDMI when a track starts while the receiver or TV reports it isn't ready (standby, off or unplugged). Linux doesn't mark a bitstream as compressed audio then, so a receiver may stay silent or play noise.\n\n- Switch When It Wakes: PCM at first; once the receiver has been ready for 4 seconds (it may still be starting up), the bitstream.\n- Always PCM: PCM for the whole track.\n- Keep Bitstream: the bitstream the receiver took last time, straight away. For receivers that report standby wrongly but still decode.",
+        "default": "wake",
+        "possible_values": [
+          [ "wake", "Switch When It Wakes" ],
+          [ "pcm", "Always PCM" ],
+          [ "bitstream", "Keep Bitstream" ]
+        ]
       }
     ]
   },
