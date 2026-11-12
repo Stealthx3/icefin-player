@@ -255,8 +255,32 @@
                 const item = player && pm.currentItem && pm.currentItem(player);
                 return item ? { item, player } : null;
             } catch (e) { return null; }
-        }
+        },
+        // Queue items after what plays (next: true) or at the end: {ids, serverId} or {items}. False without a player.
+        queue(options, opts) {
+            const pm = window.icefinPlaybackManager;
+            const fn = pm && (opts && opts.next ? pm.queueNext : pm.queue);
+            if (typeof fn !== 'function') return Promise.resolve(false);
+            return Promise.resolve(fn.call(pm, options)).then(() => true, () => false);
+        },
+        // An instant mix from an item (a song, album, artist, playlist or genre), played at once.
+        instantMix(item) {
+            const pm = window.icefinPlaybackManager;
+            if (!pm || typeof pm.instantMix !== 'function') return Promise.resolve(false);
+            return Promise.resolve(pm.instantMix(item)).then(() => true, () => false);
+        },
+        // The app and the account (9.44): themes with no jellyfin-web chrome offer these themselves.
+        exit() { if (window.api && window.api.system && window.api.system.exit) window.api.system.exit(); },
+        signOut() { return jellyfinMenu(/sign ?out|log ?out/i, () => window.Dashboard && typeof window.Dashboard.logout === 'function' && (window.Dashboard.logout(), true)); },
+        selectServer() { return jellyfinMenu(/select server|change server/i, () => { location.hash = '#/selectserver'; return true; }); }
     };
+    // jellyfin-web's own menu entries (its side menu stays in the DOM, hidden, under a theme): pressing one runs exactly what
+    // jellyfin-web does for it; the fallback runs when the entry isn't there.
+    function jellyfinMenu(re, fallback) {
+        const a = [...document.querySelectorAll('.mainDrawer a, .mainDrawer button, .MuiDrawer-root a, .MuiDrawer-root [role="button"]')].find((x) => re.test((x.textContent || '').trim()));
+        if (a) { a.click(); return true; }
+        try { return !!fallback(); } catch (e) { return false; }
+    }
 
     // ---- focus engine ----
     function focused() {
