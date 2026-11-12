@@ -14,6 +14,7 @@ The first package found with a given id wins.
 | fonts, images, sounds | no | Served from inside the package over `icefin-theme://<id>/<path>` |
 | scripts | no | Screens and effects, declared as `"scripts"` |
 | sounds | no | UI sounds, declared as `"sounds": {"focus"\|"select"\|"back"\|"navigate"\|"error": "path.wav"}`; volume token `sound.volume` (0–1) |
+| music | no | `"music": {"startup": "music/startup.ogg", "ambient": "music/ambient.ogg", "jingles": {"<key>": "music/<key>.ogg"}}` (9.33): Ogg Vorbis, Opus or WAV. The startup jingle plays once per run of the app when the theme first comes up; the ambient piece loops (gapless) while the theme is up and nothing plays, ducks under jingles, and fades out for any playback; jingles play from scripts (`ctx.music`). Client Settings › Theme has Theme Jingles, Background Music and Music Volume; all of it is silent during passthrough |
 
 ## theme.json
 ```json
@@ -87,6 +88,9 @@ and the engine absorbs that here instead of in every theme. `scripts/icefin/them
 | `ctx.focus(el)`, `ctx.focused()` | Move focus to an element; the focused one (class `icefin-focused`) |
 | `ctx.move(dir, within)` | Spatial move in a direction, confined to `within` (a dialog, a panel); true when focus moved |
 | `ctx.sound(event)` | A UI sound: `focus`, `select`, `back`, `navigate`, `error` |
+| `ctx.music.jingle(key)` | Plays the package's jingle `key` (stopping the one playing, ducking the ambient piece); resolves false when there is none, music is off or something plays |
+| `ctx.music.stopJingle(fadeMs?)` | Fades the playing jingle out (default 350 ms) |
+| `ctx.music.has(key)` | The package has a jingle `key` |
 | `icefinTheme.ctx` | The same `ctx`, for chrome, overlays and timers outside a screen. Overlay panels get it with `close()` added |
 | `icefinTheme.ui.*` | The engine capabilities: chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop, pointerFirst, motion; details in *Engine capabilities for screens* below |
 | `icefinTheme.glyph(button)` | An original SVG for a controller button (`south`, `east`, `west`, `north`, `view`, ...) in the family of the pad used last (7.3) |
