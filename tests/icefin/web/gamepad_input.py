@@ -65,22 +65,18 @@ def main():
     srv.wait()
     xv = start_x()
     cfgdir = tempfile.mkdtemp(prefix="icefin-pad-")
-    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8", ICEFIN_THEME_PATH=THEMES,
-               # What Steam sets for a game it launches: its virtual pads allowed, the physical pads it took over hidden.
-               SDL_GAMECONTROLLER_ALLOW_STEAM_VIRTUAL_GAMEPAD="1", SDL_GAMECONTROLLER_IGNORE_DEVICES="0x054c/0x0ce6")
+    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8", ICEFIN_THEME_PATH=THEMES)
+    # What Steam sets for a game it launches: its virtual pads allowed, the physical pads it took over hidden. Only for
+    # the second, short run: with it SDL takes only Steam's virtual pads.
+    steam_env = dict(env, SDL_GAMECONTROLLER_ALLOW_STEAM_VIRTUAL_GAMEPAD="1", SDL_GAMECONTROLLER_IGNORE_DEVICES="0x054c/0x0ce6")
     log = open(os.path.join(cfgdir, "app.log"), "w")
-    app = subprocess.Popen([os.path.expanduser(a.app), f"--config-dir={cfgdir}", "--windowed", "--tv", "--disable-gpu",
-                            f"--remote-debugging-port={a.port}", "--log-level=info"], env=env, stdout=log, stderr=subprocess.STDOUT,
-                           start_new_session=True)
-    fails = []
-    ui = None
 
-    def check(label, ok, detail="", soft=False):
-        print(f"gamepad_input: {'ok  ' if ok else ('note' if soft else 'FAIL')} {label} {detail}", flush=True)
-        if not ok and not soft:
-            fails.append(label)
+    def launch(environ, cfg):
+        return subprocess.Popen([os.path.expanduser(a.app), f"--config-dir={cfg}", "--windowed", "--tv", "--disable-gpu",
+                                 f"--remote-debugging-port={a.port}", "--log-level=info"], env=environ, stdout=log,
+                                stderr=subprocess.STDOUT, start_new_session=True)
 
-    try:
+    def sign_in():
         page = Page(a.port, timeout=90)
         page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
         page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
@@ -92,6 +88,26 @@ def main():
         time.sleep(8)
         page.reconnect()
         page.wait_for("!!window.api && !!window.api.gamepads && !!window.icefinTheme && !!document.querySelector('.skinHeader')", timeout=90)
+        return page
+
+    def stop(proc):
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+            proc.wait(15)
+        except Exception:  # noqa: BLE001
+            pass
+
+    app = launch(env, cfgdir)
+    fails = []
+    ui = None
+
+    def check(label, ok, detail="", soft=False):
+        print(f"gamepad_input: {'ok  ' if ok else ('note' if soft else 'FAIL')} {label} {detail}", flush=True)
+        if not ok and not soft:
+            fails.append(label)
+
+    try:
+        page = sign_in()
         js = page.eval
         check("built with the SDL3 layer", js("new Promise(r => window.api.gamepads.available(r))") is True)
         js("new Promise(r => window.api.theme.setActiveTheme('lab-screens', '', r))")
@@ -169,15 +185,6 @@ def main():
         ui.close()
         ui = None
         page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 0)))", timeout=15)
-
-        sv = pad("Steam Virtual Gamepad", 0x28DE, 0x11FF)
-        try:
-            page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 1)))", timeout=15)
-            fam = js("new Promise(r => window.api.gamepads.list(r))")[0]["family"]
-            check("Steam Virtual Gamepad: family of the pad Steam took over", fam == "playstation", f"family={fam}")
-        finally:
-            sv.close()
-        page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 0)))", timeout=15)
         check("hotplug: pad removed", True)
 
         n = pad("Nintendo Switch Pro Controller", 0x057E, 0x2009)
@@ -186,16 +193,26 @@ def main():
         check("Nintendo-style pad family", fam == ["nintendo"], f"families={fam} (evdev pads need an SDL mapping)", soft=True)
         n.close()
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+
+        # 7.4: started by Steam (a second, short run with Steam's environment): its virtual pad, a DualSense behind it.
+        stop(app)
+        app = launch(steam_env, tempfile.mkdtemp(prefix="icefin-pad-steam-"))
+        page = sign_in()
+        sv = pad("Steam Virtual Gamepad", 0x28DE, 0x11FF)
+        try:
+            # By name: another lab session's virtual pad may be plugged in at the same time.
+            steam = "new Promise(r => window.api.gamepads.list(l => r(l.find(p => p.name.includes('Steam Virtual')) || null)))"
+            page.wait_for(steam, timeout=15)
+            got = page.eval(steam)
+            check("Steam Virtual Gamepad: family of the pad Steam took over", got["family"] == "playstation", json.dumps(got))
+        finally:
+            sv.close()
     except Exception as ex:  # noqa: BLE001
         check("run", False, f"{type(ex).__name__}: {ex}")
     finally:
         if ui:
             ui.close()
-        try:
-            os.killpg(app.pid, signal.SIGTERM)
-            app.wait(15)
-        except Exception:  # noqa: BLE001
-            pass
+        stop(app)
         if xv:
             xv.terminate()
         log.close()
