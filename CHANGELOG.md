@@ -8,6 +8,8 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
 - Media Center: library screens for movies, TV, music, pictures, books, music videos and playlists, with sorts and filters along the top, a sideways grid with the glass focus, and genres as stacks of covers.
 - Media Center's Home button and start screen corner show your server's own icon and name, loaded from the server.
+- Media Center's settings: one list of everything with the focused entry described, This device (Client Settings) and your account's settings pages laid out as Media Center pages, each drop-down shown as ‹ value › that left and right step through.
+- Media Center's slide show: the picture's name, date, album and its place in the show, the buttons together at the bottom right, and a slow pan and zoom (none with less motion). A picture in the library opens its folder's show from it. The book reader shows the book's title as a page title, with round buttons.
 - Media Center: its own search (with a phone-style keypad), favourites, Live TV (guide, channels, recorded TV, scheduled and series recordings), now playing, lyrics and the play queue, and its own screens for choosing a server, adding one and signing in (with Quick Connect).
 - Plaza on every screen but the server dashboard: lists, playlists, photos, books and the other libraries as Plaza screens with sort and filter; sign-in, servers, your profile and preferences, Quick Connect, now playing and lyrics in Plaza's frame and look; every dialog as a Plaza card; the on-screen keyboard for text fields; the music capsule on the home.
 - A playlist's items can be moved on its details screen, with a controller (Menu, then up or down) or the mouse, in every theme.
@@ -19,6 +21,8 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
 
 ### Fixed
+- Media Center: Backspace and Escape go back on every screen and close menus and dialogs; the arrows work on the settings pages it frames; the poster wall has Back and Home; closing More options returns to Media Center's details page instead of leaving jellyfin-web's.
+- Opening a picture with a theme showed every item on the server in the slide show instead of the picture's folder.
 - Plaza: opening Sort and filter or New playlist turned the whole window black.
 - A page left open before playback (Select Server, for example) showed above the video.
 - Plaza: the bottom row's channel name covered the clock; a series' episodes ran under the bar; Live TV logos were cropped; "1 seasons"; album favourites showed a resume time.
