@@ -19,6 +19,8 @@ key, and every user re-adding the remote. It has no passphrase, because only the
 repository.
 
 ## Publishing a new build
+Every build that lands on `main` is published here (the user's rule, 2026-11-12), not only alpha releases: after a merge, or a batch of merges, build the Flatpak in the lab from `main` and publish it. Use a subject that names the commit, for example `Icefin Player 0.1.0-alpha.2 (main 2aa81e9: …)`, and update the "Current build" line in `index.html`. Then check from a host with `flatpak remote-info --user icefin-test io.github.stealthx3.IcefinPlayer`. A worktree needs `git submodule update --init external/mpvqt` before `scripts/lab.sh push`, or the Flatpak build can't find mpvqt's sources. If the SSH agent refuses to sign on the host, push the Pages clone over HTTPS (`https://github.com/Stealthx3/icefin-flatpak-test.git`, with the `gh` credential helper the main repository uses).
+
 In the lab guest, after `flatpak-builder --repo=$HOME/fp-repo …` (`docs/LAB.md`):
 ```bash
 export GNUPGHOME=$HOME/icefin-test-gpg KEY=532CA3B28FBA72FC9C9F369C1CD53BAD4D48EB54
