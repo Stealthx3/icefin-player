@@ -10,11 +10,16 @@ compositor about its surface:
   hdr-hdr10    the HDR10 film: the router picks HDR output; the tag gains the film's mastering display primaries and
                luminance, MaxCLL and MaxFALL, exactly as make-media.sh wrote them;
   hdr-hlg      the HLG film: HDR output; the surface stays PQ (the compositor pass encodes PQ);
+  hdr-hdr10plus, hdr-dv81  the HDR10+ and Dolby Vision 8.1 films (make-hdr-media.sh): HDR output, the same HDR10
+               mastering metadata as hdr-hdr10 (their base layer carries it; for 8.1 mpv takes the peak from the RPU,
+               which rounds 1000 nits to 1001);
+  hdr-dv5      the Dolby Vision 5 film: HDR output, the PQ / BT.2020 tag (profile 5 has no HDR10 base layer);
   sdr-display  SDR display: HDR output not requested, no colour-management surface, HDR10 routed as tone-mapped SDR;
   hdr-off      HDR display with HDR Output off: not requested, no colour-management surface.
 It shows what Icefin sends; what a TV does with it is the hardware lab's job (5.8).
 Needs: Weston 15+ built with color management (WESTON, default ~/weston-16/bin/weston), the app installed as a
-Flatpak with the GL.default runtime extension, the lab's Jellyfin servers with make-media.sh's films.
+Flatpak with the GL.default runtime extension, the lab's Jellyfin servers with make-media.sh's and
+make-hdr-media.sh's films.
 Usage: python3 hdr_protocol.py [--server jf12] [--app io.github.stealthx3.IcefinPlayer] [--rows hdr-idle,hdr-hdr10]
 """
 import argparse, glob, json, os, re, signal, subprocess, sys, tempfile, time
@@ -39,6 +44,9 @@ ROWS = {
     "hdr-idle":    ("hdr", "auto", None, None),
     "hdr-hdr10":   ("hdr", "auto", "HDR10 HEVC", "HDR10"),
     "hdr-hlg":     ("hdr", "auto", "HLG HEVC", "HLG"),
+    "hdr-hdr10plus": ("hdr", "auto", "HDR10Plus HEVC", "HDR10Plus"),
+    "hdr-dv5":     ("hdr", "auto", "DV P5 HEVC", "DOVI"),
+    "hdr-dv81":    ("hdr", "auto", "DV P8.1 HEVC", "DOVIWithHDR10"),
     "sdr-display": ("sdr", "auto", "HDR10 HEVC", "HDR10"),
     "hdr-off":     ("hdr", "off", None, None),
 }
@@ -110,13 +118,15 @@ def main():
             check(f"{row}: run", False, f"{type(e).__name__}: {e}")
             comp = {}
         finally:
-            # A graceful quit: flatpak kill leaves Qt WebEngine's helper sandboxes behind.
-            subprocess.run(["pkill", "-TERM", "-x", "icefin-player"], capture_output=True)
+            # A graceful quit: flatpak kill leaves Qt WebEngine's helper sandboxes behind. Only this run's instance (its
+            # config dir): other lab sessions may be running the same Flatpak, and flatpak kill would stop them too.
+            mine = f"--config-dir=/var/tmp/icefin-hdrproto-{row}"
+            subprocess.run(["pkill", "-TERM", "-f", "--", mine], capture_output=True)
             for _ in range(20):
-                if subprocess.run(["pgrep", "-x", "icefin-player"], capture_output=True).returncode:
+                if subprocess.run(["pgrep", "-f", "--", mine], capture_output=True).returncode:
                     break
                 time.sleep(0.5)
-            subprocess.run(["flatpak", "kill", a.app], capture_output=True)
+            subprocess.run(["pkill", "-KILL", "-f", "--", mine], capture_output=True)
             try:
                 app.wait(15)
             except Exception:  # noqa: BLE001
@@ -137,12 +147,17 @@ def main():
                   got_surface and any("set_tf_named(11)" in r for r in reqs) and any("set_primaries_named(6)" in r for r in reqs)
                   and any(re.search(r"set_luminances\(50, 10000, \d+\)", r) for r in reqs) and any("set_image_description(" in r for r in reqs))
             mastering = [r for r in reqs if "set_mastering_display_primaries" in r]
-            if row == "hdr-hdr10":
+            if rng in ("HDR10", "HDR10Plus", "DOVIWithHDR10"):
                 check(f"{row}: router picks HDR output", decision.get("output") == "HDR output", decision.get("reason", ""))
                 check(f"{row}: the film's mastering primaries", any("set_mastering_display_primaries(680000, 320000, 265000, 690000, 150000, 60000, 312700, 329000)" in r for r in mastering),
                       mastering[-1] if mastering else "none")
-                check(f"{row}: mastering luminance 0.0001-1000 nits", any("set_mastering_luminance(1, 1000)" in r for r in reqs))
+                # Dolby Vision 8.1: mpv takes the peak from the RPU (PQ-coded), 1001 nits for the film's 1000.
+                peak = r"set_mastering_luminance\(1, 100[01]\)" if rng.startswith("DOVI") else r"set_mastering_luminance\(1, 1000\)"
+                check(f"{row}: mastering luminance 0.0001-1000 nits", any(re.search(peak, r) for r in reqs),
+                      next((r for r in reqs if "set_mastering_luminance" in r), "none"))
                 check(f"{row}: MaxCLL 1000, MaxFALL 400", any("set_max_cll(1000)" in r for r in reqs) and any("set_max_fall(400)" in r for r in reqs))
+            elif rng == "DOVI":
+                check(f"{row}: router picks HDR output", decision.get("output") == "HDR output", decision.get("reason", ""))
             elif row == "hdr-hlg":
                 check(f"{row}: router picks HDR output", decision.get("output") == "HDR output", decision.get("reason", ""))
                 check(f"{row}: no HDR10 mastering metadata", not mastering)
