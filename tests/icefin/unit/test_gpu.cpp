@@ -12,6 +12,7 @@
 #include "icefin/gpu/DecoderSelfTest.h"
 #include "icefin/gpu/WebGpuStatus.h"
 #include <QTemporaryDir>
+#include <QFile>
 #include "icefin/settings/SettingsMerge.h"
 
 using namespace Icefin::Gpu;
@@ -121,6 +122,28 @@ private slots:
     QCOMPARE(v.size(), 3);  // replaced in place, not appended
     QCOMPARE(v[1].toObject()["value"].toString(), QString("hardwareDecoding"));
     QCOMPARE(v[1].toObject()["default"].toString(), QString("auto"));
+  }
+  void doviDirectPlaysByDefault()
+  {
+    // Upstream's Force Transcode Dolby Vision defaults to on, which kept profile 5 from ever reaching the Vulkan
+    // renderer or the capability prompt's Play anyway (6.6). Icefin's description turns the default off.
+    auto read = [](const QString& path) {
+      QFile f(path);
+      return f.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(f.readAll()) : QJsonDocument();
+    };
+    const QString res = QStringLiteral(ICEFIN_TESTMEDIA "/..");
+    const QJsonDocument up = read(res + "/../../../resources/settings/settings_description.json");
+    QVERIFY(up.isArray());
+    const QJsonArray merged = Icefin::Settings::mergeDescription(up, res + "/settings_description.json").array();
+    int found = 0;
+    for (const QJsonValue& s : merged)
+      for (const QJsonValue& v : s.toObject()["values"].toArray())
+        if (v.toObject()["value"].toString() == "force_transcode_dovi") {
+          ++found;
+          QCOMPARE(s.toObject()["section"].toString(), QString("video"));
+          QCOMPARE(v.toObject()["default"].toBool(true), false);
+        }
+    QCOMPARE(found, 1);
   }
   void selfTestDecodesSample()
   {

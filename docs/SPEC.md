@@ -206,6 +206,7 @@ It asks once, when the user presses play, from the feature's own video range and
 **Device profile.** The static force-transcode toggles become overrides under a new Auto mode:
 
 - On the Vulkan renderer, Auto direct-plays HDR10, HLG and Dolby Vision 5 and 8, because Icefin can display or tone-map them locally, which beats a server transcode.
+- Upstream's *Force Transcode Dolby Vision* defaults to on, which would have the server convert every profile 5 film. Icefin turns its default off (6.6), so profile 5 reaches the Vulkan renderer, and on OpenGL the capability prompt's *Play anyway* plays the original. Switched on, it stays an override.
 - Auto asks the server to transcode only codecs the decoder self-test finds unplayable in real time, plus whatever the user picked in a capability prompt.
 
 **Gamescope.** Under Gamescope, Icefin runs as an XWayland client: the Flatpak's X11 fallback is granted there because Gamescope offers no Wayland socket by default. It uses the same single-surface renderer on an X11 surface, with HDR through Gamescope's WSI and full-screen gamepad mode. Native Wayland inside Gamescope is a long-term item.
