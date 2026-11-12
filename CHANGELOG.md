@@ -5,6 +5,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 ## [Unreleased]
 
 ### Added
+- Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
+- Media Center: library screens for movies, TV, music, pictures, books, music videos and playlists, with sorts and filters along the top, a sideways grid with the glass focus, and genres as stacks of covers.
+- Media Center's Home button and start screen corner show your server's own icon and name, loaded from the server.
 - Plaza on every screen but the server dashboard: lists, playlists, photos, books and the other libraries as Plaza screens with sort and filter; sign-in, servers, your profile and preferences, Quick Connect, now playing and lyrics in Plaza's frame and look; every dialog as a Plaza card; the on-screen keyboard for text fields; the music capsule on the home.
 - A playlist's items can be moved on its details screen, with a controller (Menu, then up or down) or the mouse, in every theme.
 - Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
