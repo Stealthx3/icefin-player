@@ -33,7 +33,7 @@
         const timer = setInterval(() => { if (!clock.isConnected) { clearInterval(timer); return; } clock.textContent = now(); }, 15000);
         // ---- the bar: the engine's Back and Home become the round buttons; the focused thing's name between them ----
         const bar = el('div', 'pz-mbar pz-d-bar');
-        bar.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 51 C480 21 1440 21 1920 51 V210 H0 Z"/><path class="pz-bar-shine" d="M0 60 C480 30 1440 30 1920 60"/><path class="pz-bar-line" d="M0 51 C480 21 1440 21 1920 51"/></svg>';
+        bar.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 24 C480 6 1440 6 1920 24 V210 H0 Z"/><path class="pz-bar-shine" d="M0 32 C480 14 1440 14 1920 32"/><path class="pz-bar-line" d="M0 24 C480 6 1440 6 1920 24"/></svg>';
         const mid = el('div', 'pz-mmid');
         const focusLine = el('div', 'pz-mfocus');
         const hints = el('div', 'pz-mhints');
@@ -76,7 +76,11 @@
             if (actions) main.append(actions);
             if (options) main.append(options);
         }
-        // ---- the focus line, and the section tabs once the lists are in ----
+        // ---- More options opens Plaza's own item menu (itemmenu.js), not jellyfin-web's page ----
+        const more = d.querySelector('.icefin-d-btn[data-action="more"]');
+        if (more && P.itemMenu) more.addEventListener('click', (e) => { e.stopImmediatePropagation(); e.preventDefault(); P.itemMenu(item); }, true);
+        root.plazaItem = item;
+                // ---- the focus line, and the section tabs once the lists are in ----
         root.addEventListener('icefin-focus', (e) => {
             const t = e.target;
             const label = t.getAttribute('aria-label') || (t.querySelector('.icefin-d-name') || t).textContent;
@@ -116,5 +120,16 @@
         }, { passive: true });
     }
 
-    T.registerScreen('#/details', T.ui.details.screen({ layout: 'banner', onReady }));
+    // ≡ (Menu) on the page opens the item menu, except on a playlist's tracks, where it moves one (the engine's)
+    const screen = T.ui.details.screen({ layout: 'banner', onReady });
+    const onAction = screen.onAction;
+    screen.onAction = function (action, ctx) {
+        if (action === 'menu' && P.itemMenu) {
+            const f = ctx.focused();
+            const root = document.getElementById('icefin-theme-root');
+            if (!(f && f.classList.contains('icefin-d-track') && f.closest('[data-icefin-reorder]')) && !document.querySelector('.icefin-d-moving') && root && root.plazaItem) { P.itemMenu(root.plazaItem); return true; }
+        }
+        return onAction ? onAction.call(this, action, ctx) : false;
+    };
+    T.registerScreen('#/details', screen);
 })();

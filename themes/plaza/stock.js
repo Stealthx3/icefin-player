@@ -51,7 +51,7 @@
             extra.append(headerBtn('Play on', /cast|play ?on/i), headerBtn('Watch together', /sync ?play/i));
             head.append(name, tabs, extra);
             const bar = el('div', 'pz-mbar pz-sc-bar');
-            bar.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 51 C480 21 1440 21 1920 51 V210 H0 Z"/><path class="pz-bar-shine" d="M0 60 C480 30 1440 30 1920 60"/><path class="pz-bar-line" d="M0 51 C480 21 1440 21 1920 51"/></svg>';
+            bar.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 24 C480 6 1440 6 1920 24 V210 H0 Z"/><path class="pz-bar-shine" d="M0 32 C480 14 1440 14 1920 32"/><path class="pz-bar-line" d="M0 24 C480 6 1440 6 1920 24"/></svg>';
             const round = (cls, label) => { const b = el('button', 'pz-mround ' + cls, label); b.type = 'button'; b.setAttribute('aria-label', label); b.tabIndex = -1; return b; };
             const back = round('pz-mround-back', 'Back');
             const home = round('pz-mround-home', 'Home');
