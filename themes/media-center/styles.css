@@ -311,3 +311,41 @@ html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playin
 /* notices (toasts): bottom right, glass */
 html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !important; right: 4.06vw !important; bottom: 5vh !important; border-radius: 0 !important; font-size: 2.6vh; font-weight: 300;
   background: rgb(var(--icefin-color-background-channel) / 0.92) !important; color: var(--icefin-color-text) !important; border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); }
+
+/* ---- Library screens (library.js, 9.46): a pivot along the top, the grid running sideways in rows, the lens on the
+   focused item, its name and facts under the grid, the count at the bottom right. ---- */
+#icefin-theme-root[data-mc="library"] { overflow: clip !important; }
+.mc-lib-pivot { position: absolute; left: 21.67vh; top: 14.4vh; right: 4.06vw; align-items: baseline; z-index: 2; }
+.mc-lib-crumb { font-size: 3.3vh; color: var(--icefin-color-focus); padding: 0.4vh 0; }
+.mc-lib-crumb:empty { display: none; }
+.mc-lib-body { position: absolute; left: 21.67vh; right: 0; top: 22vh; bottom: 18vh; overflow: hidden; padding: 2vh 0 0 1.5vh; }
+.mc-lib-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--mc-rows, 2), auto); gap: 2.5vh 2.2vh; align-content: start;
+  width: max-content; transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
+.mc-lib-tile { position: relative; cursor: pointer; outline: none; transition: transform 180ms, opacity 180ms; opacity: 0.85; transform-origin: center; }
+.mc-lib-art { position: relative; background: var(--icefin-color-surface) center / cover no-repeat; border-radius: 0.14vh; overflow: hidden; }
+.mc-lib-poster .mc-lib-art { width: 17.2vh; height: 25.8vh; }
+.mc-lib-square .mc-lib-art { width: 17.8vh; height: 17.8vh; }
+.mc-lib-photo .mc-lib-art { width: 22.5vh; height: 16.9vh; }
+.mc-lib-wide .mc-lib-art { width: 27vh; height: 15.2vh; }
+.mc-lib-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 1vh; font-size: 2vh; opacity: 0.8; }
+.mc-lib-progress { position: absolute; left: 0; bottom: 0; height: 0.7vh; background: var(--icefin-color-focus); }
+.mc-lib-tile.icefin-focused { transform: scale(1.18); opacity: 1; z-index: 2; }
+.mc-lib-tile.icefin-focused .mc-lib-art, .mc-lib-tile.icefin-focused .mc-lib-stack i:last-child {
+  box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-lib-tile.icefin-focused .mc-lib-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(var(--icefin-color-glass-channel) / 0.28), transparent 36%); }
+/* groups (genres, networks): three covers stacked, the name under them */
+.mc-lib-grid[data-group="1"] { grid-template-rows: repeat(2, auto); }
+.mc-lib-group { width: 26vh; }
+.mc-lib-stack { position: relative; width: 23.6vh; height: 25vh; }
+.mc-lib-stack i { position: absolute; width: 14.4vh; height: 21.7vh; display: block; background: var(--icefin-color-surface) center / cover no-repeat; box-shadow: 0 0.3vh 1.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-lib-stack i:nth-child(1) { left: 0; top: 2.8vh; opacity: 0.6; }
+.mc-lib-stack i:nth-child(2) { left: 4.2vh; top: 1.4vh; opacity: 0.8; background-color: var(--icefin-color-surfaceRaised); }
+.mc-lib-stack i:nth-child(3) { left: 8.3vh; top: 0; }
+.mc-lib-name { font-size: 2.5vh; opacity: 0.8; margin-top: 0.6vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-lib-tile.icefin-focused .mc-lib-name { opacity: 1; }
+.mc-lib-empty { font-size: 3vh; opacity: 0.6; padding: 4vh 0; }
+.mc-lib-info { position: absolute; left: 21.67vh; right: 20vw; bottom: 6vh; }
+.mc-lib-info-name { font-size: 4.2vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-lib-info-facts { font-size: 2.5vh; opacity: 0.78; margin-top: 0.6vh; }
+.mc-count { position: absolute; right: 4.06vw; bottom: 3.6vh; font-size: 2.8vh; opacity: 0.7; }
+html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-lib-tile { transition-duration: 0ms !important; }

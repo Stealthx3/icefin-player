@@ -52,7 +52,8 @@
     }
 
     // Libraries the poster wall shows (wall.js); Live TV keeps its own guide page.
-    const WALL = new Set(['movies', 'tvshows', 'music', 'musicvideos', 'homevideos', 'boxsets']);
+    // "All ..." opens the library screen for the library's type (library.js); collections and the rest open the wall.
+    const LIBRARY = { movies: '#/movies', tvshows: '#/tv', music: '#/music', musicvideos: '#/musicvideos', homevideos: '#/homevideos', books: '#/books', playlists: '#/playlists', boxsets: '#/list' };
     let grid = null;  // rows of tiles, for structured navigation
     let lastCol = [];  // each row remembers where its focus was
 
@@ -124,7 +125,11 @@
                 if (c.links) c.links.forEach(([label, go]) => row.append(textTile(label, go)));
                 else c.items.forEach((it) => row.append(tile(client, it, c.wide)));
                 // The whole library on the poster wall (wall.js).
-                if (c.view && WALL.has(c.view.CollectionType)) row.append(textTile(`All ${c.view.Name}`, () => T.ctx.navigate(`#/list?parentId=${c.view.Id}&serverId=${client.serverId()}`)));
+                if (c.view && LIBRARY[c.view.CollectionType]) {
+                    const r = LIBRARY[c.view.CollectionType];
+                    const q = r === '#/list' ? `parentId=${c.view.Id}` : `topParentId=${c.view.Id}&collectionType=${c.view.CollectionType}`;
+                    row.append(textTile(`All ${c.view.Name}`, () => T.ctx.navigate(`${r}?${q}&serverId=${client.serverId()}`)));
+                }
                 const band = el('div', 'mc-band');
                 band.append(row);
                 cat.append(band);
