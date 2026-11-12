@@ -95,6 +95,25 @@
         "default": true
       },
       {
+        "value": "jingles",
+        "display_name": "Theme Jingles",
+        "help": "Play the theme's startup jingle when Icefin opens, and its short jingles where the theme has them (opening a channel, for example). Silent while anything plays.",
+        "default": true
+      },
+      {
+        "value": "ambientMusic",
+        "display_name": "Background Music",
+        "help": "Play the theme's background music on its screens. It fades out while a video or music plays, and never plays while audio goes straight to your receiver (passthrough).",
+        "default": true
+      },
+      {
+        "value": "musicVolume",
+        "display_name": "Music Volume",
+        "help": "How loud the theme's jingles and background music are, next to its interface sounds.",
+        "default": "60",
+        "possible_values": [ [ "20", "20 %" ], [ "40", "40 %" ], [ "60", "60 %" ], [ "80", "80 %" ], [ "100", "100 %" ] ]
+      },
+      {
         "value": "sync",
         "display_name": "Sync Theme With Account",
         "help": "Keep the theme, colour scheme and preset the same on every Icefin device signed in to this account: a change here appears on the others, and theirs here. Off, this device keeps its own theme, so several devices on one account can use different themes at the same time.",
