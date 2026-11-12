@@ -46,7 +46,7 @@
             // Icefin's own (the screen root, the overlay, the on-screen keyboard) and jellyfin-web's dialogs (which the
             // capability prompt uses too) steps aside as well. A theme with a transparent screen over the native
             // backdrop showed all of it through.
-            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(.dialogContainer)';
+            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(#icefin-live):not(.dialogContainer)';
             const hide = ['.skinHeader', '.mainDrawer', '.mainDrawerHandle', '.mainAnimatedPages', '.backgroundContainer', '#reactRoot', `body > ${keep}`]
                 .map((s) => `html.${SCREEN_CLASS} ${s}, html.${SCREEN_CLASS} ${s} *`).join(', ');
             st.textContent = `${hide} { visibility: hidden !important; }`

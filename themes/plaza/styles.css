@@ -263,19 +263,24 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 /* ---------------- Menus ---------------- */
 .pz-menu { position: absolute; inset: 0; }
 .pz-mhead { position: absolute; left: 0; right: 0; top: calc(33 * var(--pz)); height: calc(87 * var(--pz)); display: flex; align-items: center; gap: calc(30 * var(--pz)); z-index: 3; }
-.pz-mname { flex: none; height: 100%; max-width: calc(600 * var(--pz)); display: flex; align-items: center; box-sizing: border-box; padding: 0 calc(66 * var(--pz)) 0 calc(54 * var(--pz));
+.pz-mname { flex: none; height: 100%; display: flex; align-items: center; box-sizing: border-box; padding: 0 calc(66 * var(--pz)) 0 calc(54 * var(--pz));
   border-radius: 0 calc(60 * var(--pz)) calc(60 * var(--pz)) 0; background: linear-gradient(180deg, var(--pz-ch-a), var(--pz-ch-b)); color: var(--pz-ink-on);
   font-size: calc(37 * var(--pz)); font-weight: 700; text-shadow: 0 1px calc(3 * var(--pz)) rgb(0 0 0 / 0.2); box-shadow: 0 calc(3 * var(--pz)) calc(9 * var(--pz)) rgb(0 0 0 / 0.15);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  white-space: nowrap; gap: calc(24 * var(--pz)); max-width: calc(760 * var(--pz)); }
+.pz-mname-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .pz-k-resume .pz-mname { text-shadow: none; }
-.pz-tabs { flex: 1; min-width: 0; display: flex; gap: calc(15 * var(--pz)); }
+/* Many seasons: the tabs scroll sideways (focus brings a tab into view); room above and below for the focus glow. */
+.pz-tabs { flex: 1; min-width: 0; display: flex; gap: calc(15 * var(--pz)); overflow-x: auto; scrollbar-width: none; padding: calc(14 * var(--pz)) calc(10 * var(--pz)); margin-top: calc(-14 * var(--pz)); margin-bottom: calc(-14 * var(--pz)); }
 .pz-tab { flex: none; height: calc(69 * var(--pz)); padding: 0 calc(33 * var(--pz)); border-radius: 999px; display: flex; align-items: center; cursor: pointer; outline: none; white-space: nowrap;
   font-size: calc(28 * var(--pz)); color: var(--icefin-color-text); background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised));
   box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-tileEmpty), 0 calc(3 * var(--pz)) calc(6 * var(--pz)) rgb(0 0 0 / 0.12); }
 .pz-tab.pz-tab-on { font-weight: 700; box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 calc(3 * var(--pz)) calc(6 * var(--pz)) rgb(0 0 0 / 0.12); }
 .pz-tab.icefin-focused { box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 0 calc(21 * var(--pz)) calc(5 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6); }
 .pz-tab-sort { margin-left: auto; }
-.pz-mclock { flex: none; margin-right: calc(60 * var(--pz)); font-size: calc(33 * var(--pz)); font-weight: 500; color: var(--icefin-color-textSecondary); }
+.pz-mclock { flex: none; font-size: calc(30 * var(--pz)); font-weight: 500; opacity: 0.92; padding-left: calc(24 * var(--pz));
+  border-left: calc(3 * var(--pz)) solid rgb(255 255 255 / 0.45); font-variant-numeric: tabular-nums; }
+.pz-k-resume .pz-mclock { border-left-color: var(--icefin-color-divider); }
+.pz-tabs { margin-right: calc(60 * var(--pz)); }
 .pz-mbody { position: absolute; left: 0; right: 0; top: 0; bottom: calc(180 * var(--pz)); }
 .pz-mbar { position: absolute; left: 0; right: 0; bottom: 0; height: calc(210 * var(--pz)); z-index: 2; }
 .pz-mround { top: calc(39 * var(--pz)); width: calc(144 * var(--pz)); height: calc(144 * var(--pz)); font-size: calc(30 * var(--pz)); }

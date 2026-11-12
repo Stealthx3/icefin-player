@@ -173,7 +173,7 @@ def main():
         page.wait_for("location.hash.startsWith('#/movies') && !!document.querySelector('#icefin-theme-root[data-pz-view=\"movies\"] .pz-grid[data-pz-grid-ready]')", timeout=20)
         time.sleep(1)
         m = json.loads(js("JSON.stringify({tabs: [...document.querySelectorAll('.pz-tab')].map(t => t.textContent), cells: document.querySelectorAll('.pz-cell').length, "
-                          "name: document.querySelector('.pz-mname').textContent, rounds: [...document.querySelectorAll('.pz-mround')].map(r => r.textContent)})"))
+                          "name: document.querySelector('.pz-mname-text').textContent, rounds: [...document.querySelectorAll('.pz-mround')].map(r => r.textContent)})"))
         check("Open leads to the Movies menu: tabs, a grid of posters, round Back and Home",
               m["name"] == "Movies" and m["tabs"][:4] == ["Movies", "Collections", "Genres", "Favourites"] and m["cells"] > 0 and m["rounds"] == ["Back", "Home"], json.dumps(m))
         check("focus starts in the grid", foc().startswith("pz-cell/"), foc())
@@ -193,7 +193,7 @@ def main():
         # ---- the other menus ----
         go("#/tv")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-pz-view=\"tv\"] .pz-grid[data-pz-grid-ready]')", timeout=20)
-        check("Shows menu", js("document.querySelector('.pz-mname').textContent") == "Shows")
+        check("Shows menu", js("document.querySelector('.pz-mname-text').textContent") == "Shows")
         sid = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Series', Recursive: true, Limit: 1}).then(r => (r.Items[0] || {}).Id || null)")
         if sid:
             go(f"#/home?pz=series&id={sid}")
@@ -217,11 +217,11 @@ def main():
         shot("guide.png")
         go("#/home?pz=resume")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-pz-view=\"resume\"]') && document.getElementById('icefin-theme-root').hasAttribute('data-pz-ready')", timeout=20)
-        check("Continue Watching: the disc rack", js("document.querySelector('.pz-mname').textContent") == "Continue Watching")
+        check("Continue Watching: the disc rack", js("document.querySelector('.pz-mname-text').textContent") == "Continue Watching")
         shot("resume.png")
         go("#/home?pz=nextup")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-pz-view=\"nextup\"] .pz-grid[data-pz-grid-ready]')", timeout=20)
-        check("Next Up menu", js("document.querySelector('.pz-mname').textContent") == "Next Up")
+        check("Next Up menu", js("document.querySelector('.pz-mname-text').textContent") == "Next Up")
 
         # ---- search from the round button ----
         go("#/home")

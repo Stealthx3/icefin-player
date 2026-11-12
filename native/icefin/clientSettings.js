@@ -94,7 +94,9 @@
                 addOption(c);
             }
         });
-        list.addEventListener('keydown', (e) => {
+        list.addEventListener('keydown', (e) => { if (listKey(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+        function listKey(key) {
+            const e = { key };
             const items = [...list.querySelectorAll('.icefin-dd-option')], i = items.indexOf(document.activeElement);
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 const it = items[Math.max(0, Math.min(items.length - 1, (i < 0 ? 0 : i) + (e.key === 'ArrowDown' ? 1 : -1)))];
@@ -107,13 +109,12 @@
                 close(true);
             } else if (e.key === 'Tab') {
                 close(true);
-                return;
+                return false;
             } else {
-                return;
+                return false;
             }
-            e.preventDefault();
-            e.stopImmediatePropagation();
-        }, true);
+            return true;
+        }
         // jellyfin-web's input layer (remote, gamepad) sends a cancelable "command" event to the focused element.
         list.addEventListener('command', (e) => {
             if (e.detail && e.detail.command === 'back') { e.preventDefault(); e.stopPropagation(); close(true); }
@@ -130,7 +131,7 @@
             if (list.style.top) list.style.top = `${parseFloat(list.style.top) + dy}px`;
             else list.style.bottom = `${parseFloat(list.style.bottom) - dy}px`;
         }
-        open = { list, select };
+        open = { list, select, key: listKey };
         const first = current || list.querySelector('.icefin-dd-option');
         if (first) {
             first.focus({ preventScroll: true });
@@ -166,6 +167,10 @@
     document.addEventListener('mousedown', (e) => { if (open && !open.list.contains(e.target) && e.target !== open.select) close(false); }, true);
     window.addEventListener('resize', () => close(false));
     document.addEventListener('scroll', (e) => { if (open && !open.list.contains(e.target)) close(false); }, true);
+    // For the themed Client Settings page (settingsHub.js): the open list takes ArrowUp, ArrowDown, Enter and Escape
+    // from the remote without going through keyboard events. True when a list was open and used the key.
+    dropdown.key = (key) => !!(open && open.key(key));
+    dropdown.isOpen = () => !!open;
     window.icefinDropdown = dropdown;
 
     // ---- the arrangement ----
