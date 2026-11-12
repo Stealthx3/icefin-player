@@ -17,6 +17,13 @@
 // up, buttons that plugins and jellyfin-web put over the video (MediaSegment and Intro Skipper skip buttons, OVERLAYS)
 // move into a lane just above the controls, wherever the theme's layout puts them, and come back when the controls
 // hide. With a remote or controller, Up from the controls' top row goes to the overlay, Down comes back.
+//
+// Size (alpha feedback: on a 4K TV the controls were too small to read from the couch): the controls over video scale
+// by --icefin-osd-scale, in every theme and in the stock look. Auto sizes them by the screen's height (CSS px / 1080,
+// never below 1, so 4K at 100% desktop scaling gets twice the size); Couch Mode adds COUCH_FACTOR, thicker focus
+// outlines and html[data-icefin-couch] (themes show their controller hints); Client Settings -> Video -> Player
+// Controls Size takes a percentage of that. Couch Mode is on when its switch is, or when Detect Couch Displays is on
+// and the capability model calls this display a couch display (TV-sized, or Gamescope / Big Picture).
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -83,7 +90,21 @@ html[data-icefin-osd-up] [data-icefin-overlay] { bottom: calc(var(--icefin-osd-c
   transition: bottom 200ms ease; z-index: 1001 !important; }
 html[data-icefin-osd-up] .skip-button:focus, html[data-icefin-osd-up] #skipIntro button:focus, html[data-icefin-osd-up] .skipIntro button:focus,
 html[data-icefin-osd-up] [data-icefin-overlay]:focus { outline: 0.18em solid var(--icefin-color-focus); outline-offset: 0.15em; }
+/* size: the controls over video, scaled as one (zoom keeps jellyfin-web's px and em parts in proportion) */
+html[data-icefin-osd-playing] #videoOsdPage .videoOsdBottom, html[data-icefin-osd-playing] .skinHeader.osdHeader,
+html[data-icefin-osd-playing] .upNextContainer { zoom: var(--icefin-osd-scale, 1); }
+/* overlays fixed to the window: scaled from their bottom-right corner, so the lane above places them in screen px */
+html[data-icefin-osd-playing] .skip-button, html[data-icefin-osd-playing] #skipIntro, html[data-icefin-osd-playing] .skipIntro,
+html[data-icefin-osd-playing] [data-icefin-overlay] { transform: scale(var(--icefin-osd-scale, 1)) !important; transform-origin: 100% 100% !important; }
+/* menus over video (audio, subtitles, speed): larger text; jellyfin-web places them by their measured size */
+html[data-icefin-osd-playing] .actionSheet { font-size: calc(100% * var(--icefin-osd-scale, 1)); }
+/* the panel layout keeps its share of the screen when zoomed */
+html[data-icefin-osd="panel"][data-icefin-osd-playing] #videoOsdPage .videoOsdBottom { width: min(calc(70vw / var(--icefin-osd-scale, 1)), 70em) !important; }
+/* Couch Mode: focus that reads across the room */
+html[data-icefin-couch][data-icefin-osd-playing] #videoOsdPage .videoOsdBottom :focus,
+html[data-icefin-couch][data-icefin-osd-playing] .skip-button:focus { outline: 0.22em solid var(--icefin-color-focus, currentColor) !important; outline-offset: 0.12em; }
 `;
+    const COUCH_FACTOR = 1.3;
     const OVERLAYS = '.skip-button, #skipIntro button, .skipIntro button, [data-icefin-overlay]';
     let spec = null;
     const html = () => document.documentElement;
@@ -118,8 +139,11 @@ html[data-icefin-osd-up] [data-icefin-overlay]:focus { outline: 0.18em solid var
         let up = false;
         if (bar && !bar.classList.contains('hide') && !bar.classList.contains('videoOsdBottom-hidden')) {
             const r = bar.getBoundingClientRect(), cs = getComputedStyle(bar);
-            up = r.height > 0 && r.top < innerHeight - 4 && parseFloat(cs.opacity) > 0.1 && cs.visibility !== 'hidden';
-            if (up) h.style.setProperty('--icefin-osd-clear', `${Math.max(0, Math.round(innerHeight - r.top))}px`);
+            // A zoomed element's rect comes back divided by its zoom (--icefin-osd-scale): back to viewport px.
+            const z = parseFloat(h.style.getPropertyValue('--icefin-osd-scale')) || 1;
+            const top = r.top * z;
+            up = r.height > 0 && top < innerHeight - 4 && parseFloat(cs.opacity) > 0.1 && cs.visibility !== 'hidden';
+            if (up) h.style.setProperty('--icefin-osd-clear', `${Math.max(0, Math.round(innerHeight - top))}px`);
         }
         h.toggleAttribute('data-icefin-osd-up', !!up);
     }
@@ -147,6 +171,36 @@ html[data-icefin-osd-up] [data-icefin-overlay]:focus { outline: 0.18em solid var
         return false;
     };
     E.addActionHook(laneHook);
+    // ---- size ----
+    function settingsVideo() { try { return (window.jmpInfo && window.jmpInfo.settings && window.jmpInfo.settings.video) || {}; } catch (e) { return {}; } }
+    function couchOn() {
+        const v = settingsVideo();
+        if (v.icefin_couch_mode === true) return true;
+        const sys = T.system;
+        return v.icefin_couch_detect !== false && !!(sys && sys.couch && sys.couch.couch);
+    }
+    function sizeScale() {
+        const v = settingsVideo();
+        const base = Math.max(1, innerHeight / 1080);
+        const couch = couchOn();
+        const pct = v.icefin_osd_size && v.icefin_osd_size !== 'auto' ? Number(v.icefin_osd_size) / 100 : 1;
+        return { scale: Math.max(0.6, Math.min(4, base * (couch ? COUCH_FACTOR : 1) * (pct || 1))), couch };
+    }
+    function applySize() {
+        const h = html();
+        if (!h) return;
+        const { scale, couch } = sizeScale();
+        h.style.setProperty('--icefin-osd-scale', scale.toFixed(3));
+        h.toggleAttribute('data-icefin-couch', couch);
+    }
+    T.ui.osdSize = () => sizeScale();
+    window.addEventListener('resize', applySize);
+    window.addEventListener('icefin-system', applySize);
+    const hookSettings = () => {
+        if (window.jmpInfo && Array.isArray(window.jmpInfo.settingsUpdate)) window.jmpInfo.settingsUpdate.push((section) => { if (section === 'video') applySize(); });
+        applySize();
+    };
+    if (document.documentElement) hookSettings(); else document.addEventListener('DOMContentLoaded', hookSettings);
     window.addEventListener('hashchange', watchRoute);
     window.addEventListener('popstate', watchRoute);
     setInterval(watchRoute, 1000);  // jellyfin-web's own navigation goes through history.pushState as well

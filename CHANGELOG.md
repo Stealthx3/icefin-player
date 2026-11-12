@@ -4,6 +4,19 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-11-12
+
+### Added
+- Client Settings as a themed page in every theme with a settings area: a list of its sections, and every control, drop-downs included, usable with a remote or controller.
+- Live TV: a connecting dialog while a channel starts, and an error notice with the reason, Try again and Close when it can't.
+- Player controls sized for the screen: twice the size on a 4K display at 100% desktop scaling, Client Settings -> Video -> Player Controls Size, and Couch Mode (larger controls, thicker focus, controller hints kept), switched on by hand or for TV-sized displays and Gamescope.
+- A signed Flatpak test repository on GitHub Pages (docs/INSTALL.md).
+
+### Fixed
+- Skip buttons (MediaSegments, Intro Skipper) were covered by the player controls: they now sit above them, reachable with Up.
+- Theme sounds were silent when the desktop's notification sounds were muted: they play on Icefin's own stream now.
+- Plaza: the Collections channel shows random collections, and the menus' clock moved into the channel name pill, where nothing covers it.
+
 ## [0.1.0-alpha.1] - 2026-11-11
 
 First alpha. Everything below is tested in the virtual lab (`docs/LAB.md`); testers' hardware comes next (`docs/BETA-CHECKLIST.md`).
@@ -26,5 +39,6 @@ First alpha. Everything below is tested in the virtual lab (`docs/LAB.md`); test
 ### Upstream base
 - jellyfin-desktop v2.0.0 (`1634d3d`).
 
-[Unreleased]: https://github.com/Stealthx3/icefin-player/compare/v0.1.0-alpha.1...HEAD
+[Unreleased]: https://github.com/Stealthx3/icefin-player/compare/v0.1.0-alpha.2...HEAD
+[0.1.0-alpha.2]: https://github.com/Stealthx3/icefin-player/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/Stealthx3/icefin-player/releases/tag/v0.1.0-alpha.1

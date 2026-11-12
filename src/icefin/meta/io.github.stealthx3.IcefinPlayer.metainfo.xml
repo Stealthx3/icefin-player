@@ -40,6 +40,12 @@
   </supports>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.1.0~alpha.2" date="2026-11-12" type="development">
+      <url>https://github.com/Stealthx3/icefin-player/releases/tag/v0.1.0-alpha.2</url>
+      <description>
+        <p>Feedback on the first alpha: Client Settings as a themed page that works with a controller, a connecting dialog and error notice for Live TV, skip buttons kept clear of the player controls, player controls sized for 4K and a Couch Mode, theme sounds that play when desktop notification sounds are muted, and Plaza fixes.</p>
+      </description>
+    </release>
     <release version="0.1.0~alpha.1" date="2026-11-11" type="development">
       <url>https://github.com/Stealthx3/icefin-player/releases/tag/v0.1.0-alpha.1</url>
       <description>
