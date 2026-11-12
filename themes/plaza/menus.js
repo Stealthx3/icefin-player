@@ -35,7 +35,9 @@
         const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
         tick();
         const timer = setInterval(tick, 15000);
-        head.append(name, tabs);
+        head.append(name);
+        P.nowPill(head);
+        head.append(tabs);
         const body = el('div', 'pz-mbody');
         const barEl = el('div', 'pz-mbar');
         barEl.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 24 C480 6 1440 6 1920 24 V210 H0 Z"/><path class="pz-bar-shine" d="M0 32 C480 14 1440 14 1920 32"/><path class="pz-bar-line" d="M0 24 C480 6 1440 6 1920 24"/></svg>';
@@ -381,6 +383,65 @@
         return { el: np, stop() { clearInterval(timer); np.remove(); } };
     };
 
+    // ---- "Now playing" beside the name pill on every screen while music plays (9.44); it opens now playing ----
+    // It waits tucked under the name pill: playback starting slides it out (pushing the tabs along), stopping slides it
+    // back. The record spins while the music plays and stands still while it is paused.
+    P.nowPill = (head) => {
+        const b = el('div', 'pz-nowpill');
+        b.setAttribute('aria-label', 'Now playing');
+        const rec = el('span', 'pz-nowpill-rec'), disc = el('span', 'pz-nowpill-disc'), label = el('span', 'pz-nowpill-label'), text = el('span', 'pz-nowpill-text');
+        disc.append(label);
+        rec.append(disc);
+        b.append(rec, el('b', '', '♫ Now playing'), text);
+        b.addEventListener('click', () => { if (b.classList.contains('pz-on')) T.ctx.navigate('#/queue'); });
+        let seen = false, first = true, art = '';
+        const tick = () => {
+            if (b.isConnected) seen = true;
+            else if (seen) { clearInterval(timer); return; }
+            const n = T.ctx.nowPlaying();
+            const it = n && n.item;
+            const on = !!(it && it.MediaType === 'Audio');
+            let paused = false;
+            try { paused = !!(on && n.player.paused && n.player.paused()); } catch (e) { /* the player went away */ }
+            if (on) {
+                text.textContent = [it.Name, (it.Artists || [])[0] || it.AlbumArtist].filter(Boolean).join(' · ');
+                const a = P.posterArt(it, 120) || '';
+                if (a !== art) { art = a; label.style.backgroundImage = a ? `url("${a}")` : ''; }
+            }
+            // how far to tuck it: its own width, so it hides wholly under the name pill. Set without a transition, so
+            // a new title doesn't shove the tabs before the slide begins.
+            if (b.isConnected && !b.classList.contains('pz-on')) {
+                b.classList.add('pz-np-still');
+                b.style.setProperty('--pz-np-w', `${b.offsetWidth}px`);
+                void getComputedStyle(b).marginLeft;
+                if (!first) b.classList.remove('pz-np-still');
+            }
+            if (first && b.isConnected) {
+                // a screen opened while music plays shows it out already; the slide is for playback starting and stopping
+                first = false;
+                b.classList.add('pz-np-still');
+                requestAnimationFrame(() => requestAnimationFrame(() => b.classList.remove('pz-np-still')));
+            }
+            if (on !== b.classList.contains('pz-on')) {
+                b.classList.toggle('pz-on', on);
+                if (on) P.focusable(b);
+                else {
+                    b.removeAttribute('data-icefin-focus');
+                    if (b.classList.contains('icefin-focused')) {
+                        const next = [...head.querySelectorAll('[data-icefin-focus]')].find((x) => x !== b);
+                        if (next) T.ctx.focus(next);
+                    }
+                }
+            }
+            b.classList.toggle('pz-np-paused', paused);
+        };
+        const timer = setInterval(tick, 1000);
+        head.append(b);
+        tick();
+        requestAnimationFrame(tick);
+        return b;
+    };
+
     // Music: albums, artists, songs, playlists and genres, with what is playing in a bar under the grid.
     let nowTimer = null;
     const squareGrid = (q, extra) => (s) => Object.assign(posterGrid(q)(s), { shape: 'square', art: (it) => P.posterArt(it, 400),
@@ -490,8 +551,9 @@
                 emptyLabel: 'No information',
                 onFocus(p, ch) { F.focusText(p.gap ? ch.name : `${p.title} · ${ch.ch.ChannelNumber ? 'CH ' + ch.ch.ChannelNumber : ch.name} · ${P.time(p.start)} – ${P.time(p.end)}`); },
                 onSelect(p, ch) {
-                    if (p.start <= Date.now() && p.end > Date.now()) playChannel(ch.ch);
-                    else T.ctx.navigate(`#/details?id=${p.id}&serverId=${P.sid()}`);
+                    // Plaza's programme card: watch, record, record the series (9.44); a gap in the guide just tunes in
+                    if (p.gap || !p.id || !P.programmeCard) { playChannel(ch.ch); return; }
+                    P.programmeCard(p.id, ch.ch);
                 }
             });
         }
@@ -969,7 +1031,67 @@
         ]
     });
 
-    const VIEWS = { library: () => LIBRARY, items: () => ITEMS, series, resume, nextup: () => NEXTUP };
+    // ---- You (9.44): the user's own pages, and the account: switch user or server, sign out ----
+    function you() {
+        let F = null;
+        return {
+            async mount(root) {
+                ui.pointerFirst(true);
+                F = frame(root, { view: 'you', kind: 'tvshows', name: 'You', hints: 'Ⓐ Open · Ⓑ Back' });
+                const c = P.client(), uid = P.uid();
+                let u = {};
+                try { u = await c.getCurrentUser(); } catch (e) { u = {}; }
+                if (!F) return;
+                const me = el('div', 'pz-you-me');
+                const pic = el('div', 'pz-you-pic');
+                if (u.PrimaryImageTag) P.bg(pic, P.img(uid, 'Primary', u.PrimaryImageTag, 300)); else pic.textContent = (u.Name || '?').charAt(0).toUpperCase();
+                me.append(pic, el('div', 'pz-you-name', u.Name || ''), el('div', 'pz-you-server', (c.serverInfo && c.serverInfo() && c.serverInfo().Name) || ''));
+                const list = el('div', 'pz-you-rows');
+                const row = (label, sub, go, cls) => {
+                    const r = P.focusable(el('div', 'pz-setrow pz-you-row' + (cls ? ' ' + cls : '')));
+                    r.append(el('span', 'pz-setrow-label', label));
+                    if (sub) r.append(el('span', 'pz-sheet-row-sub', sub));
+                    r.addEventListener('click', go);
+                    r.addEventListener('icefin-focus', () => F && F.focusText(label));
+                    list.append(r);
+                    return r;
+                };
+                const to = (route) => () => T.ctx.navigate(route);
+                row('Profile', 'Picture, password', to(`#/userprofile?userId=${uid}`));
+                row('Display', 'Language, date and time', to(`#/mypreferencesdisplay?userId=${uid}`));
+                row('Home', 'What the home shows', to(`#/mypreferenceshome?userId=${uid}`));
+                row('Playback', 'Languages, quality', to(`#/mypreferencesplayback?userId=${uid}`));
+                row('Subtitles', 'Language, look', to(`#/mypreferencessubtitles?userId=${uid}`));
+                row('Controls', 'Controllers and remotes', to(`#/mypreferencescontrols?userId=${uid}`));
+                row('Quick Connect', 'Sign in another device', to('#/quickconnect'));
+                if (T.ctx.signOut) row('Switch user', 'Another account on this server', () => T.ctx.signOut());
+                if (T.ctx.selectServer) row('Switch server', 'Another server', () => T.ctx.selectServer());
+                if (T.ctx.signOut && P.sheet) row('Sign out', '', () => P.sheet.show({
+                    title: 'Sign out', kind: 'folder', danger: true,
+                    render(body) {
+                        body.append(el('div', 'pz-sheet-question', `Sign out of ${u.Name || 'your account'}?`), el('div', 'pz-sheet-note', 'This device forgets the sign-in; you choose who signs in next.'));
+                        const f = el('div', 'pz-panel-foot');
+                        const keep = P.focusable(el('div', 'pz-tab pz-tab-on', 'Stay signed in'));
+                        keep.addEventListener('click', () => P.sheet.close());
+                        const out = P.focusable(el('div', 'pz-tab', 'Sign out'));
+                        out.addEventListener('click', () => { P.sheet.close(); T.ctx.signOut(); });
+                        f.append(keep, out);
+                        body.append(f);
+                    }
+                }), 'pz-you-danger');
+                const box = el('div', 'pz-you');
+                box.append(me, list);
+                F.body.append(box);
+                const first = list.querySelector('[data-icefin-focus]');
+                if (first) T.ctx.focus(first);
+            },
+            onAction(a, ctx) { P.sawAction(); return common(a, ctx); },
+            onBack() { goBack(); return true; },
+            unmount() { if (F) F.stop(); ui.pointerFirst(false); F = null; }
+        };
+    }
+
+    const VIEWS = { library: () => LIBRARY, items: () => ITEMS, series, resume, nextup: () => NEXTUP, you };
     P.menus = { screen: (name) => (VIEWS[name] || VIEWS.library)() };
     T.registerScreen('#/movies', MOVIES);
     T.registerScreen('#/tv', SHOWS);

@@ -955,3 +955,56 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 #icefin-theme-root[data-pz="settings"] .icefin-cs .formDialogContent { scroll-padding: calc(40 * var(--pz)) 0; }
 #icefin-theme-root[data-pz="settings"] .icefin-s-body { overflow: visible; }
 #icefin-theme-root[data-pz="settings"] .icefin-s-entries { padding: calc(54 * var(--pz)) calc(54 * var(--pz)); }
+
+/* ==== 9.44 entry points ==== */
+.pz-k-exit { --pz-ch-a: #ff8787; --pz-ch-b: #e03131; }
+/* "Now playing" beside the name pill while music plays: tucked under the name pill until playback starts, then it
+   slides out and pushes the tabs along; it slides back when playback stops. The record spins while music plays. */
+.pz-mname { position: relative; z-index: 2; }
+.pz-nowpill { position: relative; z-index: 1; flex: none; display: flex; align-items: center; gap: calc(12 * var(--pz)); height: calc(62 * var(--pz)); max-width: calc(560 * var(--pz));
+  padding: 0 calc(24 * var(--pz)) 0 calc(6 * var(--pz)); border-radius: 999px; box-sizing: border-box;
+  background: var(--pz-pill); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) #b388ff, var(--pz-lift); font-size: calc(22 * var(--pz)); color: var(--icefin-color-text); cursor: pointer; outline: none; white-space: nowrap;
+  margin-left: calc(-1 * (var(--pz-np-w, calc(560 * var(--pz))) + var(--pz-head-gap, calc(30 * var(--pz))))); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: margin-left 0.55s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.2s linear 0.35s, visibility 0s linear 0.55s; }
+.pz-nowpill.pz-on { margin-left: 0; opacity: 1; visibility: visible; pointer-events: auto;
+  transition: margin-left 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.15), opacity 0.15s linear, visibility 0s; }
+.pz-nowpill.pz-np-still { transition: none; }
+.pz-nowpill.icefin-focused, .pz-nowpill:hover { box-shadow: var(--pz-glow); }
+/* the record: fine grooves, two light bands pressed into the vinyl and the album art as its label all turn with it, so the
+   spin reads even at this size; the shine stays put, as light on a real record does */
+.pz-nowpill-rec { position: relative; flex: none; width: calc(54 * var(--pz)); height: calc(54 * var(--pz)); border-radius: 50%; box-shadow: 0 calc(2 * var(--pz)) calc(5 * var(--pz)) rgb(0 0 0 / 0.35); }
+.pz-nowpill-rec::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 20deg, transparent 0 6%, rgb(255 255 255 / 0.32) 11%, transparent 17% 56%, rgb(255 255 255 / 0.2) 61%, transparent 66%); mix-blend-mode: screen; }
+.pz-nowpill-disc { position: absolute; inset: 0; border-radius: 50%; animation: pz-spin 2.2s linear infinite;
+  background:
+    conic-gradient(from 0deg, rgb(255 255 255 / 0.28) 0 7%, transparent 7% 50%, rgb(255 255 255 / 0.14) 50% 55%, transparent 55%),
+    repeating-radial-gradient(circle, #171025 0 calc(1.1 * var(--pz)), #3b2d63 calc(1.1 * var(--pz)) calc(1.9 * var(--pz)), #171025 calc(1.9 * var(--pz)) calc(3 * var(--pz))),
+    var(--pz-record, #2b1d4f); }
+.pz-nowpill-label { position: absolute; inset: 31%; border-radius: 50%; background: var(--pz-record-label, #ffd166) center / cover no-repeat;
+  box-shadow: 0 0 0 calc(1.5 * var(--pz)) rgb(255 255 255 / 0.55); }
+.pz-nowpill-label::before { content: ""; position: absolute; left: 50%; top: 50%; width: calc(5 * var(--pz)); height: calc(5 * var(--pz)); margin: calc(-2.5 * var(--pz)) 0 0 calc(-2.5 * var(--pz)); border-radius: 50%; background: #120c22; }
+.pz-nowpill-label::after { content: ""; position: absolute; left: 44%; top: 4%; width: 12%; height: 26%; border-radius: 999px; background: rgb(255 255 255 / 0.9); box-shadow: 0 0 calc(2 * var(--pz)) rgb(0 0 0 / 0.5); }
+.pz-nowpill.pz-np-paused .pz-nowpill-disc { animation-play-state: paused; }
+.pz-nowpill-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--icefin-color-textSecondary); }
+#icefin-stock-chrome .pz-nowpill { pointer-events: auto; }
+/* the You menu */
+.pz-you { position: absolute; left: calc(105 * var(--pz)); right: calc(105 * var(--pz)); top: calc(150 * var(--pz)); bottom: 0; display: grid; grid-template-columns: calc(330 * var(--pz)) minmax(0, 1fr); gap: calc(60 * var(--pz)); }
+.pz-you-me { display: flex; flex-direction: column; align-items: center; gap: calc(10 * var(--pz)); padding-top: calc(10 * var(--pz)); }
+.pz-you-pic { width: calc(260 * var(--pz)); height: calc(260 * var(--pz)); border-radius: 50%; background: linear-gradient(160deg, var(--pz-ch-a), var(--pz-ch-b)) center / cover no-repeat; color: var(--pz-ink-on);
+  display: flex; align-items: center; justify-content: center; font-size: calc(96 * var(--pz)); font-weight: 700; box-shadow: inset 0 0 0 calc(6 * var(--pz)) var(--icefin-color-surface), var(--pz-lift); }
+.pz-you-name { font-size: calc(36 * var(--pz)); font-weight: 700; }
+.pz-you-server { font-size: calc(21 * var(--pz)); color: var(--icefin-color-textSecondary); }
+.pz-you-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(14 * var(--pz)); align-content: start; padding: calc(30 * var(--pz)); margin: calc(-30 * var(--pz)); }
+.pz-you-row .pz-setrow-label { flex: 1; }
+.pz-you-danger .pz-setrow-label { color: var(--icefin-color-error); }
+/* item menu: images */
+.pz-sheet-images { display: flex; flex-wrap: wrap; gap: calc(16 * var(--pz)); }
+.pz-sheet-image { position: relative; width: calc(170 * var(--pz)); height: calc(170 * var(--pz)); border-radius: calc(18 * var(--pz)); background: var(--icefin-color-tileEmpty) center / contain no-repeat;
+  box-shadow: var(--pz-ring), var(--pz-lift); cursor: pointer; outline: none; overflow: hidden; }
+.pz-sheet-image.icefin-focused, .pz-sheet-image:hover { box-shadow: var(--pz-glow); }
+.pz-sheet-image-label { position: absolute; left: 0; right: 0; bottom: 0; padding: calc(6 * var(--pz)) calc(10 * var(--pz)); background: rgb(0 0 0 / 0.55); color: #ffffff; font-size: calc(16 * var(--pz)); text-align: center; }
+/* a Live TV programme */
+.pz-sheet-prog { display: grid; grid-template-columns: calc(440 * var(--pz)) minmax(0, 1fr); gap: calc(36 * var(--pz)); }
+.pz-sheet-prog-art { aspect-ratio: 16 / 9; border-radius: calc(24 * var(--pz)); background: linear-gradient(160deg, #5cc8f5, #1b8fd6) center / cover no-repeat; box-shadow: inset 0 0 0 calc(5 * var(--pz)) var(--icefin-color-surface), var(--pz-lift); }
+.pz-sheet-prog-info { display: flex; flex-direction: column; gap: calc(8 * var(--pz)); min-width: 0; }
+.pz-sheet-prog-info .pz-sheet-note:last-child { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }

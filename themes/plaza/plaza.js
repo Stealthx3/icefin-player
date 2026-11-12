@@ -33,7 +33,7 @@
         if (v.CollectionType === 'boxsets') return `#/boxsets?${q}&name=${encodeURIComponent(v.Name || '')}`;
         return `#/home?pz=library&id=${v.Id}&kind=${P.kindOf(v.CollectionType)}&name=${encodeURIComponent(v.Name || '')}`;
     }
-    function channels(views, favourites) {
+    function channels(views, favourites, hasPlaylists) {
         const c = P.client(), uid = P.uid();
         const list = views.map((v) => ({
             id: 'library-' + v.Id, kind: P.kindOf(v.CollectionType), label: v.Name, view: v, menu: libraryMenu(v),
@@ -50,6 +50,10 @@
                 fetch: () => P.safe(c.getResumableItems(uid, { Limit: 6, MediaTypes: 'Video', Fields: P.FIELDS })).then(P.items) },
             { id: 'nextup', kind: 'nextup', label: 'Next Up', menu: '#/home?pz=nextup',
                 fetch: () => P.safe(c.getNextUpEpisodes({ UserId: uid, Limit: 6, Fields: P.FIELDS })).then(P.items) });
+        // Playlists: a channel of its own whenever there are playlists and no Playlists library shows them (9.44)
+        if (hasPlaylists && !views.some((v) => v.CollectionType === 'playlists'))
+            list.push({ id: 'playlists', kind: 'playlists', label: 'Playlists', menu: `#/playlists?serverId=${P.sid()}`,
+                fetch: () => P.safe(c.getItems(uid, { IncludeItemTypes: 'Playlist', Recursive: true, SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 6, Fields: P.FIELDS })).then(P.items) });
         for (const f of favourites) list.push({ id: 'fav-' + f.Id, kind: 'favourite', label: f.Name, play: f, items: [f] });
         return list;
     }
@@ -615,7 +619,28 @@
             }
             return false;
         },
-        onBack() { if (S && S.drag) { drop(null); return true; } return closeCard(); },
+        onBack() {
+            if (S && S.drag) { drop(null); return true; }
+            if (closeCard()) return true;
+            // nothing left to go back to: offer to quit (9.44)
+            if (T.ctx.exit && P.sheet) {
+                P.sheet.show({
+                    title: 'Icefin', kind: 'livetv',
+                    render(body) {
+                        body.append(el('div', 'pz-sheet-question', 'Exit Icefin?'), el('div', 'pz-sheet-note', 'Anything playing stops.'));
+                        const f = el('div', 'pz-panel-foot');
+                        const stay = P.focusable(el('div', 'pz-tab pz-tab-on', 'Cancel'));
+                        stay.addEventListener('click', () => P.sheet.close());
+                        const go = P.focusable(el('div', 'pz-tab', 'Exit'));
+                        go.addEventListener('click', () => T.ctx.exit());
+                        f.append(stay, go);
+                        body.append(f);
+                    }
+                });
+                return true;
+            }
+            return false;
+        },
         mount(root) {
             root.setAttribute('data-pz', 'home');
             ui.pointerFirst(true);
@@ -668,10 +693,11 @@
 
             const mine = S;
             Promise.all([ui.userViews(), P.safe(P.client().getItems(P.uid(), { Filters: 'IsFavorite', Recursive: true, Limit: 24, SortBy: 'SortName',
-                IncludeItemTypes: 'Movie,Series,Episode,MusicAlbum,MusicVideo,Video,BoxSet,Playlist,Audio', Fields: P.FIELDS })).then(P.items)])
-                .then(([views, favs]) => {
+                IncludeItemTypes: 'Movie,Series,Episode,MusicAlbum,MusicVideo,Video,BoxSet,Playlist,Audio', Fields: P.FIELDS })).then(P.items),
+                P.safe(P.client().getItems(P.uid(), { IncludeItemTypes: 'Playlist', Recursive: true, Limit: 1 })).then((r) => P.items(r).length > 0)])
+                .then(([views, favs, hasPlaylists]) => {
                     if (S !== mine) return;
-                    fill(channels(views, favs));
+                    fill(channels(views, favs, hasPlaylists));
                     const reopen = P.reopen && S.list.find((x) => x.id === P.reopen);
                     P.reopen = null;
                     const t = reopen ? S.tiles.find((x) => x.plazaChannel === reopen) : S.tiles[0];
