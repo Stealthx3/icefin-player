@@ -639,3 +639,9 @@ html[data-mc-more] #icefin-stock-chrome .mc-title { visibility: hidden; }
 @keyframes mc-page-in { from { opacity: 0; } to { opacity: 1; } }
 html[data-icefin-stock]:not([data-icefin-dashboard]) .mainAnimatedPage:not(.hide) { animation: mc-page-in 0.24s ease-out both; }
 html[data-icefin-stock][data-icefin-motion="low"] .mainAnimatedPage:not(.hide) { animation: none; }
+/* leaving a settings page Media Center lays out (settings.js) for a themed screen: the page went on showing for a few
+   frames until the screen had mounted; with no frame up it stays hidden. Only these pages: the engine reads
+   jellyfin-web's other hidden pages (the library, the item menu, the viewers) and needs them visible. */
+html[data-icefin-theme]:not([data-icefin-stock]) .page[data-mc-form] { visibility: hidden; }
+/* the player's side panel takes the right of the screen: the seek bar and its times end before it */
+.mc-player:has(.mc-p-panel) .mc-p-bottom { right: calc(36.7vw + 2.4vh); }
