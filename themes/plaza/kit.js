@@ -64,6 +64,7 @@
         if (it.CommunityRating) parts.push(`★ ${Number(it.CommunityRating).toFixed(1)}`);
         if (it.Type === 'Series' && it.ChildCount) parts.push(`${it.ChildCount} season${it.ChildCount === 1 ? '' : 's'}`);
         if (it.Type === 'BoxSet' && it.ChildCount) parts.push(`Collection of ${it.ChildCount}`);
+        if ((it.Type === 'MusicAlbum' || it.Type === 'Playlist') && it.ChildCount) parts.splice(1, 0, P.count(it.ChildCount, it.Type === 'MusicAlbum' ? 'track' : 'item'));
         return parts.filter(Boolean).join(' · ');
     };
     // Hint text with controller buttons drawn as round keys: "Ⓐ Open · Ⓑ Back" (the circled letters aren't in every font).
@@ -76,6 +77,11 @@
         }
         return out;
     };
+    // "1 season", "3 seasons"
+    P.count = (n, word) => (n ? `${n} ${word}${n === 1 ? '' : 's'}` : '');
+    P.isVideo = (it) => !!it && ['Movie', 'Episode', 'Video', 'MusicVideo', 'Trailer', 'Series', 'Season', 'TvChannel'].includes(it.Type);
+    const TYPE = { MusicAlbum: 'Album', MusicArtist: 'Artist', MusicVideo: 'Music video', BoxSet: 'Collection', Series: 'Show', Episode: 'Episode', Audio: 'Song', TvChannel: 'Channel' };
+    P.typeName = (it) => (it ? TYPE[it.Type] || it.Type || '' : '');
     P.time = (d) => new Date(d).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
     // ---- what each kind of item does ----

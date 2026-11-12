@@ -166,6 +166,7 @@
             for (const ch of slots.slice(p * per, p * per + per)) {
                 const t = tile(ch);
                 t.setAttribute('data-pz-page', String(p));
+                t.setAttribute('data-pz-row', String(Math.floor((S.tiles.length % per) / S.cols)));
                 t.setAttribute('data-pz-slot', String(S.tiles.length));
                 S.tiles.push(t);
                 page.append(t);
@@ -451,8 +452,8 @@
             P.bg(pan, P.wideArt(it, 1280) || P.posterArt(it, 800));
             frame.append(pan, el('div', 'pz-fav-badge', '▶ PREVIEW'));
             body.append(frame, el('div', 'pz-reflect pz-fav-reflect'),
-                textBlock('pz-fav-info', [['pz-kicker', `★ FAVOURITE · ${(it.Type || '').toUpperCase()}`], ['pz-big', it.Name], ['pz-meta', P.meta(it)],
-                    ['pz-overview', it.Overview || ''], ['pz-sub', P.left(it) ? `Resume · ${P.left(it)}` : '']]));
+                textBlock('pz-fav-info', [['pz-kicker', `★ FAVOURITE · ${P.typeName(it).toUpperCase()}`], ['pz-big', it.Name], ['pz-meta', P.meta(it)],
+                    ['pz-overview', it.Overview || ''], ['pz-sub', P.isVideo(it) && P.left(it) ? `Resume · ${P.left(it)}` : '']]));
             // A muted preview of the item itself, from a little way in, where the server can stream it.
             if (['Movie', 'Episode', 'Video', 'MusicVideo'].includes(it.Type) && !ui.motion.reduced()) {
                 const start = Math.round(((it.RunTimeTicks || 0) / 1e7) * 0.15);
@@ -477,7 +478,9 @@
             const chan = P.items(r).find((x) => x.CurrentProgram) || P.items(r)[0];
             if (!chan) { body.append(textBlock('pz-side-info', [['pz-big', 'No Live TV channels'], ['pz-meta', 'This server has no tuner or guide set up.']])); return; }
             const now = chan.CurrentProgram;
-            P.bg(screen, (now && P.thumbArt(now, 800)) || P.thumbArt(chan, 800));
+            const pic = now && P.thumbArt(now, 800);
+            P.bg(screen, pic || P.thumbArt(chan, 800));
+            screen.classList.toggle('pz-logo', !pic);
             const lines = [['pz-kicker', `NOW · ${chan.ChannelNumber ? 'CH ' + chan.ChannelNumber : chan.Name}`], ['pz-big', now ? now.Name : chan.Name]];
             const info = textBlock('pz-side-info', lines);
             if (now) {
@@ -526,7 +529,7 @@
             tv.lastChild.append(screen);
             const seasons = el('div', 'pz-seasons');
             seasons.append(el('div', 'pz-season pz-season-2'), el('div', 'pz-season pz-season-1'),
-                el('div', 'pz-season pz-season-0', nu ? `Season ${nu.ParentIndexNumber}` : `${series.ChildCount || ''} seasons`));
+                el('div', 'pz-season pz-season-0', nu ? `Season ${nu.ParentIndexNumber}` : P.count(series.ChildCount, 'season')));
             body.append(tv, el('div', 'pz-reflect pz-tv-reflect'), seasons,
                 textBlock('pz-side-info pz-below-seasons', [['pz-big', series.Name], ['pz-meta', P.meta(series)], ['pz-accent', nu ? `Next: ${P.episodeCode(nu)} · ${nu.Name}` : '']]));
             return;
@@ -707,13 +710,7 @@
     });
 })();
 
-// Details (PLAN 9.18): the engine's details screen (every feature of the stock page) in this theme's layout; the look
-// is in styles.css, "Details".
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'banner' }));
-})();
+// Details: details.js (9.43) frames the engine's details screen in Plaza's layout.
 
 // Player controls (PLAN 9.19): jellyfin-web's own controls (every function kept) in this theme's layout; the look is
 // the osd.* tokens in tokens.json.

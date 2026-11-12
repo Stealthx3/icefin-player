@@ -9,11 +9,16 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - A playlist's items can be moved on its details screen, with a controller (Menu, then up or down) or the mouse, in every theme.
 - Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
 
-### Fixed
-- Leaving full screen now tells the web client and media controls (MPRIS) the window is windowed again; the full-screen state used to stay on after the first time.
-
 ### Changed
+- Plaza has its own details page: the name pill and clock, tabs for each section, the framed art, one row of action pills, and Back and Home in the bar; albums and playlists show their tracks beside the art.
+- Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
+
+### Fixed
+- Plaza: opening Sort and filter or New playlist turned the whole window black.
+- A page left open before playback (Select Server, for example) showed above the video.
+- Plaza: the bottom row's channel name covered the clock; a series' episodes ran under the bar; Live TV logos were cropped; "1 seasons"; album favourites showed a resume time.
+- Leaving full screen now tells the web client and media controls (MPRIS) the window is windowed again; the full-screen state used to stay on after the first time.
 
 ## [0.1.0-alpha.2] - 2026-11-12
 
