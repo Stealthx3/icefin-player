@@ -113,6 +113,7 @@ def main():
         after = json.loads(js("JSON.stringify(window.labPlayer.last)"))["position"]
         check("a relative seek", after < before, f"{before} -> {after}")
 
+        check("ui.player.controls(): the same player outside the screen", js("window.icefinTheme.ui.player.controls().state().active === true && window.icefinTheme.ui.player.controls().state().duration > 1000") is True)
         # ---- the archive: jellyfin-web's skip button ----
         js("(() => { const c = document.createElement('div'); c.className = 'skip-button-container'; c.innerHTML = '<button class=\"skip-button\">Skip Intro</button>';"
            " document.body.append(c); c.querySelector('button').addEventListener('click', () => { window.labSkipped = true; }); return true; })()")
