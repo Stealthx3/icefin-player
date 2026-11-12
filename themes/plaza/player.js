@@ -38,7 +38,14 @@
         const name = el('div', 'pz-mname pz-pl-name');
         const nameText = el('span', 'pz-mname-text');
         const ends = el('span', 'pz-mclock pz-pl-ends');
-        name.append(nameText, ends);
+        // Back at the pill's left end: leaves the video, as Ⓑ does with the controls hidden (jellyfin-web's own header
+        // with its back arrow and title is hidden under Plaza's controls)
+        const leave = P.focusable(el('div', 'pz-pl-back'));
+        leave.setAttribute('aria-label', 'Back');
+        leave.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        leave.append(document.createTextNode('Back'));
+        leave.addEventListener('click', () => { ctx.sound('back'); history.back(); });
+        name.append(leave, nameText, ends);
         // the capsule: the time line over the transport and the rest
         const cap = el('div', 'pz-pl-cap');
         const line = el('div', 'pz-pl-line');
@@ -104,7 +111,7 @@
         bar.addEventListener('pointermove', (e) => { if (drag) show(st(), at(e)); poke(); });
         bar.addEventListener('pointerup', (e) => { if (!drag) return; drag = false; const s = st(); player.seek(at(e) * s.duration); S.preview = null; ctx.sound('select'); });
         box.addEventListener('pointermove', () => poke());
-        S = { root, player, ctx, box, shade, name, nameText, ends, cap, bar, fill, knob, ticks, pos, dur, prev, back10, pp, fwd30, next, audio, subs, chapters, together, playon, more,
+        S = { root, player, ctx, box, shade, name, leave, nameText, ends, cap, bar, fill, knob, ticks, pos, dur, prev, back10, pp, fwd30, next, audio, subs, chapters, together, playon, more,
             archive, archiveKey: '', ticksKey: '', shown: false, timer: 0, card: null, preview: null, off: null, kind: '' };
         function show(s, frac) { S.preview = frac; draw(s); }
     }
@@ -302,11 +309,13 @@
     T.ui.player.set({
         mount(root, player, ctx) {
             build(root, player, ctx);
+            document.documentElement.classList.add('pz-pl-up');
             S.off = player.on((s) => draw(s));
             draw(player.state());
             showControls(true);
         },
         unmount() {
+            document.documentElement.classList.remove('pz-pl-up');
             if (!S) return;
             clearTimeout(S.timer);
             if (S.off) S.off();
@@ -323,6 +332,7 @@
                 return false;  // OK clicks the row
             }
             if (action === 'play_pause' || action === 'playpause') { player.playPause(); showControls(); return true; }
+            if (action === 'back') return false;  // onBack: close a card, hide the controls, or leave the video
             if (!S.shown) {
                 // hidden: ◀▶ skip back and forward, anything else brings the controls back (OK answers a skip prompt)
                 if ((action === 'left' || action === 'right') && player.state().canSeek) { player.seekBy(action === 'left' ? -10000 : 30000); ctx.sound('focus'); showControls(); return true; }

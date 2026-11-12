@@ -2,12 +2,15 @@
 """plaza_signin.py — Plaza's own Play on card, server choice and sign-in (PLAN 9.44), on the engine's 9.44 calls.
 Lab guests only (it signs out). With Plaza active (the repository's themes):
   - Settings › Home: Plaza's channels with switches; one switched off is gone from the home (then back on);
+  - Profile: Plaza's own, with the name, picture and server; new passwords that don't match, and a wrong current
+    password, are refused (the lab password never changes);
+  - Quick Connect approve: a wrong code is refused; a code started by another device, typed on the pad, signs it in;
   - Play on (the header button on a jellyfin-web page): Plaza's card, this device "Playing here", New group;
   - after signing out: #/selectserver shows the lab server as a channel and Add a server; #/login shows the lab
     user's face; a wrong password is refused with a reason; the right one signs in and goes home.
 Usage: python3 theme_player.py --app ~/build/src/icefin-player --server jf12 --out ~/rplaza-signin
 """
-import argparse, base64, json, os, signal, sys, tempfile, time
+import argparse, base64, json, os, signal, sys, tempfile, time, urllib.request
 from urllib.parse import urlparse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +77,46 @@ def main():
         check("a channel switched off is gone from the home", not any(first and n.startswith(first) for n in names), [first, names[:6]])
         js(f"location.hash = '#/mypreferenceshome?userId={uid}'; true"); time.sleep(3)
         js("document.querySelector('.pz-ph-row').click(); true"); time.sleep(0.5)
-        js(f"location.hash = '#/userprofile?userId={uid}'; true"); time.sleep(3)
+        for pg in ['display', 'playback', 'subtitles', 'controls']:
+            js(f"location.hash = '#/mypreferences{pg}?userId={uid}'; true"); time.sleep(4)
+            shot(f"prefs-{pg}.png")
+        # Profile: Plaza's own; the password checks are refused, so the lab password never changes
+        js(f"location.hash = '#/userprofile?userId={uid}'; true"); time.sleep(4)
+        pf = js("(() => { const n = document.querySelector('.pz-pf-name'); return n ? [n.textContent, !!document.querySelector('.pz-pf-pic'), document.querySelector('.pz-pf-where').textContent] : null; })()")
+        check("Profile: Plaza's own, with the name, picture and server", bool(pf) and pf[0].lower() == cred['user'].lower() and pf[1], pf)
+        shot("profile.png")
+        setpw = "((a, b, c) => { const i = document.querySelectorAll('.pz-pf-form .pz-input'); i[0].value = a; i[1].value = b; i[2].value = c; document.querySelector('.pz-pf-save').click(); return true; })"
+        js(setpw + "('x', 'new-a', 'new-b')"); time.sleep(1)
+        check("new passwords that don't match are refused", 'match' in js("document.querySelector('.pz-pf-form .pz-si-error').textContent"))
+        if js("!document.querySelector('.pz-pf-form .pz-field').hidden"):
+            js(setpw + "('certainly-not-the-password', 'lab-new', 'lab-new')"); time.sleep(3)
+            check("a wrong current password is refused", 'didn’t work' in js("document.querySelector('.pz-pf-form .pz-si-error').textContent"),
+                  js("document.querySelector('.pz-pf-form .pz-si-error').textContent"))
+        # Quick Connect approve: a code started from "another device" (a request here) is typed on the pad and approved
+        js("location.hash = '#/quickconnect'; true"); time.sleep(4)
+        check("Quick Connect: Plaza's code boxes and number pad", js("document.querySelectorAll('.pz-qa-digit').length === 6 && document.querySelectorAll('.pz-qa-key').length === 11") is True)
+        def rest(method, path, auth):
+            req = urllib.request.Request(srv.base + path, method=method, headers={"Authorization": auth, "Content-Type": "application/json"}, data=b"" if method == "POST" else None)
+            with urllib.request.urlopen(req, timeout=10) as r:
+                return json.loads(r.read() or b"null")
+        other = 'MediaBrowser Client="plaza-lab", Device="Other device", DeviceId="plaza-lab-qc", Version="1.0"'
+        try:
+            qc = rest("POST", "/QuickConnect/Initiate", other)
+        except Exception as e:  # noqa: BLE001
+            qc = None
+            print("plaza_signin: info Quick Connect is off on the lab server:", e, flush=True)
+        if qc:
+            press = "(k => { [...document.querySelectorAll('.pz-qa-key')].find(b => b.getAttribute('aria-label') === k).click(); return true; })"
+            for d in "000000": js(press + f"('{d}')")
+            js("document.querySelector('.pz-qa-go').click(); true"); time.sleep(2)
+            check("a wrong code is refused", 'didn’t work' in js("document.querySelector('.pz-qa-msg').textContent"), js("document.querySelector('.pz-qa-msg').textContent"))
+            for _ in range(6): js(press + "('Delete')")
+            for d in qc["Code"]: js(press + f"('{d}')")
+            shot("quickconnect.png")
+            js("document.querySelector('.pz-qa-go').click(); true"); time.sleep(3)
+            st = rest("GET", "/QuickConnect/Connect?Secret=" + qc["Secret"], other)
+            check("the right code approves the other device", st.get("Authenticated") is True, {"code": qc["Code"], "msg": js("document.querySelector('.pz-qa-msg').textContent")})
+        js(f"location.hash = '#/mypreferencesdisplay?userId={uid}'; true"); time.sleep(3)
         js("[...document.querySelectorAll('.pz-sc-extra-btn')].find(b => b.textContent.startsWith('Play on')).click(); true"); time.sleep(3)
         rows = js("[...document.querySelectorAll('#icefin-theme-overlay .pz-po-row')].map(r => r.textContent)")
         check("Play on: Plaza's card, this device playing here, New group", any('Playing here' in r for r in rows) and any('New group' in r for r in rows), rows)
@@ -82,7 +124,9 @@ def main():
         js("window.icefinTheme.handleAction('back')"); time.sleep(1)
         page.eval("setTimeout(() => window.icefinTheme.ctx.signOut(), 100); true", await_promise=False); time.sleep(6); page.reconnect(); js = page.eval
         page.wait_for("!!window.icefinTheme && !!window.icefinTheme.ctx.servers", timeout=60)
+        print("plaza_signin: info signed out: theme", js("JSON.stringify(window.icefinTheme.active())"), "hash", js("location.hash"), flush=True)
         js("location.hash = '#/selectserver'; true"); time.sleep(4)
+        print("plaza_signin: info at selectserver: theme", js("JSON.stringify(window.icefinTheme.active())"), "servers", js("window.icefinTheme.ctx.servers().then(x => JSON.stringify(x))"), flush=True)
         tiles = js("[...document.querySelectorAll('.pz-sv-server .pz-sv-name')].map(x => x.textContent)")
         check("Choose a server: the lab server as a channel, and Add a server", len(tiles) >= 1 and js("!!document.querySelector('.pz-sv-add')") is True, tiles)
         shot("servers.png")
@@ -104,6 +148,7 @@ def main():
         time.sleep(7); page.reconnect(); js = page.eval
         page.wait_for("!!window.ApiClient && !!window.ApiClient.getCurrentUserId()", timeout=60)
         check("the right password signs in and goes home", js("location.hash").startswith('#/home'), js("location.hash"))
+        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")  # the lab device back to stock jellyfin-web (the default)
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
