@@ -5,6 +5,7 @@
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
+    const M = window.icefinMediaCenter;
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
 
     function tile(client, item, wide) {
@@ -41,10 +42,11 @@
                 if (latest.length) cats.push({ title: v.Name, items: latest, wide: false, view: v });
             } catch (e) { console.warn('Media Center: latest', v.Name, e); }
         }
-        cats.push({ title: 'More', links: [
-            ['Classic home', () => { location.hash = '#/home?icefin=stock'; }],
-            ['Search', () => { location.hash = '#/search'; }],
-            ['Settings', () => { location.hash = '#/mypreferencesmenu'; }]
+        cats.push({ title: 'Tasks', links: [
+            ['settings', () => { location.hash = '#/mypreferencesmenu'; }],
+            ['search', () => { location.hash = '#/search'; }],
+            ['classic home', () => { location.hash = '#/home?icefin=stock'; }],
+            ['close', () => askExit()]
         ] });
         return cats;
     }
@@ -54,10 +56,30 @@
     let grid = null;  // rows of tiles, for structured navigation
     let lastCol = [];  // each row remembers where its focus was
 
+    // Back on the start screen, or "close": a band asks before Icefin closes (the canvas's "Back on start asks to close").
+    function askExit() {
+        const host = document.getElementById('icefin-theme-root');
+        if (!host || M.band.open) return;
+        M.band(host, {
+            title: 'Close Icefin?', text: 'Anything playing stops. Icefin opens on this start screen next time.',
+            note: 'Back again closes this without closing Icefin.',
+            choices: [{ label: 'Yes', run: () => T.ctx.exit() }, { label: 'No', safe: true }, { label: 'Switch user', run: () => T.ctx.signOut() }]
+        }).then(() => { const f = document.querySelector('#icefin-theme-root .mc-cat.current .mc-tile'); if (f && !T.ctx.focused()) T.ctx.focus(f); });
+    }
+
     T.registerScreen('#/home', {
+        onBack() {
+            if (M.band.open) { M.band.open.close(); return true; }
+            askExit();
+            return true;
+        },
         // The strip navigates by structure, not geometry: up/down change category (keeping the column), left/right stay
         // in the row, Enter opens.
         onAction(action, ctx) {
+            if (M.band.open) {
+                if (action === 'up' || action === 'down' || action === 'left' || action === 'right') { ctx.move(action, M.band.open.el); return true; }
+                return false;
+            }
             if (!grid) return false;
             const f = ctx.focused();
             let r = grid.findIndex((row) => row.includes(f));
@@ -88,7 +110,8 @@
             const strip = el('div', 'mc-strip');
             const now = el('div', 'mc-now');
             now.hidden = true;
-            start.append(el('div', 'mc-brand', 'Icefin'), clock, strip, now);
+            // The corner mark is the server's own brand (ui.brand: its icon and name), never an image from this package.
+            start.append(M.brandMark(el('div', 'mc-brand'), { name: true }), clock, strip, now);
             root.append(field, start);
             root.setAttribute('data-mc', 'start');
 
@@ -166,12 +189,4 @@
             clearInterval(this.nowTimer);
         }
     });
-})();
-
-// Player controls (PLAN 9.19): jellyfin-web's own controls (every function kept) in this theme's layout; the look is
-// the osd.* tokens in tokens.json.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.osd) T.ui.osd.set({ layout: 'panel', align: 'right' });
 })();

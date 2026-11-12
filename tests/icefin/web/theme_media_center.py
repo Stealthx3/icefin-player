@@ -71,7 +71,7 @@ def main():
         page.switch_theme_reloading("media-center", "!!document.querySelector('#icefin-theme-root')")
         page.wait_for("+(document.querySelector('#icefin-theme-root[data-mc-ready]') || {dataset: {}}).dataset.mcReady > 0 || +((document.querySelector('#icefin-theme-root') || {}).getAttribute && document.querySelector('#icefin-theme-root').getAttribute('data-mc-ready')) > 0", timeout=30)
         cats = js("JSON.stringify([...document.querySelectorAll('.mc-cat-title')].map(e => e.textContent))")
-        check("start strip: one row per library, plus More", json.loads(cats)[-1] == "More" and len(json.loads(cats)) >= 3, cats)
+        check("start strip: one row per library, plus Tasks", json.loads(cats)[-1] == "Tasks" and len(json.loads(cats)) >= 3, cats)
         # jellyfin-web's own navigation (history.pushState, no hashchange) must mount and unmount themed screens: before
         # the fix only the theme's colours showed when the user reached Home that way.
         js("location.hash = '#/mypreferencesmenu?icefin=stock'; true")
@@ -136,9 +136,11 @@ def main():
         btns = js("JSON.stringify([...document.querySelectorAll('.icefin-d-btn')].map(b => b.dataset.action))")
         check("details: Play (or Resume) and Favourite", "favourite" in btns and ("play" in btns or "resume" in btns), btns)
         check("details: a button has focus", js("!!document.querySelector('.icefin-d-btn.icefin-focused')") is True)
-        act("right")
+        act("down")
         time.sleep(0.3)
-        check("details: right moves along the buttons", js("[...document.querySelectorAll('.icefin-d-btn')].indexOf(document.querySelector('.icefin-d-btn.icefin-focused'))") == 1)
+        check("details: down moves along the action column (9.46)", js("[...document.querySelectorAll('.icefin-d-actions .icefin-d-btn')].indexOf(document.querySelector('.icefin-d-btn.icefin-focused'))") == 1)
+        check("details: the column sits left of the poster", js("document.querySelector('.icefin-d-actions').getBoundingClientRect().right <= document.querySelector('.icefin-d-poster').getBoundingClientRect().left") is True)
+        check("details: Home shows the server's icon (9.27)", js("(() => { const i = document.querySelector('.icefin-d-navbtn[data-action=home] img'); return !!i && new URL(i.src).host === new URL(window.ApiClient.serverAddress()).host; })()") is True)
         shot("details.png")
         # A series has its own themed details too (9.18): seasons and episodes, no fallback to jellyfin-web's page.
         series = js("new Promise(r => window.icefinTheme.ctx.apiClient().getItems(window.icefinTheme.ctx.apiClient().getCurrentUserId(), {IncludeItemTypes: 'Series', Recursive: true, Limit: 1}).then(x => r((x.Items[0] || {}).Id || '')))")

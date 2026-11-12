@@ -100,3 +100,214 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 .icefin-details .icefin-d-card.icefin-focused { transform: scale(1.1); }
 .icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: inset 0 0.2vh 0 rgb(var(--icefin-color-glass-channel) / 0.6), 0 0 0 0.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.6),
   0 1.4vh 2.8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+
+/* ---- Page chrome (kit.js, 9.46), from the design canvas at 1280x720, in vh so it keeps its proportions:
+   Back 6.4vh and the larger Home 8.06vh (the server's icon, ui.brand), 2.92vh from the left edge and the same 2.92vh
+   from Home to the title (the user: equal spacing), the title in light lower case, the clock at the top right. ---- */
+.mc-nav { position: absolute; left: 2.92vh; top: 5vh; display: flex; align-items: center; gap: 1.39vh; z-index: 3; }
+.mc-round { width: 6.4vh; height: 6.4vh; border-radius: 50%; padding: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.6); color: var(--icefin-color-text); cursor: pointer; overflow: hidden;
+  background: radial-gradient(circle at 50% 28%, rgb(var(--icefin-color-glass-channel) / 0.5), rgb(var(--icefin-color-glass-channel) / 0.06) 62%); }
+.mc-round svg { width: 2.8vh; height: 2.8vh; }
+.mc-round-home { width: 8.06vh; height: 8.06vh; margin: -0.83vh 0; border-color: rgb(var(--icefin-color-text-channel) / 0.85);
+  background: radial-gradient(circle at 50% 28%, rgb(var(--icefin-color-focus-channel) / 0.95), var(--icefin-color-accent) 58%, var(--icefin-color-accentStrong)); }
+.mc-brand-icon { width: 4.6vh; height: 4.6vh; object-fit: contain; }
+.mc-brand-initial { font-size: 3.6vh; font-weight: 400; color: var(--icefin-color-onAccent); }
+.mc-round.icefin-focused, .mc-round:hover { box-shadow: 0 0 0 0.3vh var(--icefin-color-focus), 0 0 2.4vh 0.6vh var(--icefin-color-focusGlow); outline: none; }
+.mc-title { position: absolute; left: 21.67vh; top: 4.72vh; font-size: 6.1vh; font-weight: 300; letter-spacing: -0.02em; white-space: nowrap; line-height: 1.2; z-index: 2; }
+.mc-clock { position: absolute; right: 4.06vw; top: 4.2vh; font-size: 3.6vh; font-weight: 300; opacity: 0.9; z-index: 2; }
+
+/* Buttons and list rows: resting glass, focus a glossy light-blue bar. */
+.mc-btn { height: 6.7vh; padding: 0 3.3vh; display: flex; align-items: center; font: inherit; font-size: 3.05vh; font-weight: 300; color: var(--icefin-color-text); text-align: left;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.18); border-radius: 0.28vh; box-sizing: border-box; cursor: pointer; }
+.mc-btn.icefin-focused, .mc-btn:hover, .mc-li.icefin-focused, .mc-pivot-item.icefin-focused {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%);
+  border-color: rgb(var(--icefin-color-glass-channel) / 0.9); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); color: var(--icefin-color-onAccent);
+  text-shadow: 0 0.14vh 0.28vh rgb(var(--icefin-color-glassEdge-channel) / 0.65); outline: none; }
+.mc-li { min-height: 6.1vh; display: flex; align-items: center; gap: 1.7vh; padding: 0 1.9vh; font-size: 2.7vh; border-radius: 0.28vh; box-sizing: border-box; cursor: pointer; border: 0.14vh solid transparent; }
+.mc-li-value { margin-left: auto; font-size: 2.4vh; opacity: 0.85; white-space: nowrap; }
+.mc-radio { width: 3.3vh; height: 3.3vh; border-radius: 50%; border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.7); box-sizing: border-box; flex: none; display: flex; align-items: center; justify-content: center; }
+.mc-radio.on::after { content: ''; width: 1.4vh; height: 1.4vh; border-radius: 50%; background: currentColor; }
+.mc-pivot { display: flex; gap: 3.6vh; }
+.mc-pivot-item { font: inherit; font-size: 3.3vh; font-weight: 300; background: none; border: 0.14vh solid transparent; color: rgb(var(--icefin-color-text-channel) / 0.5); padding: 0.4vh 1vh; border-radius: 0.28vh; cursor: pointer; }
+.mc-pivot-item.on { color: var(--icefin-color-text); }
+.mc-rule { height: 0.14vh; background: var(--icefin-color-divider); margin: 1.9vh 0 1.7vh; }
+.mc-note { font-size: 2.1vh; opacity: 0.6; margin: 2.5vh 1.9vh 0; line-height: 1.45; }
+.mc-sec { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--icefin-color-focus); font-weight: 400; margin: 1.9vh 0 0.8vh; }
+
+/* A side panel from the right (menus, pickers, sort and filter) and a band across the screen (questions). */
+.mc-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 36.7vw; z-index: 6; padding: 4.7vh 4.7vh; box-sizing: border-box; overflow: auto;
+  background: linear-gradient(90deg, rgb(var(--icefin-color-background-channel) / 0.9), rgb(var(--icefin-color-surface-channel) / 0.97));
+  border-left: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: -4vh 0 8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-dim { position: absolute; inset: 0; background: rgb(var(--icefin-color-glassEdge-channel) / 0.55); z-index: 7; }
+.mc-band-dialog { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); min-height: 38vh; z-index: 8; display: flex; gap: 6vw; padding: 5.5vh 6vw 5.5vh 21.67vh; box-sizing: border-box;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.96), rgb(var(--icefin-color-surface-channel) / 0.96));
+  border-top: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); border-bottom: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); box-shadow: 0 0 11vh rgb(var(--icefin-color-glassEdge-channel) / 0.7); }
+.mc-band-body { flex: 1; max-width: 50vw; }
+.mc-band-title { font-size: 5.3vh; font-weight: 300; }
+.mc-band-text { font-size: 2.9vh; opacity: 0.85; margin-top: 2vh; line-height: 1.45; }
+.mc-band-note { font-size: 2.2vh; opacity: 0.6; margin-top: 2.5vh; }
+.mc-band-choices { width: 19.5vw; display: flex; flex-direction: column; gap: 1.4vh; }
+
+/* ---- Player controls (player.js, ui.player): over the video, transparent; scrims top and bottom fade in with the
+   controls; the transport is a cluster of round glass buttons at the bottom right, the title and seek bar at the left. */
+#icefin-theme-root.mc-player { color: var(--icefin-color-text); font-weight: 300; }
+.mc-player .mc-p-scrim-top, .mc-player .mc-p-scrim-bottom, .mc-player .mc-p-top, .mc-player .mc-p-bottom { opacity: 0; transition: opacity 250ms; pointer-events: none; }
+.mc-player.mc-p-up .mc-p-scrim-top, .mc-player.mc-p-up .mc-p-scrim-bottom, .mc-player.mc-p-up .mc-p-top, .mc-player.mc-p-up .mc-p-bottom { opacity: 1; pointer-events: auto; }
+.mc-p-scrim-top { position: absolute; left: 0; right: 0; top: 0; height: 22vh; background: linear-gradient(180deg, rgb(var(--icefin-color-glassEdge-channel) / 0.75), transparent); }
+.mc-p-scrim-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 32vh; background: linear-gradient(180deg, transparent, rgb(var(--icefin-color-background-channel) / 0.85) 40%, rgb(var(--icefin-color-surface-channel) / 0.95)); }
+.mc-p-bottom { position: absolute; left: 21.67vh; right: 4.06vw; bottom: 4vh; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; row-gap: 2.4vh; align-items: end; }
+.mc-p-meta { min-width: 0; }
+.mc-p-title { font-size: 4.2vh; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-p-logo { max-height: 9vh; max-width: 32vw; object-fit: contain; object-position: left bottom; display: block; }
+.mc-p-sub { font-size: 2.4vh; opacity: 0.78; margin-top: 0.6vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-p-transport { display: flex; align-items: center; gap: 1.4vh; }
+.mc-p-gap { width: 1.9vh; }
+.mc-tb { width: 7.2vh; height: 7.2vh; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--icefin-color-text); box-sizing: border-box;
+  border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.65);
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-glass-channel) / 0.42), rgb(var(--icefin-color-accent-channel) / 0.25) 55%, rgb(var(--icefin-color-glassEdge-channel) / 0.6)); }
+.mc-tb svg { width: 3vh; height: 3vh; }
+.mc-tb-big { width: 9.2vh; height: 9.2vh; }
+.mc-tb-big svg { width: 3.9vh; height: 3.9vh; }
+.mc-tb.icefin-focused, .mc-tb:hover { box-shadow: 0 0 0 0.28vh var(--icefin-color-glass), 0 0 3vh 0.6vh var(--icefin-color-focusGlow); outline: none;
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-glass-channel) / 0.95), rgb(var(--icefin-color-accent-channel) / 0.9) 55%, var(--icefin-color-accentStrong)); }
+.mc-tb[hidden] { display: none; }
+.mc-p-seek { grid-column: 1 / -1; padding: 1vh 0; border-radius: 0.28vh; outline: none; cursor: pointer; }
+.mc-p-track { position: relative; height: 0.85vh; border-radius: 0.5vh; background: rgb(var(--icefin-color-text-channel) / 0.2); }
+.mc-p-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0.5vh; background: linear-gradient(90deg, var(--icefin-color-accent), var(--icefin-color-focus)); }
+.mc-p-seg { position: absolute; top: 0; bottom: 0; background: rgb(var(--icefin-color-focus-channel) / 0.3); }
+.mc-p-tick { position: absolute; top: -0.4vh; width: 0.28vh; height: 1.7vh; background: rgb(var(--icefin-color-text-channel) / 0.6); }
+.mc-p-knob { position: absolute; top: 50%; width: 2.5vh; height: 2.5vh; margin: -1.25vh 0 0 -1.25vh; border-radius: 50%; background: var(--icefin-color-text); box-shadow: 0 0 1.7vh var(--icefin-color-focusGlow); opacity: 0; transition: opacity 150ms; }
+.mc-p-seek.icefin-focused .mc-p-knob, .mc-p-seek:hover .mc-p-knob { opacity: 1; }
+.mc-p-seek.icefin-focused .mc-p-track { box-shadow: 0 0 0 0.28vh rgb(var(--icefin-color-focus-channel) / 0.6); }
+.mc-p-seek.mc-p-live .mc-p-knob { display: none; }
+.mc-p-times { display: flex; justify-content: space-between; font-size: 2.2vh; opacity: 0.78; margin-top: 1.1vh; }
+.mc-p-skip { position: absolute; right: 4.06vw; bottom: 30vh; z-index: 4; }
+.mc-p-skip[hidden], .mc-p-next[hidden] { display: none; }
+.mc-p-next { position: absolute; right: 4.06vw; bottom: 30vh; width: 34vw; padding: 2.5vh; box-sizing: border-box; z-index: 4;
+  background: rgb(var(--icefin-color-background-channel) / 0.92); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: 0 0 5.5vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-p-next-count { font-size: 2.1vh; opacity: 0.7; }
+.mc-p-next-title { font-size: 2.9vh; margin: 0.4vh 0 2vh; }
+.mc-p-next-btns { display: flex; gap: 1.4vh; }
+.mc-p-chapters { position: absolute; left: 0; right: 0; top: 0; padding: 4.7vh 4.7vh 3vh; display: flex; gap: 2.2vh; overflow: hidden; z-index: 5; opacity: 0; pointer-events: none; transition: opacity 250ms;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.92), rgb(var(--icefin-color-background-channel) / 0.6) 75%, transparent); }
+.mc-player.mc-p-chapters-up .mc-p-chapters { opacity: 1; pointer-events: auto; }
+.mc-p-ch { flex: none; width: 23.6vh; background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; opacity: 0.75; }
+.mc-p-ch-img { width: 23.6vh; height: 13.3vh; background: var(--icefin-color-surface) center / cover no-repeat; border-radius: 0.28vh; }
+.mc-p-ch-label { font-size: 2vh; margin-top: 0.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-p-ch-time { font-size: 1.8vh; opacity: 0.7; }
+.mc-p-ch.icefin-focused { opacity: 1; outline: none; }
+.mc-p-ch.icefin-focused .mc-p-ch-img { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-p-panel .mc-p-list { display: flex; flex-direction: column; gap: 0.3vh; }
+.mc-p-info { width: auto; left: 21.67vh; right: auto; top: 15vh; bottom: auto; max-width: 60vw; border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); }
+.mc-p-info-title { font-size: 4.2vh; font-weight: 300; }
+.mc-p-info-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 4.7vh; margin-bottom: 2.5vh; }
+.mc-p-info dl { display: grid; grid-template-columns: 20vh 1fr; row-gap: 0.6vh; margin: 0; font-size: 2.35vh; }
+.mc-p-info dt { opacity: 0.62; }
+.mc-p-info dd { margin: 0; }
+
+/* The start screen's corner mark: the server's own icon and name (ui.brand). */
+.mc-brand { display: flex; align-items: center; gap: 1.4vh; }
+.mc-brand .mc-brand-icon { width: 5vh; height: 5vh; }
+.mc-brand .mc-brand-initial { font-size: 4vh; color: var(--icefin-color-text); }
+.mc-brand .mc-brand-name { font-size: inherit; }
+
+/* ---- Details, 9.46 (the canvas's "movie details"): the actions as a column at the left, the poster, then the facts;
+   the engine's markup re-flowed with CSS (its info block opens up into the main grid). ---- */
+.icefin-details .icefin-d-nav.mc-nav { left: 2.92vh; top: 5vh; gap: 1.39vh; }
+.icefin-details .icefin-d-nav .icefin-d-navbtn { padding: 0; font-size: 0; }
+.icefin-details > .mc-title, .icefin-details > .mc-clock { z-index: 3; }
+.icefin-details .icefin-d-scroll { top: 14vh; }
+.icefin-details .icefin-d-main { grid-template-columns: 19.5vw 17vw minmax(0, 1fr); column-gap: 2.6vw; row-gap: 0; padding: 2vh 4.06vw 4vh 21.67vh; align-items: start; }
+.icefin-details .icefin-d-info { display: contents; }
+.icefin-details .icefin-d-main > *, .icefin-details .icefin-d-info > * { grid-column: 3; }
+.icefin-details .icefin-d-actions { grid-column: 1; grid-row: 1 / span 12; flex-direction: column; flex-wrap: nowrap; gap: 0.97vh; margin-top: 0; align-self: start; }
+.icefin-details .icefin-d-poster { grid-column: 2; grid-row: 1 / span 12; width: 17vw; }
+.icefin-details[data-shape="wide"] .icefin-d-poster { width: 17vw; }
+.icefin-details .icefin-d-actions .icefin-d-btn { height: 6.1vh; padding: 0 2.8vh; justify-content: flex-start; font-size: 2.9vh; font-weight: 300; border-radius: 0.28vh;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.16); color: var(--icefin-color-text); transform: none; }
+.icefin-details .icefin-d-actions .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-options .icefin-d-select.icefin-focused {
+  transform: none; color: var(--icefin-color-onAccent); border-color: rgb(var(--icefin-color-glass-channel) / 0.9); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow);
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%); }
+.icefin-details .icefin-d-title { font-size: 5.3vh; margin-top: 0; }
+.icefin-details .icefin-d-facts, .icefin-details .icefin-d-genres { font-size: 2.5vh; opacity: 0.8; }
+.icefin-details .icefin-d-overview { font-size: 2.65vh; line-height: 1.55; }
+.icefin-details .icefin-d-sections { padding-left: 21.67vh; padding-right: 4.06vw; }
+.icefin-details .icefin-d-section h2 { font-size: 1.9vh; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.6; }
+
+/* ---- jellyfin-web's own pages and dialogs under Media Center (9.46; ui.stockChrome frames the pages with kit.js's
+   chrome). Never the server dashboard (html[data-icefin-dashboard]) and never menus over video (the web fallback's
+   look is ui.osd's). ---- */
+#icefin-stock-chrome .mc-sc { position: fixed; inset: 0 0 auto 0; height: 14vh; pointer-events: none; color: var(--icefin-color-text); font-weight: 300;
+  background: linear-gradient(180deg, var(--icefin-color-background) 55%, rgb(var(--icefin-color-background-channel) / 0)); }
+#icefin-stock-chrome .mc-sc .mc-nav { pointer-events: auto; }
+html[data-icefin-stock] body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 20% 10%, var(--icefin-color-surface) 0%, var(--icefin-color-background) 60%); }
+html[data-icefin-stock] .skinHeader, html[data-icefin-stock] header.MuiAppBar-root, html[data-icefin-stock] .mainDrawerHandle,
+html[data-icefin-stock] .backdropContainer, html[data-icefin-stock] .backgroundContainer { visibility: hidden !important; }
+html[data-icefin-stock] .mainAnimatedPage, html[data-icefin-stock] .page { color: var(--icefin-color-text); font-weight: 300; background: transparent !important;
+  padding-top: 15vh !important; padding-left: 21.67vh !important; padding-right: 4.06vw !important; box-sizing: border-box; }
+html[data-icefin-stock], html[data-icefin-stock] .page, html[data-icefin-stock] .scrollY { scroll-padding: 16vh 0 6vh; }
+html[data-icefin-stock] .page h1, html[data-icefin-stock] .page h2, html[data-icefin-stock] .page .sectionTitle { font-weight: 300; color: var(--icefin-color-text); }
+html[data-icefin-stock] .page .sectionTitle { font-size: 3.6vh; }
+html[data-icefin-stock] .page .fieldDescription, html[data-icefin-stock] .page .secondaryText { color: var(--icefin-color-textSecondary); font-size: 2.1vh; }
+
+/* fields: glass; focused, white with dark text and a glow */
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html[data-icefin-stock] .page select, html[data-icefin-stock] .page textarea,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog select,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog textarea {
+  font: inherit; font-size: 2.65vh; color: var(--icefin-color-text); background: rgb(var(--icefin-color-glass-channel) / 0.08) !important;
+  border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.45) !important; border-radius: 0.28vh; min-height: 6.1vh; padding: 0 1.7vh; box-sizing: border-box; }
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):focus, html[data-icefin-stock] .page select:focus, html[data-icefin-stock] .page textarea:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input:not([type=checkbox]):not([type=radio]):focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog select:focus, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog textarea:focus {
+  background: var(--icefin-color-glass) !important; color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass) !important; box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); outline: none; }
+
+/* buttons: resting glass, focused the glossy bar */
+html[data-icefin-stock] .page .raised, html[data-icefin-stock] .page .button-submit, html[data-icefin-stock] .page .button-cancel, html[data-icefin-stock] .page .btnAddServer,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .raised,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooterItem {
+  font: inherit; font-size: 2.9vh; font-weight: 300; text-transform: none; letter-spacing: 0; color: var(--icefin-color-text) !important; min-height: 6.7vh; padding: 0 3.3vh;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07) !important; border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.18) !important; border-radius: 0.28vh !important; box-shadow: none; }
+html[data-icefin-stock] .page .raised:focus, html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page .btnAddServer:focus, html[data-icefin-stock] .page .raised:hover,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .raised:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooterItem:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheetMenuItem:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .listItem-button:focus {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%) !important;
+  color: var(--icefin-color-onAccent) !important; border-color: rgb(var(--icefin-color-glass-channel) / 0.9) !important; box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow) !important; outline: none; }
+/* tick boxes: glass squares */
+html[data-icefin-stock] .page .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog .checkboxOutline {
+  border-radius: 0.28vh !important; border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.7) !important; background: rgb(var(--icefin-color-glass-channel) / 0.06) !important; }
+html[data-icefin-stock] .page input[type=checkbox]:checked + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:checked + span + .checkboxOutline {
+  background: var(--icefin-color-accent) !important; border-color: var(--icefin-color-glass) !important; }
+html[data-icefin-stock] .page input[type=checkbox]:focus + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:focus + span + .checkboxOutline {
+  box-shadow: 0 0 2vh 0.3vh var(--icefin-color-focusGlow) !important; border-color: var(--icefin-color-glass) !important; }
+
+/* menus (action sheets: the item menu, pickers, sort): the side panel from the right */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet {
+  position: fixed !important; left: auto !important; right: 0 !important; top: 0 !important; bottom: 0 !important; width: 33.6vw !important; max-width: none !important; max-height: none !important; margin: 0 !important;
+  border-radius: 0 !important; padding: 4.2vh 4.7vh !important; box-sizing: border-box; color: var(--icefin-color-text);
+  background: linear-gradient(90deg, rgb(var(--icefin-color-background-channel) / 0.92), rgb(var(--icefin-color-surface-channel) / 0.98)) !important;
+  border-left: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: -4vh 0 8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet .actionSheetTitle { font-size: 4.2vh; font-weight: 300; margin: 0 0 2vh; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheetMenuItem { min-height: 5.3vh; font-size: 2.8vh; font-weight: 300; border-radius: 0.28vh; border: 0.14vh solid transparent; }
+/* full-screen forms (add to playlist, media info, edit details, identify, subtitles): the panel, wider */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog:not(.actionSheet) {
+  left: auto !important; right: 0 !important; width: 52vw !important; max-width: none !important; border-radius: 0 !important; color: var(--icefin-color-text);
+  background: linear-gradient(90deg, rgb(var(--icefin-color-background-channel) / 0.94), rgb(var(--icefin-color-surface-channel) / 0.99)) !important;
+  border-left: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: -4vh 0 8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog .formDialogHeader { background: transparent !important; color: var(--icefin-color-text); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog .formDialogHeaderTitle { font-size: 4.2vh; font-weight: 300; }
+/* questions (confirm, alert, prompt): a band across the screen */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet) {
+  position: fixed !important; left: 0 !important; right: 0 !important; top: 50% !important; transform: translateY(-50%) !important; width: 100vw !important; max-width: none !important; margin: 0 !important;
+  border-radius: 0 !important; padding: 5vh 6vw 5vh 21.67vh !important; box-sizing: border-box; color: var(--icefin-color-text);
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.96), rgb(var(--icefin-color-surface-channel) / 0.96)) !important;
+  border-top: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); border-bottom: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); box-shadow: 0 0 11vh rgb(var(--icefin-color-glassEdge-channel) / 0.7) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet) h2 { font-size: 5.3vh; font-weight: 300; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogBackdrop { background: rgb(var(--icefin-color-glassEdge-channel) / 0.55) !important; }
+/* notices (toasts): bottom right, glass */
+html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !important; right: 4.06vw !important; bottom: 5vh !important; border-radius: 0 !important; font-size: 2.6vh; font-weight: 300;
+  background: rgb(var(--icefin-color-background-channel) / 0.92) !important; color: var(--icefin-color-text) !important; border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); }
