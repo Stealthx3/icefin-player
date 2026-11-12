@@ -19,9 +19,12 @@
         const field = el('div', 'mc-field');
         field.append(el('div', 'mc-ribbon one'), el('div', 'mc-ribbon two'));
         root.append(field);
-        // Before sign-in there is no Home: Back only, the server's icon at the corner where it can load.
+        // Before sign-in there is no Home: Back only. Signed in (choose a server from settings), Home stays.
         const chrome = M.chrome(root, title);
-        chrome.home.remove();
+        const c = T.ctx.apiClient();
+        let signedIn = false;
+        try { signedIn = !!(c && c.getCurrentUserId()); } catch (e) { /* not signed in */ }
+        if (!signedIn) chrome.home.remove();
         return chrome;
     }
     function button(label, fn, cls) {

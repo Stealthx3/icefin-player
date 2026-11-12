@@ -204,13 +204,13 @@ def main():
         page.wait_for("location.hash.startsWith('#/list') && (document.querySelector('#icefin-theme-root') || {getAttribute: () => ''}).getAttribute('data-mc-ready') === '1'", timeout=30)
         n = js("+document.querySelector('#icefin-theme-root').getAttribute('data-mc-count')")
         check("#/list opens the poster wall with the library", js("document.querySelector('#icefin-theme-root').getAttribute('data-mc')") == "wall" and n > 0,
-              f"{n} posters, {js('document.querySelector(\'.mc-wall-title\').textContent')}")
+              f"{n} posters, {js('document.querySelector(\'#icefin-theme-root .mc-title\').textContent')}")
         first_id = js("document.querySelector('.mc-poster.icefin-focused').dataset.id")
         act("right")
         time.sleep(0.4)
         moved = js("document.querySelector('.mc-poster.icefin-focused').dataset.id")
         check("wall: right moves to the next poster", n < 2 or moved != first_id)
-        if n > 7:
+        if n > 8:  # from the second poster, down lands on the ninth (index 8): it needs nine
             act("down")
             time.sleep(0.5)
             check("wall: down moves a row (seven across)", js("[...document.querySelectorAll('.mc-poster')].indexOf(document.querySelector('.mc-poster.icefin-focused'))") == 8)
