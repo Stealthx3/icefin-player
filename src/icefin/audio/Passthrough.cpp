@@ -25,12 +25,36 @@ static QString spdifName(Codec c)
   return {};
 }
 
+// The IEC 61937 carrier each format needs on HDMI (48 kHz content, as mpv's spdif muxer writes it): AC-3 and DTS
+// 48 kHz stereo; E-AC-3 four times that; TrueHD and DTS-HD (HD rate 768 kHz) eight channels at 192 kHz (HBR).
+struct Carrier { int rate; int channels; };
+static Carrier carrier(Codec c)
+{
+  switch (c) {
+    case Codec::AC3: case Codec::DTS: return {48000, 2};
+    case Codec::EAC3: return {192000, 2};
+    case Codec::DTSHD: case Codec::TrueHD: return {192000, 8};
+  }
+  return {48000, 2};
+}
+
 Decision decide(const Track& t, const QSet<Codec>& user, const std::optional<Eld>& eld, Backend backend)
 {
   const bool eldKnown = eld && (eld->valid || eld->stale);
   auto ok = [&](Codec c, QString* why) {
     if (!user.contains(c)) { *why = codecName(c) + " not enabled"; return false; }
     if (eldKnown && !eld->supports(c)) { *why = "receiver lacks " + codecName(c); return false; }
+    // The kernel opens the HDMI PCM only at the ELD's rates and channel count (PLAN 3.9): a sink listing E-AC-3 but
+    // nothing above 48 kHz can't take E-AC-3's 192 kHz stream, and mpv stalls on the refused open instead of failing.
+    const Carrier need = carrier(c);
+    if (eldKnown && eld->maxRate > 0 && need.rate > eld->maxRate) {
+      *why = QString("receiver's ELD tops out at %1 kHz, %2 needs %3 kHz").arg(eld->maxRate / 1000.0).arg(codecName(c)).arg(need.rate / 1000);
+      return false;
+    }
+    if (eldKnown && eld->maxChannels > 0 && need.channels > eld->maxChannels) {
+      *why = QString("receiver's ELD has %1 channels, %2 needs %3").arg(eld->maxChannels).arg(codecName(c)).arg(need.channels);
+      return false;
+    }
     if (!backendCarries(backend, c)) { *why = "backend can't carry " + codecName(c); return false; }
     return true;
   };
