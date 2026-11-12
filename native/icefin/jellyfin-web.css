@@ -147,9 +147,10 @@ html[data-icefin-backdrop] { color-scheme: normal !important; }
    Confirmations, alerts, action sheets (item menus, track and speed pickers, sort menus), form dialogs and pickers:
    the theme's raised surface and corner radius, and a filled focus that reads from across the room. While one is
    open, the remote drives it (themeEngine.js steps aside). Couch Mode (osdLayout.js) makes them larger. */
-html.icefin-themed .dialogContainer .dialog:not(.dialog-fullscreen):not(.dialog-fixedSize) { background-color: var(--icefin-color-surfaceRaised, var(--icefin-color-surface));
+html.icefin-themed:not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.dialog-fullscreen):not(.dialog-fixedSize) { background-color: var(--icefin-color-surfaceRaised, var(--icefin-color-surface));
   color: var(--icefin-color-text); border-radius: var(--icefin-shape-cardRadius, 0.6em); box-shadow: 0 1em 3em rgb(var(--icefin-color-background-channel) / 0.55); }
-html.icefin-themed .dialogContainer .actionSheet { background-color: var(--icefin-color-surfaceRaised, var(--icefin-color-surface)); color: var(--icefin-color-text); }
+/* over video, menus keep the player controls' look (osd.menuBackground, osdLayout.js) */
+html.icefin-themed:not([data-icefin-osd-playing]) .dialogContainer .actionSheet { background-color: var(--icefin-color-surfaceRaised, var(--icefin-color-surface)); color: var(--icefin-color-text); }
 html.icefin-themed .dialogContainer .dialog .actionSheetMenuItem:focus,
 html.icefin-themed .dialogContainer .dialog .listItem:focus,
 html.icefin-themed .dialogContainer .dialog .listItem-button:focus { background-color: var(--icefin-color-focus) !important; color: var(--icefin-color-onFocus) !important; outline: none; }
