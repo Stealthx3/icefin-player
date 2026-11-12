@@ -306,9 +306,48 @@
         return true;  // a themed screen keeps arrows even at its edge
     }
 
+    // An open jellyfin-web dialog (not one of the engine's own, and not one a themed screen has taken in): the topmost.
+    function foreignDialog() {
+        let top = null;
+        for (const d of document.querySelectorAll('.dialogContainer .dialog')) {
+            if (d.closest('#' + ROOT_ID)) continue;
+            const cs = getComputedStyle(d);
+            if (cs.display !== 'none' && cs.visibility !== 'hidden' && d.getClientRects().length) top = d;
+        }
+        return top;
+    }
+    // Focus into a dialog: its selected entry if it has one (a track or speed picker), else its first control.
+    const DIALOG_CONTROLS = '.actionSheetMenuItem, .listItem-button, button, input:not([type=hidden]), select, textarea, [tabindex="0"]';
+    function focusInto(d) {
+        const visible = (e) => e.getClientRects().length && !e.disabled && getComputedStyle(e).visibility !== 'hidden';
+        const all = [...d.querySelectorAll(DIALOG_CONTROLS)].filter(visible);
+        const pick = all.find((e) => e.matches('[data-selected="true"], .selected, [aria-selected="true"]') || e.querySelector('.actionsheetMenuItemIcon:not(:empty), .check')) || all[0];
+        if (pick) { pick.focus(); return true; }
+        return false;
+    }
+    // A menu opened with the remote or a controller gets focus at once; with the mouse it stays where it is.
+    let lastInput = 'pointer';
+    document.addEventListener('mousedown', () => { lastInput = 'pointer'; }, true);
+    const dialogWatch = new MutationObserver(() => {
+        if (lastInput !== 'pad') return;
+        const d = foreignDialog();
+        if (d && !d.contains(document.activeElement)) setTimeout(() => { const t = foreignDialog(); if (t && !t.contains(document.activeElement)) focusInto(t); }, 60);
+    });
+    const startDialogWatch = () => dialogWatch.observe(document.body, { childList: true, subtree: true });
+    if (document.body) startDialogWatch(); else document.addEventListener('DOMContentLoaded', startDialogWatch);
+
     function handleAction(action) {
+        lastInput = 'pad';
         for (const h of actionHooks.slice()) {
             try { if (h(action)) return true; } catch (e) { console.error('icefinTheme: action hook', e); }
+        }
+        // A jellyfin-web dialog or menu (action sheets, confirmations, pickers, the item menu), over a themed screen, a
+        // stock page or video, owns the remote while it is open: its own focus navigation handles the action (PLAN
+        // 9.38). In desktop layout jellyfin-web doesn't put focus in it, so the first press does that here.
+        const dlg = foreignDialog();
+        if (dlg) {
+            if (!dlg.contains(document.activeElement) && action !== 'back' && focusInto(dlg)) { sound('focus'); return true; }
+            return false;
         }
         if (!current) return false;
         // A screen may own its navigation (rows, strips): it sees every action first and returns true when it used it.
