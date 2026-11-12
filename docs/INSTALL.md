@@ -3,10 +3,21 @@
 Icefin Player ships as a Flatpak (app ID `io.github.stealthx3.IcefinPlayer`) and runs on Linux, Wayland first. It
 installs alongside Flathub's Jellyfin Desktop: separate app ID, separate settings and data.
 
-> **Status, November 2026:** Icefin is in alpha. Download the bundle from the
-> [releases page](https://github.com/Stealthx3/icefin-player/releases) (the latest alpha, or the rolling *Nightly*
-> build of `main`) and install it as below. Signed `stable` and `nightly` repositories with one-click `.flatpakref`
+> **Status, November 2026:** Icefin is in alpha. Install it from the test repository below, or download a bundle
+> from the [releases page](https://github.com/Stealthx3/icefin-player/releases) (the latest alpha, or the rolling
+> *Nightly* build of `main`). Signed `stable` and `nightly` repositories with one-click `.flatpakref`
 > files come later (PLAN 12.1).
+
+## Install from the test repository
+The test repository is a signed Flatpak remote with the current alpha and test builds, served by GitHub Pages
+(<https://stealthx3.github.io/icefin-flatpak-test/>). `flatpak update` then keeps Icefin current.
+```bash
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak remote-add --user --if-not-exists icefin-test https://stealthx3.github.io/icefin-flatpak-test/icefin-test.flatpakrepo
+flatpak install --user icefin-test io.github.stealthx3.IcefinPlayer
+```
+A build installed from a bundle switches to the remote with
+`flatpak install --user --reinstall icefin-test io.github.stealthx3.IcefinPlayer`; settings and sign-in stay.
 
 ## Install a bundle
 ```bash
