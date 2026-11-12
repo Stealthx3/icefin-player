@@ -425,3 +425,310 @@ html[data-icefin-motion="low"] [data-pz] *, html[data-icefin-motion="low"] [data
 .icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-surface); color: var(--icefin-color-text); box-shadow: inset 0 0 0 0.22em var(--icefin-color-focus); }
 .icefin-details .icefin-d-poster, .icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.8em; box-shadow: inset 0 0 0 0.12em var(--icefin-color-divider); }
 .icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 0 0.25em var(--icefin-color-focus); }
+
+/* ==================== jellyfin-web's own pages and dialogs in Plaza (PLAN 9.42) ====================
+   Every function stays jellyfin-web's; Plaza frames the page (stock.js: the name pill with the clock, sibling tabs,
+   the curved bar with round Back and Home) and restyles it: white rounded cards on the striped ground, pill fields and
+   buttons, switches for tick boxes, the glow on focus. Dialogs become framed cards with a coloured name tab. Scoped to
+   html[data-icefin-stock] (a jellyfin-web page under a theme) or to dialogs anywhere but the dashboard and over video.
+   The server dashboard (html[data-icefin-dashboard]) keeps jellyfin-web's own look. */
+html[data-icefin-theme] { --pz: calc(100vh / 1080); --pz-ink-on: #ffffff;
+  --pz-font: "M PLUS Rounded 1c", "Nunito", "Varela Round", "Noto Sans", "Open Sans", sans-serif;
+  --pz-ring: inset 0 0 0 calc(3 * var(--pz)) var(--icefin-color-tileEmpty);
+  --pz-glow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 0 calc(21 * var(--pz)) calc(5 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6);
+  --pz-lift: 0 calc(3 * var(--pz)) calc(6 * var(--pz)) rgb(0 0 0 / 0.12);
+  --pz-pill: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); }
+
+/* ---- the frame ---- */
+#icefin-stock-chrome .pz-sc { position: absolute; inset: 0; font-family: var(--pz-font); color: var(--icefin-color-text); --pz-ch-a: var(--icefin-color-accent); --pz-ch-b: var(--icefin-color-accentStrong); }
+#icefin-stock-chrome .pz-sc.pz-k-folder { --pz-ch-a: #b0bec5; --pz-ch-b: #607d8b; }
+#icefin-stock-chrome .pz-sc.pz-k-music { --pz-ch-a: #b388ff; --pz-ch-b: #6a3fd1; }
+#icefin-stock-chrome .pz-sc.pz-k-livetv { --pz-ch-a: #5cc8f5; --pz-ch-b: #1b8fd6; }
+#icefin-stock-chrome .pz-sc-head > * { pointer-events: auto; }
+#icefin-stock-chrome .pz-sc-tabs { flex: 0 1 auto; margin-right: 0; }
+#icefin-stock-chrome .pz-sc-extra { margin-left: auto; margin-right: calc(60 * var(--pz)); display: flex; gap: calc(12 * var(--pz)); }
+#icefin-stock-chrome .pz-sc-extra[hidden], #icefin-stock-chrome .pz-mround[hidden] { display: none; }
+#icefin-stock-chrome .pz-tab { font-family: inherit; border: 0; }
+#icefin-stock-chrome .pz-tab:hover, #icefin-stock-chrome .pz-mround:hover { box-shadow: var(--pz-glow); }
+#icefin-stock-chrome .pz-sc-extra-btn { height: calc(56 * var(--pz)); font-size: calc(22 * var(--pz)); }
+#icefin-stock-chrome .pz-mbar { pointer-events: none; }
+#icefin-stock-chrome .pz-mbar > .pz-mround { pointer-events: auto; border: calc(6 * var(--pz)) solid var(--icefin-color-accent); font-family: inherit; font-weight: 700;
+  color: var(--icefin-color-textSecondary); background: radial-gradient(circle at 40% 35%, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); box-shadow: 0 calc(4 * var(--pz)) calc(12 * var(--pz)) rgb(0 0 0 / 0.18); }
+#icefin-stock-chrome .pz-bar-fill { fill: var(--icefin-color-bar); }
+#icefin-stock-chrome .pz-bar-line { fill: none; stroke: var(--icefin-color-accent); stroke-width: 6; }
+#icefin-stock-chrome .pz-bar-shine { fill: none; stroke: var(--icefin-color-surface); stroke-width: 3; opacity: 0.7; }
+
+/* ---- the page under it ---- */
+html[data-icefin-stock] body { background: var(--icefin-color-background)
+  repeating-linear-gradient(180deg, transparent 0 calc(4.5 * var(--pz)), rgb(var(--icefin-color-text-channel) / 0.035) calc(4.5 * var(--pz)) calc(6 * var(--pz))) !important; }
+html[data-icefin-stock] .skinHeader, html[data-icefin-stock] header.MuiAppBar-root, html[data-icefin-stock] .mainDrawerHandle,
+html[data-icefin-stock] .backdropContainer, html[data-icefin-stock] .backgroundContainer { visibility: hidden !important; }
+html[data-icefin-stock] .mainAnimatedPage, html[data-icefin-stock] .page { font-family: var(--pz-font); color: var(--icefin-color-text);
+  padding-top: calc(150 * var(--pz)) !important; padding-bottom: calc(240 * var(--pz)) !important; box-sizing: border-box; background: transparent !important; }
+html[data-icefin-stock] .page .padded-bottom-page { padding-bottom: calc(60 * var(--pz)); }
+/* focus never lands behind the name pill or the bar: scrolling into view keeps clear of them */
+html[data-icefin-stock], html[data-icefin-stock] .page, html[data-icefin-stock] .scrollY { scroll-padding: calc(150 * var(--pz)) 0 calc(250 * var(--pz)); }
+html[data-icefin-stock] ::-webkit-scrollbar, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer ::-webkit-scrollbar { width: calc(10 * var(--pz)); height: calc(10 * var(--pz)); background: transparent; }
+html[data-icefin-stock] ::-webkit-scrollbar-thumb, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer ::-webkit-scrollbar-thumb { background: rgb(var(--icefin-color-focus-channel) / 0.5); border-radius: 999px; }
+html[data-icefin-stock] .page h1, html[data-icefin-stock] .page h2, html[data-icefin-stock] .page .sectionTitle { font-family: var(--pz-font); font-weight: 700; color: var(--icefin-color-text); }
+html[data-icefin-stock] .page .sectionTitle { font-size: calc(32 * var(--pz)); }
+html[data-icefin-stock] .page .fieldDescription, html[data-icefin-stock] .page .secondaryText { color: var(--icefin-color-textSecondary); font-size: calc(20 * var(--pz)); }
+/* sections as white rounded cards */
+html[data-icefin-stock] .page .verticalSection, html[data-icefin-stock] .page .detailSection, html[data-icefin-stock] .page .readOnlyContent,
+html[data-icefin-stock] .page form.manualLoginForm, html[data-icefin-stock] .page form.forgotPasswordForm {
+  background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); border-radius: calc(36 * var(--pz));
+  padding: calc(30 * var(--pz)) calc(36 * var(--pz)) !important; margin-bottom: calc(24 * var(--pz)); box-shadow: 0 0 0 calc(4 * var(--pz)) var(--icefin-color-surface), 0 calc(6 * var(--pz)) calc(18 * var(--pz)) rgb(0 0 0 / 0.1); box-sizing: border-box; }
+html[data-icefin-stock] .page .verticalSection .verticalSection { background: none; box-shadow: none; padding: 0 !important; }
+
+/* ---- fields, buttons, switches: on jellyfin-web's pages and in dialogs ---- */
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html[data-icefin-stock] .page select, html[data-icefin-stock] .page textarea,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog select,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog textarea {
+  font-family: var(--pz-font); font-size: calc(24 * var(--pz)); color: var(--icefin-color-text); background: var(--icefin-color-surface) !important; border: 0 !important;
+  border-radius: 999px; min-height: calc(62 * var(--pz)); padding: 0 calc(30 * var(--pz)); box-shadow: var(--pz-ring); box-sizing: border-box; }
+html[data-icefin-stock] .page textarea, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog textarea { border-radius: calc(30 * var(--pz)); padding: calc(18 * var(--pz)) calc(30 * var(--pz)); }
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):focus, html[data-icefin-stock] .page select:focus, html[data-icefin-stock] .page textarea:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog select:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog textarea:focus { box-shadow: var(--pz-glow) !important; outline: none; }
+html[data-icefin-stock] .page .inputLabel, html[data-icefin-stock] .page .selectLabel, html[data-icefin-stock] .page .checkboxListLabel,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog .inputLabel, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog .selectLabel {
+  font-family: var(--pz-font); font-size: calc(20 * var(--pz)); color: var(--icefin-color-textSecondary); padding-left: calc(24 * var(--pz)); margin-bottom: calc(6 * var(--pz)); }
+html[data-icefin-stock] .page .selectArrowContainer, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog .selectArrowContainer { right: calc(18 * var(--pz)); color: var(--icefin-color-accent); }
+
+html[data-icefin-stock] .page .raised, html[data-icefin-stock] .page .button-submit, html[data-icefin-stock] .page .button-cancel, html[data-icefin-stock] .page button.raised,
+html[data-icefin-stock] .page .btnAddServer,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .raised,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooterItem {
+  font-family: var(--pz-font); font-size: calc(24 * var(--pz)); font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--icefin-color-text) !important;
+  background: var(--pz-pill) !important; border-radius: 999px !important; min-height: calc(64 * var(--pz)); padding: 0 calc(36 * var(--pz));
+  box-shadow: var(--pz-ring), var(--pz-lift); border: 0; }
+html[data-icefin-stock] .page .button-submit, html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .button-submit {
+  box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), var(--pz-lift); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .button-delete { box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-error), var(--pz-lift); }
+html[data-icefin-stock] .page .raised:focus, html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page button.raised:focus, html[data-icefin-stock] .page .btnAddServer:focus,
+html[data-icefin-stock] .page .raised:hover, html[data-icefin-stock] .page button.raised:hover {
+  box-shadow: var(--pz-glow) !important; background: var(--pz-pill) !important; color: var(--icefin-color-text) !important; outline: none; }
+/* icon buttons: small round buttons with a ring */
+html[data-icefin-stock] .page .paper-icon-button-light:not(.btnPlayPause) { border-radius: 50%; background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); color: var(--icefin-color-accentStrong); margin: 0 calc(4 * var(--pz)); }
+html[data-icefin-stock] .page .paper-icon-button-light:focus, html[data-icefin-stock] .page .paper-icon-button-light:hover { box-shadow: var(--pz-glow) !important; background: var(--pz-pill) !important; color: var(--icefin-color-accentStrong) !important; }
+
+/* tick boxes become switches, on the right of their row */
+html[data-icefin-stock] .page label:has(> input[type=checkbox]), html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog label:has(> input[type=checkbox]) {
+  display: flex !important; align-items: center; justify-content: space-between; gap: calc(24 * var(--pz)); min-height: calc(62 * var(--pz)); padding: 0 calc(6 * var(--pz)) 0 calc(24 * var(--pz)) !important;
+  border-radius: calc(20 * var(--pz)); font-family: var(--pz-font); }
+html[data-icefin-stock] .page label:has(> input[type=checkbox]) .checkboxLabel, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog label:has(> input[type=checkbox]) .checkboxLabel {
+  padding-left: 0 !important; margin: 0; font-size: calc(23 * var(--pz)); color: var(--icefin-color-text); order: 1; }
+html[data-icefin-stock] .page input[type=checkbox] + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox] + span + .checkboxOutline {
+  position: relative !important; top: auto !important; left: auto !important; order: 2; flex: none; width: calc(78 * var(--pz)) !important; height: calc(40 * var(--pz)) !important;
+  border: 0 !important; border-radius: 999px !important; background: var(--icefin-color-tileEmpty) !important; box-shadow: inset 0 calc(2 * var(--pz)) calc(3 * var(--pz)) rgb(0 0 0 / 0.15); transition: background 160ms; }
+html[data-icefin-stock] .page input[type=checkbox] + span + .checkboxOutline::after, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox] + span + .checkboxOutline::after {
+  content: ""; position: absolute; top: calc(4 * var(--pz)); left: calc(4 * var(--pz)); width: calc(32 * var(--pz)); height: calc(32 * var(--pz)); border-radius: 50%;
+  background: var(--icefin-color-surface); box-shadow: 0 1px calc(3 * var(--pz)) rgb(0 0 0 / 0.25); transition: left 160ms; }
+html[data-icefin-stock] .page input[type=checkbox]:checked + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:checked + span + .checkboxOutline {
+  background: linear-gradient(180deg, var(--icefin-color-accent), var(--icefin-color-accentStrong)) !important; }
+html[data-icefin-stock] .page input[type=checkbox]:checked + span + .checkboxOutline::after, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:checked + span + .checkboxOutline::after { left: calc(42 * var(--pz)); }
+html[data-icefin-stock] .page .checkboxOutline .checkboxIcon, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog .checkboxOutline .checkboxIcon { display: none !important; }
+html[data-icefin-stock] .page input[type=checkbox]:focus + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:focus + span + .checkboxOutline { box-shadow: var(--pz-glow) !important; }
+html[data-icefin-stock] .page label:has(> input[type=checkbox]):has(input[type=checkbox]:focus), html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog label:has(> input[type=checkbox]):has(input[type=checkbox]:focus) { background: rgb(var(--icefin-color-focus-channel) / 0.12); }
+
+/* lists and cards on jellyfin-web's pages */
+html[data-icefin-stock] .page .listItem { font-family: var(--pz-font); background: var(--pz-pill); border-radius: calc(20 * var(--pz)); margin: 0 0 calc(10 * var(--pz)); box-shadow: var(--pz-ring), var(--pz-lift); border: 0 !important; }
+html[data-icefin-stock] .page .listItem:focus, html[data-icefin-stock] .page .listItem:hover { box-shadow: var(--pz-glow); background: var(--pz-pill) !important; color: var(--icefin-color-text) !important; }
+html[data-icefin-stock] .page .card .cardBox, html[data-icefin-stock] .page .card .cardScalable, html[data-icefin-stock] .page .card .cardImageContainer { border-radius: calc(24 * var(--pz)); }
+html[data-icefin-stock] .page .card .cardImageContainer.defaultCardBackground { background: linear-gradient(160deg, var(--icefin-color-accent), var(--icefin-color-accentStrong)) !important; color: var(--pz-ink-on); }
+html[data-icefin-stock] .page .card:focus .cardScalable, html[data-icefin-stock] .page .card:hover .cardScalable { box-shadow: var(--pz-glow); animation: pz-glow 2.6s ease-in-out infinite; }
+html[data-icefin-stock] .page .card .cardText { font-family: var(--pz-font); font-weight: 700; color: var(--icefin-color-text); }
+html[data-icefin-stock] .page .alphaPicker, html[data-icefin-stock] .page .alphaPicker-fixed-right .MuiPaper-root { background: var(--icefin-color-surface) !important; border-radius: 999px; box-shadow: var(--pz-ring), var(--pz-lift); padding: calc(8 * var(--pz)) 0; }
+html[data-icefin-stock] .page .alphaPickerButton { color: var(--icefin-color-textSecondary); font-family: var(--pz-font); }
+html[data-icefin-stock] .page .alphaPickerButton:focus, html[data-icefin-stock] .page .alphaPickerButton-selected { color: var(--icefin-color-accentStrong); font-weight: 700; background: none; }
+
+/* ---- sign-in and servers ---- */
+html[data-icefin-stock="login"] .page .readOnlyContent, html[data-icefin-stock="login"] .page .manualLoginForm { max-width: calc(980 * var(--pz)); margin-left: auto; margin-right: auto; }
+html[data-icefin-stock="login"] .page .readOnlyContent { display: flex; flex-wrap: wrap; gap: calc(14 * var(--pz)); justify-content: center; background: none; box-shadow: none; }
+html[data-icefin-stock="login"] .page .readOnlyContent button { width: auto !important; flex: none; }
+html[data-icefin-stock="login"] #divUsers .cardImageContainer, html[data-icefin-stock="login"] #divUsers .cardScalable, html[data-icefin-stock="login"] #divUsers .cardBox { border-radius: 50% !important; }
+html[data-icefin-stock="selectserver"] .page .card .cardScalable { border-radius: calc(24 * var(--pz)); }
+html[data-icefin-stock="selectserver"] .page .verticalSection { max-width: calc(1300 * var(--pz)); margin-left: auto; margin-right: auto; }
+html[data-icefin-stock="selectserver"] .page .verticalSection:has(.btnAddServer) { background: none; box-shadow: none; }
+html[data-icefin-stock="login"] .page .manualLoginForm { margin-top: 0 !important; }
+html[data-icefin-stock="login"] .page .manualLoginForm .inputContainer, html[data-icefin-stock="login"] .page .manualLoginForm .checkboxContainer { margin-bottom: calc(12 * var(--pz)); }
+html[data-icefin-stock="selectserver"] .page .card .cardPadder-square { padding-bottom: 60% !important; }
+html[data-icefin-stock="selectserver"] .page .card .cardImageIcon { font-size: calc(72 * var(--pz)); color: var(--pz-ink-on); }
+
+/* ---- user preferences, profile, Quick Connect ---- */
+html[data-icefin-stock^="mypreferences"] .page form, html[data-icefin-stock="userprofile"] .page .padded-left, html[data-icefin-stock="quickconnect"] .page form { max-width: calc(1240 * var(--pz)); margin-left: auto !important; margin-right: auto !important; }
+html[data-icefin-stock="userprofile"] .page .imagePlaceHolder, html[data-icefin-stock="userprofile"] .page #image { border-radius: 50%; overflow: hidden; box-shadow: var(--pz-ring), var(--pz-lift); }
+html[data-icefin-stock="userprofile"] .page .username { font-size: calc(48 * var(--pz)); }
+html[data-icefin-stock="quickconnect"] #txtQuickConnectCode { font-size: calc(54 * var(--pz)); font-weight: 700; letter-spacing: 0.4em; text-align: center; color: var(--icefin-color-accentStrong); min-height: calc(100 * var(--pz)); }
+
+/* ---- music: now playing (#/queue) and lyrics ---- */
+html[data-icefin-stock="queue"] .nowPlayingInfoContainer { align-items: center; gap: calc(60 * var(--pz)); min-height: calc(440 * var(--pz)); }
+html[data-icefin-stock="queue"] .nowPlayingPageImageContainer { position: relative; width: calc(380 * var(--pz)) !important; height: calc(380 * var(--pz)) !important; flex: none; margin-left: calc(40 * var(--pz)); margin-right: calc(170 * var(--pz)) !important; }
+html[data-icefin-stock="queue"] .nowPlayingPageImageContainer::before { content: ""; position: absolute; z-index: 0; top: calc(-10 * var(--pz)); left: calc(130 * var(--pz)); width: calc(400 * var(--pz)); height: calc(400 * var(--pz)); border-radius: 50%;
+  background: radial-gradient(circle, var(--pz-record-label, #ffd166) 0 16%, var(--pz-record, #2b1d4f) 17% 100%); box-shadow: 0 calc(8 * var(--pz)) calc(20 * var(--pz)) rgb(0 0 0 / 0.3); animation: pz-spin 8s linear infinite; }
+html[data-icefin-stock="queue"] .nowPlayingPageImageContainer > * { position: relative; z-index: 1; width: 100% !important; height: 100% !important; border-radius: calc(20 * var(--pz)) !important; overflow: hidden; box-shadow: var(--pz-ring), 0 calc(6 * var(--pz)) calc(16 * var(--pz)) rgb(0 0 0 / 0.2); }
+html[data-icefin-stock="queue"] .nowPlayingSongName { font-size: calc(52 * var(--pz)); font-weight: 700; }
+html[data-icefin-stock="queue"] .nowPlayingAlbum, html[data-icefin-stock="queue"] .nowPlayingArtist { font-size: calc(26 * var(--pz)); }
+html[data-icefin-stock="queue"] .nowPlayingAlbum a, html[data-icefin-stock="queue"] .nowPlayingArtist a { color: var(--icefin-color-textSecondary); }
+html[data-icefin-stock="queue"] .btnPlayStateCommand { width: calc(78 * var(--pz)) !important; height: calc(78 * var(--pz)) !important; }
+html[data-icefin-stock="queue"] .btnPlayPause { width: calc(104 * var(--pz)) !important; height: calc(104 * var(--pz)) !important; border-radius: 50%; background: var(--pz-pill); color: var(--icefin-color-accentStrong);
+  box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), var(--pz-lift); }
+html[data-icefin-stock="queue"] .btnPlayPause .material-icons { font-size: calc(70 * var(--pz)) !important; }
+html[data-icefin-stock="queue"] .playlistSection .listItem { min-height: calc(66 * var(--pz)); }
+html[data-icefin-stock="queue"] .playlistSection .listItem.playlistIndexIndicatorImage, html[data-icefin-stock="queue"] .playlistSection .listItem[data-playlistitemid].playing { box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent); }
+html[data-icefin-stock] .page .mdl-slider-background-flex { height: calc(12 * var(--pz)); border-radius: 999px; background: var(--icefin-color-tileEmpty); }
+html[data-icefin-stock] .page .mdl-slider-background-lower { background: linear-gradient(90deg, var(--icefin-color-accent), var(--icefin-color-accentStrong)) !important; border-radius: 999px; }
+html[data-icefin-stock="lyrics"] .lyricsContainer { text-align: center; width: 100%; }
+html[data-icefin-stock="lyrics"] .lyricsLine { font-family: var(--pz-font); font-size: calc(34 * var(--pz)); color: var(--icefin-color-textSecondary); margin: calc(12 * var(--pz)) 0; transition: font-size 200ms, color 200ms; }
+html[data-icefin-stock="lyrics"] .lyricsLine.pastLyric { opacity: 0.55; }
+html[data-icefin-stock="lyrics"] .lyricsLine:not(.pastLyric):not(.futureLyric) { font-size: calc(54 * var(--pz)); font-weight: 700; color: var(--icefin-color-accentStrong); }
+html[data-icefin-stock="lyrics"] .lyricsContainer h1 { font-size: calc(40 * var(--pz)); color: var(--icefin-color-textSecondary); }
+
+/* the music bar while music plays: a capsule above Plaza's bar */
+html[data-icefin-stock] .appfooter { bottom: calc(200 * var(--pz)) !important; background: transparent !important; z-index: 997 !important; }
+html[data-icefin-stock] .nowPlayingBar { position: relative !important; left: 50% !important; right: auto !important; transform: translateX(-50%); bottom: auto !important; width: min(calc(1300 * var(--pz)), 92vw) !important;
+  border-radius: 999px; background: var(--pz-pill) !important; color: var(--icefin-color-text) !important; box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 calc(6 * var(--pz)) calc(16 * var(--pz)) rgb(0 0 0 / 0.18) !important;
+  font-family: var(--pz-font); overflow: hidden; z-index: 997 !important; }
+html[data-icefin-stock] .nowPlayingBar .mediaButton, html[data-icefin-stock] .nowPlayingBar a { color: var(--icefin-color-text) !important; }
+html[data-icefin-stock] .nowPlayingBar .playPauseButton { color: var(--icefin-color-accentStrong) !important; }
+html[data-icefin-stock] .nowPlayingBar .nowPlayingBarPositionContainer { left: calc(60 * var(--pz)); right: calc(60 * var(--pz)); width: auto; top: 0 !important; }
+html[data-icefin-stock] .nowPlayingBar .nowPlayingBarVolumeSliderContainer, html[data-icefin-stock] .nowPlayingBar .muteButton { display: none !important; }
+html[data-icefin-stock] .nowPlayingBar .nowPlayingBarInfoContainer { padding-left: calc(30 * var(--pz)); }
+
+/* ---- dialogs: framed cards with a coloured name tab, over a dimmed screen ---- */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogBackdropOpened { background: rgb(40 46 54 / 0.42) !important; opacity: 1 !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.slideshowDialog):not(.videoPlayerContainer):not(#bookPlayer) {
+  font-family: var(--pz-font); color: var(--icefin-color-text); background: var(--icefin-color-surface) linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)) !important;
+  border-radius: calc(48 * var(--pz)) !important; box-shadow: 0 0 0 calc(6 * var(--pz)) var(--icefin-color-surface), 0 calc(14 * var(--pz)) calc(42 * var(--pz)) rgb(0 0 0 / 0.25) !important; overflow: hidden;
+  --pz-tab-a: var(--icefin-color-accent); --pz-tab-b: var(--icefin-color-accentStrong); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:has(.button-delete) { --pz-tab-a: #ff8787; --pz-tab-b: var(--icefin-color-error); }
+/* full-screen editors and pickers become a card with the screen around it */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog.dialog-fixedSize:not(.slideshowDialog),
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog.dialog-fullscreen:not(.slideshowDialog) {
+  position: fixed !important; inset: 5vh max(6vw, calc(50vw - 900 * var(--pz))) !important; width: auto !important; height: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog.dialog-small:not(.slideshowDialog) { inset: 8vh max(10vw, calc(50vw - 640 * var(--pz))) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.centeredDialog.formDialog {
+  position: fixed !important; inset: 0 !important; margin: auto !important; width: min(calc(980 * var(--pz)), 90vw) !important; height: fit-content !important; max-height: 86vh; min-height: 0 !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogHeader {
+  position: static !important; background: transparent !important; border: 0; min-height: calc(96 * var(--pz)); padding: 0 calc(24 * var(--pz)); justify-content: flex-start !important; gap: calc(12 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogHeader > :not(.formDialogHeaderTitle) { margin-left: 0 !important; margin-right: 0 !important; position: relative; z-index: 1; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogHeaderTitle,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .actionSheetTitle {
+  position: absolute; right: 0; top: 0; margin: 0 !important; height: calc(78 * var(--pz)); display: flex; align-items: center; padding: 0 calc(60 * var(--pz)) 0 calc(72 * var(--pz));
+  border-bottom-left-radius: calc(54 * var(--pz)); background: linear-gradient(180deg, var(--pz-tab-a), var(--pz-tab-b)); color: var(--pz-ink-on); font-family: var(--pz-font);
+  font-size: calc(30 * var(--pz)) !important; font-weight: 700; text-shadow: 0 1px calc(3 * var(--pz)) rgb(0 0 0 / 0.2); white-space: nowrap; max-width: 70%; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogHeader-clear { min-height: calc(110 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogHeader .paper-icon-button-light {
+  border-radius: 50%; background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); color: var(--icefin-color-accentStrong); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogContent { background: transparent; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .dialogContentInner { padding-top: calc(10 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .text { font-size: calc(24 * var(--pz)); line-height: 1.5; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooter {
+  background: transparent !important; border: 0 !important; position: relative; display: flex; justify-content: center; gap: calc(24 * var(--pz)); padding: calc(18 * var(--pz)) calc(30 * var(--pz)) calc(30 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooter .formDialogFooterItem { flex: 0 1 calc(320 * var(--pz)); margin: 0 !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog h2 { font-family: var(--pz-font); font-weight: 700; }
+
+/* item menus and every other action sheet: a card of pill rows */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet { padding: calc(24 * var(--pz)) calc(24 * var(--pz)) calc(18 * var(--pz)) !important; min-width: calc(520 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet:has(.actionSheetTitle) { padding-top: calc(96 * var(--pz)) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet .actionSheetMenuItem {
+  font-family: var(--pz-font); min-height: calc(64 * var(--pz)); margin: 0 0 calc(9 * var(--pz)); border-radius: calc(20 * var(--pz)) !important; background: var(--pz-pill);
+  box-shadow: var(--pz-ring), var(--pz-lift); padding: 0 calc(20 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet .actionSheetItemText { font-size: calc(24 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet .actionsheetMenuItemIcon { color: var(--icefin-color-accentStrong); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .actionSheetMenuItem:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .listItem-button:focus { box-shadow: var(--pz-glow), var(--pz-lift); font-weight: 700;
+  background-image: linear-gradient(180deg, var(--icefin-color-focus), var(--icefin-color-accentStrong)) !important; color: var(--icefin-color-onFocus) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .actionSheetMenuItem:focus .actionsheetMenuItemIcon { color: inherit; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .raised:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooterItem:focus { box-shadow: var(--pz-glow), var(--pz-lift) !important; }
+/* subtitle search results, identify results and the like: rows */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .listItem:not(.actionSheetMenuItem) { border-radius: calc(20 * var(--pz)); background: var(--pz-pill); box-shadow: var(--pz-ring); margin-bottom: calc(9 * var(--pz)); }
+
+/* the photo viewer: the photo framed in white on black, pill buttons */
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .swiper-slide-img { border-radius: calc(26 * var(--pz)); box-shadow: 0 0 0 calc(6 * var(--pz)) var(--icefin-color-surface), 0 calc(8 * var(--pz)) calc(24 * var(--pz)) rgb(0 0 0 / 0.5); max-height: 88vh !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .slideshowTopBar, html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .slideshowBottomBar { background: none !important; font-family: var(--pz-font); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .slideshowBottomBar { justify-content: center; gap: calc(16 * var(--pz)); padding-bottom: calc(30 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .paper-icon-button-light, html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .slideshowButton {
+  border-radius: 999px; background: var(--pz-pill) !important; color: var(--icefin-color-accentStrong) !important; box-shadow: var(--pz-ring), var(--pz-lift); width: calc(76 * var(--pz)); height: calc(76 * var(--pz)); margin: 0 calc(8 * var(--pz)); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .paper-icon-button-light:focus, html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .paper-icon-button-light:hover { box-shadow: var(--pz-glow) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .swiper-button-prev, html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .swiper-button-next { color: var(--icefin-color-accent); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .slideshowTextContainer, html[data-icefin-theme]:not([data-icefin-dashboard]) .slideshowDialog .slideshowTopBar .slideshowTitle {
+  font-family: var(--pz-font); color: var(--icefin-color-text); background: var(--icefin-color-surface); border-radius: 999px; padding: calc(8 * var(--pz)) calc(24 * var(--pz)); font-weight: 700; }
+
+/* the book reader (EPUB, PDF, comics): its bars' buttons as round pills, the title as a pill, on Plaza's ground */
+html[data-icefin-theme]:not([data-icefin-dashboard]) :is(#bookPlayer, #pdfPlayer, #comicsPlayer) { background: var(--icefin-color-background) !important; font-family: var(--pz-font); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) :is(#bookPlayer, #pdfPlayer, #comicsPlayer) .bookOsdRow { gap: calc(14 * var(--pz)); padding: calc(18 * var(--pz)) calc(30 * var(--pz)); background: none !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) :is(#bookPlayer, #pdfPlayer, #comicsPlayer) .bookOsdRow .paper-icon-button-light {
+  border-radius: 50%; width: calc(76 * var(--pz)); height: calc(76 * var(--pz)); background: var(--pz-pill) !important; color: var(--icefin-color-accentStrong) !important; box-shadow: var(--pz-ring), var(--pz-lift); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) :is(#bookPlayer, #pdfPlayer, #comicsPlayer) .bookOsdRow .paper-icon-button-light:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) :is(#bookPlayer, #pdfPlayer, #comicsPlayer) .bookOsdRow .paper-icon-button-light:hover { box-shadow: var(--pz-glow) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) :is(#bookPlayer, #pdfPlayer, #comicsPlayer) .bookOsdTitle { padding: calc(8 * var(--pz)) calc(28 * var(--pz)); border-radius: 999px; background: var(--icefin-color-surface);
+  color: var(--icefin-color-text); font-weight: 700; font-size: calc(24 * var(--pz)); box-shadow: var(--pz-ring), var(--pz-lift); }
+
+/* notices and loading: a pill above the bar; a small ring for loading */
+html[data-icefin-theme]:not([data-icefin-dashboard]) .toastContainer { bottom: calc(230 * var(--pz)) !important; left: 50% !important; transform: translateX(-50%); }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { font-family: var(--pz-font); font-size: calc(24 * var(--pz)); font-weight: 700; color: var(--icefin-color-text) !important; background: var(--icefin-color-surface) !important;
+  border-radius: 999px !important; padding: calc(16 * var(--pz)) calc(36 * var(--pz)) !important; box-shadow: inset 0 0 0 calc(3 * var(--pz)) var(--icefin-color-accent), 0 calc(6 * var(--pz)) calc(16 * var(--pz)) rgb(0 0 0 / 0.2) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .mdl-spinner__layer, html[data-icefin-theme]:not([data-icefin-dashboard]) .docspinner { border-color: var(--icefin-color-accent) !important; color: var(--icefin-color-accent) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .MuiCircularProgress-root { color: var(--icefin-color-accent) !important; }
+
+/* the on-screen keyboard (ui.keyboard): rounded keys on Plaza's bar colour, docked at the bottom */
+html[data-icefin-theme] #icefin-osk { font-family: var(--pz-font); color: var(--icefin-color-text); background: var(--icefin-color-bar); border-radius: calc(48 * var(--pz)) calc(48 * var(--pz)) 0 0;
+  padding: calc(24 * var(--pz)) max(14vw, calc(50vw - 720 * var(--pz))) calc(30 * var(--pz)); box-shadow: 0 calc(-4 * var(--pz)) 0 var(--icefin-color-accent), 0 calc(-10 * var(--pz)) calc(30 * var(--pz)) rgb(0 0 0 / 0.15); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-preview { min-height: calc(40 * var(--pz)); padding: calc(10 * var(--pz)) calc(28 * var(--pz)); margin-bottom: calc(14 * var(--pz)); border-radius: 999px;
+  background: var(--icefin-color-surface); box-shadow: var(--pz-ring); font-size: calc(28 * var(--pz)); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-preview:empty::before { content: attr(data-placeholder); color: var(--icefin-color-textSecondary); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-row { display: flex; gap: calc(9 * var(--pz)); margin: calc(9 * var(--pz)) 0; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-key { flex: 1; min-height: calc(60 * var(--pz)); display: flex; align-items: center; justify-content: center; font-size: calc(26 * var(--pz)); cursor: pointer;
+  border-radius: calc(16 * var(--pz)); background: var(--pz-pill); color: var(--icefin-color-text); box-shadow: var(--pz-ring), var(--pz-lift); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-wide { flex: 1.6; font-size: calc(22 * var(--pz)); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-space { flex: 4; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-done { box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), var(--pz-lift); font-weight: 700; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-icefin-theme] #icefin-osk .icefin-osk-key:hover { box-shadow: var(--pz-glow); font-weight: 700; }
+
+/* ---- Plaza's own new parts: the sort and filter panel, new playlist, the day on photos ---- */
+.pz-panel { position: absolute; inset: 0; z-index: 30; }
+.pz-panel .pz-dim { position: absolute; inset: 0; }
+.pz-panel-card { position: absolute; right: calc(36 * var(--pz)); top: calc(36 * var(--pz)); bottom: calc(36 * var(--pz)); width: calc(820 * var(--pz)); border-radius: calc(48 * var(--pz));
+  background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); box-shadow: 0 0 0 calc(6 * var(--pz)) var(--icefin-color-surface), 0 calc(14 * var(--pz)) calc(42 * var(--pz)) rgb(0 0 0 / 0.25);
+  padding: calc(110 * var(--pz)) calc(48 * var(--pz)) calc(36 * var(--pz)); box-sizing: border-box; display: flex; flex-direction: column; gap: calc(12 * var(--pz)); overflow: hidden; }
+.pz-panel-narrow { top: 0; bottom: 0; left: 0; right: 0; margin: auto; height: calc(420 * var(--pz)); width: calc(900 * var(--pz)); }
+.pz-dlg-tab { position: absolute; right: 0; top: 0; height: calc(78 * var(--pz)); padding: 0 calc(60 * var(--pz)) 0 calc(72 * var(--pz)); display: flex; align-items: center;
+  border-bottom-left-radius: calc(54 * var(--pz)); background: linear-gradient(180deg, var(--pz-ch-a), var(--pz-ch-b)); color: var(--pz-ink-on); font-size: calc(30 * var(--pz)); font-weight: 700; text-shadow: 0 1px calc(3 * var(--pz)) rgb(0 0 0 / 0.2); }
+.pz-panel-label { font-size: calc(24 * var(--pz)); color: var(--icefin-color-textSecondary); margin-top: calc(12 * var(--pz)); }
+.pz-panel-pills { display: flex; flex-wrap: wrap; gap: calc(12 * var(--pz)); }
+.pz-panel-pills .pz-tab, .pz-panel-foot .pz-tab { height: calc(60 * var(--pz)); font-size: calc(24 * var(--pz)); }
+.pz-panel-foot { margin-top: auto; display: flex; gap: calc(24 * var(--pz)); }
+.pz-panel-foot .pz-tab { flex: 1; justify-content: center; font-weight: 700; }
+.pz-stepper { height: calc(62 * var(--pz)); border-radius: 999px; background: var(--icefin-color-surface); box-shadow: var(--pz-ring); display: flex; align-items: center; justify-content: space-between;
+  padding: 0 calc(22 * var(--pz)); font-size: calc(24 * var(--pz)); outline: none; cursor: pointer; }
+.pz-stepper.icefin-focused { box-shadow: var(--pz-glow); }
+.pz-stepper-arrow { width: 0; height: 0; border-top: calc(12 * var(--pz)) solid transparent; border-bottom: calc(12 * var(--pz)) solid transparent; }
+.pz-stepper-arrow.pz-l { border-right: calc(16 * var(--pz)) solid var(--icefin-color-accent); }
+.pz-stepper-arrow.pz-r { border-left: calc(16 * var(--pz)) solid var(--icefin-color-accent); }
+.pz-setrow { height: calc(70 * var(--pz)); border-radius: calc(22 * var(--pz)); background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); display: flex; align-items: center; justify-content: space-between;
+  padding: 0 calc(16 * var(--pz)) 0 calc(28 * var(--pz)); font-size: calc(24 * var(--pz)); outline: none; cursor: pointer; flex: none; }
+.pz-setrow.icefin-focused { box-shadow: var(--pz-glow); font-weight: 700; }
+.pz-switch { position: relative; width: calc(78 * var(--pz)); height: calc(40 * var(--pz)); border-radius: 999px; background: var(--icefin-color-tileEmpty); box-shadow: inset 0 calc(2 * var(--pz)) calc(3 * var(--pz)) rgb(0 0 0 / 0.15); flex: none; transition: background 160ms; }
+.pz-switch::after { content: ""; position: absolute; top: calc(4 * var(--pz)); left: calc(4 * var(--pz)); width: calc(32 * var(--pz)); height: calc(32 * var(--pz)); border-radius: 50%; background: var(--icefin-color-surface); box-shadow: 0 1px calc(3 * var(--pz)) rgb(0 0 0 / 0.25); transition: left 160ms; }
+.pz-switch.pz-on { background: linear-gradient(180deg, var(--icefin-color-accent), var(--icefin-color-accentStrong)); }
+.pz-switch.pz-on::after { left: calc(42 * var(--pz)); }
+.pz-field { display: flex; flex-direction: column; gap: calc(8 * var(--pz)); }
+.pz-field-label { font-size: calc(22 * var(--pz)); color: var(--icefin-color-textSecondary); padding-left: calc(24 * var(--pz)); }
+.pz-input { height: calc(66 * var(--pz)); border-radius: 999px; border: 0; background: var(--icefin-color-surface); box-shadow: var(--pz-ring); padding: 0 calc(30 * var(--pz)); font: inherit; font-size: calc(26 * var(--pz)); color: var(--icefin-color-text); outline: none; }
+.pz-input.icefin-focused, .pz-input:focus { box-shadow: var(--pz-glow); }
+.pz-count { position: absolute; right: calc(14 * var(--pz)); top: calc(14 * var(--pz)); padding: calc(3 * var(--pz)) calc(14 * var(--pz)); border-radius: 999px; background: var(--icefin-color-surface);
+  color: var(--icefin-color-accentStrong); font-size: calc(20 * var(--pz)); font-weight: 700; z-index: 2; }
+.pz-cell-new .pz-cell-art { background: var(--icefin-color-tileEmpty); box-shadow: inset 0 calc(3 * var(--pz)) calc(7 * var(--pz)) rgb(0 0 0 / 0.08); }
+.pz-cell-new .pz-cell-title { color: var(--icefin-color-textSecondary); text-shadow: none; }
+.pz-cell-new .pz-cell-title::before { content: "+"; display: block; font-size: calc(64 * var(--pz)); font-weight: 400; line-height: 1; }
+.pz-day { position: absolute; left: 0; top: calc(-44 * var(--pz)); white-space: nowrap; padding: calc(3 * var(--pz)) calc(18 * var(--pz)); border-radius: 999px; background: var(--icefin-color-surface);
+  box-shadow: var(--pz-ring), var(--pz-lift); font-size: calc(20 * var(--pz)); font-weight: 700; z-index: 2; }
+.pz-cell-folder .pz-cell-art::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / 0.35)); }
+/* the home's music capsule (9.42): over the channels' top edge while music plays; up from the first row reaches it */
+.pz-nowplaying.pz-mini { left: 50%; right: auto; transform: translateX(-50%); width: calc(1020 * var(--pz)); top: calc(8 * var(--pz)); height: calc(76 * var(--pz)); z-index: 6;
+  border-radius: 999px; background: var(--pz-pill); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 calc(6 * var(--pz)) calc(16 * var(--pz)) rgb(0 0 0 / 0.18);
+  padding: 0 calc(18 * var(--pz)) 0 calc(12 * var(--pz)); gap: calc(18 * var(--pz)); font-size: calc(24 * var(--pz)); --pz-ch-a: #b388ff; --pz-ch-b: #6a3fd1; }
