@@ -12,6 +12,7 @@
 #include "shared/Paths.h"
 #include "Branding.h"  // ICEFIN-HOOK: Icefin branding constants
 #include "icefin/log/Redact.h"  // ICEFIN-HOOK: more log redaction (PLAN 11.2)
+#include "icefin/log/Recent.h"  // ICEFIN-HOOK: recent lines for the diagnostics report (PLAN 11.4)
 #include "settings/SettingsComponent.h"
 #include "Version.h"
 
@@ -28,6 +29,7 @@ static QString tempLogPath;
 static void qtMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
   QMutexLocker lock(&logMutex);
+  Icefin::Log::remember(type, msg);  // ICEFIN-HOOK: recent lines for the diagnostics report (PLAN 11.4)
 
   // Check if message meets any output threshold
   bool shouldOutputToTerminal = messageLevelValue[type] >= terminalLogLevel;

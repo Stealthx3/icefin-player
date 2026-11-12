@@ -37,6 +37,7 @@ result is seen; anything else is a bug report (P1 if playback is silent, black o
 | A2 | Soundbar or TV over eARC / ARC | Same | Formats the bar supports show on it; the rest arrive as PCM, never silence | 3.8 |
 | A3 | Any HDMI sink | Unplug and replug the cable, turn the receiver off and on during playback | Sound returns (or a notice), never silent without a message | 3.8, 3.9 |
 | A4 | Any | Watch speech for a few minutes with passthrough on | Lip sync looks right | 3.8 |
+| A5 | AV receiver over HDMI, passthrough on | With the receiver in standby, start a TrueHD or DTS-HD film; let CEC (or the remote) wake it | PCM at first; about 4 s after the receiver is ready, a short gap and the receiver's display shows the bitstream format. Note how long your receiver takes to be ready and whether 4 s was enough. Then try Receiver in Standby → Keep Bitstream: does your receiver decode it while waking, or stay silent / play noise? | 3.9, D32 |
 
 ## Controllers and Steam
 

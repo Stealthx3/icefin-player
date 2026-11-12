@@ -15,7 +15,7 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             render/PlaybackRouter.cpp render/PlaybackRouter.h render/RouterComponent.cpp render/RouterComponent.h
             render/HdrCapabilityProbe.cpp render/HdrCapabilityProbe.h render/VulkanDevice.cpp render/VulkanDevice.h render/VulkanVideo.cpp render/VulkanVideo.h render/MpvTarget.cpp render/MpvTarget.h render/Compositing.cpp render/Compositing.h
             capability/CapabilityModel.cpp capability/CapabilityModel.h
-            log/Redact.cpp log/Redact.h
+            log/Redact.cpp log/Redact.h log/Recent.cpp log/Recent.h diag/Report.cpp diag/Report.h
             input/GamepadNames.cpp input/GamepadNames.h input/GamepadComponent.cpp input/GamepadComponent.h)
 
 # Native backdrop (PLAN 8.4): Qt ShaderTools bakes built-in themes' GLSL backdrops at load. Optional: without it
