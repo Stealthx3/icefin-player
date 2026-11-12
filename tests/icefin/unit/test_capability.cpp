@@ -127,6 +127,21 @@ private Q_SLOTS:
     failed.vulkanFallback = "no device";
     QCOMPARE(rendererSummary(snapshot(failed)), QString("OpenGL (fallback: Vulkan failed: no device)"));
   }
+
+  // Couch Mode's detection (alpha feedback): a TV-sized display or a Gamescope session; the theme view carries it.
+  void couchDisplays()
+  {
+    QCOMPARE(couchDisplay({{"diagonalInches", 65.0}}).value("couch").toBool(), true);
+    QCOMPARE(couchDisplay({{"diagonalInches", 65.0}}).value("reason").toString(), QString("display 65 in"));
+    QCOMPARE(couchDisplay({{"diagonalInches", 27.0}}).value("couch").toBool(), false);
+    QCOMPARE(couchDisplay({{"diagonalInches", 0.0}}).value("reason").toString(), QString("display size unknown"));
+    QCOMPARE(couchDisplay({{"diagonalInches", 24.0}, {"gamescope", true}}).value("reason").toString(), QString("gamescope"));
+    Inputs tv = openGl();
+    tv.screen = {{"diagonalInches", 55.0}};
+    QVariantMap s = snapshot(tv);
+    s["theme"] = themeView(s);
+    QCOMPARE(s["theme"].toMap().value("couch").toMap().value("couch").toBool(), true);
+  }
 };
 
 QTEST_GUILESS_MAIN(TestCapability)
