@@ -125,7 +125,9 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   receiver's ELD, without a restart), `icefin/standby` (invalid ELD: PCM until it wakes, D32),
   `icefin/standby-wake` and `icefin/standby-flap` (the bitstream 4 s after the wake, the wait starting over when it
   drops back to standby), `icefin/standby-pcm` and `icefin/standby-bitstream` (the two override settings) and
-  `icefin/unplug` (unplugged mid-track and for a whole track: nothing stalls). The client needs
+  `icefin/unplug` (unplugged mid-track and for a whole track: nothing stalls), `icefin/fallback-default` and
+  `icefin/fallback-silent` (the HDMI device held by another program: PCM, then the default device, then silence with
+  the notice; the track always plays to the end). The client needs
   Icefin's runtime packages: `avsim.sh icefin-image APP` makes a second base disk with them (once per
   dependency change), and `AVSIM_BASE=avsim-icefin` starts the client from it.
 - **Run:**

@@ -124,7 +124,6 @@ void PlayerComponent::initializeMpv()
   // us better flexibility how to react to such errors (instead of just
   // aborting playback immediately).
   m_mpv->setProperty( "audio-fallback-to-null", "yes");
-  m_mpv->setProperty( "audio-fallback-to-null", "no");  // ICEFIN-HOOK: never-silent fallback handles failures (PLAN 3.6)
 
   // Do not let the decoder downmix (better customization for us).
   m_mpv->setProperty( "ad-lavc-downmix", false);
