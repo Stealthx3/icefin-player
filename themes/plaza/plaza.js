@@ -381,6 +381,7 @@
             Object.assign(card.style, { left: `${21 * u}px`, top: `${18 * u}px`, width: `${r.width - 42 * u}px`, height: `${r.height - 36 * u}px` });
         }
         fillCard(ch, card);
+        jingle(ch);
         const done = () => {
             if (!S || !S.card || S.card.el !== card) return;
             S.busy = false;
@@ -396,6 +397,7 @@
         if (preview) preview.stop();
         S.card = null;
         S.root.removeAttribute('data-pz-channel');
+        if (T.ctx.music) T.ctx.music.stopJingle(leaving ? 150 : 350);
         if (leaving) { card.remove(); dim.remove(); return true; }
         const page = t ? Number(t.getAttribute('data-pz-page')) : S.page;
         if (t && page !== S.page) show(page, false);
@@ -433,6 +435,14 @@
         fillCard(next, card);
         P.slide(card.querySelector('.pz-card-stage'), dir);
         T.ctx.sound('navigate');
+        jingle(next);
+    }
+    // Each kind of channel has its own jingle while its card is open (9.33); a favourite has none.
+    function jingle(ch) {
+        const m = T.ctx.music;
+        if (!m) return;
+        if (ch.kind !== 'favourite' && m.has(ch.kind)) m.jingle(ch.kind);
+        else m.stopJingle(200);
     }
 
     function fillCard(ch, card) {
