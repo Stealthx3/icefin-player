@@ -91,13 +91,25 @@
         };
         extra('Classic home', 'Jellyfin’s own home, with any plugin home sections', 'boxsets', 'classic', () => T.ctx.navigate('#/home?icefin=stock'));
         if (T.ctx.exit) extra('Exit Icefin', 'Quit the app', 'exit', 'power', () => T.ctx.exit());
-        for (const t of tiles) {
+        const tile = (t) => {
+            if (t.classList.contains('pz-s-tile')) return;
             const [kind, icon] = look(t);
             t.classList.add('pz-s-tile', 'pz-k-' + kind);
             const i = el('span', 'pz-s-icon');
             i.innerHTML = ICON[icon];
             t.insertBefore(i, t.querySelector('.icefin-s-desc'));
-        }
+            // the dashboard's entry (administrators): "Server dashboard", before Exit (the walk's mock-up)
+            if (icon === 'server') {
+                const n = t.querySelector('.icefin-s-name'), dsc = t.querySelector('.icefin-s-desc');
+                if (n) n.textContent = 'Server dashboard';
+                if (dsc) dsc.textContent = 'Libraries, users, plugins: Jellyfin’s own dashboard (administrators)';
+                const exit = entries.querySelector('.pz-k-exit');
+                if (exit) entries.insertBefore(t, exit);
+            }
+        };
+        tiles.forEach(tile);
+        // the engine adds the dashboard's entry once it knows the user is an administrator: dress it when it comes
+        new MutationObserver(() => { for (const t of entries.querySelectorAll('.icefin-s-entry:not(.pz-s-tile)')) tile(t); }).observe(entries, { childList: true });
     }
 
     const base = T.ui.settings.screen({ layout: 'tiles' });

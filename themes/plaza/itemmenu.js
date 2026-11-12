@@ -84,6 +84,20 @@
         return l;
     };
     const note = (text) => el('div', 'pz-sheet-note', text);
+    // a labelled stepper (◀ value ▶): Ⓐ or the right arrow moves on, the left arrow back; values: [[value, label], …]
+    const stepper = (label, values, at, changed) => {
+        const r = el('div', 'pz-sheet-steprow');
+        const st = P.focusable(el('div', 'pz-stepper'));
+        const l = el('span', 'pz-stepper-arrow pz-l'), v = el('span', 'pz-stepper-val'), rr = el('span', 'pz-stepper-arrow pz-r');
+        st.append(l, v, rr);
+        let i = Math.max(0, values.findIndex((x) => x[0] === at));
+        const show = () => { v.textContent = values[i][1]; st.setAttribute('aria-label', `${label}: ${values[i][1]}`); if (changed) changed(values[i][0]); };
+        st.addEventListener('click', (e) => { i = (i + (e.target === l ? values.length - 1 : 1)) % values.length; show(); T.ctx.sound('navigate'); });
+        show();
+        r.append(el('span', 'pz-sheet-steplabel', label), st);
+        r.value = () => values[i][0];
+        return r;
+    };
     const foot = (...buttons) => { const f = el('div', 'pz-panel-foot pz-sheet-foot'); f.append(...buttons); return f; };
     const kindOf = (it) => KIND[it.Type] || 'folder';
     const busy = (body, text) => { body.textContent = ''; body.append(note(text || 'One moment…')); };
@@ -247,17 +261,38 @@
                     note(pr.Overview || ''));
                 top.append(pic, info);
                 const actions = el('div', 'pz-panel-foot');
+                const opts = {};
                 if (on || channel) actions.append(button('Watch', () => { sheet.close(); P.play(channel || { Id: pr.ChannelId }, true); }, on));
                 if (pr.TimerId) actions.append(button('Cancel the recording', async () => { try { await del(`LiveTv/Timers/${pr.TimerId}`); sheet.close(); P.toast('Recording cancelled'); } catch (e) { P.toast('That didn’t work', true); } }));
-                else actions.append(button('Record', () => record(pr, false), !on));
-                if (pr.IsSeries && !pr.SeriesTimerId) actions.append(button('Record the series', () => record(pr, true)));
+                else actions.append(button('Record', () => record(pr, false, opts), !on));
+                if (pr.IsSeries && !pr.SeriesTimerId) actions.append(button('Record the series', () => record(pr, true, opts)));
+                actions.append(button('Details', () => { sheet.close(); P.details(pr); }));
                 body.append(top, actions);
+                // how a recording runs (the walk's mock-up): a little early, a little late, how many to keep of a series
+                if (!pr.TimerId) {
+                    const box = el('div', 'pz-sheet-steps');
+                    body.append(box);
+                    return P.safe(getJSON('LiveTv/Timers/Defaults', { programId: pr.Id })).then((d) => {
+                        if (!box.isConnected) return;
+                        const mins = [0, 1, 2, 5, 10, 15, 30, 60].map((m) => [m * 60, m ? `${m} min` : 'On time']);
+                        const keep = [[0, 'All'], ...[1, 2, 3, 5, 10, 20].map((n) => [n, `The last ${n}`])];
+                        const near = (list, v) => list.reduce((a, b) => (Math.abs(b[0] - v) < Math.abs(a[0] - v) ? b : a))[0];
+                        opts.pre = near(mins, d.PrePaddingSeconds || 0);
+                        opts.post = near(mins, d.PostPaddingSeconds || 0);
+                        opts.keep = near(keep, d.KeepUpTo || 0);
+                        box.append(stepper('Start early', mins, opts.pre, (v) => { opts.pre = v; }), stepper('Stop late', mins, opts.post, (v) => { opts.post = v; }));
+                        if (pr.IsSeries && !pr.SeriesTimerId) box.append(stepper('Keep (a series)', keep, opts.keep, (v) => { opts.keep = v; }));
+                    });
+                }
             }
         });
     };
-    async function record(pr, series) {
+    async function record(pr, series, opts) {
         try {
             const d = await c().getJSON(c().getUrl('LiveTv/Timers/Defaults', { programId: pr.Id }));
+            if (opts && opts.pre != null) { d.PrePaddingSeconds = opts.pre; d.IsPrePaddingRequired = opts.pre > 0; }
+            if (opts && opts.post != null) { d.PostPaddingSeconds = opts.post; d.IsPostPaddingRequired = opts.post > 0; }
+            if (series && opts && opts.keep != null) d.KeepUpTo = opts.keep;
             if (series) await post('LiveTv/SeriesTimers', null, d); else await post('LiveTv/Timers', null, d);
             sheet.close();
             P.toast(series ? 'Recording the series' : 'Recording');
@@ -280,11 +315,28 @@
                 busy(body);
                 const r = await P.safe(c().getItems(uid(), { IncludeItemTypes: type, Recursive: true, SortBy: 'SortName', Limit: 200, Fields: 'ChildCount' }));
                 body.textContent = '';
-                const list = el('div', 'pz-sheet-rows pz-sheet-cols pz-sheet-scroll');
-                for (const x of P.items(r)) list.append(row(x.Name, { sub: x.ChildCount != null ? P.count(x.ChildCount, 'item') : '', art: P.posterArt(x, 120), go: () => put(x) }));
-                if (!list.childElementCount) list.append(note(`No ${word}s yet: name a new one below.`));
+                // the walk's mock-up: each as its art (the server's quilt of what is in it) with its name and count; the last
+                // tile starts a new one by name
+                const list = el('div', 'pz-sheet-tiles pz-sheet-scroll');
+                const tile = (x) => {
+                    const t = P.focusable(el('div', 'pz-sheet-tile'));
+                    const art = el('div', 'pz-sheet-tile-art');
+                    P.bg(art, P.posterArt(x, 300));
+                    art.append(el('div', 'pz-sheet-tile-name', x.Name || ''));
+                    if (x.ChildCount != null) art.append(el('div', 'pz-count', String(x.ChildCount)));
+                    t.append(art);
+                    t.setAttribute('aria-label', `${x.Name}${x.ChildCount != null ? ' · ' + P.count(x.ChildCount, 'item') : ''}`);
+                    t.addEventListener('click', () => put(x));
+                    return t;
+                };
+                for (const x of P.items(r)) list.append(tile(x));
                 const name = field(`Or a new ${word}, named`, '', { placeholder: type === 'Playlist' ? 'Road trip' : 'Favourites of 2026' });
-                body.append(list, name, foot(button('Add', () => make(name.input.value), true), button('Cancel', () => sheet.close())));
+                const fresh = P.focusable(el('div', 'pz-sheet-tile pz-sheet-tile-new'));
+                fresh.append(el('div', 'pz-sheet-tile-art', `New ${word}`));
+                fresh.addEventListener('click', () => T.ctx.focus(name.input));
+                list.append(fresh);
+                const what = [item.Name, item.RunTimeTicks ? P.runtime(item.RunTimeTicks) : ''].filter(Boolean).join(' · ');
+                body.append(list, note(`Adding ${what}`), name, foot(button('Add', () => make(name.input.value), true), button('Cancel', () => sheet.close())));
             }
         });
         const ids = [item.Id];
@@ -320,7 +372,9 @@
                 step.append(el('span', 'pz-stepper-arrow pz-l'), val, el('span', 'pz-stepper-arrow pz-r'));
                 step.addEventListener('click', () => findSubtitles(item, (li + 1) % LANGS.length));
                 const results = el('div', 'pz-sheet-rows pz-sheet-scroll');
-                body.append(el('div', 'pz-panel-label', `Language (Ⓐ for the next one), for ${item.Name}`), step, results, foot(button('Close', () => sheet.close())));
+                const has = ((item.MediaStreams || ((item.MediaSources || [])[0] || {}).MediaStreams) || []).filter((m) => m.Type === 'Subtitle').map((m) => m.DisplayTitle || m.Language).filter(Boolean);
+                body.append(el('div', 'pz-panel-label', `Language (Ⓐ for the next one), for ${item.Name}`), step, results,
+                    note(has.length ? `On the item now: ${[...new Set(has)].slice(0, 6).join(', ')}` : 'The item has no subtitles yet'), foot(button('Close', () => sheet.close())));
                 results.append(note('Searching…'));
                 const r = await P.safe(getJSON(`Items/${item.Id}/RemoteSearch/Subtitles/${LANGS[li][0]}`));
                 results.textContent = '';
@@ -328,10 +382,12 @@
                 if (!list.length) { results.append(note('Nothing found in this language. Ⓐ on the language tries the next one.')); return; }
                 for (const s of list.slice(0, 30)) {
                     const sub = [s.ProviderName, s.Format, s.CommunityRating ? `★ ${Number(s.CommunityRating).toFixed(1)}` : '', s.DownloadCount ? `${s.DownloadCount} downloads` : '', s.IsHashMatch ? 'exact match' : ''].filter(Boolean).join(' · ');
-                    results.append(row(s.Name || s.Id, { sub, go: async () => {
+                    const r2 = row(s.Name || s.Id, { sub, go: async () => {
                         try { await post(`Items/${item.Id}/RemoteSearch/Subtitles/${encodeURIComponent(s.Id)}`); sheet.close(); P.toast('Downloading the subtitles'); }
                         catch (e) { P.toast('That didn’t work', true); }
-                    } }));
+                    } });
+                    r2.append(el('span', 'pz-sheet-get', 'Get'));
+                    results.append(r2);
                 }
             },
         });
@@ -374,26 +430,85 @@
             }
         });
     }
+    // edit details (the walk's mock-up): General, People, Images, IDs and Lock; one Save for all of it
     function editDetails(item) {
         sheet.show({
             title: 'Edit details', kind: kindOf(item), wide: true,
-            render(body) {
+            async render(body) {
+                busy(body);
+                const full = await P.safe(c().getItem(uid(), item.Id));
+                if (!full || !full.Id) { body.textContent = ''; body.append(note('This item can’t be read right now.')); return; }
+                body.textContent = '';
+                const tabs = el('div', 'pz-sheet-tabs');
+                const pane = el('div', 'pz-sheet-pane pz-sheet-scroll');
+                const panes = {};
+                const show = (id) => { for (const [k, p] of Object.entries(panes)) p.hidden = k !== id; for (const b of tabs.children) b.classList.toggle('pz-tab-on', b.dataset.tab === id); };
+                const addTab = (id, label) => { const b = P.focusable(el('div', 'pz-tab', label)); b.dataset.tab = id; b.addEventListener('click', () => show(id)); tabs.append(b); panes[id] = el('div', 'pz-sheet-form'); pane.append(panes[id]); };
+                addTab('general', 'General'); addTab('people', 'People'); addTab('images', 'Images'); addTab('ids', 'IDs'); addTab('lock', 'Lock');
+                // General
                 const f = {
-                    Name: field('Title', item.Name), ForcedSortName: field('Sort title', item.ForcedSortName || item.SortName), OriginalTitle: field('Original title', item.OriginalTitle),
-                    ProductionYear: field('Year', item.ProductionYear, { type: 'number' }), OfficialRating: field('Rating', item.OfficialRating), CommunityRating: field('Community rating', item.CommunityRating, { type: 'number' }),
-                    Genres: field('Genres, separated by commas', (item.Genres || []).join(', ')), Tags: field('Tags, separated by commas', (item.Tags || []).join(', ')),
-                    Overview: field('Overview', item.Overview, { multiline: true })
+                    Name: field('Title', full.Name), ForcedSortName: field('Sort title', full.ForcedSortName || full.SortName), OriginalTitle: field('Original title', full.OriginalTitle),
+                    ProductionYear: field('Year', full.ProductionYear, { type: 'number' }), OfficialRating: field('Rating', full.OfficialRating), CommunityRating: field('Community rating', full.CommunityRating, { type: 'number' }),
+                    Tags: field('Tags, separated by commas', (full.Tags || []).join(', '))
                 };
-                const grid = el('div', 'pz-sheet-form pz-sheet-scroll');
-                grid.append(...Object.values(f));
-                body.append(grid, foot(button('Save', save, true), button('Cancel', () => sheet.close())));
+                const genres = [...(full.Genres || [])];
+                const chips = el('div', 'pz-sheet-chips');
+                const addGenre = field('Add a genre', '', { placeholder: 'Comedy' });
+                const drawChips = () => {
+                    chips.textContent = '';
+                    genres.forEach((g, k) => { const x = P.focusable(el('div', 'pz-sheet-chip', `${g} ×`)); x.setAttribute('aria-label', `Remove ${g}`); x.addEventListener('click', () => { genres.splice(k, 1); drawChips(); }); chips.append(x); });
+                    const plus = P.focusable(el('div', 'pz-sheet-chip pz-sheet-chip-add', '+ Genre'));
+                    plus.addEventListener('click', () => { const v = addGenre.input.value.trim(); if (v) { if (!genres.includes(v)) genres.push(v); addGenre.input.value = ''; drawChips(); } else T.ctx.focus(addGenre.input); });
+                    chips.append(plus);
+                };
+                drawChips();
+                const genreBox = el('div', 'pz-field pz-field-wide');
+                genreBox.append(el('span', 'pz-field-label', 'Genres'), chips);
+                const overview = field('Overview', full.Overview, { multiline: true });
+                panes.general.append(...Object.values(f), addGenre, genreBox, overview);
+                // People
+                const people = [...(full.People || [])];
+                const plist = el('div', 'pz-sheet-rows pz-field-wide');
+                const drawPeople = () => {
+                    plist.textContent = '';
+                    people.forEach((pp, k) => plist.append(row(pp.Name, { sub: [pp.Role, pp.Type].filter(Boolean).join(' · ') + ' · Ⓐ removes', go: () => { people.splice(k, 1); drawPeople(); } })));
+                    if (!people.length) plist.append(note('No cast or crew.'));
+                };
+                drawPeople();
+                const pName = field('Name', ''), pRole = field('Role', '', { placeholder: 'Character, or Director' });
+                const pAdd = button('Add the person', () => { const n = pName.input.value.trim(); if (!n) { T.ctx.focus(pName.input); return; } people.push({ Name: n, Role: pRole.input.value.trim(), Type: /director/i.test(pRole.input.value) ? 'Director' : 'Actor' }); pName.input.value = ''; pRole.input.value = ''; drawPeople(); });
+                panes.people.append(plist, pName, pRole, pAdd);
+                // Images: the editor of its own
+                panes.images.append(note('Posters, backdrops and logos have an editor of their own.'), button('Edit images', () => editImages(full), true));
+                // IDs: what the providers know it by
+                const ids = Object.assign({ Imdb: '', Tmdb: '', Tvdb: '' }, full.ProviderIds || {});
+                const idf = {};
+                for (const k of Object.keys(ids)) { idf[k] = field(k, ids[k]); panes.ids.append(idf[k]); }
+                // Lock: keep the server's refreshes off this item, or off some of it
+                const switchRow = (label, on) => {
+                    const x = P.focusable(el('div', 'pz-setrow pz-sheet-switch' + (on ? ' pz-on' : '')));
+                    const sw = el('span', 'pz-switch' + (on ? ' pz-on' : ''));
+                    x.append(el('span', 'pz-setrow-label', label), sw);
+                    x.addEventListener('click', () => { x.classList.toggle('pz-on'); sw.classList.toggle('pz-on', x.classList.contains('pz-on')); T.ctx.sound('select'); });
+                    return x;
+                };
+                const lockAll = switchRow('Lock this item (refreshes leave it alone)', !!full.LockData);
+                panes.lock.append(lockAll);
+                const FIELDS = [['Name', 'Title'], ['Overview', 'Overview'], ['Genres', 'Genres'], ['OfficialRating', 'Rating'], ['Cast', 'Cast and crew'], ['Tags', 'Tags'], ['Studios', 'Studios'], ['ProductionLocations', 'Countries']];
+                const locked = new Set(full.LockedFields || []);
+                const lockRows = FIELDS.map(([k, label]) => { const x = switchRow(`Lock ${label.toLowerCase()}`, locked.has(k)); x.dataset.field = k; return x; });
+                panes.lock.append(...lockRows);
+                show('general');
+                body.append(tabs, pane, foot(button('Save', save, true), button('Cancel', () => sheet.close())));
                 async function save() {
                     try {
-                        const full = await c().getItem(uid(), item.Id);
                         const v = (k) => f[k].input.value.trim();
-                        Object.assign(full, { Name: v('Name'), ForcedSortName: v('ForcedSortName'), OriginalTitle: v('OriginalTitle'), OfficialRating: v('OfficialRating'), Overview: f.Overview.input.value,
+                        const pids = {};
+                        for (const [k, x] of Object.entries(idf)) if (x.input.value.trim()) pids[k] = x.input.value.trim();
+                        Object.assign(full, { Name: v('Name'), ForcedSortName: v('ForcedSortName'), OriginalTitle: v('OriginalTitle'), OfficialRating: v('OfficialRating'), Overview: overview.input.value,
                             ProductionYear: v('ProductionYear') ? Number(v('ProductionYear')) : null, CommunityRating: v('CommunityRating') ? Number(v('CommunityRating')) : null,
-                            Genres: v('Genres').split(',').map((x) => x.trim()).filter(Boolean), Tags: v('Tags').split(',').map((x) => x.trim()).filter(Boolean) });
+                            Genres: genres, Tags: v('Tags').split(',').map((x) => x.trim()).filter(Boolean), People: people, ProviderIds: pids,
+                            LockData: lockAll.classList.contains('pz-on'), LockedFields: lockRows.filter((x) => x.classList.contains('pz-on')).map((x) => x.dataset.field) });
                         await post(`Items/${item.Id}`, null, full);
                         sheet.close();
                         P.toast('Saved');
