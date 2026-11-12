@@ -94,10 +94,12 @@
     function startSession(key) {
         const page = osdPage();
         // What is there as the session starts is jellyfin-web's (or a plugin's on every page, not the player's). jellyfin-web
-        // finishes building its player page just after playback starts: whatever arrives in the first moments joins the
-        // starting set instead of counting as an injection.
+        // finishes building its player page just after playback starts: whatever arrives before the picture moves, and in
+        // the first moments after, joins the starting set instead of counting as an injection. The moments count from the
+        // first frame, not from here: a live channel can take seconds to tune, and the player page (with what plugins add
+        // to every video) is built only once it plays (graceFrom, below).
         session = {
-            key, fallback: null, graceUntil: Date.now() + 2500,
+            key, fallback: null, graceUntil: Infinity, opened: Date.now(),
             present: new Set(document.body ? [...document.body.children] : []),
             buttons: new Set(page ? [...page.querySelectorAll('button, input, select, [role="button"]')] : [])
         };
@@ -312,9 +314,17 @@
         const it = safe(() => m.currentItem(p), null);
         return it ? `${it.Id}:${safe(() => m.playSessionId(p), '')}` : null;
     }
+    // The grace window starts when the picture moves (or after a minute of waiting, say paused at the start).
+    function graceFrom() {
+        if (!session || session.graceUntil !== Infinity) return;
+        const m = pm(), p = cur();
+        const pos = m && p ? safe(() => m.currentTime(p), 0) || 0 : 0;
+        if (pos > 0 || Date.now() - session.opened > 60000) session.graceUntil = Date.now() + 2500;
+    }
     // Sessions follow playback, not the screen: a new item or play session is a new session; leaving video ends one.
     setInterval(() => {
         if (!spec) return;
+        graceFrom();
         const k = onVideo() ? sessionKey() : null;
         if (k && (!session || session.key !== k)) {
             const was = session && session.fallback;
