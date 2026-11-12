@@ -391,21 +391,22 @@ html[data-icefin-couch] .pz-mhint-keys { display: inline !important; }
 .pz-rack-pills { position: absolute; left: 0; right: 0; top: calc(735 * var(--pz)); display: flex; justify-content: center; gap: calc(24 * var(--pz)); }
 /* Music: what is playing, under the grid. */
 .pz-nowplaying { position: absolute; left: calc(285 * var(--pz)); right: calc(285 * var(--pz)); top: calc(774 * var(--pz)); height: calc(90 * var(--pz)); z-index: 3; display: none; align-items: center;
-  gap: calc(24 * var(--pz)); padding: 0 calc(30 * var(--pz)) calc(10 * var(--pz)) calc(15 * var(--pz)); border-radius: 999px; box-sizing: border-box; font-size: calc(24 * var(--pz));
+  gap: calc(24 * var(--pz)); padding: 0 calc(30 * var(--pz)) calc(17 * var(--pz)) calc(30 * var(--pz)); border-radius: 999px; box-sizing: border-box; font-size: calc(24 * var(--pz));
   --pz-ch-a: #b388ff; --pz-ch-b: #6a3fd1;
   background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--pz-ch-a), 0 calc(4 * var(--pz)) calc(12 * var(--pz)) rgb(0 0 0 / 0.14); }
 .pz-nowplaying.pz-on { display: flex; }
-.pz-np-record { position: relative; z-index: 1; flex: none; width: calc(72 * var(--pz)); height: calc(72 * var(--pz)); border-radius: 50%; background: radial-gradient(circle, var(--pz-record-label) 0 16%, var(--pz-record) 17% 100%) center / cover; animation: pz-spin 3s linear infinite; }
+.pz-np-record { position: relative; z-index: 1; flex: none; width: calc(58 * var(--pz)); height: calc(58 * var(--pz)); border-radius: 50%; background: radial-gradient(circle, var(--pz-record-label) 0 16%, var(--pz-record) 17% 100%) center / cover; animation: pz-spin 3s linear infinite; }
 .pz-nowplaying.pz-np-paused .pz-np-record { animation-play-state: paused; }
 .pz-np-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* the progress: a glowing line along the capsule's foot from the record's left edge; the grabber shows while pointed at */
-.pz-np-line { position: absolute; left: calc(15 * var(--pz)); right: calc(36 * var(--pz)); bottom: calc(2 * var(--pz)); height: calc(18 * var(--pz)); cursor: pointer; touch-action: none; }
+/* the progress: a glowing line along the capsule's foot from the record's left edge, inside the rounded ends (the record
+   and the line sit far enough in that the line and the grabber clear the curves); the grabber shows while pointed at */
+.pz-np-line { position: absolute; left: calc(30 * var(--pz)); right: calc(30 * var(--pz)); bottom: calc(10 * var(--pz)); height: calc(18 * var(--pz)); cursor: pointer; touch-action: none; }
 .pz-np-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: calc(3 * var(--pz)); margin-top: calc(-1.5 * var(--pz)); border-radius: 999px;
   background: color-mix(in srgb, var(--pz-ch-a) 22%, transparent); }
 .pz-np-fill { position: absolute; left: 0; top: 50%; width: 0; height: calc(5 * var(--pz)); margin-top: calc(-2.5 * var(--pz)); border-radius: 999px;
   background: linear-gradient(90deg, var(--pz-ch-b), var(--pz-ch-a) 60%, color-mix(in srgb, var(--pz-ch-a) 40%, #ffffff));
   box-shadow: 0 0 calc(4 * var(--pz)) var(--pz-ch-a), 0 0 calc(10 * var(--pz)) var(--pz-ch-a), 0 0 calc(22 * var(--pz)) color-mix(in srgb, var(--pz-ch-a) 80%, transparent); transition: width 0.45s linear; }
-.pz-np-dot { position: absolute; left: 0; top: 50%; width: calc(20 * var(--pz)); height: calc(20 * var(--pz)); margin: calc(-10 * var(--pz)) 0 0 calc(-10 * var(--pz)); border-radius: 50%;
+.pz-np-dot { position: absolute; left: 0; top: 50%; width: calc(16 * var(--pz)); height: calc(16 * var(--pz)); margin: calc(-8 * var(--pz)) 0 0 calc(-8 * var(--pz)); border-radius: 50%;
   background: #ffffff; box-shadow: 0 0 0 calc(3 * var(--pz)) var(--pz-ch-a), 0 0 calc(12 * var(--pz)) var(--pz-ch-a); opacity: 0; transform: scale(0.4); transition: opacity 0.15s, transform 0.15s, left 0.45s linear; pointer-events: none; }
 .pz-np-line:hover .pz-np-dot, .pz-np-seeking .pz-np-dot { opacity: 1; transform: scale(1); }
 .pz-np-seeking .pz-np-fill, .pz-np-seeking .pz-np-dot { transition: opacity 0.15s, transform 0.15s; }
