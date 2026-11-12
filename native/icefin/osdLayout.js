@@ -12,6 +12,11 @@
 //   osd.menuBackground, osd.menuRadius, osd.headerBackground (the title bar over the video)
 // Every one has a default from the colour tokens. jellyfin-web's class names live only here, so a jellyfin-web change
 // is absorbed in one place. html[data-icefin-osd] carries the layout, html[data-icefin-osd-align] the alignment.
+//
+// Overlay lane (user feedback on the first alpha: the controls covered the Skip Intro button): while the controls are
+// up, buttons that plugins and jellyfin-web put over the video (MediaSegment and Intro Skipper skip buttons, OVERLAYS)
+// move into a lane just above the controls, wherever the theme's layout puts them, and come back when the controls
+// hide. With a remote or controller, Up from the controls' top row goes to the overlay, Down comes back.
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -72,7 +77,14 @@ html[data-icefin-osd="minimal"] #videoOsdPage .videoOsdBottom .buttons > div:fir
 html[data-icefin-osd="minimal"] #videoOsdPage .videoOsdBottom .osdTimeText { margin-right: auto; }
 html[data-icefin-osd="minimal"] #videoOsdPage .videoOsdBottom .buttons > :not(:first-child) { font-size: 0.8em; opacity: 0.8; }
 html[data-icefin-osd="minimal"] #videoOsdPage .sliderContainer .mdl-slider-background-flex { height: ${V('progressHeight', '0.15em')}; }
+/* the overlay lane: plugin buttons over the video sit above the controls while those are up */
+html[data-icefin-osd-up] .skip-button, html[data-icefin-osd-up] #skipIntro, html[data-icefin-osd-up] .skipIntro,
+html[data-icefin-osd-up] [data-icefin-overlay] { bottom: calc(var(--icefin-osd-clear, 0px) + 1.2em) !important; top: auto !important;
+  transition: bottom 200ms ease; z-index: 1001 !important; }
+html[data-icefin-osd-up] .skip-button:focus, html[data-icefin-osd-up] #skipIntro button:focus, html[data-icefin-osd-up] .skipIntro button:focus,
+html[data-icefin-osd-up] [data-icefin-overlay]:focus { outline: 0.18em solid var(--icefin-color-focus); outline-offset: 0.15em; }
 `;
+    const OVERLAYS = '.skip-button, #skipIntro button, .skipIntro button, [data-icefin-overlay]';
     let spec = null;
     const html = () => document.documentElement;
     function ensureStyle() {
@@ -98,10 +110,47 @@ html[data-icefin-osd="minimal"] #videoOsdPage .sliderContainer .mdl-slider-backg
         const h = html();
         if (h) h.toggleAttribute('data-icefin-osd-playing', /^#\/video\b/.test(location.hash));
     }
+    // The controls' top edge, while they are up, for the overlay lane.
+    function watchControls() {
+        const h = html();
+        if (!h) return;
+        const bar = /^#\/video\b/.test(location.hash) && document.querySelector('#videoOsdPage .videoOsdBottom');
+        let up = false;
+        if (bar && !bar.classList.contains('hide') && !bar.classList.contains('videoOsdBottom-hidden')) {
+            const r = bar.getBoundingClientRect(), cs = getComputedStyle(bar);
+            up = r.height > 0 && r.top < innerHeight - 4 && parseFloat(cs.opacity) > 0.1 && cs.visibility !== 'hidden';
+            if (up) h.style.setProperty('--icefin-osd-clear', `${Math.max(0, Math.round(innerHeight - r.top))}px`);
+        }
+        h.toggleAttribute('data-icefin-osd-up', !!up);
+    }
+    setInterval(watchControls, 200);
+    const visibleOverlay = () => [...document.querySelectorAll(OVERLAYS)].find((b) => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(b).visibility !== 'hidden'; });
+    // Up from the controls' top row reaches the overlay; Down from the overlay returns to the controls.
+    const laneHook = (a) => {
+        if ((a !== 'up' && a !== 'down') || !/^#\/video\b/.test(location.hash)) return false;
+        const f = document.activeElement;
+        const bar = document.querySelector('#videoOsdPage .videoOsdBottom');
+        if (!bar || !html().hasAttribute('data-icefin-osd-up')) return false;
+        const ov = visibleOverlay();
+        if (!ov) return false;
+        if (a === 'up' && f && bar.contains(f)) {
+            const fr = f.getBoundingClientRect(), br = bar.getBoundingClientRect();
+            const topRow = [...bar.querySelectorAll('button, input, [tabindex]')].filter((x) => x.offsetParent !== null)
+                .reduce((m, x) => Math.min(m, x.getBoundingClientRect().top), Infinity);
+            if (fr.top <= topRow + 4 || fr.top - br.top < br.height * 0.34) { ov.focus(); E.sound('focus'); return true; }
+            return false;
+        }
+        if (a === 'down' && f && (f === ov || (ov.contains && ov.contains(f)))) {
+            const back = bar.querySelector('.btnPause, .btnPlayPause') || bar.querySelector('button');
+            if (back) { back.focus(); E.sound('focus'); return true; }
+        }
+        return false;
+    };
+    E.addActionHook(laneHook);
     window.addEventListener('hashchange', watchRoute);
     window.addEventListener('popstate', watchRoute);
     setInterval(watchRoute, 1000);  // jellyfin-web's own navigation goes through history.pushState as well
-    E.onReset(() => { spec = null; apply(); });
+    E.onReset(() => { spec = null; apply(); E.addActionHook(laneHook); });  // a theme change clears the action hooks
 
     T.ui.osd = {
         set(o) {

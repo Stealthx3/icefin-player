@@ -30,6 +30,9 @@
         const list = views.map((v) => ({
             id: 'library-' + v.Id, kind: P.kindOf(v.CollectionType), label: v.Name, view: v, menu: libraryMenu(v),
             fetch: () => (v.CollectionType === 'livetv' ? Promise.resolve([])
+                // Collections: a random handful of the collections themselves, new each time (user feedback).
+                : v.CollectionType === 'boxsets' ? P.safe(c.getItems(uid, { ParentId: v.Id, IncludeItemTypes: 'BoxSet', Recursive: true, SortBy: 'Random',
+                    ImageTypes: 'Primary', Limit: 6, Fields: P.FIELDS })).then(P.items)
                 : P.safe(c.getLatestItems({ userId: uid, parentId: v.Id, Limit: 6, Fields: P.FIELDS })).then(P.items))
         }));
         list.push(
@@ -304,7 +307,8 @@
             }
             return;
         }
-        const items = ch.items || (ch.fetch ? await ch.fetch() : []);
+        // Collections draw a fresh random selection each time their card opens.
+        const items = (kind === 'boxsets' && ch.fetch ? await ch.fetch() : ch.items) || (ch.fetch ? await ch.fetch() : []);
         if (!live()) return;
         if (kind === 'livetv') {
             const tv = el('div', 'pz-tv');

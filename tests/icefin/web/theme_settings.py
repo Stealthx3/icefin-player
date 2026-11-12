@@ -5,7 +5,7 @@ For every bundled theme with a settings area (all but Baseline), signed in as an
   - the theme's Settings (#/mypreferencesmenu) opens the themed settings area with Client settings, Classic View and
     Server Settings, and a way to the user's own profile and preferences;
 Once:
-  - Client settings opens the Client Settings dialog;
+  - Client settings opens the themed Client Settings page (the dialog inside the theme's screen, alpha feedback);
   - Classic View turns the theme off for the session at once (the stock look), and leaves the saved choice alone;
     Client Settings -> Theme says so and its "Back to <theme>" brings the theme back;
   - Server Settings opens the server's dashboard (jellyfin-web's own page);
@@ -118,9 +118,10 @@ def main():
             first = False
             # Client settings: the dialog.
             js("document.querySelector('.icefin-s-entry[data-entry=client]').click(); true")
-            page.wait_for("[...document.querySelectorAll('.formDialogHeaderTitle')].some(t => t.textContent === 'Client Settings')", timeout=15)
-            check("Client settings opens the Client Settings dialog", True)
-            js("document.querySelectorAll('.dialogContainer').forEach(d => d.remove()); true")
+            page.wait_for("location.hash.includes('pane=client') && !!document.querySelector('#icefin-theme-root .icefin-cs-host .formDialogHeaderTitle')", timeout=15)
+            check("Client settings opens the themed Client Settings page", js("!document.querySelector('body > .dialogContainer')") is True)
+            js("location.hash = '#/mypreferencesmenu'; true")
+            page.wait_for("!!document.querySelector('#icefin-theme-root[data-icefin-settings-ready] .icefin-s-entry[data-entry=classic]')", timeout=15)
             # Classic View: the stock look now, the saved choice untouched, the way back in Client Settings.
             saved = js("new Promise(r => window.api.theme.selection(r))")
             js("document.querySelector('.icefin-s-entry[data-entry=classic]').click(); true")

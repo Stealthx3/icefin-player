@@ -63,6 +63,7 @@
         if (it.OfficialRating) parts.push(it.OfficialRating);
         if (it.CommunityRating) parts.push(`★ ${Number(it.CommunityRating).toFixed(1)}`);
         if (it.Type === 'Series' && it.ChildCount) parts.push(`${it.ChildCount} season${it.ChildCount === 1 ? '' : 's'}`);
+        if (it.Type === 'BoxSet' && it.ChildCount) parts.push(`Collection of ${it.ChildCount}`);
         return parts.filter(Boolean).join(' · ');
     };
     // Hint text with controller buttons drawn as round keys: "Ⓐ Open · Ⓑ Back" (the circled letters aren't in every font).

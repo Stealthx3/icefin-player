@@ -25,13 +25,17 @@
         root.setAttribute('data-pz-view', spec.view);
         const m = el('div', 'pz-menu pz-k-' + spec.kind);
         const head = el('div', 'pz-mhead');
-        const name = el('div', 'pz-mname', spec.name);
+        // The clock rides in the channel's name pill (user's choice): tabs and pills can't cover it there, and the name
+        // shortens before the time does.
+        const name = el('div', 'pz-mname');
+        const nameText = el('span', 'pz-mname-text', spec.name);
+        const clock = el('span', 'pz-mclock');
+        name.append(nameText, clock);
         const tabs = el('div', 'pz-tabs');
-        const clock = el('div', 'pz-mclock');
         const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
         tick();
         const timer = setInterval(tick, 15000);
-        head.append(name, tabs, clock);
+        head.append(name, tabs);
         const body = el('div', 'pz-mbody');
         const barEl = el('div', 'pz-mbar');
         barEl.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 51 C480 21 1440 21 1920 51 V210 H0 Z"/><path class="pz-bar-shine" d="M0 60 C480 30 1440 30 1920 60"/><path class="pz-bar-line" d="M0 51 C480 21 1440 21 1920 51"/></svg>';
@@ -65,7 +69,7 @@
             setActive(id) { tabEls.forEach((b) => b.classList.toggle('pz-tab-on', b.getAttribute('data-pz-tab') === id)); },
             tab: (id) => tabEls.find((b) => b.getAttribute('data-pz-tab') === id),
             tabs: () => tabEls,
-            setName(text) { name.textContent = text; },
+            setName(text) { nameText.textContent = text; },
             focusText(text) { focusLine.textContent = text || ''; },
             pageText(text) { pageText.textContent = text ? ` · ${text}` : ''; },
             hints(text) { hintText.textContent = ''; hintText.append(...P.hintNodes(text)); },
