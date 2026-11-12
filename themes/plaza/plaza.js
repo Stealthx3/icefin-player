@@ -33,6 +33,10 @@
         if (v.CollectionType === 'boxsets') return `#/boxsets?${q}&name=${encodeURIComponent(v.Name || '')}`;
         return `#/home?pz=library&id=${v.Id}&kind=${P.kindOf(v.CollectionType)}&name=${encodeURIComponent(v.Name || '')}`;
     }
+    // what the channels are made from: the libraries, the favourites, whether there are playlists
+    const loadSources = () => Promise.all([ui.userViews(), P.safe(P.client().getItems(P.uid(), { Filters: 'IsFavorite', Recursive: true, Limit: 24, SortBy: 'SortName',
+        IncludeItemTypes: 'Movie,Series,Episode,MusicAlbum,MusicVideo,Video,BoxSet,Playlist,Audio', Fields: P.FIELDS })).then(P.items),
+    P.safe(P.client().getItems(P.uid(), { IncludeItemTypes: 'Playlist', Recursive: true, Limit: 1 })).then((r) => P.items(r).length > 0)]);
     function channels(views, favourites, hasPlaylists) {
         const c = P.client(), uid = P.uid();
         const list = views.map((v) => ({
@@ -68,6 +72,23 @@
         while (ids.length && ids[ids.length - 1] === null) ids.pop();
         try { localStorage.setItem(orderKey(), JSON.stringify(ids)); } catch (e) { /* the order just isn't kept */ }
     }
+    // Hidden channels (Settings › Home, 9.44): per user, on this device; a hidden channel leaves its slot empty
+    const hiddenKey = () => 'icefin.plaza.hidden.' + P.uid();
+    function loadHidden() {
+        try { const v = JSON.parse(localStorage.getItem(hiddenKey()) || '[]'); return new Set(Array.isArray(v) ? v : []); } catch (e) { return new Set(); }
+    }
+    // For Settings › Home: every channel in the home's order, with whether it shows; showing or hiding one; a new order
+    P.homeChannels = async () => {
+        const [views, favs, hasPlaylists] = await loadSources();
+        const hidden = loadHidden();
+        return arrange(channels(views, favs, hasPlaylists)).filter(Boolean).map((c) => ({ id: c.id, label: c.label, kind: c.kind, hidden: hidden.has(c.id) }));
+    };
+    P.setChannelHidden = (id, hide) => {
+        const h = loadHidden();
+        if (hide) h.add(id); else h.delete(id);
+        try { localStorage.setItem(hiddenKey(), JSON.stringify([...h])); } catch (e) { /* not kept */ }
+    };
+    P.setChannelOrder = (ids) => { try { localStorage.setItem(orderKey(), JSON.stringify(ids)); } catch (e) { /* not kept */ } };
     // Saved slots first; a channel the order doesn't know yet (a new library or favourite) takes the first empty slot.
     function arrange(list) {
         const order = loadOrder();
@@ -152,7 +173,8 @@
     }
     function fill(list) {
         S.channels = list;
-        place(arrange(list));
+        const hidden = loadHidden();
+        place(arrange(list).map((c) => (c && hidden.has(c.id) ? null : c)));
     }
     // Draws the slots (channels and gaps) page by page.
     function place(slots) {
@@ -716,9 +738,7 @@
             layout();
 
             const mine = S;
-            Promise.all([ui.userViews(), P.safe(P.client().getItems(P.uid(), { Filters: 'IsFavorite', Recursive: true, Limit: 24, SortBy: 'SortName',
-                IncludeItemTypes: 'Movie,Series,Episode,MusicAlbum,MusicVideo,Video,BoxSet,Playlist,Audio', Fields: P.FIELDS })).then(P.items),
-                P.safe(P.client().getItems(P.uid(), { IncludeItemTypes: 'Playlist', Recursive: true, Limit: 1 })).then((r) => P.items(r).length > 0)])
+            loadSources()
                 .then(([views, favs, hasPlaylists]) => {
                     if (S !== mine) return;
                     fill(channels(views, favs, hasPlaylists));
