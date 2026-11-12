@@ -4,6 +4,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+- Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
+
 ### Changed
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
 

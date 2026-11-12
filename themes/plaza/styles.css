@@ -84,6 +84,22 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .pz-k-favourite .pz-name::before { content: "★ "; color: var(--pz-ch-b); }
 
 /* Page arrows: blue triangles over the peeking neighbours. */
+/* Moving a channel: the lifted channel rides above the grid, its slot stays as a faint outline, the slot under it lights. */
+#icefin-theme-root[data-pz-moving] { user-select: none; }
+#icefin-theme-root[data-pz-moving] .pz-tile { cursor: grabbing; }
+#icefin-theme-root[data-pz-moving] .pz-name { display: none; }
+.pz-tile.pz-lifted { opacity: 0.3; animation: none; box-shadow: inset 0 0 0 calc(4 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6); }
+.pz-tile.pz-drop { animation: none; box-shadow: 0 0 0 calc(6 * var(--pz)) var(--icefin-color-focus); }
+.pz-ghost { position: absolute; z-index: 30; pointer-events: none; transform: translateY(calc(-14 * var(--pz))) scale(1.06); transform-origin: 50% 50%;
+  box-shadow: 0 0 0 calc(6 * var(--pz)) var(--icefin-color-focus), 0 calc(22 * var(--pz)) calc(40 * var(--pz)) rgb(0 0 0 / 0.28); animation: pz-bob 1.4s ease-in-out infinite; }
+.pz-ghost-pad { transition: left 160ms ease-out, top 160ms ease-out; }
+.pz-ghost .pz-name { display: none; }
+@keyframes pz-bob { 0%, 100% { transform: translateY(calc(-14 * var(--pz))) scale(1.06); } 50% { transform: translateY(calc(-20 * var(--pz))) scale(1.06); } }
+.pz-move-hint { position: absolute; z-index: 31; left: 50%; top: calc(24 * var(--pz)); transform: translateX(-50%); display: flex; gap: calc(18 * var(--pz)); align-items: center;
+  padding: calc(10 * var(--pz)) calc(28 * var(--pz)); border-radius: calc(999 * var(--pz)); background: var(--icefin-color-surface); color: var(--icefin-color-textSecondary);
+  font-size: calc(24 * var(--pz)); white-space: nowrap; box-shadow: 0 calc(4 * var(--pz)) calc(14 * var(--pz)) rgb(0 0 0 / 0.16); }
+.pz-move-name { color: var(--icefin-color-text); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .pz-ghost { animation: none; } .pz-ghost-pad { transition: none; } }
 .pz-arrow { position: absolute; top: calc(381 * var(--pz)); width: calc(69 * var(--pz)); height: calc(99 * var(--pz)); cursor: pointer; z-index: 4; animation: pz-nudge 1.8s ease-in-out infinite; }
 .pz-arrow::before, .pz-arrow::after { content: ""; position: absolute; clip-path: polygon(12% 4%, 94% 50%, 12% 96%); }
 .pz-arrow::before { inset: 0; background: var(--icefin-color-accentStrong); }
