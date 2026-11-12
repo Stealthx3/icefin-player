@@ -25,7 +25,7 @@
         const head = el('div', 'pz-mhead pz-d-head');
         const name = el('div', 'pz-mname');
         const clock = el('span', 'pz-mclock');
-        name.append(el('span', 'pz-mname-text', NAME[item.Type] || 'Details'), clock);
+        name.append(el('span', 'pz-mname-text', item.Type === 'Playlist' ? item.Name || 'Playlist' : NAME[item.Type] || 'Details'), clock);
         const tabs = el('div', 'pz-tabs pz-d-tabs');
         head.append(name);
         if (P.nowPill) P.nowPill(head);
@@ -70,7 +70,11 @@
             if (item.Type === 'MusicAlbum' || item.Type === 'Audio') heroArt.append(el('div', 'pz-d-record'));
             main.prepend(heroArt);
             const kicker = info.querySelector('.icefin-d-kicker');
-            const k = el('div', 'pz-kicker pz-d-kicker', [P.typeName(item), item.ProductionYear].filter(Boolean).join(' · ').toUpperCase());
+            const year = (d) => (d ? new Date(d).getFullYear() : '');
+            const kick = item.Type === 'Person'
+                ? (item.PremiereDate ? `BORN ${year(item.PremiereDate)}${item.EndDate ? ' · DIED ' + year(item.EndDate) : ''}` : 'CAST & CREW')
+                : [P.typeName(item), item.ProductionYear].filter(Boolean).join(' · ').toUpperCase();
+            const k = el('div', 'pz-kicker pz-d-kicker', kick);
             if (kicker && kicker.textContent.trim()) kicker.classList.add('pz-d-sub'); else if (kicker) kicker.remove();
             info.prepend(k);
             const actions = info.querySelector('.icefin-d-actions');
@@ -78,6 +82,19 @@
             if (actions) main.append(actions);
             if (options) main.append(options);
         }
+        // ---- the walk's mock-ups (9.44): genres as chips; the actions' labels and marks ----
+        const genres = d.querySelector('.icefin-d-genres');
+        if (genres && item.Genres && item.Genres.length) {
+            genres.textContent = '';
+            item.Genres.slice(0, 4).forEach((g) => genres.append(el('span', 'pz-chip', g)));
+        }
+        const btn = (a) => d.querySelector(`.icefin-d-actions .icefin-d-btn[data-action="${a}"]`);
+        const relabel = (b, text) => { if (b) { b.textContent = text; b.setAttribute('aria-label', text); } };
+        if (btn('more')) relabel(btn('more'), 'More');
+        if (item.Type === 'Series') {
+            const b = btn('play');
+            if (b && /^Play S\d+ E\d+/.test(b.textContent)) relabel(b, b.textContent.replace(/^Play /, 'Next up: '));
+        } else if (btn('resume') && P.left(item)) relabel(btn('resume'), `Resume · ${P.left(item)}`);
         // ---- More options opens Plaza's own item menu (itemmenu.js), not jellyfin-web's page ----
         const more = d.querySelector('.icefin-d-btn[data-action="more"]');
         if (more && P.itemMenu) more.addEventListener('click', (e) => { e.stopImmediatePropagation(); e.preventDefault(); P.itemMenu(item); }, true);
@@ -104,14 +121,48 @@
                 tabs.append(b);
                 return b;
             };
-            tab('Overview', null).classList.add('pz-tab-on');
+            // the first tab is the top of the page: the tracks beside the art on an album or playlist, a person's biography
+            const listed = item.Type === 'MusicAlbum' || item.Type === 'Playlist';
+            tab(listed ? (item.Type === 'Playlist' ? 'Items' : 'Tracks') : item.Type === 'Person' ? 'Biography' : 'Overview', null).classList.add('pz-tab-on');
             for (const s of d.querySelectorAll('.icefin-d-section')) {
+                if (listed && s.dataset.section === 'tracks') continue;
                 const h = s.querySelector('h2');
-                if (h && h.textContent.trim()) tab(h.textContent.trim(), s);
+                const label = h && (h.dataset.pzLabel || h.textContent.trim());
+                if (label) tab(label, s);
             }
         };
+        // Filmography with its count; an album's "More by" the artist (the walk's mock-ups)
+        const finish = async () => {
+            const film = d.querySelector('.icefin-d-section[data-section="filmography"]');
+            if (film) { const h = film.querySelector('h2'); const n = film.querySelectorAll('.icefin-d-card').length; if (h && n) { h.dataset.pzLabel = 'Filmography'; h.textContent = `Filmography · ${n}`; } }
+            const artist = item.Type === 'MusicAlbum' && (item.AlbumArtists || [])[0];
+            if (artist && !d.querySelector('[data-section="moreby"]')) {
+                const r = await P.safe(P.client().getItems(P.uid(), { AlbumArtistIds: artist.Id, IncludeItemTypes: 'MusicAlbum', Recursive: true, SortBy: 'ProductionYear,SortName', SortOrder: 'Descending', Limit: 24, Fields: 'PrimaryImageAspectRatio' }));
+                const albums = P.items(r).filter((a) => a.Id !== item.Id);
+                const sections = d.querySelector('.icefin-d-sections');
+                if (albums.length && sections && root.isConnected) {
+                    const sec = el('section', 'icefin-d-section');
+                    sec.dataset.section = 'moreby';
+                    const row = el('div', 'icefin-d-row');
+                    for (const a of albums) {
+                        const c = P.focusable(el('div', 'icefin-d-card square'));
+                        c.dataset.id = a.Id;
+                        const img = el('div', 'icefin-d-img');
+                        P.bg(img, P.posterArt(a, 400));
+                        c.append(img, el('div', 'icefin-d-name', a.Name || ''));
+                        if (a.ProductionYear) c.append(el('div', 'icefin-d-sub', String(a.ProductionYear)));
+                        c.addEventListener('click', () => P.details(a));
+                        row.append(c);
+                    }
+                    sec.append(el('h2', '', `More by ${artist.Name}`), row);
+                    const tracks = sections.querySelector('[data-section="tracks"]');
+                    if (tracks && tracks.nextSibling) sections.insertBefore(sec, tracks.nextSibling); else sections.append(sec);
+                }
+            }
+            drawTabs();
+        };
         drawTabs();
-        const obs = new MutationObserver(() => { if (root.hasAttribute('data-icefin-details-complete')) { obs.disconnect(); drawTabs(); } });
+        const obs = new MutationObserver(() => { if (root.hasAttribute('data-icefin-details-complete')) { obs.disconnect(); finish(); } });
         obs.observe(root, { attributes: true, attributeFilter: ['data-icefin-details-complete'] });
         // the tab of the section in view follows the scrolling
         if (scroll) scroll.addEventListener('scroll', () => {

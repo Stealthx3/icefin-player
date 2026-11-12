@@ -16,7 +16,9 @@
         square: { w: 240, h: 240, gx: 33, gy: 75, rows: 2, top: 162 },
         wide: { w: 405, h: 186, gx: 27, gy: 33, rows: 3, top: 168 },
         episode: { w: 390, h: 219, gx: 36, gy: 105, rows: 2, top: 162 },
-        result: { w: 240, h: 180, gx: 24, gy: 0, rows: 1, top: 0 }
+        result: { w: 240, h: 180, gx: 24, gy: 0, rows: 1, top: 0 },
+        // playlists: four across, the server's quilt of the playlist's art with the name on it (the walk's mock-up)
+        quilt: { w: 330, h: 300, gx: 36, gy: 30, rows: 2, top: 162 }
     };
 
     // ---- the frame ----
@@ -187,6 +189,8 @@
             return false;
         };
         g.relayout = () => { g.cache.clear(); draw(Math.min(g.page, g.pages - 1), 0, g.focused() ? 0 : null); };
+        // jump to the item at an index (the A–Z rail): its page, focused
+        g.goToIndex = (i) => { const n = per(), p = Math.max(0, Math.min(Math.floor(i / n), g.pages - 1)); T.ctx.sound('navigate'); draw(p, p === g.page ? 0 : (p > g.page ? 1 : -1), Math.max(0, i - p * n)); };
         g.destroy = () => { g.dead = true; box.remove(); };
         return g;
     }
@@ -288,7 +292,9 @@
                     F.focusText('');
                     grid = pageGrid(F.body, Object.assign({ frame: F, takeFocus: focusGrid, empty: t.empty }, t.grid(sortOf(state), parent, p)));
                     screen.grid = grid;
+                    if (spec.shown) spec.shown(screen);
                 };
+                screen.sort = () => sortOf(state);
                 F.setTabs(tabs, tabs[0].id, (id) => show(id, false));
                 if (spec.after) spec.after(F, parent, p, screen);
                 show(tabs[0].id, true);
@@ -505,6 +511,17 @@
         let F = null, grid = null, guide = null, guideEl = null;
         const c = () => P.client(), uid = () => P.uid();
         const playChannel = (ch) => P.play(ch, true);
+        // each channel on the page with what comes on next (one request for the page)
+        const withNext = async (r) => {
+            const chans = P.items(r);
+            if (!chans.length) return r;
+            const res = await P.safe(c().getLiveTvPrograms({ UserId: uid(), ChannelIds: chans.map((x) => x.Id).join(','), MinStartDate: new Date().toISOString(), SortBy: 'StartDate',
+                EnableImages: false, EnableUserData: false, EnableTotalRecordCount: false, Limit: 400 }));
+            const next = new Map();
+            for (const p of P.items(res)) if (!next.has(p.ChannelId)) next.set(p.ChannelId, p);
+            for (const ch of chans) ch.pzNext = next.get(ch.Id) || null;
+            return r;
+        };
         const channelCell = (c2, ch) => {
             const now = ch.CurrentProgram;
             c2.classList.add('pz-chan');
@@ -515,14 +532,14 @@
             const tag = ch.ImageTags && ch.ImageTags.Primary;
             if (tag) P.bg(logo, P.img(ch.Id, 'Primary', tag, 200)); else logo.textContent = ch.Name;
             art.append(logo, el('div', 'pz-chan-no', ch.ChannelNumber ? `CH ${ch.ChannelNumber}` : ''), el('div', 'pz-chan-now', now ? now.Name : ch.Name),
-                el('div', 'pz-chan-time', now ? `${P.time(now.StartDate)} – ${P.time(now.EndDate)}` : ''));
+                el('div', 'pz-chan-time', [now ? `${P.time(now.StartDate)} – ${P.time(now.EndDate)}` : '', ch.pzNext ? `Next ${P.time(ch.pzNext.StartDate)} ${ch.pzNext.Name}` : ''].filter(Boolean).join(' · ')));
             if (now) {
                 const s = Date.parse(now.StartDate), e = Date.parse(now.EndDate);
                 art.append(P.progressBar(Math.max(0, Math.min(1, (Date.now() - s) / (e - s || 1)))));
             }
         };
         const tabs = {
-            channels: () => ({ shape: 'wide', fetch: (start, limit) => P.safe(c().getLiveTvChannels({ UserId: uid(), StartIndex: start, Limit: limit, AddCurrentProgram: true, EnableImages: true, ImageTypeLimit: 1, EnableUserData: false, EnableTotalRecordCount: true }))
+            channels: () => ({ shape: 'wide', fetch: (start, limit) => P.safe(c().getLiveTvChannels({ UserId: uid(), StartIndex: start, Limit: limit, AddCurrentProgram: true, EnableImages: true, ImageTypeLimit: 1, EnableUserData: false, EnableTotalRecordCount: true })).then(withNext)
                 .then((r) => ({ items: P.items(r), total: r.TotalRecordCount })),
             art: () => '', decorate: channelCell, name: (ch) => ch.Name, focus: (ch) => [ch.ChannelNumber ? `CH ${ch.ChannelNumber}` : '', ch.CurrentProgram ? ch.CurrentProgram.Name : ch.Name].filter(Boolean).join(' · '),
             select: playChannel, play: playChannel, menu: P.details, empty: 'This server has no Live TV channels' }),
@@ -569,6 +586,18 @@
                     P.programmeCard(p.id, ch.ch);
                 }
             });
+            // the day the guide shows, over the channels (it follows the guide past midnight)
+            const day = el('div', 'pz-guide-day');
+            guideEl.append(day);
+            const head = guideEl.querySelector('.icefin-guide-times');
+            const dayOf = () => {
+                const t = +(head && head.getAttribute('data-start')) || Date.now();
+                const d = new Date(t), today = new Date();
+                const n = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 864e5);
+                day.textContent = n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            };
+            dayOf();
+            if (head) new MutationObserver(dayOf).observe(head, { attributes: true, attributeFilter: ['data-start'] });
         }
         function show(id, focus) {
             if (grid) { grid.destroy(); grid = null; }
@@ -659,7 +688,6 @@
                 if (!F) return;
                 const start = (nextUp && seasons.find((s) => s.Id === nextUp.SeasonId)) || seasons[0];
                 const tabs = seasons.map((s) => ({ id: s.Id, label: s.IndexNumber === 0 ? 'Specials' : s.Name, s }));
-                tabs.push({ id: 'details', label: 'Details', cls: 'pz-tab-sort', go: () => P.details(seriesItem) });
                 F.setTabs(tabs, start ? start.Id : null, (sid) => { const t = tabs.find((x) => x.id === sid); if (t && t.s) season(t.s, false); });
                 F.root.setAttribute('data-pz-seasons', String(seasons.length));
                 if (start) await season(start, true); else list.append(el('div', 'pz-empty', 'No seasons yet'));
@@ -890,12 +918,33 @@
                 { id: 'shuffle', label: 'Shuffle', cls: 'pz-tab-action', go: () => playAll(q, true) }
             ];
         },
-        after(F, parent, p) {
+        after(F, parent, p, screen) {
+            // The A–Z rail (the walk's mock-up): a letter jumps the list to the first title from it; shown while sorted A to Z
+            const rail = el('div', 'pz-az');
+            const q = listQuery(p);
+            for (const ch of ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']) {
+                const b = P.focusable(el('div', 'pz-az-key', ch));
+                b.setAttribute('aria-label', ch === '#' ? 'Numbers and symbols' : `Titles from ${ch}`);
+                b.addEventListener('icefin-focus', () => F.focusText(ch === '#' ? 'The start of the list' : `Titles from ${ch}`));
+                b.addEventListener('click', async () => {
+                    if (!screen.grid) return;
+                    let i = 0;
+                    if (ch !== '#') {
+                        const r = await P.safe(P.client().getItems(P.uid(), Object.assign({ Recursive: true, Limit: 0, EnableTotalRecordCount: true, NameLessThan: ch }, withSort(screen.sort(), q))));
+                        i = r.TotalRecordCount || 0;
+                    }
+                    if (screen.grid) screen.grid.goToIndex(i);
+                });
+                rail.append(b);
+            }
+            F.body.append(rail);
+            screen.rail = rail;
             // The pill shows the genre's, studio's or person's own name.
             const id = p.get('genreId') || p.get('musicGenreId') || p.get('studioId') || p.get('personId') || p.get('artistId') || p.get('albumArtistId') || p.get('parentId');
             if (id && !p.get('name')) P.safe(P.client().getItem(P.uid(), id)).then((it) => { if (it && it.Name) F.setName(it.Name); });
             else if (p.get('tag')) F.setName(p.get('tag'));
-        }
+        },
+        shown(screen) { if (screen.rail) { const x = screen.sort(); screen.rail.hidden = !(x.id === 'name' && x.SortOrder === 'Ascending'); } }
     });
 
     // Playlists (#/playlists): each as a square of its art with a count; the last cell makes a new one.
@@ -947,11 +996,10 @@
         if (mediaType) q.MediaTypes = mediaType;
         const base = itemsQuery(withSort(s, q));
         return {
-            shape: 'square',
+            shape: 'quilt', label: true,
             // one more cell than the server has: "New playlist", at the end
             fetch: async (start, limit) => { const r = await base(start, limit); const total = (r.total || 0) + 1; const items = r.items.slice(); if (start + items.length === total - 1 && items.length < limit) items.push({ Id: '', pzNew: true, Name: 'New playlist' }); return { items, total }; },
             art: (it) => (it.pzNew ? '' : P.posterArt(it, 400)), name: (it) => it.Name,
-            caption: (it) => (it.pzNew ? '' : `${it.ChildCount || 0} item${it.ChildCount === 1 ? '' : 's'}`),
             decorate: (c, it) => { if (it.pzNew) c.classList.add('pz-cell-new'); else if (it.ChildCount != null) c.append(el('div', 'pz-count', String(it.ChildCount))); },
             focus: (it) => (it.pzNew ? 'New playlist' : `${it.Name} · ${it.ChildCount || 0} items`),
             select: (it, c) => { if (it.pzNew) { const F = PLAYLISTS.frame(); plPanel = newPlaylist(F, () => PLAYLISTS.grid && PLAYLISTS.grid.relayout()); return; } P.details(it); },
@@ -1057,7 +1105,9 @@
                 if (!F) return;
                 const me = el('div', 'pz-you-me');
                 const pic = el('div', 'pz-you-pic');
-                if (u.PrimaryImageTag) P.bg(pic, P.img(uid, 'Primary', u.PrimaryImageTag, 300)); else pic.textContent = (u.Name || '?').charAt(0).toUpperCase();
+                // a user's picture is a user image (Users/{id}/Images), not an item image
+                const face = u.PrimaryImageTag && c.getUserImageUrl ? c.getUserImageUrl(uid, { type: 'Primary', tag: u.PrimaryImageTag, maxWidth: 300 }) : '';
+                if (face) P.bg(pic, face); else pic.textContent = (u.Name || '?').charAt(0).toUpperCase();
                 me.append(pic, el('div', 'pz-you-name', u.Name || ''), el('div', 'pz-you-server', (c.serverInfo && c.serverInfo() && c.serverInfo().Name) || ''));
                 const list = el('div', 'pz-you-rows');
                 const row = (label, sub, go, cls) => {
