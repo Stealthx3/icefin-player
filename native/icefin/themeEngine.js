@@ -354,6 +354,20 @@
         if (pick) { pick.focus(); return true; }
         return false;
     }
+    // Back on a jellyfin-web menu that left no history entry (Play on, Watch together and other sheets opened beside a
+    // button): jellyfin-web's own Back would leave the page with the menu still up, so a click outside it closes it, as
+    // the mouse would. True when the menu began to close; a dialog that ignores the click (a modal one) keeps
+    // jellyfin-web's own Back.
+    function closeLooseDialog(d) {
+        if (history.state) return false;  // a dialog with a history entry: jellyfin-web's Back closes it
+        const c = d.closest('.dialogContainer');
+        if (!c) return false;
+        const before = d.style.animation || '';
+        c.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        c.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const after = d.style.animation || '';
+        return !d.isConnected || (after !== before && /down|out/i.test(after));
+    }
     // A menu opened with the remote or a controller gets focus at once; with the mouse it stays where it is.
     let lastInput = 'pointer';
     document.addEventListener('mousedown', () => { lastInput = 'pointer'; }, true);
@@ -375,6 +389,7 @@
         // 9.38). In desktop layout jellyfin-web doesn't put focus in it, so the first press does that here.
         const dlg = foreignDialog();
         if (dlg) {
+            if (action === 'back' && closeLooseDialog(dlg)) { sound('back'); return true; }
             if (!dlg.contains(document.activeElement) && action !== 'back' && focusInto(dlg)) { sound('focus'); return true; }
             return false;
         }
@@ -407,7 +422,13 @@
     const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'enter', Escape: 'back', Backspace: 'back' };
     window.addEventListener('keydown', (e) => {
         const action = KEYS[e.key];
-        if (!action || !current || e.altKey || e.ctrlKey || e.metaKey) return;
+        if (!action || e.altKey || e.ctrlKey || e.metaKey) return;
+        // Escape on a jellyfin-web menu that left no history entry closes it here (closeLooseDialog), on any page
+        if (action === 'back' && e.key === 'Escape') {
+            const d = foreignDialog();
+            if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
+        }
+        if (!current) return;
         // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
         // screen) are that thing's: only keys on the theme's own UI, or on nothing in particular, drive the screen.
         const t = e.target;
