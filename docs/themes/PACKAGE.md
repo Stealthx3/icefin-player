@@ -76,6 +76,9 @@ and the engine absorbs that here instead of in every theme. `scripts/icefin/them
 | `ctx.canPlay()` | True when the player is ready for `ctx.play` |
 | `ctx.nowPlaying()` | `{item, player}` for what is playing or paused, or `null` |
 | `ctx.navigate(hash)` | Go to a route (`#/details?id=...&serverId=...`) |
+| `ctx.queue(options, {next})` | Queue items (`{ids, serverId}` or `{items}`) at the end, or right after what plays with `next: true` (9.44). A promise of true, or false without a player |
+| `ctx.instantMix(item)` | An instant mix from a song, album, artist, playlist or genre, played at once (9.44) |
+| `ctx.exit()`, `ctx.signOut()`, `ctx.selectServer()` | Quit Icefin; sign out (jellyfin-web's own Sign Out, so its saved sign-in is cleared too); go to the server list (9.44). For themes that replace jellyfin-web's menus |
 | `ctx.focus(el)`, `ctx.focused()` | Move focus to an element; the focused one (class `icefin-focused`) |
 | `ctx.move(dir, within)` | Spatial move in a direction, confined to `within` (a dialog, a panel); true when focus moved |
 | `ctx.sound(event)` | A UI sound: `focus`, `select`, `back`, `navigate`, `error` |
