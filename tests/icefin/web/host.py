@@ -157,11 +157,18 @@ class Host:
                 except Exception as e2:  # noqa: BLE001
                     print(f"host: COULD NOT put your theme back ({e2}); it was {json.dumps(self.original)}", flush=True)
                 self.app = again
+                self.page = p if "p" in locals() else self.page
+        # Quit the way the user would. Signalling the whole process group took the sandbox's xdg-dbus-proxy down with
+        # the app, and Qt WebEngine aborted on the lost connection (a core dump per run) until the D-Bus guard.
         try:
-            os.killpg(self.app.pid, signal.SIGTERM)
+            self.page.eval("window.api.system.exit(); true", await_promise=False)
             self.app.wait(20)
         except Exception:  # noqa: BLE001
-            pass
+            try:
+                os.killpg(self.app.pid, signal.SIGTERM)
+                self.app.wait(20)
+            except Exception:  # noqa: BLE001
+                pass
         self.log.close()
 
 
