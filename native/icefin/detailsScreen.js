@@ -400,7 +400,8 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
             if (item.Type === 'Season' && item.SeriesId) button('series', 'Series', () => T.ctx.navigate(`#/details?id=${item.SeriesId}&serverId=${client.serverId()}`));
             if (item.Type === 'MusicAlbum' && (item.AlbumArtists || [])[0]) button('artist', 'Artist', () => T.ctx.navigate(`#/details?id=${item.AlbumArtists[0].Id}&serverId=${client.serverId()}`));
             // jellyfin-web's own page keeps the rest (edit, delete, add to playlist or collection, download, identify).
-            button('more', 'More options', () => location.assign(`#/details?id=${item.Id}&serverId=${client.serverId()}&icefin=stock`));
+            // jellyfin-web's own item menu (every action it has), opened at once over its details page (PLAN 9.38).
+            button('more', 'More options', () => location.assign(`#/details?id=${item.Id}&serverId=${client.serverId()}&icefin=stock&icefinmore=1`));
 
             // ---- versions and tracks ----
             const sources = (item.MediaSources || []).filter((s) => s.Type !== 'Placeholder');
@@ -571,5 +572,20 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
     }
 
     // ensureStyle: the base stylesheet (buttons, Back and Home, layouts) for other engine screens that reuse the markup.
+    // ?icefinmore=1 on the stock details page: open its item menu as soon as the page has its More button.
+    let menuFor = null;  // hashchange and popstate both arrive for one navigation: open the menu once
+    function openStockMenu() {
+        if (!/[?&]icefinmore=1\b/.test(location.hash)) { menuFor = null; return; }
+        if (menuFor === location.hash) return;
+        menuFor = location.hash;
+        let tries = 0;
+        const t = setInterval(() => {
+            const b = [...document.querySelectorAll('.btnMoreCommands')].find((x) => x.getClientRects().length && !x.closest('#icefin-theme-root'));
+            if (b) { clearInterval(t); b.click(); } else if (++tries > 40) clearInterval(t);
+        }, 150);
+    }
+    window.addEventListener('hashchange', openStockMenu);
+    window.addEventListener('popstate', openStockMenu);
+
     T.ui.details = { screen, ensureStyle, PLAYABLE: [...PLAYABLE], TYPES: [...PLAYABLE, ...CONTAINER] };
 })();
