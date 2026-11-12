@@ -45,6 +45,7 @@
         cats.push({ title: 'Tasks', links: [
             ['settings', () => { location.hash = '#/mypreferencesmenu'; }],
             ['search', () => { location.hash = '#/search'; }],
+            ['favourites', () => { location.hash = '#/favorites'; }],
             ['classic home', () => { location.hash = '#/home?icefin=stock'; }],
             ['close', () => askExit()]
         ] });
