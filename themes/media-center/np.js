@@ -118,7 +118,8 @@
         b('Shuffle', async () => { const m = await T.ctx.playMode(); await T.ctx.setShuffle(!(m && m.shuffle === 'Shuffle')); draw(); });
         b('Save as playlist', async () => { const ok = await T.ctx.saveQueueAsPlaylist(`Queue ${new Date().toLocaleDateString()}`); T.ctx.sound(ok === false ? 'error' : 'select'); });
         b('Clear queue', () => M.band(root, { title: 'Clear the queue?', text: 'What plays now stops.', choices: [{ label: 'Clear it', run: async () => { await T.ctx.clearQueue(); T.ctx.navigate('#/home'); } }, { label: 'Keep it', safe: true }] }));
-        async function draw(focusId) {
+        async function draw(focusId, settle) {
+            if (settle) await new Promise((r) => setTimeout(r, 700));  // the player takes a moment to move
             const q = await T.ctx.queueItems();
             if (!N || N.root !== root) return;
             list.textContent = '';
@@ -131,10 +132,10 @@
                 r.addEventListener('click', () => {
                     T.ctx.sound('select');
                     M.band(root, { title: it.name, text: [it.artist, it.album].filter(Boolean).join(' · '), choices: [
-                        { label: 'Play from here', run: async () => { await T.ctx.playQueueAt(it.playlistItemId); draw(it.playlistItemId); } },
-                        { label: 'Move up', run: async () => { await T.ctx.moveInQueue(it.playlistItemId, Math.max(0, i - 1)); draw(it.playlistItemId); } },
-                        { label: 'Move down', run: async () => { await T.ctx.moveInQueue(it.playlistItemId, Math.min(items.length - 1, i + 1)); draw(it.playlistItemId); } },
-                        { label: 'Remove', run: async () => { await T.ctx.removeFromQueue([it.playlistItemId]); draw(); } },
+                        { label: 'Play from here', run: async () => { await T.ctx.playQueueAt(it.playlistItemId); draw(it.playlistItemId, true); } },
+                        { label: 'Move up', run: async () => { await T.ctx.moveInQueue(it.playlistItemId, Math.max(0, i - 1)); draw(it.playlistItemId, true); } },
+                        { label: 'Move down', run: async () => { await T.ctx.moveInQueue(it.playlistItemId, Math.min(items.length - 1, i + 1)); draw(it.playlistItemId, true); } },
+                        { label: 'Remove', run: async () => { await T.ctx.removeFromQueue([it.playlistItemId]); draw(null, true); } },
                         { label: 'Cancel', safe: true }] }).then(() => { if (!M.band.open) { const f = list.querySelector(`[data-pid="${focusId || it.playlistItemId}"]`); if (f) T.ctx.focus(f); } });
                 });
                 r.dataset.pid = it.playlistItemId;
