@@ -119,7 +119,7 @@ def main():
         page.eval("setTimeout(() => window.icefinTheme.ctx.signOut(), 100); true", await_promise=False); time.sleep(6); page.reconnect(); js = page.eval
         page.wait_for("!!window.icefinTheme && location.hash.includes('login') || location.hash.includes('selectserver')", timeout=60)
         if "selectserver" in js("location.hash"):
-            js(f"window.icefinTheme.ctx.connect('{sid}')"); time.sleep(4)
+            page.eval(f"window.icefinTheme.ctx.connect('{sid}'); true", await_promise=False); time.sleep(4); page.reconnect(); js = page.eval
         users = json.loads(js("window.icefinTheme.ctx.publicUsers().then(x => JSON.stringify(x))"))
         check("publicUsers(): the lab user", any(u["name"].lower() == cred["user"].lower() for u in users) or users == [], users)
         bad = json.loads(js(f"window.icefinTheme.ctx.signIn({json.dumps(cred['user'])}, 'not-the-password').then(x => JSON.stringify(x))"))

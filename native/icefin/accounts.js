@@ -35,7 +35,9 @@
         const c = conn();
         return (c && safe(() => c.currentApiClient(), null)) || window.ApiClient || null;
     };
-    const ajax = (c, type, path, query, body) => c.ajax({ type, url: c.getUrl(path, query), data: body ? JSON.stringify(body) : undefined, contentType: body ? 'application/json' : undefined, dataType: 'json' });
+    // json: the answer is read as JSON (Quick Connect); SyncPlay and the rest answer with nothing
+    const ajax = (c, type, path, query, body, json) => c.ajax(Object.assign({ type, url: c.getUrl(path, query), data: body ? JSON.stringify(body) : undefined, contentType: body ? 'application/json' : undefined },
+        json ? { dataType: 'json' } : {}));
     const go = (hash) => { location.hash = hash; };
 
     // ---- servers and sign-in ----
@@ -109,7 +111,7 @@
         try { enabled = await c.getJSON(c.getUrl('QuickConnect/Enabled')); } catch (e) { enabled = false; }
         if (!enabled) return null;
         let start;
-        try { start = await ajax(c, 'POST', 'QuickConnect/Initiate'); } catch (e) { return null; }
+        try { start = await ajax(c, 'POST', 'QuickConnect/Initiate', null, null, true); } catch (e) { return null; }
         let stop = false;
         const done = (async () => {
             const until = Date.now() + 5 * 60 * 1000;
@@ -120,7 +122,7 @@
                 try { s = await c.getJSON(c.getUrl('QuickConnect/Connect', { Secret: start.Secret })); } catch (e) { s = null; }
                 if (s && s.Authenticated) {
                     try {
-                        const r = await ajax(c, 'POST', 'Users/AuthenticateWithQuickConnect', null, { Secret: start.Secret });
+                        const r = await ajax(c, 'POST', 'Users/AuthenticateWithQuickConnect', null, { Secret: start.Secret }, true);
                         if (c.onAuthenticated) await c.onAuthenticated(c, r);   // the connection manager keeps the sign-in
                         signedIn(c, r);
                         return { ok: true };
