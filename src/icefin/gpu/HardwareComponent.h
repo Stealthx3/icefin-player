@@ -25,6 +25,10 @@ public:
   QStringList transcodeCodecs() const;
   // Is the web layer GPU-accelerated (4.3)? Asynchronous: webStatusReady() follows; also kept in results().web.
   Q_INVOKABLE void checkWeb();
+  // The diagnostics report (PLAN 11.4, src/icefin/diag/Report.h): redacted Markdown text for a bug report.
+  Q_INVOKABLE QString report() const;
+  // report() onto the clipboard; returns the text too, so the page can show it where the clipboard doesn't reach.
+  Q_INVOKABLE QString copyReport() const;
 
 Q_SIGNALS:
   void finished(const QVariantMap& results);
