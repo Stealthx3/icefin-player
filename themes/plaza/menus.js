@@ -1156,6 +1156,10 @@
 
     const VIEWS = { library: () => LIBRARY, items: () => ITEMS, series, resume, nextup: () => NEXTUP, you };
     P.menus = { screen: (name) => (VIEWS[name] || VIEWS.library)() };
+    // the menu frame and its helpers, for screens in other files (music.js)
+    P.frame = frame;
+    P.goBack = goBack;
+    P.common = common;
     T.registerScreen('#/movies', MOVIES);
     T.registerScreen('#/tv', SHOWS);
     T.registerScreen('#/music', MUSIC);
