@@ -58,7 +58,12 @@ window.NativeShell = {
 
     getPlugins() {
         return plugins;
-    }
+    },  // ICEFIN-HOOK: jellyfin-web 12 calls the two below (book readers, video OSD); closing a book threw without them
+    // ICEFIN-HOOK: as in a browser, nothing to do: the readers' Full screen button goes through the page's Fullscreen
+    // ICEFIN-HOOK: API (webview.qml's onFullScreenRequested) and only calls these when the page is already in that state;
+    // ICEFIN-HOOK: the video OSD calls them on every play and stop, and video keeps the window as the user set it.
+    enableFullscreen() {},  // ICEFIN-HOOK: see above
+    disableFullscreen() {}  // ICEFIN-HOOK: see above
 };
 
 function getDeviceProfile() {

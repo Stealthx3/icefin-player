@@ -928,7 +928,9 @@
     });
 
     // Books (#/books): covers; A opens the reader, Menu the book's page.
-    const read = (it) => T.ctx.play({ ids: [it.Id], serverId: P.sid() });
+    // Through P.play, which always gives a start position (the saved one): jellyfin-web's EPUB and PDF readers divide
+    // it without a default, so leaving it out opens the book at NaN ("No Section Found", "Invalid page request").
+    const read = (it) => P.play(it);
     const BOOKS = libraryMenu({
         view: 'books', kind: () => 'books', name: (p) => p.get('name') || 'Books', sortable: true,
         hints: 'Ⓐ Read · ≡ Details · ◀▶ Page',
