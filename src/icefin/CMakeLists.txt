@@ -90,3 +90,16 @@ elseif(ICEFIN_FLATPAK)
 else()
   message(STATUS "Icefin: libmpv without the Vulkan render API; build external/mpv (build-lab.sh) for the Vulkan video path")
 endif()
+
+# D-Bus guard (Linux): Qt WebEngine's Chromium aborts the process when one of its D-Bus connections drops; Icefin's
+# executable interposes libdbus's filter calls so that one signal is passed over instead (system/DBusGuard.cpp). The
+# definitions must be in the executable itself and exported, so they bind ahead of libdbus for Qt WebEngine.
+if(UNIX AND NOT APPLE)
+  function(icefin_dbus_guard)
+    target_sources(${MAIN_TARGET} PRIVATE ${CMAKE_SOURCE_DIR}/src/icefin/system/DBusGuard.cpp)
+    target_link_options(${MAIN_TARGET} PRIVATE "LINKER:--export-dynamic-symbol=dbus_connection_add_filter"
+                        "LINKER:--export-dynamic-symbol=dbus_connection_remove_filter")
+    target_link_libraries(${MAIN_TARGET} ${CMAKE_DL_LIBS})
+  endfunction()
+  cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR}/src CALL icefin_dbus_guard)
+endif()

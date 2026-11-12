@@ -260,6 +260,8 @@ The audio work makes passthrough decisions from what the receiver actually suppo
 2. then releases any device reservation and retries on the default device;
 3. only then plays silence, with an on-screen notice and a log entry.
 
+How it notices (found in the Virtual AV tier, PLAN 3.9). mpv keeps upstream's null fallback, so a failed open lands on mpv's null output instead of ending the file. Icefin checks a second after the audio output settles, and a playing track on the null output means the open failed. A failed passthrough open is the exception: mpv skips the null output while passthrough is on and stalls, so step 1 follows mpv's "Failed to initialize audio driver" log line instead. Each step restarts the audio chain on the same track, because mpv picks passthrough or a decoder only when the chain starts; `ao-reload` alone reopens the same failing format. Before this, a busy HDMI device (another program holding it) stalled an audio-only track with no step taken.
+
 **Volume and UI sounds.**
 
 - During passthrough, software volume can't change the bitstream, so the volume slider is hidden and volume keys are sent to the receiver over CEC through upstream's libcec integration when available.

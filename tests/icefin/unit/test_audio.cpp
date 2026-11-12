@@ -2,6 +2,7 @@
 #include <QtTest>
 #include <QFile>
 #include "icefin/audio/AudioPolicy.h"
+#include "icefin/audio/Fallback.h"
 #include "icefin/audio/Eld.h"
 #include "icefin/audio/Passthrough.h"
 #include "icefin/audio/AudioOutput.h"
@@ -253,6 +254,17 @@ private slots:
     QVERIFY(!g.update(true, 16999));
     QVERIFY(g.update(true, 17000));                               // 4 s from the second wake
     QCOMPARE(Icefin::Audio::kWakeDelayMs, 4000);
+  }
+  void nullOutputMeansFailure()
+  {
+    using Icefin::Audio::Fallback;
+    QVERIFY(Fallback::onNullOutput("null", true));      // a failed open landed on mpv's null output
+    QVERIFY(!Fallback::onNullOutput("alsa", true));     // a real output
+    QVERIFY(!Fallback::onNullOutput("", true));         // not opened yet: the next event judges again
+    QVERIFY(!Fallback::onNullOutput("null", false));    // no audio track
+    QVERIFY(Fallback::isAoInitFailure("ao", "Failed to initialize audio driver 'alsa'\n"));
+    QVERIFY(!Fallback::isAoInitFailure("ao/alsa", "Playback open error: Device or resource busy\n"));
+    QVERIFY(!Fallback::isAoInitFailure("cplayer", "Failed to initialize audio driver 'alsa'\n"));
   }
   void userToggleWins()
   {
