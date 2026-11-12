@@ -56,6 +56,10 @@ Passthrough sends Dolby and DTS bitstreams to an AV receiver unchanged. Turn it 
   sound server while it plays and hands it back afterwards.
 - **A receiver on the TV's eARC/ARC:** your computer sees what the TV reports, which may leave out TrueHD. Icefin then
   sends TrueHD as multichannel PCM.
+- **Receiver in standby or off when a track starts:** Linux can't send a bitstream properly until the receiver is
+  ready, so Icefin plays PCM and switches to the bitstream about 4 seconds after the receiver wakes (a short audio
+  gap). Client Settings → Audio → Receiver in Standby can make it *Always PCM*, or *Keep Bitstream* for a receiver
+  that reports standby wrongly but still decodes.
 - Icefin never plays silently: if the output fails, it retries as PCM, then on the default device, and only then shows
   a notice.
 

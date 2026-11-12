@@ -23,6 +23,7 @@ QString Eld::summary() const
   if (!monitorName.isEmpty()) parts << monitorName;
   parts << QString("LPCM %1ch").arg(lpcmChannels);
   for (auto it = codecs.cbegin(); it != codecs.cend(); ++it) parts << QString("%1 %2ch").arg(codecName(it.key())).arg(it.value());
+  if (maxRate > 0) parts << QString("up to %1 kHz %2ch").arg(maxRate / 1000.0).arg(maxChannels);
   if (!valid) parts << "invalid";
   if (stale) parts << "stale";
   return parts.join(", ");
@@ -49,6 +50,11 @@ std::optional<Eld> parseEld(const QString& text)
     if (!cm.hasMatch()) continue;
     const int type = cm.captured(1).toInt(nullptr, 16);
     const int ch = kv.value(QString("sad%1_channels").arg(i)).toInt();
+    // "[0xe0] 32000 44100 48000": the kernel's PCM takes every rate any SAD lists, and the basic three.
+    const QString rates = kv.value(QString("sad%1_rates").arg(i));
+    for (const QString& r : rates.mid(rates.indexOf(']') + 1).split(' ', Qt::SkipEmptyParts))
+      e.maxRate = qMax(e.maxRate, qMax(48000, r.toInt()));
+    e.maxChannels = qMax(e.maxChannels, qMax(2, ch));
     if (type == 1) { e.lpcmChannels = qMax(e.lpcmChannels, ch); continue; }
     switch (type) {
       case int(Codec::AC3): case int(Codec::DTS): case int(Codec::EAC3): case int(Codec::DTSHD): case int(Codec::TrueHD):
