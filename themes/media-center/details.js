@@ -50,11 +50,3 @@
         }
     }));
 })();
-
-// Settings (PLAN 9.24): the engine's settings area (Client settings, Classic View, Server Settings) as the canvas's
-// settings list.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.settings) T.registerScreen('#/mypreferencesmenu', T.ui.settings.screen({ layout: 'list' }));
-})();

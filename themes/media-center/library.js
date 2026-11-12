@@ -75,6 +75,10 @@
             T.ctx.sound('select');
             if (group) { L.filter = { name: it.Name, key: L.pivot.group === 'studios' ? 'StudioIds' : 'GenreIds', id: it.Id }; reload(); return; }
             if (it.Type === 'Folder' || it.Type === 'PhotoAlbum') { L.parentId = it.Id; reload(); return; }
+            // a picture: the slide show of its folder from it (viewers.js lays it out). jellyfin-web builds the show from
+            // the first item's ParentId, so the item carries it (Fields) and goes alone: without it the show is every
+            // item on the server.
+            if (it.Type === 'Photo' || it.MediaType === 'Photo') { T.ctx.play({ items: [it] }); return; }
             M.details(it.Id);
         });
         if (L.io) L.io.observe(t);
@@ -83,7 +87,7 @@
 
     async function fetchPage() {
         const c = M.client(), uid = c.getCurrentUserId(), p = L.pivot;
-        const base = { StartIndex: L.tiles.length, Limit: PAGE, Fields: 'PrimaryImageAspectRatio,ChildCount,OfficialRating,CommunityRating,ProductionYear,RunTimeTicks',
+        const base = { StartIndex: L.tiles.length, Limit: PAGE, Fields: 'PrimaryImageAspectRatio,ChildCount,OfficialRating,CommunityRating,ProductionYear,RunTimeTicks,ParentId',
             ImageTypeLimit: 1, EnableImageTypes: 'Primary,Thumb', EnableUserData: true };
         if (p.nextUp) {
             const r = await c.getNextUpEpisodes({ UserId: uid, ParentId: L.parentId, ...base });

@@ -112,6 +112,8 @@
     M.band.open = null;
 
     // ---- a frame around jellyfin-web's own pages (9.42 ui.stockChrome): the same chrome, the page's title ----
+    // stockHooks: the theme's other scripts lay out a page after each update (settings.js: the account pages).
+    M.stockHooks = [];
     if (T.ui.stockChrome) T.ui.stockChrome.set({
         mount(host, info) {
             const frame = M.el('div', 'mc-sc');
@@ -138,6 +140,7 @@
             if (!this.title) return;
             const t = (STOCK_TITLES[(info.route || '').replace(/^#\//, '')] || info.title || '').trim();
             this.title.textContent = t.toLowerCase();
+            for (const h of M.stockHooks) { try { h(info); } catch (e) { console.error('media-center: stock page', e); } }
         }
     });
     const STOCK_TITLES = {
