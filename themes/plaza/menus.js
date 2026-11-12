@@ -55,7 +55,7 @@
         root.append(m);
         let tabEls = [];
         const f = {
-            root, body, menu: m, back, home: homeBtn,
+            root, body, menu: m, back, home: homeBtn, kind: spec.kind,
             setTabs(list, active, onTab) {
                 tabs.textContent = '';
                 tabEls = list.map((t) => {
@@ -80,6 +80,21 @@
     function goBack() {
         if (history.length > 1) history.back(); else T.ctx.navigate('#/home');
     }
+
+    // ---- an empty list: the channel's picture, what it means, and a way forward (9.43) ----
+    P.emptyState = (text, hint, action, kind) => {
+        const box = el('div', 'pz-empty pz-empty-state');
+        // an empty shelf in the channel's colours
+        const ill = el('div', 'pz-empty-ill pz-k-' + (kind || 'folder'));
+        ill.innerHTML = '<svg viewBox="0 0 160 100" aria-hidden="true"><rect x="8" y="10" width="144" height="80" rx="20" fill="var(--icefin-color-surface)" stroke="var(--pz-ch-b)" stroke-width="5"/>'
+            + '<rect x="30" y="30" width="28" height="40" rx="6" fill="var(--pz-ch-a)" opacity=".55"/><rect x="66" y="30" width="28" height="40" rx="6" fill="none" stroke="var(--pz-ch-a)" stroke-width="4" stroke-dasharray="6 5"/>'
+            + '<rect x="102" y="30" width="28" height="40" rx="6" fill="none" stroke="var(--pz-ch-a)" stroke-width="4" stroke-dasharray="6 5"/></svg>';
+        box.append(ill);
+        box.append(el('div', 'pz-empty-text', text));
+        if (hint) box.append(el('div', 'pz-empty-hint', hint));
+        if (action) { const b = P.focusable(el('div', 'pz-tab pz-tab-on pz-empty-go', action.label)); b.addEventListener('click', action.go); box.append(b); }
+        return box;
+    };
 
     // ---- a paged grid of server items ----
     // opts: shape, fetch(start, limit) -> {items, total}, art(item) -> url, caption?(item), name(item), focus(item) -> text,
@@ -119,7 +134,7 @@
             const items = r.items || [];
             g.cells = items.map((it, i) => cell(it, i));
             g.cells.forEach((c) => pageEl.append(c));
-            if (!items.length) pageEl.append(el('div', 'pz-empty', opts.empty || 'Nothing here yet'));
+            if (!items.length) pageEl.append(P.emptyState(opts.empty || 'Nothing here yet', opts.emptyHint, opts.emptyAction, opts.frame && opts.frame.kind));
             P.slide(pageEl, dir);
             prev.classList.toggle('pz-hidden', g.page === 0);
             next.classList.toggle('pz-hidden', g.page >= g.pages - 1);
@@ -134,7 +149,7 @@
             c.plazaItem = it;
             const art = el('div', 'pz-cell-art');
             const url = opts.art ? opts.art(it) : '';
-            if (url) P.bg(art, url); else art.append(el('div', 'pz-cell-title', opts.name(it)));
+            if (url) { P.bg(art, url); if (opts.label) art.append(el('div', 'pz-cell-label', opts.name(it))); } else art.append(el('div', 'pz-cell-title', opts.name(it)));
             c.append(art);
             if (opts.decorate) opts.decorate(c, it, art);
             if (opts.caption) c.append(el('div', 'pz-cell-cap', opts.caption(it)));
@@ -300,7 +315,7 @@
     const posterGrid = (q, extra) => (s) => Object.assign({ shape: 'poster', fetch: itemsQuery(withSort(s, q)),
         art: (it) => P.posterArt(it, 400), name: (it) => it.Name, focus: (it) => [it.Name, P.meta(it)].filter(Boolean).join(' · '),
         select: P.open, play: (it) => P.play(it), menu: P.details }, extra || {});
-    const nameGrid = (path, q, onPick) => () => ({ shape: 'wide', fetch: namedQuery(path, q),
+    const nameGrid = (path, q, onPick) => () => ({ shape: 'wide', fetch: namedQuery(path, q), label: true,
         art: (it) => P.wideArt(it, 600) || P.posterArt(it, 400), name: (it) => it.Name, focus: (it) => it.Name, select: onPick });
 
     const MOVIES = libraryMenu({
@@ -374,7 +389,7 @@
         hints: 'Ⓐ Open · ▶ Play · ≡ Details · ◀▶ Page',
         tabs: (parent) => [
             { id: 'albums', label: 'Albums', grid: squareGrid({ ParentId: parent, IncludeItemTypes: 'MusicAlbum' }) },
-            { id: 'artists', label: 'Artists', grid: () => ({ shape: 'square', fetch: namedQuery('Artists/AlbumArtists', { ParentId: parent, Fields: 'PrimaryImageAspectRatio' }),
+            { id: 'artists', label: 'Artists', grid: () => ({ shape: 'square', label: true, fetch: namedQuery('Artists/AlbumArtists', { ParentId: parent, Fields: 'PrimaryImageAspectRatio' }),
                 art: (it) => P.posterArt(it, 400), name: (it) => it.Name, focus: (it) => it.Name, select: P.details, play: (it) => P.play(it), menu: P.details }) },
             { id: 'songs', label: 'Songs', grid: squareGrid({ ParentId: parent, IncludeItemTypes: 'Audio' }, { select: (it) => P.play(it, true) }) },
             { id: 'playlists', label: 'Playlists', grid: squareGrid({ IncludeItemTypes: 'Playlist', MediaTypes: 'Audio' }), empty: 'No playlists yet' },
@@ -439,10 +454,12 @@
             recordings: () => ({ shape: 'episode', fetch: (start, limit) => P.safe(c().getLiveTvRecordings({ UserId: uid(), StartIndex: start, Limit: limit, Fields: P.FIELDS, EnableImages: true, EnableTotalRecordCount: true }))
                 .then((r) => ({ items: P.items(r), total: r.TotalRecordCount })),
             art: (it) => P.thumbArt(it, 600), caption: (it) => it.Name, name: (it) => it.Name, focus: (it) => [it.Name, it.StartDate ? new Date(it.StartDate).toLocaleDateString() : ''].filter(Boolean).join(' · '),
-            select: P.details, play: (it) => P.play(it), menu: P.details, empty: 'No recordings yet' }),
+            select: P.details, play: (it) => P.play(it), menu: P.details, empty: 'No recordings yet', emptyHint: 'Record a programme from the Guide; it shows up here.',
+            emptyAction: { label: 'Open the Guide', go: () => { const t = F && F.tab('guide'); if (t) t.click(); } } }),
             schedule: () => ({ shape: 'wide', fetch: () => P.safe(c().getLiveTvTimers({})).then((r) => ({ items: P.items(r), total: P.items(r).length })),
             art: () => '', decorate: (c2, t) => { const a = c2.querySelector('.pz-cell-art'); a.textContent = ''; a.append(el('div', 'pz-chan-no', t.ChannelName || ''), el('div', 'pz-chan-now', t.Name || ''), el('div', 'pz-chan-time', t.StartDate ? `${new Date(t.StartDate).toLocaleDateString([], { weekday: 'short' })} ${P.time(t.StartDate)}` : '')); c2.classList.add('pz-chan'); },
-            name: (t) => t.Name, focus: (t) => [t.Name, t.ChannelName].filter(Boolean).join(' · '), select: (t) => t.ProgramId && T.ctx.navigate(`#/details?id=${t.ProgramId}&serverId=${P.sid()}`), empty: 'Nothing scheduled to record' })
+            name: (t) => t.Name, focus: (t) => [t.Name, t.ChannelName].filter(Boolean).join(' · '), select: (t) => t.ProgramId && T.ctx.navigate(`#/details?id=${t.ProgramId}&serverId=${P.sid()}`), empty: 'Nothing scheduled to record', emptyHint: 'Programmes and series you choose to record are listed here.',
+            emptyAction: { label: 'Open the Guide', go: () => { const t = F && F.tab('guide'); if (t) t.click(); } } })
         };
         async function showGuide(focusIt) {
             guideEl = el('div', 'pz-guide');
@@ -793,8 +810,8 @@
             const square = /MusicAlbum|Audio/.test(q.IncludeItemTypes || '');
             return [
                 { id: 'all', label: 'All', grid: square ? squareGrid(q) : posterGrid(q), empty: 'Nothing here yet' },
-                { id: 'playall', label: 'Play all', go: () => playAll(q, false) },
-                { id: 'shuffle', label: 'Shuffle', go: () => playAll(q, true) }
+                { id: 'playall', label: 'Play all', cls: 'pz-tab-action pz-tab-play', go: () => playAll(q, false) },
+                { id: 'shuffle', label: 'Shuffle', cls: 'pz-tab-action', go: () => playAll(q, true) }
             ];
         },
         after(F, parent, p) {
