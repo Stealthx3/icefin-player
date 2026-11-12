@@ -278,8 +278,9 @@ def main():
         if has:
             js("document.querySelector('.pz-tile.pz-k-boxsets').click(); true")
             time.sleep(1.6)
-            fan = js("[...document.querySelectorAll('.pz-fan-card')].filter(c => getComputedStyle(c).backgroundImage.includes('url(')).length")
-            check("the Collections channel shows collections", fan >= 1, f"{fan} with art")
+            # the lab's generated collections may have no art: count the collections shown (cards that aren't empty slots)
+            fan = js("[...document.querySelectorAll('.pz-fan-card')].filter(c => !c.classList.contains('pz-fan-empty')).length")
+            check("the Collections channel shows collections", fan >= 1, f"{fan} shown")
             shot("collections.png")
         else:
             print("alpha1_feedback: info no Collections library on this server", flush=True)

@@ -1043,6 +1043,54 @@
         return views;
     }
 
+
+    // ---- stock chrome (9.42): the theme's frame around jellyfin-web's own pages ----
+    // jellyfin-web's own pages (sign-in, lists, settings, now playing, ...) keep every function; a theme can frame them
+    // (a title, a bar) through ui.stockChrome and restyle them under html[data-icefin-stock="<route>"]. The server
+    // dashboard and plugin configuration pages are never framed: html[data-icefin-dashboard] marks them, so a theme's
+    // rules can leave them stock. The player (#/video) has its own controls (9.19) and no frame.
+    const DASHBOARD = /^#\/(dashboard|configurationpage|wizard|addplugin|installedplugins|availableplugins|scheduledtasks?|scheduledtask|metadataimages|metadatanfo|networking|notificationsettings|apikeys|logs?|log|userprofiles|useredit|userlibraryaccess|userparentalcontrol|userpassword|usernew|devices?|serveractivity|encodingsettings|playbackconfiguration|streamingsettings|librarydisplay|library|livetvstatus|livetvsettings|livetvtuner|livetvguideprovider|edititemmetadata|repositories|branding|backups|activity|keys)(\b|\/|\?|$)/;
+    let stockSpec = null, stockEl = null, stockMounted = false, stockTimers = [];
+    const stockDashboard = () => DASHBOARD.test(location.hash) || !!(document.body && document.body.classList.contains('dashboardDocument'));
+    const stockTitle = () => {
+        const t = [...document.querySelectorAll('.skinHeader .pageTitle, .pageTitle')].find((x) => (x.textContent || '').trim());
+        return t ? t.textContent.trim() : '';
+    };
+    function stockRoute(info) {
+        const dash = !!(info.theme && stockDashboard());
+        const on = !!(info.theme && !info.screen && !dash && !/^#\/video\b/.test(location.hash));
+        attr('data-icefin-dashboard', dash);
+        attr('data-icefin-stock', on ? (info.route.replace(/^#\//, '') || 'home') : false);
+        stockTimers.forEach(clearTimeout);
+        stockTimers = [];
+        if (!on || !stockSpec) { if (stockEl) stockEl.hidden = true; return; }
+        if (!stockEl || !stockEl.isConnected) {
+            stockEl = document.createElement('div');
+            stockEl.id = 'icefin-stock-chrome';
+            stockEl.style.cssText = 'position:fixed;inset:0;z-index:998;pointer-events:none';
+            document.body.append(stockEl);
+            stockMounted = false;
+        }
+        stockEl.hidden = false;
+        const ctx = T.ctx;
+        const send = () => {
+            const i = { route: info.route, hash: location.hash, title: stockTitle(), back: () => history.back(), home: () => { location.hash = '#/home'; } };
+            try {
+                if (!stockMounted) { stockMounted = true; stockSpec.mount(stockEl, i, ctx); }
+                if (stockSpec.update) stockSpec.update(i, ctx);
+            } catch (e) { console.error('icefinTheme: stock chrome', e); }
+        };
+        send();
+        // jellyfin-web shows the page and sets its title a moment after the route changes
+        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) send(); }, ms));
+    }
+    const stockChrome = {
+        // spec: {mount(el, info, ctx), update?(info, ctx)}; info: {route, hash, title, back(), home()}
+        set(spec) { stockSpec = spec || null; },
+        element: () => stockEl
+    };
+    E.onRoute(stockRoute);
+
     E.addActionHook(oskHook);
     E.addActionHook(overlayHook);
     E.onReset(() => {
@@ -1063,6 +1111,12 @@
         attr('data-icefin-rail', false);
         keyboard.disable();
         timePalette.stop();
+        stockSpec = null;
+        stockTimers.forEach(clearTimeout);
+        if (stockEl) stockEl.remove();
+        stockEl = null;
+        attr('data-icefin-stock', false);
+        attr('data-icefin-dashboard', false);
         // mount() cleared the hooks just before this runs: the keyboard's and the overlay's go back first (both are modal)
         E.addActionHook(oskHook);
         E.addActionHook(overlayHook);
@@ -1070,5 +1124,5 @@
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
+    T.ui = { motion, pointerFirst, chrome, stockChrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
 })();
