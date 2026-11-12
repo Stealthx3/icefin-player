@@ -142,3 +142,29 @@ html[data-icefin-backdrop] #reactRoot { background: transparent !important; }
 /* With color-scheme: dark (jellyfin-web's) and a transparent root, Chromium paints the canvas its own dark grey
    instead of leaving it see-through. */
 html[data-icefin-backdrop] { color-scheme: normal !important; }
+
+/* ---- Dialogs and menus (PLAN 9.38): in the theme's look, and readable and reachable from a remote or controller ----
+   Confirmations, alerts, action sheets (item menus, track and speed pickers, sort menus), form dialogs and pickers:
+   the theme's raised surface and corner radius, and a filled focus that reads from across the room. While one is
+   open, the remote drives it (themeEngine.js steps aside). Couch Mode (osdLayout.js) makes them larger. */
+html.icefin-themed .dialogContainer .dialog:not(.dialog-fullscreen):not(.dialog-fixedSize) { background-color: var(--icefin-color-surfaceRaised, var(--icefin-color-surface));
+  color: var(--icefin-color-text); border-radius: var(--icefin-shape-cardRadius, 0.6em); box-shadow: 0 1em 3em rgb(var(--icefin-color-background-channel) / 0.55); }
+html.icefin-themed .dialogContainer .actionSheet { background-color: var(--icefin-color-surfaceRaised, var(--icefin-color-surface)); color: var(--icefin-color-text); }
+html.icefin-themed .dialogContainer .dialog .actionSheetMenuItem:focus,
+html.icefin-themed .dialogContainer .dialog .listItem:focus,
+html.icefin-themed .dialogContainer .dialog .listItem-button:focus { background-color: var(--icefin-color-focus) !important; color: var(--icefin-color-onFocus) !important; outline: none; }
+html.icefin-themed .dialogContainer .dialog .listItem:focus .secondary,
+html.icefin-themed .dialogContainer .dialog .actionSheetMenuItem:focus .actionSheetItemAsideText { color: var(--icefin-color-onFocus) !important; opacity: 0.85; }
+html.icefin-themed .dialogContainer .dialog .emby-button:focus,
+html.icefin-themed .dialogContainer .dialog .button-flat:focus,
+html.icefin-themed .dialogContainer .dialog .raised:focus { background-color: var(--icefin-color-focus) !important; color: var(--icefin-color-onFocus) !important;
+  box-shadow: 0 0 0 0.18em rgb(var(--icefin-color-focus-channel) / 0.35); }
+html.icefin-themed .dialogContainer .dialog .paper-icon-button-light:focus { color: var(--icefin-color-onFocus) !important; background-color: var(--icefin-color-focus) !important; border-radius: 50%; }
+html.icefin-themed .dialogContainer .dialog .emby-checkbox:focus + span + .checkboxOutline,
+html.icefin-themed .dialogContainer .dialog .emby-radio:focus + .mdl-radio__outer-circle { box-shadow: 0 0 0 0.25em rgb(var(--icefin-color-focus-channel) / 0.55); }
+html.icefin-themed .dialogContainer .dialog .emby-input:focus,
+html.icefin-themed .dialogContainer .dialog .emby-select-withcolor:focus,
+html.icefin-themed .dialogContainer .dialog .emby-textarea:focus { box-shadow: 0 0 0 0.15em var(--icefin-color-focus); }
+html.icefin-themed .dialogContainer .dialog .actionSheetMenuItem,
+html.icefin-themed .dialogContainer .dialog .listItem-button { border-radius: calc(var(--icefin-shape-cardRadius, 0.6em) * 0.6); }
+html[data-icefin-couch].icefin-themed .dialogContainer .dialog:not(.dialog-fullscreen) { font-size: 125%; }
