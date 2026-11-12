@@ -391,13 +391,25 @@ html[data-icefin-couch] .pz-mhint-keys { display: inline !important; }
 .pz-rack-pills { position: absolute; left: 0; right: 0; top: calc(735 * var(--pz)); display: flex; justify-content: center; gap: calc(24 * var(--pz)); }
 /* Music: what is playing, under the grid. */
 .pz-nowplaying { position: absolute; left: calc(285 * var(--pz)); right: calc(285 * var(--pz)); top: calc(774 * var(--pz)); height: calc(90 * var(--pz)); z-index: 3; display: none; align-items: center;
-  gap: calc(24 * var(--pz)); padding: 0 calc(30 * var(--pz)) 0 calc(15 * var(--pz)); border-radius: 999px; box-sizing: border-box; font-size: calc(24 * var(--pz));
+  gap: calc(24 * var(--pz)); padding: 0 calc(30 * var(--pz)) calc(17 * var(--pz)) calc(30 * var(--pz)); border-radius: 999px; box-sizing: border-box; font-size: calc(24 * var(--pz));
+  --pz-ch-a: #b388ff; --pz-ch-b: #6a3fd1;
   background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised)); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--pz-ch-a), 0 calc(4 * var(--pz)) calc(12 * var(--pz)) rgb(0 0 0 / 0.14); }
 .pz-nowplaying.pz-on { display: flex; }
-.pz-np-record { flex: none; width: calc(72 * var(--pz)); height: calc(72 * var(--pz)); border-radius: 50%; background: radial-gradient(circle, var(--pz-record-label) 0 16%, var(--pz-record) 17% 100%) center / cover; animation: pz-spin 3s linear infinite; }
-.pz-np-text { flex: none; max-width: 40%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pz-np-bar { flex: 1; width: auto; height: calc(9 * var(--pz)); }
-.pz-np-bar > div { background: linear-gradient(90deg, var(--pz-ch-a), var(--pz-ch-b)); }
+.pz-np-record { position: relative; z-index: 1; flex: none; width: calc(58 * var(--pz)); height: calc(58 * var(--pz)); border-radius: 50%; background: radial-gradient(circle, var(--pz-record-label) 0 16%, var(--pz-record) 17% 100%) center / cover; animation: pz-spin 3s linear infinite; }
+.pz-nowplaying.pz-np-paused .pz-np-record { animation-play-state: paused; }
+.pz-np-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the progress: a glowing line along the capsule's foot from the record's left edge, inside the rounded ends (the record
+   and the line sit far enough in that the line and the grabber clear the curves); the grabber shows while pointed at */
+.pz-np-line { position: absolute; left: calc(30 * var(--pz)); right: calc(30 * var(--pz)); bottom: calc(10 * var(--pz)); height: calc(18 * var(--pz)); cursor: pointer; touch-action: none; }
+.pz-np-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: calc(3 * var(--pz)); margin-top: calc(-1.5 * var(--pz)); border-radius: 999px;
+  background: color-mix(in srgb, var(--pz-ch-a) 22%, transparent); }
+.pz-np-fill { position: absolute; left: 0; top: 50%; width: 0; height: calc(5 * var(--pz)); margin-top: calc(-2.5 * var(--pz)); border-radius: 999px;
+  background: linear-gradient(90deg, var(--pz-ch-b), var(--pz-ch-a) 60%, color-mix(in srgb, var(--pz-ch-a) 40%, #ffffff));
+  box-shadow: 0 0 calc(4 * var(--pz)) var(--pz-ch-a), 0 0 calc(10 * var(--pz)) var(--pz-ch-a), 0 0 calc(22 * var(--pz)) color-mix(in srgb, var(--pz-ch-a) 80%, transparent); transition: width 0.45s linear; }
+.pz-np-dot { position: absolute; left: 0; top: 50%; width: calc(16 * var(--pz)); height: calc(16 * var(--pz)); margin: calc(-8 * var(--pz)) 0 0 calc(-8 * var(--pz)); border-radius: 50%;
+  background: #ffffff; box-shadow: 0 0 0 calc(3 * var(--pz)) var(--pz-ch-a), 0 0 calc(12 * var(--pz)) var(--pz-ch-a); opacity: 0; transform: scale(0.4); transition: opacity 0.15s, transform 0.15s, left 0.45s linear; pointer-events: none; }
+.pz-np-line:hover .pz-np-dot, .pz-np-seeking .pz-np-dot { opacity: 1; transform: scale(1); }
+.pz-np-seeking .pz-np-fill, .pz-np-seeking .pz-np-dot { transition: opacity 0.15s, transform 0.15s; }
 .pz-np-btn { flex: none; width: calc(60 * var(--pz)); height: calc(60 * var(--pz)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none; color: var(--pz-ch-b); font-size: calc(28 * var(--pz)); }
 /* Search: the field, the filters, a row of results, and a keyboard for the remote. */
 .pz-search-field { position: absolute; left: calc(50% - 690 * var(--pz)); width: calc(1380 * var(--pz)); top: calc(150 * var(--pz)); height: calc(90 * var(--pz)); box-sizing: border-box;
@@ -726,6 +738,10 @@ html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playin
 /* item menus and every other action sheet: a card of pill rows */
 html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet { padding: calc(24 * var(--pz)) calc(24 * var(--pz)) calc(18 * var(--pz)) !important; min-width: calc(520 * var(--pz)); }
 html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet:has(.actionSheetTitle) { padding-top: calc(96 * var(--pz)) !important; }
+/* a sheet jellyfin-web places beside the button that opened it (Play on, Watch together: their buttons are in its hidden
+   header) is centred like Plaza's own sheets */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet[style*="left"] {
+  left: 0 !important; right: 0 !important; top: 0 !important; bottom: 0 !important; margin: auto !important; width: fit-content !important; height: fit-content !important; max-height: 80vh; }
 html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet .actionSheetMenuItem {
   font-family: var(--pz-font); min-height: calc(64 * var(--pz)); margin: 0 0 calc(9 * var(--pz)); border-radius: calc(20 * var(--pz)) !important; background: var(--pz-pill);
   box-shadow: var(--pz-ring), var(--pz-lift); padding: 0 calc(20 * var(--pz)); }
@@ -824,9 +840,7 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
   box-shadow: var(--pz-ring), var(--pz-lift); font-size: calc(20 * var(--pz)); font-weight: 700; z-index: 2; }
 .pz-cell-folder .pz-cell-art::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / 0.35)); }
 /* the home's music capsule (9.42): over the channels' top edge while music plays; up from the first row reaches it */
-.pz-nowplaying.pz-mini { left: 50%; right: auto; transform: translateX(-50%); width: calc(1020 * var(--pz)); top: calc(8 * var(--pz)); height: calc(76 * var(--pz)); z-index: 6;
-  border-radius: 999px; background: var(--pz-pill); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 calc(6 * var(--pz)) calc(16 * var(--pz)) rgb(0 0 0 / 0.18);
-  padding: 0 calc(18 * var(--pz)) 0 calc(12 * var(--pz)); gap: calc(18 * var(--pz)); font-size: calc(24 * var(--pz)); --pz-ch-a: #b388ff; --pz-ch-b: #6a3fd1; }
+.pz-nowplaying.pz-mini { top: calc(4 * var(--pz)); z-index: 6; }
 
 /* ==== walk fixes (9.43) ==== */
 /* the bottom row's name pill goes above the channel, clear of the clock in the bar's notch */
@@ -865,7 +879,7 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 .pz-sheet-body { display: flex; flex-direction: column; gap: calc(16 * var(--pz)); min-height: 0; }
 .pz-sheet-rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(12 * var(--pz)); }
 .pz-sheet-rows.pz-sheet-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.pz-sheet-scroll { max-height: 46vh; overflow-y: auto; padding: calc(8 * var(--pz)); margin: calc(-8 * var(--pz)); scrollbar-width: thin; }
+.pz-sheet-scroll { max-height: 46vh; overflow-y: auto; padding: calc(8 * var(--pz)); margin: calc(-8 * var(--pz)); scrollbar-width: none; }
 .pz-sheet-row { min-height: calc(68 * var(--pz)); display: flex; align-items: center; gap: calc(16 * var(--pz)); padding: calc(8 * var(--pz)) calc(26 * var(--pz)); box-sizing: border-box; border-radius: calc(22 * var(--pz));
   background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); font-size: calc(25 * var(--pz)); cursor: pointer; outline: none; }
 .pz-sheet-row.icefin-focused, .pz-sheet-row:hover { box-shadow: var(--pz-glow); font-weight: 700; }
@@ -955,3 +969,164 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 #icefin-theme-root[data-pz="settings"] .icefin-cs .formDialogContent { scroll-padding: calc(40 * var(--pz)) 0; }
 #icefin-theme-root[data-pz="settings"] .icefin-s-body { overflow: visible; }
 #icefin-theme-root[data-pz="settings"] .icefin-s-entries { padding: calc(54 * var(--pz)) calc(54 * var(--pz)); }
+
+/* ==== 9.44 entry points ==== */
+.pz-k-exit { --pz-ch-a: #ff8787; --pz-ch-b: #e03131; }
+/* "Now playing" beside the name pill while music plays: tucked under the name pill until playback starts, then it
+   slides out and pushes the tabs along; it slides back when playback stops. The record spins while music plays. */
+.pz-mname { position: relative; z-index: 2; }
+.pz-nowpill { position: relative; z-index: 1; flex: none; display: flex; align-items: center; gap: calc(12 * var(--pz)); height: calc(62 * var(--pz)); max-width: calc(560 * var(--pz));
+  padding: 0 calc(24 * var(--pz)) 0 calc(6 * var(--pz)); border-radius: 999px; box-sizing: border-box;
+  background: var(--pz-pill); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) #b388ff, var(--pz-lift); font-size: calc(22 * var(--pz)); color: var(--icefin-color-text); cursor: pointer; outline: none; white-space: nowrap;
+  margin-left: calc(-1 * (var(--pz-np-w, calc(560 * var(--pz))) + var(--pz-head-gap, calc(30 * var(--pz))))); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: margin-left 0.55s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.2s linear 0.35s, visibility 0s linear 0.55s; }
+.pz-nowpill.pz-on { margin-left: 0; opacity: 1; visibility: visible; pointer-events: auto;
+  transition: margin-left 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.15), opacity 0.15s linear, visibility 0s; }
+.pz-nowpill.pz-np-still { transition: none; }
+.pz-nowpill.icefin-focused, .pz-nowpill:hover { box-shadow: var(--pz-glow); }
+/* the record: fine grooves, two light bands pressed into the vinyl and the album art as its label all turn with it, so the
+   spin reads even at this size; the shine stays put, as light on a real record does */
+.pz-nowpill-rec { position: relative; flex: none; width: calc(54 * var(--pz)); height: calc(54 * var(--pz)); border-radius: 50%; box-shadow: 0 calc(2 * var(--pz)) calc(5 * var(--pz)) rgb(0 0 0 / 0.35); }
+.pz-nowpill-rec::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 20deg, transparent 0 6%, rgb(255 255 255 / 0.32) 11%, transparent 17% 56%, rgb(255 255 255 / 0.2) 61%, transparent 66%); mix-blend-mode: screen; }
+.pz-nowpill-disc { position: absolute; inset: 0; border-radius: 50%; animation: pz-spin 2.2s linear infinite;
+  background:
+    conic-gradient(from 0deg, rgb(255 255 255 / 0.28) 0 7%, transparent 7% 50%, rgb(255 255 255 / 0.14) 50% 55%, transparent 55%),
+    repeating-radial-gradient(circle, #171025 0 calc(1.1 * var(--pz)), #3b2d63 calc(1.1 * var(--pz)) calc(1.9 * var(--pz)), #171025 calc(1.9 * var(--pz)) calc(3 * var(--pz))),
+    var(--pz-record, #2b1d4f); }
+.pz-nowpill-label { position: absolute; inset: 31%; border-radius: 50%; background: var(--pz-record-label, #ffd166) center / cover no-repeat;
+  box-shadow: 0 0 0 calc(1.5 * var(--pz)) rgb(255 255 255 / 0.55); }
+.pz-nowpill-label::before { content: ""; position: absolute; left: 50%; top: 50%; width: calc(5 * var(--pz)); height: calc(5 * var(--pz)); margin: calc(-2.5 * var(--pz)) 0 0 calc(-2.5 * var(--pz)); border-radius: 50%; background: #120c22; }
+.pz-nowpill-label::after { content: ""; position: absolute; left: 44%; top: 4%; width: 12%; height: 26%; border-radius: 999px; background: rgb(255 255 255 / 0.9); box-shadow: 0 0 calc(2 * var(--pz)) rgb(0 0 0 / 0.5); }
+.pz-nowpill.pz-np-paused .pz-nowpill-disc { animation-play-state: paused; }
+.pz-nowpill-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--icefin-color-textSecondary); }
+#icefin-stock-chrome .pz-nowpill { pointer-events: auto; }
+/* the You menu */
+.pz-you { position: absolute; left: calc(105 * var(--pz)); right: calc(105 * var(--pz)); top: calc(150 * var(--pz)); bottom: 0; display: grid; grid-template-columns: calc(330 * var(--pz)) minmax(0, 1fr); gap: calc(60 * var(--pz)); }
+.pz-you-me { display: flex; flex-direction: column; align-items: center; gap: calc(10 * var(--pz)); padding-top: calc(10 * var(--pz)); }
+.pz-you-pic { width: calc(260 * var(--pz)); height: calc(260 * var(--pz)); border-radius: 50%; background: linear-gradient(160deg, var(--pz-ch-a), var(--pz-ch-b)) center / cover no-repeat; color: var(--pz-ink-on);
+  display: flex; align-items: center; justify-content: center; font-size: calc(96 * var(--pz)); font-weight: 700; box-shadow: inset 0 0 0 calc(6 * var(--pz)) var(--icefin-color-surface), var(--pz-lift); }
+.pz-you-name { font-size: calc(36 * var(--pz)); font-weight: 700; }
+.pz-you-server { font-size: calc(21 * var(--pz)); color: var(--icefin-color-textSecondary); }
+.pz-you-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(14 * var(--pz)); align-content: start; padding: calc(30 * var(--pz)); margin: calc(-30 * var(--pz)); }
+.pz-you-row .pz-setrow-label { flex: 1; }
+.pz-you-danger .pz-setrow-label { color: var(--icefin-color-error); }
+/* item menu: images */
+.pz-sheet-images { display: flex; flex-wrap: wrap; gap: calc(16 * var(--pz)); }
+.pz-sheet-image { position: relative; width: calc(170 * var(--pz)); height: calc(170 * var(--pz)); border-radius: calc(18 * var(--pz)); background: var(--icefin-color-tileEmpty) center / contain no-repeat;
+  box-shadow: var(--pz-ring), var(--pz-lift); cursor: pointer; outline: none; overflow: hidden; }
+.pz-sheet-image.icefin-focused, .pz-sheet-image:hover { box-shadow: var(--pz-glow); }
+.pz-sheet-image-label { position: absolute; left: 0; right: 0; bottom: 0; padding: calc(6 * var(--pz)) calc(10 * var(--pz)); background: rgb(0 0 0 / 0.55); color: #ffffff; font-size: calc(16 * var(--pz)); text-align: center; }
+/* a Live TV programme */
+.pz-sheet-prog { display: grid; grid-template-columns: calc(440 * var(--pz)) minmax(0, 1fr); gap: calc(36 * var(--pz)); }
+.pz-sheet-prog-art { aspect-ratio: 16 / 9; border-radius: calc(24 * var(--pz)); background: linear-gradient(160deg, #5cc8f5, #1b8fd6) center / cover no-repeat; box-shadow: inset 0 0 0 calc(5 * var(--pz)) var(--icefin-color-surface), var(--pz-lift); }
+.pz-sheet-prog-info { display: flex; flex-direction: column; gap: calc(8 * var(--pz)); min-width: 0; }
+.pz-sheet-prog-info .pz-sheet-note:last-child { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ==== walk 3 against the mock-ups (9.44) ==== */
+/* the server's status card beside the icefin button on the home */
+.pz-srv { position: absolute; left: calc(277 * var(--pz)); top: calc(94 * var(--pz)); width: calc(51 * var(--pz)); height: calc(66 * var(--pz)); box-sizing: border-box; border-radius: calc(8 * var(--pz));
+  background: var(--icefin-color-surface); box-shadow: 0 calc(1.5 * var(--pz)) calc(4.5 * var(--pz)) rgb(0 0 0 / 0.25), inset 0 0 0 calc(3 * var(--pz)) var(--icefin-color-accent); color: var(--icefin-color-accentStrong); display: flex; align-items: center; justify-content: center; }
+.pz-srv svg { width: calc(34 * var(--pz)); height: calc(44 * var(--pz)); }
+.pz-srv-dot { position: absolute; right: calc(-6 * var(--pz)); top: calc(-6 * var(--pz)); width: calc(16 * var(--pz)); height: calc(16 * var(--pz)); border-radius: 50%; background: #2f9e44; box-shadow: 0 0 0 calc(3 * var(--pz)) var(--icefin-color-surface); }
+.pz-srv.pz-srv-down .pz-srv-dot { background: #e03131; }
+.pz-srv.pz-srv-down { color: var(--icefin-color-textSecondary); }
+/* the Live TV card: what comes on next */
+.pz-side-info .pz-next-kicker { margin-top: calc(30 * var(--pz)); }
+/* the guide: the day it shows over the channels, and NOW on the now-line */
+.pz-guide-day { position: absolute; left: 0; top: 0; width: calc(300 * var(--pz)); height: calc(46 * var(--pz)); box-sizing: border-box; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+  background: var(--pz-pill); box-shadow: var(--pz-ring); font-size: calc(24 * var(--pz)); font-weight: 700; color: var(--icefin-color-text); }
+.pz-guide .icefin-guide-now::before { content: "NOW"; position: absolute; left: 50%; top: calc(-30 * var(--pz)); transform: translateX(-50%); padding: calc(2 * var(--pz)) calc(12 * var(--pz)); border-radius: 999px;
+  background: var(--icefin-color-accent); color: #ffffff; font-size: calc(16 * var(--pz)); font-weight: 700; letter-spacing: 0.06em; white-space: nowrap; }
+/* the A–Z rail on a list (#/list) */
+.pz-az { position: absolute; right: calc(112 * var(--pz)); top: calc(162 * var(--pz)); bottom: calc(41 * var(--pz)); width: calc(40 * var(--pz)); display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+  padding: calc(8 * var(--pz)) 0; border-radius: 999px; background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); z-index: 2; }
+.pz-az[hidden] { display: none; }
+.pz-az-key { width: calc(32 * var(--pz)); height: calc(26 * var(--pz)); border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: calc(17 * var(--pz)); font-weight: 700; color: var(--icefin-color-textSecondary); cursor: pointer; outline: none; }
+.pz-az-key:hover { color: var(--icefin-color-text); }
+.pz-az-key.icefin-focused { background: var(--icefin-color-accent); color: #ffffff; box-shadow: 0 0 calc(12 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6); }
+/* details: genres as chips; marks on the actions */
+#icefin-theme-root[data-pz="details"] .icefin-d-genres { display: flex; flex-wrap: wrap; gap: calc(9 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] .pz-chip { padding: calc(3 * var(--pz)) calc(18 * var(--pz)); border-radius: 999px; background: var(--icefin-color-surface); box-shadow: inset 0 0 0 calc(3 * var(--pz)) var(--icefin-color-tileEmpty);
+  font-size: calc(20 * var(--pz)); color: var(--icefin-color-textSecondary); }
+#icefin-theme-root[data-pz="details"] .icefin-d-btn[data-action="favourite"]::before { content: "★"; margin-right: calc(10 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] .icefin-d-btn[data-action="played"]::before { content: "✓"; margin-right: calc(10 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] .icefin-d-btn[data-action="more"]::before { content: "⋯"; margin-right: calc(10 * var(--pz)); font-weight: 700; }
+/* details: Version, Audio and Subtitles as labelled steppers (◀ value ▶); Ⓐ opens the picker */
+#icefin-theme-root[data-pz="details"] .icefin-d-select { font-size: 0; height: auto; padding: 0; background: none; box-shadow: none; display: inline-flex; flex-direction: column; align-items: stretch; gap: calc(6 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] .icefin-d-select::before { content: attr(data-option); text-transform: capitalize; font-size: calc(19 * var(--pz)); color: var(--icefin-color-textSecondary); padding-left: calc(24 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] .icefin-d-select::after { display: none; }
+#icefin-theme-root[data-pz="details"] .icefin-d-select b { margin: 0; height: calc(62 * var(--pz)); line-height: calc(62 * var(--pz)); min-width: calc(300 * var(--pz)); max-width: calc(480 * var(--pz)); box-sizing: border-box; display: block; text-align: center;
+  padding: 0 calc(54 * var(--pz)); position: relative; border-radius: 999px; background: var(--icefin-color-surface); box-shadow: inset 0 0 0 calc(4 * var(--pz)) var(--icefin-color-tileEmpty);
+  font-size: calc(23 * var(--pz)); font-weight: 500; color: var(--icefin-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#icefin-theme-root[data-pz="details"] .icefin-d-select b::before, #icefin-theme-root[data-pz="details"] .icefin-d-select b::after { content: ""; position: absolute; top: 50%; margin-top: calc(-10 * var(--pz));
+  border-top: calc(10 * var(--pz)) solid transparent; border-bottom: calc(10 * var(--pz)) solid transparent; }
+#icefin-theme-root[data-pz="details"] .icefin-d-select b::before { left: calc(20 * var(--pz)); border-right: calc(14 * var(--pz)) solid var(--icefin-color-accent); }
+#icefin-theme-root[data-pz="details"] .icefin-d-select b::after { right: calc(20 * var(--pz)); border-left: calc(14 * var(--pz)) solid var(--icefin-color-accent); }
+#icefin-theme-root[data-pz="details"] .icefin-d-select.icefin-focused { background: none; box-shadow: none; }
+#icefin-theme-root[data-pz="details"] .icefin-d-select.icefin-focused b { box-shadow: var(--pz-glow); font-weight: 700; }
+/* details: the picker card at the mock-up's size */
+#icefin-theme-root[data-pz="details"] .icefin-d-picker-box { width: calc(780 * var(--pz)); min-height: calc(420 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] .icefin-d-option { min-height: calc(81 * var(--pz)); font-size: calc(28 * var(--pz)); margin-bottom: calc(15 * var(--pz)); border-radius: calc(24 * var(--pz)); }
+/* details: a show's seasons as pills over its episodes */
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-row { gap: calc(15 * var(--pz)); padding-top: calc(9 * var(--pz)); padding-bottom: calc(9 * var(--pz)); }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card { width: auto; height: calc(62 * var(--pz)); padding: 0 calc(33 * var(--pz)); display: flex; align-items: center; border-radius: 999px;
+  background: var(--pz-pill); box-shadow: var(--pz-ring), var(--pz-lift); }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card .icefin-d-img, #icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card .icefin-d-sub,
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card .icefin-d-progress { display: none; }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card .icefin-d-name { margin: 0; font-size: calc(24 * var(--pz)); font-weight: 500; }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card.current { box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), var(--pz-lift); }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card.current .icefin-d-name { font-weight: 700; }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card.icefin-focused { box-shadow: var(--pz-glow); }
+#icefin-theme-root[data-pz="details"] [data-section="seasons"] .icefin-d-card.icefin-focused .icefin-d-img { animation: none; }
+/* details: a playlist's move handle on the left of each item */
+#icefin-theme-root[data-pz="details"] [data-icefin-reorder] .icefin-d-track { grid-template-columns: 2em 3em 1fr auto; }
+#icefin-theme-root[data-pz="details"] [data-icefin-reorder] .icefin-d-track > .h { order: -1; color: var(--icefin-color-textSecondary); font-size: calc(28 * var(--pz)); }
+/* the series menu: each episode's Details inside its row */
+.pz-ep-wrap { border-radius: calc(24 * var(--pz)); padding-right: calc(21 * var(--pz)); background: linear-gradient(180deg, var(--icefin-color-surface), var(--icefin-color-surfaceRaised));
+  box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-tileEmpty), 0 calc(3 * var(--pz)) calc(6 * var(--pz)) rgb(0 0 0 / 0.12); }
+.pz-ep-wrap .pz-ep { background: none; box-shadow: none; }
+.pz-ep-wrap .pz-ep.icefin-focused { animation: none; }
+.pz-ep-wrap:has(> .pz-ep.icefin-focused) { animation: pz-glow 2.6s ease-in-out infinite; }
+.pz-ep-wrap .pz-ep-more { height: calc(56 * var(--pz)); font-size: calc(21 * var(--pz)); }
+/* details: an album or playlist with its title under the art (the walk's mock-ups); the tracks beside */
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-details .icefin-d-main, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-details .icefin-d-main { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .pz-d-art, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .pz-d-art { width: calc(345 * var(--pz)); }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .pz-d-reflect, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .pz-d-reflect, #icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-overview, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-overview, #icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-tagline, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-tagline, #icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-genres, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-genres { display: none; }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-info, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-info { padding-top: calc(21 * var(--pz)); }
+/* sheets (the walk's mock-ups): playlist and collection tiles; a Get pill; steppers; Edit details' sections */
+.pz-sheet-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(24 * var(--pz)); padding: calc(12 * var(--pz)); max-height: calc(420 * var(--pz)); }
+.pz-sheet-tile { outline: none; cursor: pointer; border-radius: calc(30 * var(--pz)); }
+.pz-sheet-tile-art { position: relative; aspect-ratio: 1.08; border-radius: calc(30 * var(--pz)); overflow: hidden; background: linear-gradient(160deg, var(--pz-ch-a), var(--pz-ch-b)) center / cover no-repeat;
+  box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-surface), var(--pz-lift); }
+.pz-sheet-tile-name { position: absolute; left: 0; right: 0; bottom: 0; padding: calc(36 * var(--pz)) calc(18 * var(--pz)) calc(12 * var(--pz)); font-size: calc(24 * var(--pz)); font-weight: 700; color: var(--icefin-color-text);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0), rgb(255 255 255 / 0.92)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pz-sheet-tile.icefin-focused .pz-sheet-tile-art { animation: pz-glow 2.6s ease-in-out infinite; }
+.pz-sheet-tile-new .pz-sheet-tile-art { background: var(--icefin-color-tileEmpty); box-shadow: inset 0 calc(3 * var(--pz)) calc(7 * var(--pz)) rgb(0 0 0 / 0.08); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--icefin-color-textSecondary); font-size: calc(24 * var(--pz)); font-weight: 700; }
+.pz-sheet-tile-new .pz-sheet-tile-art::before { content: "+"; font-size: calc(64 * var(--pz)); font-weight: 400; line-height: 1; }
+.pz-sheet-get { flex: none; margin-left: calc(18 * var(--pz)); padding: calc(6 * var(--pz)) calc(24 * var(--pz)); border-radius: 999px; background: var(--pz-pill); box-shadow: var(--pz-ring); font-size: calc(21 * var(--pz)); font-weight: 700; }
+.pz-sheet-row.icefin-focused .pz-sheet-get { box-shadow: inset 0 0 0 calc(4 * var(--pz)) var(--icefin-color-accent); }
+.pz-sheet-steps { display: flex; flex-direction: column; gap: calc(12 * var(--pz)); margin-top: calc(18 * var(--pz)); }
+.pz-sheet-steprow { display: flex; align-items: center; justify-content: space-between; gap: calc(24 * var(--pz)); padding: calc(6 * var(--pz)) calc(12 * var(--pz)) calc(6 * var(--pz)) calc(27 * var(--pz)); border-radius: calc(24 * var(--pz));
+  background: var(--pz-pill); box-shadow: var(--pz-ring); font-size: calc(24 * var(--pz)); }
+.pz-sheet-steprow .pz-stepper { min-width: calc(270 * var(--pz)); padding: 0 calc(18 * var(--pz)); box-sizing: border-box; }
+.pz-sheet-tabs { display: flex; gap: calc(12 * var(--pz)); margin-bottom: calc(18 * var(--pz)); }
+.pz-sheet-pane { max-height: calc(470 * var(--pz)); }
+.pz-sheet-pane .pz-sheet-form[hidden] { display: none; }
+.pz-field-wide { grid-column: 1 / -1; }
+.pz-sheet-chips { display: flex; flex-wrap: wrap; gap: calc(10 * var(--pz)); padding: calc(6 * var(--pz)) 0; }
+.pz-sheet-chip { padding: calc(6 * var(--pz)) calc(20 * var(--pz)); border-radius: 999px; background: var(--pz-pill); box-shadow: var(--pz-ring); font-size: calc(21 * var(--pz)); cursor: pointer; outline: none; }
+.pz-sheet-chip.icefin-focused { box-shadow: var(--pz-glow); font-weight: 700; }
+.pz-sheet-chip-add { color: var(--icefin-color-accentStrong); }
+.pz-sheet-form > .pz-sheet-switch { grid-column: 1 / -1; }
+/* the settings hub: four channels a row (the walk's mock-up) */
+#icefin-theme-root[data-pz="settings"][data-pz-pane="hub"] .icefin-s-entries { grid-template-columns: repeat(4, calc(380 * var(--pz))); }
+/* Live TV channel cards: the times and what is next on one line */
+.pz-chan .pz-chan-time { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* an album's or playlist's actions in one row: Favourite, Played and More as round marks (the walk's mock-up) */
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-actions, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-actions { flex-wrap: nowrap; gap: calc(8 * var(--pz)); }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-actions .icefin-d-btn, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-actions .icefin-d-btn { padding: 0 calc(16 * var(--pz)); }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-actions .icefin-d-btn:is([data-action="favourite"], [data-action="played"], [data-action="more"]), #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-actions .icefin-d-btn:is([data-action="favourite"], [data-action="played"], [data-action="more"]) { font-size: 0; width: calc(62 * var(--pz)); padding: 0; justify-content: center; flex: none; }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .icefin-d-actions .icefin-d-btn:is([data-action="favourite"], [data-action="played"], [data-action="more"])::before, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .icefin-d-actions .icefin-d-btn:is([data-action="favourite"], [data-action="played"], [data-action="more"])::before { font-size: calc(26 * var(--pz)); margin: 0; }
+#icefin-theme-root[data-pz="details"][data-icefin-details="MusicAlbum"] .pz-d-art, #icefin-theme-root[data-pz="details"][data-icefin-details="Playlist"] .pz-d-art { width: calc(300 * var(--pz)); }

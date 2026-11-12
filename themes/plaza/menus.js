@@ -16,7 +16,9 @@
         square: { w: 240, h: 240, gx: 33, gy: 75, rows: 2, top: 162 },
         wide: { w: 405, h: 186, gx: 27, gy: 33, rows: 3, top: 168 },
         episode: { w: 390, h: 219, gx: 36, gy: 105, rows: 2, top: 162 },
-        result: { w: 240, h: 180, gx: 24, gy: 0, rows: 1, top: 0 }
+        result: { w: 240, h: 180, gx: 24, gy: 0, rows: 1, top: 0 },
+        // playlists: four across, the server's quilt of the playlist's art with the name on it (the walk's mock-up)
+        quilt: { w: 330, h: 300, gx: 36, gy: 30, rows: 2, top: 162 }
     };
 
     // ---- the frame ----
@@ -35,7 +37,9 @@
         const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
         tick();
         const timer = setInterval(tick, 15000);
-        head.append(name, tabs);
+        head.append(name);
+        P.nowPill(head);
+        head.append(tabs);
         const body = el('div', 'pz-mbody');
         const barEl = el('div', 'pz-mbar');
         barEl.innerHTML = '<svg class="pz-mbar-svg" viewBox="0 0 1920 210" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill" d="M0 24 C480 6 1440 6 1920 24 V210 H0 Z"/><path class="pz-bar-shine" d="M0 32 C480 14 1440 14 1920 32"/><path class="pz-bar-line" d="M0 24 C480 6 1440 6 1920 24"/></svg>';
@@ -185,6 +189,8 @@
             return false;
         };
         g.relayout = () => { g.cache.clear(); draw(Math.min(g.page, g.pages - 1), 0, g.focused() ? 0 : null); };
+        // jump to the item at an index (the A–Z rail): its page, focused
+        g.goToIndex = (i) => { const n = per(), p = Math.max(0, Math.min(Math.floor(i / n), g.pages - 1)); T.ctx.sound('navigate'); draw(p, p === g.page ? 0 : (p > g.page ? 1 : -1), Math.max(0, i - p * n)); };
         g.destroy = () => { g.dead = true; box.remove(); };
         return g;
     }
@@ -286,7 +292,9 @@
                     F.focusText('');
                     grid = pageGrid(F.body, Object.assign({ frame: F, takeFocus: focusGrid, empty: t.empty }, t.grid(sortOf(state), parent, p)));
                     screen.grid = grid;
+                    if (spec.shown) spec.shown(screen);
                 };
+                screen.sort = () => sortOf(state);
                 F.setTabs(tabs, tabs[0].id, (id) => show(id, false));
                 if (spec.after) spec.after(F, parent, p, screen);
                 show(tabs[0].id, true);
@@ -340,16 +348,18 @@
         ]
     });
 
-    // What's playing (music): a capsule with the record, the title, the progress and the transport. The Music menu shows
-    // it under its grid, and the home above the bar (9.42), while music plays. Returns {stop()}.
+    // What's playing (music): one wide capsule, on the home (9.44; every other screen has the Now playing pill in its
+    // head): the record, the title and the transport, with the progress as a glowing line along its foot from the
+    // record's left edge. Pointing at the line shows the grabber; a click or a drag seeks. Returns {el, stop()}.
     P.miniPlayer = (host, cls) => {
         const np = el('div', 'pz-nowplaying' + (cls ? ' ' + cls : ''));
-        const rec = el('div', 'pz-np-record'), text = el('div', 'pz-np-text'), bar = el('div', 'pz-progress pz-np-bar'), fillEl = el('div');
-        bar.append(fillEl);
-        // drawn icons: the transport symbols aren't in every font
+        const rec = el('div', 'pz-np-record'), text = el('div', 'pz-np-text');
+        const line = el('div', 'pz-np-line'), fillEl = el('div', 'pz-np-fill'), dot = el('div', 'pz-np-dot');
+        line.append(fillEl, dot);
         const ICON = {
             prev: '<path d="M6 5v14M19 5 9 12l10 7z"/>', next: '<path d="M18 5v14M5 5l10 7-10 7z"/>',
-            playpause: '<path d="M4 5l8 7-8 7z"/><path d="M14 5h2.5v14H14zM19 5h2.5v14H19z"/>', open: '<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/>'
+            playpause: '<path d="M4 5l8 7-8 7z"/><path d="M14 5h2.5v14H14zM19 5h2.5v14H19z"/>', open: '<ellipse cx="6.2" cy="17.6" rx="3.2" ry="2.4" transform="rotate(-22 6.2 17.6)" stroke="none"/><ellipse cx="17.2" cy="15.4" rx="3.2" ry="2.4" transform="rotate(-22 17.2 15.4)" stroke="none"/>'
+                + '<path d="M8.9 16.8V6.4M19.9 14.6V4.2" fill="none" stroke-width="1.9" stroke-linecap="round"/><path d="M8.9 5.9 19.9 3.6v3.4L8.9 9.3z" stroke="none"/>'
         };
         const btn = (icon, aria, go) => {
             const b = P.focusable(el('div', 'pz-np-btn'));
@@ -361,9 +371,19 @@
         const pm = () => T.ctx.nowPlaying();
         const ctl = (fn) => { const n = pm(); if (n && n.player) try { fn(n.player); } catch (e) { /* the player went away */ } };
         const open = btn('open', 'Now playing', () => T.ctx.navigate('#/queue'));
-        np.append(rec, text, bar, btn('prev', 'Previous', () => ctl((p) => p.previousTrack && p.previousTrack())),
-            btn('playpause', 'Play or pause', () => ctl((p) => (p.paused && p.paused() ? p.unpause() : p.pause()))), btn('next', 'Next', () => ctl((p) => p.nextTrack && p.nextTrack())), open);
+        np.append(rec, text, btn('prev', 'Previous', () => ctl((p) => p.previousTrack && p.previousTrack())),
+            btn('playpause', 'Play or pause', () => ctl((p) => (p.paused && p.paused() ? p.unpause() : p.pause()))), btn('next', 'Next', () => ctl((p) => p.nextTrack && p.nextTrack())), open, line);
         host.append(np);
+        let dur = 0, dragging = false;
+        const show = (f) => { const pc = `${Math.max(0, Math.min(1, f)) * 100}%`; fillEl.style.width = pc; dot.style.left = pc; };
+        // seeking: the line (with a taller zone to point at) takes clicks and drags
+        const frac = (e) => { const r = line.getBoundingClientRect(); return (e.clientX - r.left) / r.width; };
+        const seek = (f) => ctl((p) => { if (dur && p.currentTime) p.currentTime(Math.max(0, Math.min(1, f)) * dur); });
+        line.addEventListener('pointerdown', (e) => { if (!dur) return; dragging = true; line.setPointerCapture(e.pointerId); np.classList.add('pz-np-seeking'); show(frac(e)); e.preventDefault(); });
+        line.addEventListener('pointermove', (e) => { if (dragging) show(frac(e)); });
+        const end = (e) => { if (!dragging) return; dragging = false; np.classList.remove('pz-np-seeking'); seek(frac(e)); T.ctx.sound('select'); };
+        line.addEventListener('pointerup', end);
+        line.addEventListener('pointercancel', () => { dragging = false; np.classList.remove('pz-np-seeking'); });
         const tick = () => {
             const n = pm();
             const it = n && n.item;
@@ -374,15 +394,77 @@
             text.textContent = '';
             text.append(el('b', '', it.Name || ''), document.createTextNode(` — ${(it.Artists || [])[0] || it.AlbumArtist || ''}`));
             P.bg(rec, P.posterArt(it, 200));
-            try { const pos = n.player.currentTime ? n.player.currentTime() : 0, dur = n.player.duration ? n.player.duration() : 0; fillEl.style.width = dur ? `${Math.min(100, pos / dur * 100)}%` : '0%'; } catch (e) { fillEl.style.width = '0%'; }
+            let paused = false;
+            try { paused = !!(n.player.paused && n.player.paused()); } catch (e) { /* the player went away */ }
+            np.classList.toggle('pz-np-paused', paused);
+            if (dragging) return;
+            try { const pos = n.player.currentTime ? n.player.currentTime() : 0; dur = (n.player.duration ? n.player.duration() : 0) || 0; show(dur ? pos / dur : 0); } catch (e) { show(0); }
         };
         tick();
-        const timer = setInterval(tick, 1000);
+        const timer = setInterval(tick, 500);
         return { el: np, stop() { clearInterval(timer); np.remove(); } };
     };
 
-    // Music: albums, artists, songs, playlists and genres, with what is playing in a bar under the grid.
-    let nowTimer = null;
+    // ---- "Now playing" beside the name pill on every screen while music plays (9.44); it opens now playing ----
+    // It waits tucked under the name pill: playback starting slides it out (pushing the tabs along), stopping slides it
+    // back. The record spins while the music plays and stands still while it is paused.
+    P.nowPill = (head) => {
+        const b = el('div', 'pz-nowpill');
+        b.setAttribute('aria-label', 'Now playing');
+        const rec = el('span', 'pz-nowpill-rec'), disc = el('span', 'pz-nowpill-disc'), label = el('span', 'pz-nowpill-label'), text = el('span', 'pz-nowpill-text');
+        disc.append(label);
+        rec.append(disc);
+        b.append(rec, el('b', '', '♫ Now playing'), text);
+        b.addEventListener('click', () => { if (b.classList.contains('pz-on')) T.ctx.navigate('#/queue'); });
+        let seen = false, first = true, art = '';
+        const tick = () => {
+            if (b.isConnected) seen = true;
+            else if (seen) { clearInterval(timer); return; }
+            const n = T.ctx.nowPlaying();
+            const it = n && n.item;
+            const on = !!(it && it.MediaType === 'Audio');
+            let paused = false;
+            try { paused = !!(on && n.player.paused && n.player.paused()); } catch (e) { /* the player went away */ }
+            if (on) {
+                text.textContent = [it.Name, (it.Artists || [])[0] || it.AlbumArtist].filter(Boolean).join(' · ');
+                const a = P.posterArt(it, 120) || '';
+                if (a !== art) { art = a; label.style.backgroundImage = a ? `url("${a}")` : ''; }
+            }
+            // how far to tuck it: its own width, so it hides wholly under the name pill. Set without a transition, so
+            // a new title doesn't shove the tabs before the slide begins.
+            if (b.isConnected && !b.classList.contains('pz-on')) {
+                b.classList.add('pz-np-still');
+                b.style.setProperty('--pz-np-w', `${b.offsetWidth}px`);
+                void getComputedStyle(b).marginLeft;
+                if (!first) b.classList.remove('pz-np-still');
+            }
+            if (first && b.isConnected) {
+                // a screen opened while music plays shows it out already; the slide is for playback starting and stopping
+                first = false;
+                b.classList.add('pz-np-still');
+                requestAnimationFrame(() => requestAnimationFrame(() => b.classList.remove('pz-np-still')));
+            }
+            if (on !== b.classList.contains('pz-on')) {
+                b.classList.toggle('pz-on', on);
+                if (on) P.focusable(b);
+                else {
+                    b.removeAttribute('data-icefin-focus');
+                    if (b.classList.contains('icefin-focused')) {
+                        const next = [...head.querySelectorAll('[data-icefin-focus]')].find((x) => x !== b);
+                        if (next) T.ctx.focus(next);
+                    }
+                }
+            }
+            b.classList.toggle('pz-np-paused', paused);
+        };
+        const timer = setInterval(tick, 1000);
+        head.append(b);
+        tick();
+        requestAnimationFrame(tick);
+        return b;
+    };
+
+    // Music: albums, artists, songs, playlists and genres (what is playing shows in the head's Now playing pill).
     const squareGrid = (q, extra) => (s) => Object.assign(posterGrid(q)(s), { shape: 'square', art: (it) => P.posterArt(it, 400),
         focus: (it) => [it.Name, it.AlbumArtist || (it.Artists || [])[0], it.ProductionYear].filter(Boolean).join(' · ') }, extra || {});
     const MUSIC = libraryMenu({
@@ -396,8 +478,6 @@
             { id: 'playlists', label: 'Playlists', grid: squareGrid({ IncludeItemTypes: 'Playlist', MediaTypes: 'Audio' }), empty: 'No playlists yet' },
             { id: 'genres', label: 'Genres', grid: nameGrid('MusicGenres', { ParentId: parent }, (g) => filtered(parent, 'MusicAlbum', 'genre', g)) }
         ],
-        after(F) { nowTimer = P.miniPlayer(F.menu); },
-        unmount() { if (nowTimer) nowTimer.stop(); nowTimer = null; }
     });
 
     // Any other library: its folders and items as they are on disk; folders open in place.
@@ -431,6 +511,17 @@
         let F = null, grid = null, guide = null, guideEl = null;
         const c = () => P.client(), uid = () => P.uid();
         const playChannel = (ch) => P.play(ch, true);
+        // each channel on the page with what comes on next (one request for the page)
+        const withNext = async (r) => {
+            const chans = P.items(r);
+            if (!chans.length) return r;
+            const res = await P.safe(c().getLiveTvPrograms({ UserId: uid(), ChannelIds: chans.map((x) => x.Id).join(','), MinStartDate: new Date().toISOString(), SortBy: 'StartDate',
+                EnableImages: false, EnableUserData: false, EnableTotalRecordCount: false, Limit: 400 }));
+            const next = new Map();
+            for (const p of P.items(res)) if (!next.has(p.ChannelId)) next.set(p.ChannelId, p);
+            for (const ch of chans) ch.pzNext = next.get(ch.Id) || null;
+            return r;
+        };
         const channelCell = (c2, ch) => {
             const now = ch.CurrentProgram;
             c2.classList.add('pz-chan');
@@ -441,14 +532,14 @@
             const tag = ch.ImageTags && ch.ImageTags.Primary;
             if (tag) P.bg(logo, P.img(ch.Id, 'Primary', tag, 200)); else logo.textContent = ch.Name;
             art.append(logo, el('div', 'pz-chan-no', ch.ChannelNumber ? `CH ${ch.ChannelNumber}` : ''), el('div', 'pz-chan-now', now ? now.Name : ch.Name),
-                el('div', 'pz-chan-time', now ? `${P.time(now.StartDate)} – ${P.time(now.EndDate)}` : ''));
+                el('div', 'pz-chan-time', [now ? `${P.time(now.StartDate)} – ${P.time(now.EndDate)}` : '', ch.pzNext ? `Next ${P.time(ch.pzNext.StartDate)} ${ch.pzNext.Name}` : ''].filter(Boolean).join(' · ')));
             if (now) {
                 const s = Date.parse(now.StartDate), e = Date.parse(now.EndDate);
                 art.append(P.progressBar(Math.max(0, Math.min(1, (Date.now() - s) / (e - s || 1)))));
             }
         };
         const tabs = {
-            channels: () => ({ shape: 'wide', fetch: (start, limit) => P.safe(c().getLiveTvChannels({ UserId: uid(), StartIndex: start, Limit: limit, AddCurrentProgram: true, EnableImages: true, ImageTypeLimit: 1, EnableUserData: false, EnableTotalRecordCount: true }))
+            channels: () => ({ shape: 'wide', fetch: (start, limit) => P.safe(c().getLiveTvChannels({ UserId: uid(), StartIndex: start, Limit: limit, AddCurrentProgram: true, EnableImages: true, ImageTypeLimit: 1, EnableUserData: false, EnableTotalRecordCount: true })).then(withNext)
                 .then((r) => ({ items: P.items(r), total: r.TotalRecordCount })),
             art: () => '', decorate: channelCell, name: (ch) => ch.Name, focus: (ch) => [ch.ChannelNumber ? `CH ${ch.ChannelNumber}` : '', ch.CurrentProgram ? ch.CurrentProgram.Name : ch.Name].filter(Boolean).join(' · '),
             select: playChannel, play: playChannel, menu: P.details, empty: 'This server has no Live TV channels' }),
@@ -490,10 +581,23 @@
                 emptyLabel: 'No information',
                 onFocus(p, ch) { F.focusText(p.gap ? ch.name : `${p.title} · ${ch.ch.ChannelNumber ? 'CH ' + ch.ch.ChannelNumber : ch.name} · ${P.time(p.start)} – ${P.time(p.end)}`); },
                 onSelect(p, ch) {
-                    if (p.start <= Date.now() && p.end > Date.now()) playChannel(ch.ch);
-                    else T.ctx.navigate(`#/details?id=${p.id}&serverId=${P.sid()}`);
+                    // Plaza's programme card: watch, record, record the series (9.44); a gap in the guide just tunes in
+                    if (p.gap || !p.id || !P.programmeCard) { playChannel(ch.ch); return; }
+                    P.programmeCard(p.id, ch.ch);
                 }
             });
+            // the day the guide shows, over the channels (it follows the guide past midnight)
+            const day = el('div', 'pz-guide-day');
+            guideEl.append(day);
+            const head = guideEl.querySelector('.icefin-guide-times');
+            const dayOf = () => {
+                const t = +(head && head.getAttribute('data-start')) || Date.now();
+                const d = new Date(t), today = new Date();
+                const n = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 864e5);
+                day.textContent = n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            };
+            dayOf();
+            if (head) new MutationObserver(dayOf).observe(head, { attributes: true, attributeFilter: ['data-start'] });
         }
         function show(id, focus) {
             if (grid) { grid.destroy(); grid = null; }
@@ -584,7 +688,6 @@
                 if (!F) return;
                 const start = (nextUp && seasons.find((s) => s.Id === nextUp.SeasonId)) || seasons[0];
                 const tabs = seasons.map((s) => ({ id: s.Id, label: s.IndexNumber === 0 ? 'Specials' : s.Name, s }));
-                tabs.push({ id: 'details', label: 'Details', cls: 'pz-tab-sort', go: () => P.details(seriesItem) });
                 F.setTabs(tabs, start ? start.Id : null, (sid) => { const t = tabs.find((x) => x.id === sid); if (t && t.s) season(t.s, false); });
                 F.root.setAttribute('data-pz-seasons', String(seasons.length));
                 if (start) await season(start, true); else list.append(el('div', 'pz-empty', 'No seasons yet'));
@@ -815,12 +918,33 @@
                 { id: 'shuffle', label: 'Shuffle', cls: 'pz-tab-action', go: () => playAll(q, true) }
             ];
         },
-        after(F, parent, p) {
+        after(F, parent, p, screen) {
+            // The A–Z rail (the walk's mock-up): a letter jumps the list to the first title from it; shown while sorted A to Z
+            const rail = el('div', 'pz-az');
+            const q = listQuery(p);
+            for (const ch of ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']) {
+                const b = P.focusable(el('div', 'pz-az-key', ch));
+                b.setAttribute('aria-label', ch === '#' ? 'Numbers and symbols' : `Titles from ${ch}`);
+                b.addEventListener('icefin-focus', () => F.focusText(ch === '#' ? 'The start of the list' : `Titles from ${ch}`));
+                b.addEventListener('click', async () => {
+                    if (!screen.grid) return;
+                    let i = 0;
+                    if (ch !== '#') {
+                        const r = await P.safe(P.client().getItems(P.uid(), Object.assign({ Recursive: true, Limit: 0, EnableTotalRecordCount: true, NameLessThan: ch }, withSort(screen.sort(), q))));
+                        i = r.TotalRecordCount || 0;
+                    }
+                    if (screen.grid) screen.grid.goToIndex(i);
+                });
+                rail.append(b);
+            }
+            F.body.append(rail);
+            screen.rail = rail;
             // The pill shows the genre's, studio's or person's own name.
             const id = p.get('genreId') || p.get('musicGenreId') || p.get('studioId') || p.get('personId') || p.get('artistId') || p.get('albumArtistId') || p.get('parentId');
             if (id && !p.get('name')) P.safe(P.client().getItem(P.uid(), id)).then((it) => { if (it && it.Name) F.setName(it.Name); });
             else if (p.get('tag')) F.setName(p.get('tag'));
-        }
+        },
+        shown(screen) { if (screen.rail) { const x = screen.sort(); screen.rail.hidden = !(x.id === 'name' && x.SortOrder === 'Ascending'); } }
     });
 
     // Playlists (#/playlists): each as a square of its art with a count; the last cell makes a new one.
@@ -872,11 +996,10 @@
         if (mediaType) q.MediaTypes = mediaType;
         const base = itemsQuery(withSort(s, q));
         return {
-            shape: 'square',
+            shape: 'quilt', label: true,
             // one more cell than the server has: "New playlist", at the end
             fetch: async (start, limit) => { const r = await base(start, limit); const total = (r.total || 0) + 1; const items = r.items.slice(); if (start + items.length === total - 1 && items.length < limit) items.push({ Id: '', pzNew: true, Name: 'New playlist' }); return { items, total }; },
             art: (it) => (it.pzNew ? '' : P.posterArt(it, 400)), name: (it) => it.Name,
-            caption: (it) => (it.pzNew ? '' : `${it.ChildCount || 0} item${it.ChildCount === 1 ? '' : 's'}`),
             decorate: (c, it) => { if (it.pzNew) c.classList.add('pz-cell-new'); else if (it.ChildCount != null) c.append(el('div', 'pz-count', String(it.ChildCount))); },
             focus: (it) => (it.pzNew ? 'New playlist' : `${it.Name} · ${it.ChildCount || 0} items`),
             select: (it, c) => { if (it.pzNew) { const F = PLAYLISTS.frame(); plPanel = newPlaylist(F, () => PLAYLISTS.grid && PLAYLISTS.grid.relayout()); return; } P.details(it); },
@@ -969,7 +1092,69 @@
         ]
     });
 
-    const VIEWS = { library: () => LIBRARY, items: () => ITEMS, series, resume, nextup: () => NEXTUP };
+    // ---- You (9.44): the user's own pages, and the account: switch user or server, sign out ----
+    function you() {
+        let F = null;
+        return {
+            async mount(root) {
+                ui.pointerFirst(true);
+                F = frame(root, { view: 'you', kind: 'tvshows', name: 'You', hints: 'Ⓐ Open · Ⓑ Back' });
+                const c = P.client(), uid = P.uid();
+                let u = {};
+                try { u = await c.getCurrentUser(); } catch (e) { u = {}; }
+                if (!F) return;
+                const me = el('div', 'pz-you-me');
+                const pic = el('div', 'pz-you-pic');
+                // a user's picture is a user image (Users/{id}/Images), not an item image
+                const face = u.PrimaryImageTag && c.getUserImageUrl ? c.getUserImageUrl(uid, { type: 'Primary', tag: u.PrimaryImageTag, maxWidth: 300 }) : '';
+                if (face) P.bg(pic, face); else pic.textContent = (u.Name || '?').charAt(0).toUpperCase();
+                me.append(pic, el('div', 'pz-you-name', u.Name || ''), el('div', 'pz-you-server', (c.serverInfo && c.serverInfo() && c.serverInfo().Name) || ''));
+                const list = el('div', 'pz-you-rows');
+                const row = (label, sub, go, cls) => {
+                    const r = P.focusable(el('div', 'pz-setrow pz-you-row' + (cls ? ' ' + cls : '')));
+                    r.append(el('span', 'pz-setrow-label', label));
+                    if (sub) r.append(el('span', 'pz-sheet-row-sub', sub));
+                    r.addEventListener('click', go);
+                    r.addEventListener('icefin-focus', () => F && F.focusText(label));
+                    list.append(r);
+                    return r;
+                };
+                const to = (route) => () => T.ctx.navigate(route);
+                row('Profile', 'Picture, password', to(`#/userprofile?userId=${uid}`));
+                row('Display', 'Language, date and time', to(`#/mypreferencesdisplay?userId=${uid}`));
+                row('Home', 'What the home shows', to(`#/mypreferenceshome?userId=${uid}`));
+                row('Playback', 'Languages, quality', to(`#/mypreferencesplayback?userId=${uid}`));
+                row('Subtitles', 'Language, look', to(`#/mypreferencessubtitles?userId=${uid}`));
+                row('Controls', 'Controllers and remotes', to(`#/mypreferencescontrols?userId=${uid}`));
+                row('Quick Connect', 'Sign in another device', to('#/quickconnect'));
+                if (T.ctx.signOut) row('Switch user', 'Another account on this server', () => T.ctx.signOut());
+                if (T.ctx.selectServer) row('Switch server', 'Another server', () => T.ctx.selectServer());
+                if (T.ctx.signOut && P.sheet) row('Sign out', '', () => P.sheet.show({
+                    title: 'Sign out', kind: 'folder', danger: true,
+                    render(body) {
+                        body.append(el('div', 'pz-sheet-question', `Sign out of ${u.Name || 'your account'}?`), el('div', 'pz-sheet-note', 'This device forgets the sign-in; you choose who signs in next.'));
+                        const f = el('div', 'pz-panel-foot');
+                        const keep = P.focusable(el('div', 'pz-tab pz-tab-on', 'Stay signed in'));
+                        keep.addEventListener('click', () => P.sheet.close());
+                        const out = P.focusable(el('div', 'pz-tab', 'Sign out'));
+                        out.addEventListener('click', () => { P.sheet.close(); T.ctx.signOut(); });
+                        f.append(keep, out);
+                        body.append(f);
+                    }
+                }), 'pz-you-danger');
+                const box = el('div', 'pz-you');
+                box.append(me, list);
+                F.body.append(box);
+                const first = list.querySelector('[data-icefin-focus]');
+                if (first) T.ctx.focus(first);
+            },
+            onAction(a, ctx) { P.sawAction(); return common(a, ctx); },
+            onBack() { goBack(); return true; },
+            unmount() { if (F) F.stop(); ui.pointerFirst(false); F = null; }
+        };
+    }
+
+    const VIEWS = { library: () => LIBRARY, items: () => ITEMS, series, resume, nextup: () => NEXTUP, you };
     P.menus = { screen: (name) => (VIEWS[name] || VIEWS.library)() };
     T.registerScreen('#/movies', MOVIES);
     T.registerScreen('#/tv', SHOWS);
