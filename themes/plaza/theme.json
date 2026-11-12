@@ -13,7 +13,12 @@
     "itemmenu.js",
     "details.js",
     "settings.js",
-    "stock.js"
+    "playon.js",
+    "signin.js",
+    "prefs.js",
+    "stock.js",
+    "music.js",
+    "player.js"
   ],
   "sounds": {
     "focus": "sounds/focus.wav",
