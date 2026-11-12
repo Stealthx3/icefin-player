@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """theme_sync.py — per-user theme choice, the Client Settings picker and UI sounds (PLAN 8.5). Lab guests only.
+Account sync is opt-in (Client Settings -> Theme -> Sync Theme With Account, off by default): off, each device keeps
+its own theme; on, the newest choice wins across devices.
 
 Two app instances with separate profiles act as two devices of the same user:
   1. device A picks a theme: it is saved to the server's DisplayPreferences (client icefin-player, icefin.theme);
@@ -89,18 +91,39 @@ def main():
         p.setdefault("CustomPrefs", {})["icefin.theme"] = json.dumps({"schema": 1, "theme": "", "preset": "", "timestamp": 1})
         srv.call("POST", f"/DisplayPreferences/usersettings?{q}", p)
 
+        def sync_on(page):
+            page.eval("new Promise(r => window.api.settings.setValue('theme', 'sync', true, () => r(true)))")
+            time.sleep(2.5)
+            page.eval("window.icefinThemeSync.idle().then(() => true)")
+
         appA, pa = start("A")
         check("A: sync knows the user", pa.eval("window.icefinThemeSync.user()") == uid)
+        check("Sync Theme With Account is off by default", pa.eval("new Promise(r => window.api.settings.value('theme', 'sync', r))") is False)
         check("A: set lab-contrast", call(pa, "setActiveTheme", "lab-contrast", "") is True)
         settle(pa)
         sc = server_choice()
-        check("A's choice saved to the server", sc and sc.get("theme") == "lab-contrast" and sc.get("timestamp", 0) > 1, json.dumps(sc))
+        check("with sync off, the choice stays on this device", sc and sc.get("theme") == "" and sc.get("timestamp") == 1, json.dumps(sc))
+        sync_on(pa)
+        sc = server_choice()
+        check("turning sync on saves this device's newer choice to the server", sc and sc.get("theme") == "lab-contrast" and sc.get("timestamp", 0) > 1, json.dumps(sc))
         stop(appA)
 
         appB, pb = start("B")
         settle(pb)
-        check("B (fresh device) gets the server choice", pb.eval("window.api && (window.icefinTheme.active() || {}).id") == "lab-contrast"
-              or call(pb, "activeTheme") == "lab-contrast", f"active={call(pb, 'activeTheme')}")
+        check("B (a second device, sync off) keeps its own theme", call(pb, "activeTheme") == "", f"active={call(pb, 'activeTheme')}")
+        check("B: its own theme while A's stays on the server", call(pb, "setActiveTheme", "lab-screens", "") is True)
+        settle(pb)
+        check("B's own choice doesn't reach the server", (server_choice() or {}).get("theme") == "lab-contrast", json.dumps(server_choice()))
+        call(pb, "setActiveTheme", "", "")
+        settle(pb)
+        # Give the server copy the newest timestamp again, so B takes it when B turns sync on.
+        p = srv.call("GET", f"/DisplayPreferences/usersettings?{q}")
+        sc = json.loads(p["CustomPrefs"]["icefin.theme"])
+        sc["timestamp"] = int(time.time() * 1000) + 1  # newer than B's last change, older than its next pick
+        p["CustomPrefs"]["icefin.theme"] = json.dumps(sc)
+        srv.call("POST", f"/DisplayPreferences/usersettings?{q}", p)
+        sync_on(pb)
+        check("B with sync on gets the account's theme", call(pb, "activeTheme") == "lab-contrast", f"active={call(pb, 'activeTheme')}")
         check("B: pick preset green", call(pb, "setActiveTheme", "lab-contrast", "green") is True)
         settle(pb)
         check("server has B's newer choice", (server_choice() or {}).get("preset") == "green")

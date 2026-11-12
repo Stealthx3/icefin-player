@@ -82,6 +82,12 @@
         "display_name": "Theme Sounds",
         "help": "Play the theme's interface sounds. They are always silent while a movie's audio goes straight to your receiver (passthrough).",
         "default": true
+      },
+      {
+        "value": "sync",
+        "display_name": "Sync Theme With Account",
+        "help": "Keep the theme, colour scheme and preset the same on every Icefin device signed in to this account: a change here appears on the others, and theirs here. Off, this device keeps its own theme, so several devices on one account can use different themes at the same time.",
+        "default": false
       }
     ]
   },
