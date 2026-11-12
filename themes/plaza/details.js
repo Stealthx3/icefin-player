@@ -27,7 +27,9 @@
         const clock = el('span', 'pz-mclock');
         name.append(el('span', 'pz-mname-text', NAME[item.Type] || 'Details'), clock);
         const tabs = el('div', 'pz-tabs pz-d-tabs');
-        head.append(name, tabs);
+        head.append(name);
+        if (P.nowPill) P.nowPill(head);
+        head.append(tabs);
         const now = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         clock.textContent = now();
         const timer = setInterval(() => { if (!clock.isConnected) { clearInterval(timer); return; } clock.textContent = now(); }, 15000);
@@ -124,10 +126,25 @@
     const screen = T.ui.details.screen({ layout: 'banner', onReady });
     const onAction = screen.onAction;
     screen.onAction = function (action, ctx) {
-        if (action === 'menu' && P.itemMenu) {
+        const self = this;
+        if (action === 'menu' && P.itemMenu && !document.querySelector('.icefin-d-moving')) {
             const f = ctx.focused();
             const root = document.getElementById('icefin-theme-root');
-            if (!(f && f.classList.contains('icefin-d-track') && f.closest('[data-icefin-reorder]')) && !document.querySelector('.icefin-d-moving') && root && root.plazaItem) { P.itemMenu(root.plazaItem); return true; }
+            const page = root && root.plazaItem;
+            if (page) {
+                // a playlist's track: its menu offers to move it (the engine's lift) or remove it from the playlist
+                if (f && f.classList.contains('icefin-d-track') && f.closest('[data-icefin-reorder]') && f.icefinTrack) {
+                    P.itemMenu(f.icefinTrack, { playlist: page, playlistItemId: f.icefinTrack.PlaylistItemId, move: () => onAction.call(self, 'menu', ctx), removed: () => f.remove() });
+                    return true;
+                }
+                // any other track or card: that item's own menu (inside a collection, with Remove from this collection)
+                if (f && (f.classList.contains('icefin-d-track') || f.classList.contains('icefin-d-card')) && f.dataset.id) {
+                    P.itemMenu({ Id: f.dataset.id }, page.Type === 'BoxSet' ? { collection: page, removed: () => f.remove() } : {});
+                    return true;
+                }
+                P.itemMenu(page);
+                return true;
+            }
         }
         return onAction ? onAction.call(this, action, ctx) : false;
     };
