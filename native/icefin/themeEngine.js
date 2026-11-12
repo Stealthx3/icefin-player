@@ -185,7 +185,12 @@
         // "?icefin=stock" on any route shows jellyfin-web's own page, so plugin UI a themed screen replaces (home
         // sections, for example) stays one step away.
         const stock = /[?&]icefin=stock\b/.test(location.hash);
-        const screen = pkg && !stock ? screens[path] : null;
+        let screen = pkg && !stock ? screens[path] : null;
+        // A screen can turn its route down for now (the theme's player controls, when this playback session fell back
+        // to jellyfin-web's own: D30); the route is jellyfin-web's until it says otherwise and the engine reroutes.
+        if (screen && typeof screen.declines === 'function') {
+            try { if (screen.declines()) screen = null; } catch (e) { screen = null; }
+        }
         // Same screen, same query: nothing to do. A new query (another item's details, another library's wall) mounts
         // the screen again for it.
         if (current && current.route === path && current.screen === screen && current.hash === location.hash) return;
@@ -502,7 +507,11 @@
             addActionHook(fn) { actionHooks.push(fn); return () => { actionHooks = actionHooks.filter((f) => f !== fn); }; },
             onReset(fn) { resetHooks.push(fn); },
             // After every routing decision: {route, screen (a themed screen is up), theme (one is active)}
-            onRoute(fn) { routeHooks.push(fn); }
+            onRoute(fn) { routeHooks.push(fn); },
+            // Decide the current route again (a screen's declines() changed)
+            reroute: () => route_(),
+            // While a theme's scripts load: register a screen on the theme's behalf (capabilities that own a route)
+            registerScreen: (path, screen) => window.icefinTheme.registerScreen(path, screen)
         },
         stoodDown: () => !!window.icefinPluginRuntime,
         screens: () => Object.keys(screens)
