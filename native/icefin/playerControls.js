@@ -322,6 +322,19 @@
         }
     }, 500);
 
+    function transparent(on) {
+        const h = document.documentElement;
+        if (!h) return;
+        h.toggleAttribute('data-icefin-player-up', on);
+        if (on && !document.getElementById('icefin-player-style')) {
+            const st = document.createElement('style');
+            st.id = 'icefin-player-style';
+            st.textContent = 'html[data-icefin-player-up], html[data-icefin-player-up] body { background: transparent !important; }'
+                + ' html[data-icefin-player-up] body::before, html[data-icefin-player-up] body::after { display: none !important; }';
+            (document.head || h).append(st);
+        }
+    }
+
     const screen = {
         declines: () => !spec || !!(session && session.fallback),
         mount(root, ctx) {
@@ -330,6 +343,10 @@
             root.setAttribute('data-icefin-player', '');
             root.style.background = 'transparent';
             root.style.overflow = 'hidden';
+            // The video is under the web view: nothing of the document may paint over it while the theme's controls
+            // are up. jellyfin-web's video page, which normally keeps its own ground clear, is hidden under the screen,
+            // so the document's own background (and a theme's body ground) would show instead of the picture.
+            transparent(true);
             mounted = { el: root, timer: setInterval(tick, 250) };
             last = '';
             try {
@@ -342,6 +359,7 @@
             tick();
         },
         unmount() {
+            transparent(false);
             if (!mounted) return;
             clearInterval(mounted.timer);
             mounted = null;
