@@ -349,3 +349,73 @@ html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !import
 .mc-lib-info-facts { font-size: 2.5vh; opacity: 0.78; margin-top: 0.6vh; }
 .mc-count { position: absolute; right: 4.06vw; bottom: 3.6vh; font-size: 2.8vh; opacity: 0.7; }
 html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-lib-tile { transition-duration: 0ms !important; }
+
+/* ---- Live TV (tv.js, 9.46): the guide on ui.guideGrid, the programme under it with the channel's picture ---- */
+#icefin-theme-root[data-mc="livetv"] { overflow: clip !important; }
+.mc-tv-body { position: absolute; left: 21.67vh; right: 4.06vw; top: 21vh; bottom: 3vh; overflow: hidden; }
+.mc-tv-body[data-tab="guide"] { left: 4.06vw; }
+.mc-tv-guide { position: relative; height: 54vh; }
+.mc-tv-guide .icefin-guide-channel { background: rgb(var(--icefin-color-glass-channel) / 0.05); font-size: 2.4vh; display: flex; align-items: center; gap: 1.2vh; padding-left: 1vh; }
+.mc-tv-chno { font-weight: 400; opacity: 0.7; min-width: 3.5vh; }
+.mc-tv-guide .icefin-guide-cell { background: rgb(var(--icefin-color-accentStrong-channel) / 0.35); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.15); font-size: 2.4vh; font-weight: 300;
+  padding: 0 1.4vh; display: flex; align-items: center; gap: 1vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-cell.icefin-focused {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%);
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); outline: none; }
+.mc-tv-guide .icefin-guide-now { background: var(--icefin-color-focus); box-shadow: 0 0 1.1vh var(--icefin-color-focus); width: 0.28vh; }
+.mc-tv-rec { width: 1.4vh; height: 1.4vh; border-radius: 50%; background: var(--icefin-color-error); display: inline-block; flex: none; }
+.mc-tv-rec.series { width: 2.4vh; border-radius: 0.7vh; }
+.mc-tv-under { display: flex; gap: 2.8vh; margin-top: 2.5vh; }
+.mc-tv-inset { width: 33vh; height: 18.8vh; flex: none; background: var(--icefin-color-surface) center / contain no-repeat; box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.5); }
+.mc-tv-info-title { font-size: 3.4vh; }
+.mc-tv-info-when { font-size: 2.2vh; opacity: 0.75; margin-top: 0.4vh; }
+.mc-tv-info-text { font-size: 2.2vh; opacity: 0.88; margin-top: 0.8vh; line-height: 1.45; max-height: 6.4vh; overflow: hidden; }
+.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; scrollbar-width: none; }
+.mc-tv-channel, .mc-tv-rec-tile { cursor: pointer; outline: none; opacity: 0.85; transition: transform 180ms; }
+.mc-tv-logo, .mc-tv-rec-art { position: relative; height: 14.6vh; background: rgb(var(--icefin-color-glass-channel) / 0.06) center / contain no-repeat; display: flex; align-items: center; justify-content: center; font-size: 2.4vh; border-radius: 0.14vh; }
+.mc-tv-rec-art { background-size: cover; }
+.mc-tv-channel.icefin-focused, .mc-tv-rec-tile.icefin-focused { transform: scale(1.08); opacity: 1; }
+.mc-tv-channel.icefin-focused .mc-tv-logo, .mc-tv-rec-tile.icefin-focused .mc-tv-rec-art { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-tv-channel-name, .mc-tv-rec-name { font-size: 2.3vh; margin-top: 0.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-tv-channel-now, .mc-tv-rec-when { font-size: 1.9vh; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-tv-new { position: absolute; right: 0.8vh; top: 0.8vh; font-style: normal; font-size: 1.6vh; font-weight: 600; padding: 0.1vh 0.8vh; background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); border-radius: 0.28vh; }
+.mc-tv-list { max-width: 64vw; overflow: auto; max-height: 100%; scrollbar-width: none; }
+.mc-tv-time { width: 14vh; font-size: 2.3vh; opacity: 0.75; flex: none; }
+
+/* ---- Search (browse.js): the field and keypad at the left, results grouped at the right ---- */
+.mc-search-left { position: absolute; left: 21.67vh; top: 16.7vh; width: 42vh; }
+.mc-search-label { display: block; font-size: 2.5vh; opacity: 0.75; margin-bottom: 1.1vh; }
+.mc-search-input { width: 100%; height: 6.9vh; box-sizing: border-box; padding: 0 1.9vh; font: inherit; font-size: 3.3vh; color: var(--icefin-color-text); outline: none;
+  background: rgb(var(--icefin-color-glass-channel) / 0.08); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.5); border-radius: 0; }
+.mc-search-input.icefin-focused, .mc-search-input:focus { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass); box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); }
+.mc-keypad { display: grid; grid-template-columns: repeat(3, 9.2vh); gap: 1.1vh; margin-top: 3vh; }
+.mc-key { height: 7.2vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font: inherit; color: var(--icefin-color-text); cursor: pointer;
+  background: rgb(var(--icefin-color-glass-channel) / 0.06); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.2); border-radius: 0.28vh; }
+.mc-key-main { font-size: 3vh; line-height: 1; }
+.mc-key small { font-size: 1.5vh; letter-spacing: 0.06em; opacity: 0.6; margin-top: 0.3vh; text-transform: uppercase; }
+.mc-key.icefin-focused, .mc-key:hover { background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96), rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96));
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); outline: none; }
+.mc-search-results { position: absolute; left: calc(21.67vh + 42vh + 6vh); right: 4.06vw; top: 16.4vh; bottom: 4vh; overflow: auto; scrollbar-width: none; }
+
+/* ---- Favourites (browse.js): a row per kind; the current row bright, the others dim ---- */
+#icefin-theme-root[data-mc="favorites"] { overflow: clip !important; }
+.mc-fav { position: absolute; left: 21.67vh; right: 0; top: 16vh; bottom: 0; overflow: auto; scrollbar-width: none; padding-bottom: 20vh; }
+.mc-fav-row { display: flex; align-items: center; gap: 2vh; min-height: 22vh; opacity: 0.55; transition: opacity 200ms; }
+.mc-fav-row.current { opacity: 1; }
+.mc-fav-title { width: 26vh; flex: none; font-size: 4.2vh; }
+.mc-fav-clip { flex: 1; overflow: hidden; padding: 2.5vh 1.5vh; }
+.mc-fav-strip { display: flex; gap: 2.2vh; transition: transform 300ms cubic-bezier(.2,.7,.2,1); width: max-content; }
+.mc-fav-strip .mc-lib-art { transform-origin: center; }
+.mc-fav-strip.mc-lib-poster .mc-lib-art { width: 12.5vh; height: 18.8vh; }
+.mc-fav-strip.mc-lib-square .mc-lib-art { width: 14.5vh; height: 14.5vh; }
+.mc-fav-strip.mc-lib-wide .mc-lib-art { width: 24vh; height: 13.5vh; }
+.mc-fav-strip .mc-lib-name { font-size: 2vh; max-width: 18vh; }
+/* the guide's geometry (ui.guideGrid leaves sizes to the theme): the canvas's 50 px rows and 150 px channel column at 720 */
+.mc-tv-guide .icefin-guide-times { position: relative; height: 4.7vh; margin-left: 21vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-time { top: 0; bottom: 0; padding-left: 0.8vh; line-height: 4.7vh; font-size: 2.2vh; opacity: 0.8; }
+.mc-tv-guide .icefin-guide-row { display: flex; height: 6.9vh; margin-bottom: 0.42vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-channel { width: 20.6vh; flex: none; margin-right: 0.42vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-lane { flex: 1; position: relative; }
+.mc-tv-guide .icefin-guide-cell { height: 100%; }
+.mc-tv-guide .icefin-guide-now { top: 4.7vh; bottom: 0; }
+.mc-tv-guide { height: 54.5vh; }

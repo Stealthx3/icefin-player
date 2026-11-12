@@ -10,6 +10,8 @@
     "start.js",
     "wall.js",
     "library.js",
+    "browse.js",
+    "tv.js",
     "details.js",
     "player.js"
   ],
