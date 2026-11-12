@@ -111,6 +111,20 @@
         "$ref": "#/$defs/relPath"
       }
     },
+    "music": {
+      "type": "object",
+      "description": "Theme music (9.33): Ogg Vorbis, Opus or WAV inside the package. The startup jingle plays once per run of the app, the ambient piece loops while nothing plays, jingles play from the theme's scripts (ctx.music.jingle).",
+      "additionalProperties": false,
+      "properties": {
+        "startup": { "$ref": "#/$defs/relPath" },
+        "ambient": { "$ref": "#/$defs/relPath" },
+        "jingles": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z0-9][a-z0-9-]{0,31}$" },
+          "additionalProperties": { "$ref": "#/$defs/relPath" }
+        }
+      }
+    },
     "backdrop": {
       "type": "object",
       "required": [

@@ -56,6 +56,12 @@ public:
   Q_INVOKABLE void playSound(const QString& event);
   // Diagnostics for the settings page and tests: {played, suppressed, last, reason}.
   Q_INVOKABLE QVariantMap soundState() const { return m_soundState; }
+  // Theme music (9.33): {jingles, ambient, volume 0..1, muted}. Muted during passthrough and exclusive playback, as the
+  // interface sounds; the web runtime also keeps music off while anything plays. musicStateChanged on any change.
+  Q_INVOKABLE QVariantMap musicState() const;
+  // True once per run of the app: the first themed screen plays the theme's startup jingle; later loads (sign-in, a
+  // theme change, a page reload) don't.
+  Q_INVOKABLE bool claimStartup() { const bool first = !m_startupClaimed; m_startupClaimed = true; return first; }
   Q_INVOKABLE QVariantMap tokens() const;  // resolved tokens of the active theme; empty when off
   Q_INVOKABLE QString stylesheet() const;  // CSS for the page; empty when off
   Q_INVOKABLE QStringList lastErrors() const { return m_errors; }
@@ -115,6 +121,7 @@ Q_SIGNALS:
   void installFinished(const QVariantMap& result);
   void packagesChanged();
   void classicChanged(bool on);
+  void musicStateChanged();
 
 private:
   ThemeComponent() = default;
@@ -123,6 +130,7 @@ private:
   void updateChoices();
   bool trusted(const Package& p) const;
   QMap<QString, Package> m_packages;
+  bool m_startupClaimed = false;
   QString m_active, m_preset, m_colorScheme;
   bool m_classic = false;
   TokenMap resolveFor(const Package& p, const QString& preset, const QString& scheme, QStringList* errs) const;
