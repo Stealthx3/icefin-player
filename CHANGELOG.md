@@ -9,6 +9,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - A playlist's items can be moved on its details screen, with a controller (Menu, then up or down) or the mouse, in every theme.
 - Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
 
+### Fixed
+- Leaving full screen now tells the web client and media controls (MPRIS) the window is windowed again; the full-screen state used to stay on after the first time.
+
 ### Changed
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
 
