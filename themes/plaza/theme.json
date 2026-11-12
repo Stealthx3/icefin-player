@@ -10,7 +10,9 @@
     "art.js",
     "plaza.js",
     "menus.js",
+    "itemmenu.js",
     "details.js",
+    "settings.js",
     "stock.js"
   ],
   "sounds": {
