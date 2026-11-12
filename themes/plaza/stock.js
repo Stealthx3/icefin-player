@@ -43,6 +43,8 @@
                 b.type = 'button';
                 b.tabIndex = -1;
                 b.addEventListener('click', () => {
+                    // Plaza's own card where the engine has Play on and Watch together (9.44), else jellyfin-web's menu
+                    if (P.playOn && P.playOn(/together/i.test(label) ? 'together' : 'devices')) { T.ctx.sound('select'); return; }
                     const t = [...document.querySelectorAll('.skinHeader button, header button')].find((x) => re.test(`${x.className} ${x.getAttribute('aria-label') || ''} ${x.getAttribute('title') || ''}`));
                     if (t) { T.ctx.sound('select'); t.click(); } else T.ctx.sound('error');
                 });
