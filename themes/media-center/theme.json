@@ -7,11 +7,13 @@
   "styles": "styles.css",
   "scripts": [
     "kit.js",
+    "account.js",
     "start.js",
     "wall.js",
     "library.js",
     "browse.js",
     "tv.js",
+    "np.js",
     "details.js",
     "player.js"
   ],
