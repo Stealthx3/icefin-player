@@ -35,6 +35,26 @@ static void reserveFor(const Output& out, Backend backend)
   if (!r->acquire()) qWarning().noquote() << "Icefin audio: could not reserve card" << out.card << "-" << r->lastError();
 }
 
+QVariantMap selectedAudioTrack(const QVariant& aid, const QVariantMap& current, const QVariantList& trackList)
+{
+  if (!current.value("codec").toString().isEmpty()) return current;
+  // In on_preloaded the aid upstream has just set (reselectStream) isn't in current-tracks yet (found in the Virtual AV
+  // tier, PLAN 3.9): take the track from track-list by that id, or the selected / first audio track for "auto".
+  const QString a = aid.toString();
+  if (a == "no" || a == "false") return {};
+  bool numeric = false;
+  const int id = a.toInt(&numeric);
+  QVariantMap first;
+  for (const QVariant& v : trackList) {
+    const QVariantMap t = v.toMap();
+    if (t.value("type").toString() != "audio") continue;
+    if (numeric) { if (t.value("id").toInt() == id) return t; continue; }
+    if (t.value("selected").toBool()) return t;
+    if (first.isEmpty()) first = t;
+  }
+  return numeric ? QVariantMap() : first;
+}
+
 void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCodecs, bool hdmiDevice)
 {
   {
@@ -42,13 +62,14 @@ void applyForCurrentTrack(MpvController* mpv, const QStringList& passthroughCode
     const auto chosen = backendForSetting(SettingsComponent::Get().value(SETTINGS_SECTION_AUDIO, "backend").toString());
     reserveFor(o, o.backend ? *o.backend : chosen.value_or(Backend::PipeWire));  // reservation is independent of passthrough
   }
-  const QString codec = mpv->getProperty("current-tracks/audio/codec").toString();
+  const QVariantMap track = selectedAudioTrack(mpv->getProperty("aid"), mpv->getProperty("current-tracks/audio").toMap(),
+                                              mpv->getProperty("track-list").toList());
+  const QString codec = track.value("codec").toString();
   if (codec.isEmpty() || passthroughCodecs.isEmpty()) {  // no audio, or passthrough off: upstream behaviour
     refreshBitstream(mpv, false, codec.isEmpty() ? "no audio track" : "passthrough off");
     return;
   }
-  Track t{codec, mpv->getProperty("current-tracks/audio/codec-profile").toString(),
-          mpv->getProperty("current-tracks/audio/demux-channel-count").toInt()};
+  Track t{codec, track.value("codec-profile").toString(), track.value("demux-channel-count").toInt()};
   if (t.channels <= 0) t.channels = 2;
 
   QSet<Codec> user;

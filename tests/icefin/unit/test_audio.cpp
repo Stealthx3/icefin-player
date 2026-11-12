@@ -1,6 +1,7 @@
 // Unit tests for Icefin's ELD parser, per-track passthrough decision, per-device delay and volume routing (PLAN 3.2, 3.3, 3.7).
 #include <QtTest>
 #include <QFile>
+#include "icefin/audio/AudioPolicy.h"
 #include "icefin/audio/Eld.h"
 #include "icefin/audio/Passthrough.h"
 #include "icefin/audio/AudioOutput.h"
@@ -43,6 +44,11 @@ private slots:
     auto sb = fixture("soundbar_eac3.txt");
     QVERIFY(sb && sb->supports(Codec::EAC3) && !sb->supports(Codec::TrueHD));
     QCOMPARE(sb->codecs.size(), 2);  // AAC is ignored
+    QCOMPARE(sb->maxRate, 48000);      // what the kernel lets the HDMI PCM open (3.9)
+    QCOMPARE(sb->maxChannels, 6);
+    auto full = fixture("receiver_full.txt");
+    QCOMPARE(full->maxRate, 192000);
+    QCOMPARE(full->maxChannels, 8);
   }
   void standbyKeepsLastKnown()
   {
@@ -90,7 +96,10 @@ private slots:
     QTest::newRow("dts-hd ma on pulseaudio -> core") << "dts" << "DTS-HD MA" << 8 << "receiver_full.txt" << PA << CORE << "dts" << 0;
     QTest::newRow("dts-hd on soundbar -> pcm") << "dts" << "DTS-HD MA" << 6 << "soundbar_eac3.txt" << PW << PCM << "" << 2;
     QTest::newRow("dts plain full") << "dts" << "DTS" << 6 << "receiver_full.txt" << PW << PT << "dts" << 0;
-    QTest::newRow("eac3 soundbar") << "eac3" << "" << 6 << "soundbar_eac3.txt" << PA << PT << "eac3" << 0;
+    // The soundbar lists E-AC-3 but no rate above 48 kHz: the kernel can't open E-AC-3's 192 kHz carrier (3.9).
+    QTest::newRow("eac3 soundbar -> pcm (48 kHz ELD)") << "eac3" << "" << 6 << "soundbar_eac3.txt" << PA << PCM << "" << 2;
+    QTest::newRow("eac3 full receiver") << "eac3" << "" << 6 << "receiver_full.txt" << PW << PT << "eac3" << 0;
+    QTest::newRow("ac3 soundbar") << "ac3" << "" << 6 << "soundbar_eac3.txt" << PW << PT << "ac3" << 0;
     QTest::newRow("ac3 tv") << "ac3" << "" << 6 << "tv_basic.txt" << PW << PT << "ac3" << 0;
     QTest::newRow("ac3 jack -> pcm") << "ac3" << "" << 6 << "receiver_full.txt" << JK << PCM << "" << 6;
     QTest::newRow("no eld trusts user") << "dts" << "DTS-HD MA" << 8 << "" << AL << PT << "dts-hd" << 0;
@@ -161,6 +170,41 @@ private slots:
     QCOMPARE(audio[1].toObject()["value"].toString(), QString("backend"));
     QCOMPARE(m[2].toObject()["section"].toString(), QString("icefin"));
     QCOMPARE(Icefin::Settings::mergeDescription(up, QString("/nonexistent.json")), up);  // missing file: unchanged
+  }
+  void hbrNeedsTheRates()
+  {
+    // TrueHD and DTS-HD listed, but nothing above 48 kHz: their 192 kHz HBR stream can't open (3.9).
+    const QString text = "monitor_present\t\t1\neld_valid\t\t1\nmonitor_name\t\tLow\nsad_count\t\t3\n"
+                         "sad0_coding_type\t[0x1] LPCM\nsad0_channels\t\t8\nsad0_rates\t\t[0xe0] 32000 44100 48000\n"
+                         "sad1_coding_type\t[0xc] MLP (Dolby TrueHD)\nsad1_channels\t\t8\nsad1_rates\t\t[0x80] 48000\n"
+                         "sad2_coding_type\t[0xb] DTS-HD\nsad2_channels\t\t8\nsad2_rates\t\t[0x80] 48000\n";
+    auto eld = parseEld(text);
+    QVERIFY(eld && eld->supports(Codec::TrueHD) && eld->maxRate == 48000);
+    const QSet<Codec> all{Codec::AC3, Codec::DTS, Codec::EAC3, Codec::DTSHD, Codec::TrueHD};
+    Decision d = Icefin::Audio::decide({"truehd", "", 8}, all, eld, Backend::Alsa);
+    QCOMPARE(int(d.mode), int(Decision::Pcm));
+    QCOMPARE(d.pcmChannels, 8);
+    QVERIFY2(d.reason.contains("48 kHz"), qPrintable(d.reason));
+    // A stale copy (receiver in standby) keeps the limit.
+    EldMonitor mon;
+    mon.update("k", eld);
+    auto stale = mon.update("k", parseEld("monitor_present\t\t1\neld_valid\t\t0\n"));
+    QVERIFY(stale && stale->stale && stale->maxRate == 48000);
+    QCOMPARE(int(Icefin::Audio::decide({"truehd", "", 8}, all, stale, Backend::Alsa).mode), int(Decision::Pcm));
+  }
+  void selectedTrackBeforeMpvCatchesUp()
+  {
+    // on_preloaded: aid is set but current-tracks/audio is still empty (3.9); the track comes from track-list.
+    using Icefin::Audio::selectedAudioTrack;
+    const QVariantList list{QVariantMap{{"id", 1}, {"type", "video"}, {"codec", "hevc"}},
+                            QVariantMap{{"id", 1}, {"type", "audio"}, {"codec", "truehd"}, {"demux-channel-count", 8}},
+                            QVariantMap{{"id", 2}, {"type", "audio"}, {"codec", "ac3"}, {"selected", true}}};
+    QCOMPARE(selectedAudioTrack(1, {}, list).value("codec").toString(), QString("truehd"));
+    QCOMPARE(selectedAudioTrack("2", {}, list).value("codec").toString(), QString("ac3"));
+    QCOMPARE(selectedAudioTrack("auto", {}, list).value("codec").toString(), QString("ac3"));     // the selected one
+    QVERIFY(selectedAudioTrack("no", {}, list).isEmpty());
+    QVERIFY(selectedAudioTrack(3, {}, list).isEmpty());
+    QCOMPARE(selectedAudioTrack(1, QVariantMap{{"codec", "eac3"}}, list).value("codec").toString(), QString("eac3"));  // mpv knows
   }
   void userToggleWins()
   {
