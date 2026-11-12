@@ -4,6 +4,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+- Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
+
 ## [0.1.0-alpha.2] - 2026-11-12
 
 ### Added
