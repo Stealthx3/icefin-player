@@ -1,0 +1,74 @@
+{
+  "description": "Philips Philips FTV (tv), from the linuxhw EDID collection: Digital/Philips/PHL04C3/06227819989B (CC BY 4.0); 25 EDIDs share this audio capability set",
+  "monitor_name": "Philips FTV",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "dts",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 1536
+    },
+    {
+      "codec": "eac3",
+      "channels": 8,
+      "rates": [
+        44100,
+        48000
+      ],
+      "byte3": 1
+    },
+    {
+      "codec": "dtshd",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000
+      ],
+      "byte3": 1
+    },
+    {
+      "codec": "truehd",
+      "channels": 8,
+      "rates": [
+        48000
+      ],
+      "byte3": 3
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "bitstream",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Philips/PHL04C3/06227819989B"
+}

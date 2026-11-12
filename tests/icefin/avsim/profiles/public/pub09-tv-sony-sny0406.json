@@ -1,0 +1,64 @@
+{
+  "description": "Sony SONY TV  *30 (tv), from the linuxhw EDID collection: Digital/Sony/SNY0406/8F6E66E1C454 (CC BY 4.0); 136 EDIDs share this audio capability set",
+  "monitor_name": "SONY TV *30",
+  "speakers": "0x0f",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "dts",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 1504
+    },
+    {
+      "codec": "eac3",
+      "channels": 8,
+      "rates": [
+        44100,
+        48000
+      ],
+      "byte3": 0
+    },
+    {
+      "codec": "truehd",
+      "channels": 8,
+      "rates": [
+        48000
+      ],
+      "byte3": 0
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "bitstream",
+    "eac3": "bitstream",
+    "truehd": "bitstream"
+  },
+  "source": "Digital/Sony/SNY0406/8F6E66E1C454"
+}

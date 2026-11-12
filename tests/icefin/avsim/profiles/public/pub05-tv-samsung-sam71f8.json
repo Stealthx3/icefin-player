@@ -1,0 +1,64 @@
+{
+  "description": "Samsung QBQ90 (tv), from the linuxhw EDID collection: Digital/Samsung/SAM71F8/66C470C5FDE3 (CC BY 4.0); 193 EDIDs share this audio capability set",
+  "monitor_name": "QBQ90",
+  "speakers": "0x0f",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        96000,
+        192000
+      ]
+    },
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "eac3",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "byte3": 1
+    },
+    {
+      "codec": "truehd",
+      "channels": 8,
+      "rates": [
+        48000,
+        96000,
+        192000
+      ],
+      "byte3": 3
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "bitstream",
+    "truehd": "bitstream"
+  },
+  "source": "Digital/Samsung/SAM71F8/66C470C5FDE3"
+}

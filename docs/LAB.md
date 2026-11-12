@@ -133,6 +133,15 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   the notice; the track always plays to the end). The client needs
   Icefin's runtime packages: `avsim.sh icefin-image APP` makes a second base disk with them (once per
   dependency change), and `AVSIM_BASE=avsim-icefin` starts the client from it.
+- **Public sinks (PLAN 11.5 option A):** 40 profiles in `tests/icefin/avsim/profiles/public/` made by
+  `edid_profiles.py` from the linuxhw EDID collection (CC BY 4.0; `SOURCES.md` there): the audio capabilities of
+  real TVs, AV receivers and soundbars. Of 30,974 sinks with an audio block (45,061 EDIDs from TV, receiver and
+  soundbar makers), 399 distinct capability sets; the 40 cover every decision case among them (11 expect maps, 14
+  combinations of the ELD's rate and channel limits), then receivers and soundbars, then the sets most TVs share.
+  `expect` follows the SPEC's rules (the codec listed, and a carrier the ELD can open). Not in the routine matrix:
+  `matrix.py --profiles public [--player icefin --app APP]` (ELD rows; Icefin's decision per sink and codec, about
+  40 minutes). To regenerate: a sparse checkout of the collection (`Digital/<vendor>/` for TV, receiver and soundbar
+  makers) and `edid_profiles.py write <checkout>`.
 - **Run:**
   ```
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh build'     # once, ~10 min
@@ -156,6 +165,21 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   scripts/lab.sh run 'python3 tests/icefin/web/hdr_protocol.py'          # the installed Flatpak, server jf12
   ```
   It shows what Icefin sends; whether a TV switches to HDR stays on the HTPC (5.8).
+- **Gamescope (PLAN 11.5 option D): Steam's game mode on an HDR TV, headless.** Gamescope 3.16.30.2 built from
+  Valve's source into `~/gamescope-lab` (`tests/icefin/hdr/build-gamescope.sh`: Debian 13 doesn't package it, and its
+  pinned wlroots needs newer Wayland, libdrm, xkbcommon, wayland-protocols and pixman, built into the same prefix).
+  Its headless backend with `--hdr-enabled --hdr-debug-force-support` runs on lavapipe, and its WSI layer offers X11
+  clients the HDR10 (ST 2084) colour space, as on a Deck or Bazzite in game mode. `tests/icefin/web/gamescope_hdr.py`
+  runs a native Icefin build inside it (Xwayland, the WSI layer, the Vulkan renderer) and checks per routing row what
+  Icefin hands Gamescope: the display read as HDR from the swapchain, the HDR10 swapchain, the router's choice, and
+  `VK_EXT_hdr_metadata` with each film's exact metadata (HDR10, HLG's BT.2020 container, Dolby Vision 8.1's HDR10
+  base); an SDR Gamescope and HDR Output off tone-map. Needs a build against the patched libmpv:
+  ```
+  scripts/lab.sh run 'sh tests/icefin/hdr/build-gamescope.sh'           # once: clones and builds, a few minutes
+  scripts/lab.sh run 'LD_LIBRARY_PATH=~/mpv-icefin/lib/x86_64-linux-gnu python3 tests/icefin/web/gamescope_hdr.py --app ~/build-vk/src/icefin-player'
+  ```
+  The Flatpak path (Flathub's `VulkanLayer.gamescope` extension) and a real TV stay with beta row H4.
+  Mutter can't stand in: 48.7's headless virtual monitor has only the default colour mode.
 - **Limits:** no real decoder behind the sink, so no lip sync, no receiver display, no CEC, no HDCP, and no
   check of how a real receiver treats a borderline stream. Those rows stay on the HTPC.
 
