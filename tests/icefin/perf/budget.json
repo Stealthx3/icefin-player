@@ -1,0 +1,263 @@
+{
+ "meta": {
+  "guest": "lab-icefin-htpcsim",
+  "cpus": "0,1",
+  "nproc": 4,
+  "app": "flatpak:io.github.stealthx3.IcefinPlayer",
+  "runs": 2,
+  "recorded": "2026-11-13 21:09"
+ },
+ "margin": {
+  "fps": [
+   0.8,
+   -2.0
+  ],
+  "cost_p95_ms": [
+   1.3,
+   3.0
+  ],
+  "jank_pct": [
+   1.0,
+   5.0
+  ],
+  "drops_per_min": [
+   1.5,
+   30.0
+  ]
+ },
+ "scenarios": {
+  "stock/idle": {
+   "fps": 2.4,
+   "cost_p50_ms": 14.0,
+   "cost_p95_ms": 23.5,
+   "interval_p95_ms": 989.5,
+   "jank_pct": 40.4,
+   "frames": 14.5
+  },
+  "stock/navigate": {
+   "fps": 32.5,
+   "cost_p50_ms": 25.5,
+   "cost_p95_ms": 28.0,
+   "interval_p95_ms": 28.1,
+   "jank_pct": 1.8,
+   "frames": 198.0
+  },
+  "almanac/idle": {
+   "fps": 38.8,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.4,
+   "interval_p95_ms": 27.6,
+   "jank_pct": 0.0,
+   "frames": 232.5
+  },
+  "almanac/navigate": {
+   "fps": 38.6,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.9,
+   "interval_p95_ms": 28.1,
+   "jank_pct": 0.0,
+   "frames": 242.0
+  },
+  "arcade/idle": {
+   "fps": 0.0,
+   "cost_p50_ms": 0.0,
+   "cost_p95_ms": 0.0,
+   "interval_p95_ms": 0.0,
+   "jank_pct": 0.0,
+   "frames": 0.0
+  },
+  "arcade/navigate": {
+   "fps": 0.1,
+   "cost_p50_ms": 6.7,
+   "cost_p95_ms": 6.7,
+   "interval_p95_ms": 5.5,
+   "jank_pct": 0.0,
+   "frames": 1.0
+  },
+  "baseline/idle": {
+   "fps": 2.1,
+   "cost_p50_ms": 13.1,
+   "cost_p95_ms": 17.6,
+   "interval_p95_ms": 989.8,
+   "jank_pct": 45.9,
+   "frames": 12.5
+  },
+  "baseline/navigate": {
+   "fps": 32.2,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.4,
+   "interval_p95_ms": 27.8,
+   "jank_pct": 1.2,
+   "frames": 196.0
+  },
+  "harbor/idle": {
+   "fps": 0.1,
+   "cost_p50_ms": 12.8,
+   "cost_p95_ms": 12.8,
+   "interval_p95_ms": 12.9,
+   "jank_pct": 0.0,
+   "frames": 1.0
+  },
+  "harbor/navigate": {
+   "fps": 36.2,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.2,
+   "interval_p95_ms": 27.4,
+   "jank_pct": 0.2,
+   "frames": 220.5
+  },
+  "lumen/idle": {
+   "fps": 0.0,
+   "cost_p50_ms": 0.0,
+   "cost_p95_ms": 0.0,
+   "interval_p95_ms": 0.0,
+   "jank_pct": 0.0,
+   "frames": 0.0
+  },
+  "lumen/navigate": {
+   "fps": 37.2,
+   "cost_p50_ms": 25.4,
+   "cost_p95_ms": 27.2,
+   "interval_p95_ms": 39.3,
+   "jank_pct": 2.2,
+   "frames": 225.5
+  },
+  "marquee/idle": {
+   "fps": 38.8,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.5,
+   "interval_p95_ms": 27.5,
+   "jank_pct": 0.0,
+   "frames": 233.0
+  },
+  "marquee/navigate": {
+   "fps": 38.7,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.4,
+   "interval_p95_ms": 27.4,
+   "jank_pct": 0.0,
+   "frames": 234.5
+  },
+  "media-center/idle": {
+   "fps": 23.6,
+   "cost_p50_ms": 15.9,
+   "cost_p95_ms": 18.9,
+   "interval_p95_ms": 44.8,
+   "jank_pct": 0.3,
+   "frames": 142.0
+  },
+  "media-center/navigate": {
+   "fps": 28.5,
+   "cost_p50_ms": 17.7,
+   "cost_p95_ms": 27.4,
+   "interval_p95_ms": 44.0,
+   "jank_pct": 0.0,
+   "frames": 173.5
+  },
+  "mosaic/idle": {
+   "fps": 3.7,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 28.4,
+   "interval_p95_ms": 28.4,
+   "jank_pct": 0.0,
+   "frames": 22.0
+  },
+  "mosaic/navigate": {
+   "fps": 38.3,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.9,
+   "interval_p95_ms": 28.4,
+   "jank_pct": 1.1,
+   "frames": 235.0
+  },
+  "orbit/idle": {
+   "fps": 0.0,
+   "cost_p50_ms": 0.0,
+   "cost_p95_ms": 0.0,
+   "interval_p95_ms": 0.0,
+   "jank_pct": 0.0,
+   "frames": 0.0
+  },
+  "orbit/navigate": {
+   "fps": 0.3,
+   "cost_p50_ms": 14.6,
+   "cost_p95_ms": 14.6,
+   "interval_p95_ms": 12.7,
+   "jank_pct": 0.0,
+   "frames": 2.0
+  },
+  "plaza/idle": {
+   "fps": 38.4,
+   "cost_p50_ms": 25.9,
+   "cost_p95_ms": 28.6,
+   "interval_p95_ms": 28.7,
+   "jank_pct": 0.0,
+   "frames": 230.5
+  },
+  "plaza/navigate": {
+   "fps": 38.3,
+   "cost_p50_ms": 25.8,
+   "cost_p95_ms": 28.4,
+   "interval_p95_ms": 28.5,
+   "jank_pct": 0.0,
+   "frames": 235.0
+  },
+  "plum/idle": {
+   "fps": 38.6,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.6,
+   "interval_p95_ms": 27.8,
+   "jank_pct": 0.0,
+   "frames": 232.0
+  },
+  "plum/navigate": {
+   "fps": 38.7,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 27.6,
+   "interval_p95_ms": 27.8,
+   "jank_pct": 0.0,
+   "frames": 234.5
+  },
+  "spark/idle": {
+   "fps": 27.4,
+   "cost_p50_ms": 25.6,
+   "cost_p95_ms": 31.1,
+   "interval_p95_ms": 31.8,
+   "jank_pct": 0.7,
+   "frames": 164.5
+  },
+  "spark/navigate": {
+   "fps": 7.3,
+   "cost_p50_ms": 13.8,
+   "cost_p95_ms": 25.2,
+   "interval_p95_ms": 296.8,
+   "jank_pct": 42.8,
+   "frames": 44.5
+  },
+  "tide/idle": {
+   "fps": 30.2,
+   "cost_p50_ms": 24.6,
+   "cost_p95_ms": 27.6,
+   "interval_p95_ms": 38.3,
+   "jank_pct": 0.0,
+   "frames": 181.5
+  },
+  "tide/navigate": {
+   "fps": 36.5,
+   "cost_p50_ms": 26.1,
+   "cost_p95_ms": 30.8,
+   "interval_p95_ms": 33.6,
+   "jank_pct": 0.0,
+   "frames": 232.0
+  },
+  "video-1080p-h264": {
+   "fps": 8.6,
+   "cost_p50_ms": 116.3,
+   "cost_p95_ms": 123.3,
+   "interval_p95_ms": 123.3,
+   "jank_pct": 100.0,
+   "frames": 129.0,
+   "drops_per_min": 921.8
+  }
+ }
+}

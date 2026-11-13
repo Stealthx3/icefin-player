@@ -14,6 +14,7 @@
 #include <QTemporaryDir>
 #include <QFile>
 #include "icefin/settings/SettingsMerge.h"
+#include "icefin/gpu/HardwareComponent.h"
 
 using namespace Icefin::Gpu;
 
@@ -144,6 +145,23 @@ private slots:
           QCOMPARE(v.toObject()["default"].toBool(true), false);
         }
     QCOMPARE(found, 1);
+  }
+  void frameSummary()
+  {
+    // 11.5 P: what the performance budget reads. 20 frames at 10 ms cost, one at 40 ms; one 80 ms gap in 20.
+    QList<double> costs(20, 10.0), intervals(19, 16.7);
+    costs << 40.0;
+    intervals << 80.0;
+    const QVariantMap m = Icefin::Gpu::HardwareComponent::summarizeFrames(costs, intervals, 0.5);
+    QCOMPARE(m["frames"].toInt(), 21);
+    QCOMPARE(m["fps"].toDouble(), 42.0);
+    QCOMPARE(m["cost_p50_ms"].toDouble(), 10.0);
+    QCOMPARE(m["cost_max_ms"].toDouble(), 40.0);
+    QCOMPARE(m["interval_p95_ms"].toDouble(), 16.7);  // one gap in 20 is the 100th percentile, not the 95th
+    QCOMPARE(m["jank_pct"].toDouble(), 5.0);
+    const QVariantMap none = Icefin::Gpu::HardwareComponent::summarizeFrames({}, {}, 0);
+    QCOMPARE(none["frames"].toInt(), 0);
+    QCOMPARE(none["fps"].toDouble(), 0.0);
   }
   void selfTestDecodesSample()
   {
