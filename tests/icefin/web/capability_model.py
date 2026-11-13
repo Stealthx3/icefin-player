@@ -64,9 +64,11 @@ def main():
         return page, path
 
     def stop():
-        subprocess.run(["pkill", "-TERM", "-x", "icefin-player"], capture_output=True)
+        # The name it runs under: a runner may start it through a symlink with another name (lab-matrix.py).
+        name = os.path.basename(a.app)[:15]
+        subprocess.run(["pkill", "-TERM", "-x", name], capture_output=True)
         for _ in range(30):
-            if subprocess.run(["pgrep", "-x", "icefin-player"], capture_output=True).returncode:
+            if subprocess.run(["pgrep", "-x", name], capture_output=True).returncode:
                 break
             time.sleep(0.5)
         for app, log in runs:
