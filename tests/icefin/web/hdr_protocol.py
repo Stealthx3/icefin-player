@@ -108,7 +108,12 @@ def main():
         wenv = dict(os.environ, LD_LIBRARY_PATH=libdir, XDG_RUNTIME_DIR=runtime)
         w = subprocess.Popen([weston, f"--config={ini}", "--backend=headless", "--renderer=gl", "--width=1920", "--height=1080",
                               f"--socket={sock}", f"--log={d}/weston.log"], env=wenv, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        time.sleep(3)
+        # Wait for the socket: a cold runner's first Weston takes longer than the lab's, and Qt gives up without it.
+        for _ in range(60):
+            if os.path.exists(os.path.join(runtime, sock)):
+                break
+            time.sleep(0.5)
+        time.sleep(1)
         applog = os.path.join(d, "app.log")
         env = dict(os.environ, WAYLAND_DISPLAY=sock, WAYLAND_DEBUG="client", XDG_RUNTIME_DIR=runtime)
         cmd = ["flatpak", "run", "--user", "--socket=wayland", "--nosocket=x11", "--env=QT_QPA_PLATFORM=wayland",
