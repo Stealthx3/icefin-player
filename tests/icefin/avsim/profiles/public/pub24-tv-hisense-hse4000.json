@@ -1,0 +1,37 @@
+{
+  "description": "Hisense Hisense (tv), from the linuxhw EDID collection: Digital/Hisense/HSE4000/5BF3A114E063 (CC BY 4.0); 9 EDIDs share this audio capability set",
+  "monitor_name": "Hisense",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ],
+      "max_kbps": 192
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Hisense/HSE4000/5BF3A114E063"
+}

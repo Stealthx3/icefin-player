@@ -104,7 +104,7 @@ so they test logic and the web UI, not picture or sound. "HTPC" means the real-h
 | Jellyfin server 12.x (jellyfin-web 10.12+) | Lab: full suite, plugin three-way runs |
 | KDE Plasma (Wayland) | Lab: headless KWin (display probe). HTPC: pending (PLAN 1.10) |
 | GNOME (Wayland) | Lab: headless Mutter in the spikes. No full run yet |
-| Gamescope / Steam Deck game mode | HTPC: pending (PLAN 1.10, 2.4) |
+| Gamescope / Steam Deck game mode | Lab: headless Gamescope 3.16 with HDR (native build, `gamescope_hdr.py`); the Flatpak and a real TV in the beta (H4) |
 | AMD GPU | HTPC (RX 9070 XT): pending (PLAN 1.10, 4.5) |
 | Intel and NVIDIA GPUs | Not tested yet (PLAN 4.5, 2.8) |
 | PipeWire passthrough | Lab: logic and format setting. Receiver: pending (PLAN 3.8) |

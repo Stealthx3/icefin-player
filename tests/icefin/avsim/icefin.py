@@ -220,15 +220,15 @@ def check_stream(M, codec, want, seg, pin_setup=True):
     return cmp["ok"] and seg["non_pcm"] and seg["hbr"] == hbr and seg["channels"] == (8 if hbr else 2), detail
 
 
-def rows(M, app, codecs):
+def rows(M, app, codecs, which="lab"):
     out = []
     dev = M.hdmi_device()
     ice = Icefin(M, app)
     profiles = []
-    for fn in sorted(os.listdir(f"{HERE}/profiles")):
-        with open(f"{HERE}/profiles/{fn}") as f:
+    for name in M.profile_names(which):
+        with open(f"{HERE}/profiles/{name}.json") as f:
             p = json.load(f)
-        p["name"] = fn[:-5]
+        p["name"] = name
         profiles.append(p)
     try:
         M.sh(M.AVSIM + ["profile", "avr-full"], check=True)
@@ -253,6 +253,8 @@ def rows(M, app, codecs):
         missing = [r for r in reread if r["monitor"] and r["monitor"] not in r["eld"]]
         out.append(M.row("icefin/hotplug-reread", bool(reread) and not missing, decisions=len(reread),
                          mismatched=[(r["profile"], r["codec"], r["eld"][:80]) for r in missing]))
+        if which == "public":
+            return out  # the public sinks: per-sink decisions only; standby and fallback stay on the lab's sinks
 
         # Standby (the user's choice, 2026-11-12): PCM while the receiver isn't ready, the bitstream once it has been
         # ready for 4 s. A full receiver first, so there is a remembered ELD.

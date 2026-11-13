@@ -2,6 +2,7 @@
 #include <QtTest>
 #include "icefin/input/GamepadNames.h"
 #include "icefin/input/DuplicateGuard.h"
+#include "icefin/input/Lirc.h"
 
 using namespace Icefin::Input;
 
@@ -85,6 +86,19 @@ private slots:
     QVERIFY(!g.pad("PAD_NORTH", true, 7000));
     QVERIFY(!g.key(Qt::Key_I, true, false, 7001));
     QCOMPARE(g.dropped(), 3);
+  }
+  void lircKeys()
+  {
+    // lircd without releases: one-shot presses, so InputComponent's auto-repeat never starts (it ran forever).
+    LircKeys k;
+    QCOMPARE(k.stateFor("KEY_RIGHT"), InputBase::KeyPressed);
+    QCOMPARE(k.stateFor("KEY_OK"), InputBase::KeyPressed);
+    QVERIFY(!k.releasesSeen());
+    // Once it sends a release, presses follow the button.
+    QCOMPARE(k.stateFor("KEY_OK_LIRCUP"), InputBase::KeyUp);
+    QVERIFY(k.releasesSeen());
+    QCOMPARE(k.stateFor("KEY_LEFT"), InputBase::KeyDown);
+    QCOMPARE(k.stateFor("KEY_LEFT_LIRCUP"), InputBase::KeyUp);
   }
   void sticks()
   {
