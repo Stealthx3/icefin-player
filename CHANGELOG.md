@@ -14,11 +14,15 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Plaza on every screen but the server dashboard: lists, playlists, photos, books and the other libraries as Plaza screens with sort and filter; sign-in, servers, your profile and preferences, Quick Connect, now playing and lyrics in Plaza's frame and look; every dialog as a Plaza card; the on-screen keyboard for text fields; the music capsule on the home.
 - A playlist's items can be moved on its details screen, with a controller (Menu, then up or down) or the mouse, in every theme.
 - Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
+- Client Settings -> Hardware -> Copy report: a diagnostics report for bug reports (versions, GPU and decoding, display and HDR, audio and receiver, recent log), with server addresses, sign-in tokens, user, host and home folder names removed. The bug report form asks for it.
+- Audio: Receiver in Standby (Switch When It Wakes, Always PCM, Keep Bitstream). By default a receiver that is in standby gets PCM, and the playing track switches to the bitstream 4 seconds after the receiver wakes.
+- Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
 - Plaza has its own details page: the name pill and clock, tabs for each section, the framed art, one row of action pills, and Back and Home in the bar; albums and playlists show their tracks beside the art.
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
+- Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
 
 ### Fixed
 - Media Center: Backspace and Escape go back on every screen and close menus and dialogs; the arrows work on the settings pages it frames; the poster wall has Back and Home; closing More options returns to Media Center's details page instead of leaving jellyfin-web's.
@@ -27,6 +31,11 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - A page left open before playback (Select Server, for example) showed above the video.
 - Plaza: the bottom row's channel name covered the clock; a series' episodes ran under the bar; Live TV logos were cropped; "1 seasons"; album favourites showed a resume time.
 - Leaving full screen now tells the web client and media controls (MPRIS) the window is windowed again; the full-screen state used to stay on after the first time.
+- Passthrough: a receiver whose HDMI audio can't carry a format (E-AC-3 or TrueHD on a receiver that stops at 48 kHz, for example) got silence; it gets PCM now. The decision also uses the track that is actually playing.
+- When another program holds the HDMI audio device, a track no longer freezes: Icefin tries PCM, then the default device, then plays on silently with a notice.
+- With Steam open on the desktop, a controller press no longer acts twice (Steam's desktop layout sends a key for it too).
+- IR remotes (LIRC): one press no longer keeps repeating until the next button.
+- Under Gamescope or X11 with HDR Output off, the Hardware page no longer says the display has no HDR.
 
 ## [0.1.0-alpha.2] - 2026-11-12
 
