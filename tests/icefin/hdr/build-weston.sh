@@ -27,6 +27,7 @@ rm -rf build
 meson setup build --prefix="$PREFIX" -Dbackend-default=headless -Dbackend-headless=true -Dbackend-drm=false \
   -Dbackend-wayland=false -Dbackend-x11=false -Dbackend-rdp=false -Dbackend-vnc=false -Dbackend-pipewire=false \
   -Drenderer-gl=true -Dxwayland=false -Dshell-ivi=false -Dshell-lua=false -Dsystemd=false -Ddemo-clients=false \
-  -Dsimple-clients=[] -Dtests=false -Dcolor-management-lcms=true >/dev/null
-ninja -C build install >/dev/null
+  -Dsimple-clients=[] -Dtests=false -Dcolor-management-lcms=true > meson-setup.log 2>&1 \
+  || { tail -40 meson-setup.log; exit 1; }
+ninja -C build install > ninja.log 2>&1 || { tail -40 ninja.log; exit 1; }
 LD_LIBRARY_PATH="$(ls -d "$PREFIX"/lib/*-linux-gnu)" "$PREFIX/bin/weston" --version
