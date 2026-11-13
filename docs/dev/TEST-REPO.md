@@ -32,6 +32,8 @@ flatpak build-update-repo --gpg-sign=$KEY --gpg-homedir=$GNUPGHOME --title="Icef
   --comment="Test builds of Icefin Player" --homepage=https://github.com/Stealthx3/icefin-player --default-branch=master \
   --prune --prune-depth=3 ~/pub-site/repo
 ```
+A fresh git clone of the site has no empty directories, and `build-update-repo` stops at "opendir(refs/remotes)" without them: `mkdir -p repo/refs/remotes repo/refs/mirrors` in the copy first.
+
 Then commit and push `~/pub-site` (from the host if the guest has no GitHub credentials). Pages redeploys within a minute,
 and `flatpak update` picks the build up. Keep `--prune-depth` small: GitHub Pages sites are limited to 1 GB and files to
 100 MB (the largest object today is about 89 MB).
