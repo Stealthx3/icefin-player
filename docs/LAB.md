@@ -184,6 +184,25 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
 - **Limits:** no real decoder behind the sink, so no lip sync, no receiver display, no CEC, no HDCP, and no
   check of how a real receiver treats a borderline stream. Those rows stay on the HTPC.
 
+## Performance budget (PLAN 11.5 option P)
+- **Where:** `lab-icefin-htpcsim` (4 vCPU, 6 GB, Debian's standard kernel for virtio_gpu, the headless 4K Weston TV
+  session from `tests/icefin/htpc/sim-provision.sh`, Mesa in software), with the app held to two CPUs (`taskset`).
+  Separate from `lab-icefin-main`, so other sessions' tests don't skew the numbers. The servers stay on
+  `lab-icefin-main` (`ICEFIN_SERVER_HOST=192.168.122.83`, `~/jf/creds.json` copied VM to VM).
+- **What:** `tests/icefin/perf/perf_budget.py` runs the Flatpak and, for stock jellyfin-web and every installed
+  theme, measures the home screen idle and with focus moving, then the 1080p H.264 film. The figures are Qt Quick's
+  own frames (`hardware.startFrameStats` / `frameStats`: each frame's cost from scene-graph sync to swap, frames per
+  second, the 95th-percentile interval, intervals over 50 ms) and mpv's dropped frames (`hardware.playbackStats`).
+  The page's requestAnimationFrame can't stand in: Chromium ticks it at 60 Hz whatever Qt draws.
+- **Budget:** `tests/icefin/perf/budget.json`, recorded with `--record`. A run fails when a scenario's frame cost,
+  frame rate, jank or video drops are past the budget plus a margin; scenarios recorded with fewer than 30 frames
+  (a static screen, or one the arrow keys don't move) are reported, not checked. A change meant to alter a screen
+  records the budget again. It catches regressions; what a real low-end GPU does stays with beta row V4.
+- **Run:** build the Flatpak in `lab-icefin-main`, `flatpak build-bundle`, install the bundle in the guest, then:
+  ```
+  LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=192.168.122.83 ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
+  ```
+
 ## Provisioning
 - scripts/provision.sh: native build deps (Qt 6 + WebEngine dev, libmpv-dev, SDL2, CEC), flatpak + flatpak-builder + Flathub remote, podman.
 
