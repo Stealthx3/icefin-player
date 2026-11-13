@@ -13,12 +13,21 @@ WP_TAG=1.47
 SRC="$HOME/weston/weston-$WESTON_TAG"
 sudo -n apt-get install -y -q meson ninja-build libcairo2-dev liblcms2-dev libdisplay-info-dev libdrm-dev libpixman-1-dev \
   libxkbcommon-dev libinput-dev libegl-dev libgles-dev libseat-dev libwayland-dev wayland-protocols hwdata \
-  libegl-mesa0 libgl1-mesa-dri >/dev/null
+  libegl-mesa0 libgl1-mesa-dri libexpat1-dev libffi-dev libxml2-dev >/dev/null
 if [ -x "$PREFIX/bin/weston" ]; then
   echo "build-weston: $PREFIX/bin/weston already built"
   exit 0
 fi
 mkdir -p "$HOME/weston"
+# wayland-protocols 1.47 needs wayland-scanner 1.23+; Ubuntu 24.04 (CI) has 1.22: Wayland 1.24 into the same prefix.
+if ! pkg-config --atleast-version=1.23 wayland-scanner; then
+  W="$HOME/weston/wayland-1.24.0"
+  [ -d "$W" ] || git -c advice.detachedHead=false clone -q --depth 1 --branch 1.24.0 https://gitlab.freedesktop.org/wayland/wayland.git "$W"
+  (cd "$W" && rm -rf build && meson setup build --prefix="$PREFIX" -Ddocumentation=false -Dtests=false -Ddtd_validation=false \
+    > meson-setup.log 2>&1 && ninja -C build install > ninja.log 2>&1) || { tail -30 "$W/meson-setup.log" "$W/ninja.log" 2>/dev/null; exit 1; }
+  export PKG_CONFIG_PATH="$(ls -d "$PREFIX"/lib/*-linux-gnu)/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+  export PATH="$PREFIX/bin:$PATH"
+fi
 [ -d "$SRC" ] || git -c advice.detachedHead=false clone -q --depth 1 --branch "$WESTON_TAG" https://gitlab.freedesktop.org/wayland/weston.git "$SRC"
 [ -d "$SRC/subprojects/wayland-protocols" ] || git -c advice.detachedHead=false clone -q --depth 1 --branch "$WP_TAG" \
   https://gitlab.freedesktop.org/wayland/wayland-protocols.git "$SRC/subprojects/wayland-protocols"
@@ -26,7 +35,7 @@ cd "$SRC"
 rm -rf build
 meson setup build --prefix="$PREFIX" -Dbackend-default=headless -Dbackend-headless=true -Dbackend-drm=false \
   -Dbackend-wayland=false -Dbackend-x11=false -Dbackend-rdp=false -Dbackend-vnc=false -Dbackend-pipewire=false \
-  -Drenderer-gl=true -Dxwayland=false -Dshell-ivi=false -Dshell-lua=false -Dsystemd=false -Ddemo-clients=false \
+  -Drenderer-gl=true -Drenderer-vulkan=false -Dimage-jpeg=false -Dimage-webp=false -Dxwayland=false -Dshell-ivi=false -Dshell-lua=false -Dsystemd=false -Ddemo-clients=false \
   -Dsimple-clients=[] -Dtests=false -Dcolor-management-lcms=true > meson-setup.log 2>&1 \
   || { tail -40 meson-setup.log; exit 1; }
 ninja -C build install > ninja.log 2>&1 || { tail -40 ninja.log; exit 1; }
