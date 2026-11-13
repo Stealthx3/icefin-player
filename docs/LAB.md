@@ -166,6 +166,10 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   scripts/lab.sh run 'python3 tests/icefin/web/hdr_protocol.py'          # the installed Flatpak, server jf12
   ```
   It shows what Icefin sends; whether a TV switches to HDR stays on the HTPC (5.8).
+  CI runs the same test on every Flatpak build (`icefin-flatpak.yml`, job `hdr`): Weston 16 built once and cached on
+  Ubuntu 24.04, that commit's bundle, and generated HDR10 and HLG clips served from a folder
+  (`hdr_protocol.py --media`, `tests/icefin/hdr/make-ci-clips.sh`) in place of the lab servers. The Dolby Vision and
+  HDR10+ rows stay in the lab: their clips need tools built from source.
 - **Gamescope (PLAN 11.5 option D): Steam's game mode on an HDR TV, headless.** Gamescope 3.16.30.2 built from
   Valve's source into `~/gamescope-lab` (`tests/icefin/hdr/build-gamescope.sh`: Debian 13 doesn't package it, and its
   pinned wlroots needs newer Wayland, libdrm, xkbcommon, wayland-protocols and pixman, built into the same prefix).
