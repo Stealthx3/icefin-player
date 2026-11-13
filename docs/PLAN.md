@@ -134,14 +134,14 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 10 — Upstream sync (1 wk)
 - [ ] **10.1** Merge upstream jellyfin-desktop 2.1.0 (or latest release) into `main` via `sync/upstream-<ver>` (`docs/BRANCHING.md`); full suite passes
-- [ ] **10.2** Send generic fixes upstream (ELD, audio fallback, Flatpak CI, Wayland work)
+- [ ] **10.2** Send generic fixes upstream (ELD, audio fallback, Flatpak CI, Wayland work, LIRC presses repeating forever)
 
 ## Phase 11 — Hardening and beta (2 wks)
 - [ ] **11.1** Full lab matrix (D28): every lab test passes on the release tree, the Virtual AV tier (audio and the virtual HDR display) and the simulated hardware that's built; the hardware rows (5.8's and 8.6's among them) are `docs/BETA-CHECKLIST.md` [Testing, CI and hardware lab]
 - [x] **11.2** Log redaction check; security review of theme trust levels (`tests/icefin/web/log_redaction.py`, `docs/security/THEME-TRUST-REVIEW.md`; re-review with 8.4)
 - [ ] **11.3** Beta on the nightly channel: human testers run `docs/BETA-CHECKLIST.md` on their hardware; fixes for what they find; no open P1 bugs (D28)
 - [x] **11.4** Diagnostics report for beta testers (D28): Client Settings → Hardware → *Copy report*, the capability model, renderer and decode path, display and HDR state, audio sink and passthrough decisions, recent playback reports and errors, redacted like the logs (11.2) (`src/icefin/diag/Report`: a summary, screens, now playing, the last 300 Icefin, player-state and warning log lines (`src/icefin/log/Recent`, ICEFIN-HOOK in `Log.cpp`), the capability model, audio, web layer and settings as JSON; redacted like the logs, and further: URL hosts, home folder and host name; on the clipboard and shown on the page; `test_icefin_diag`, `tests/icefin/web/diagnostics_report.py`; in the bug-report template)
-- [ ] **11.5** Simulated hardware in the lab (D28, `docs/dev/HARDWARE-SIMULATION.md`): virtual pads and remote (C, R), synthetic HDR10+ and Dolby Vision media (M), receivers from public EDID data (A), headless Gamescope and Mutter HDR (D), a low-spec performance budget (P); the VA-API device (V) once the user picks an option
+- [ ] **11.5** Simulated hardware in the lab (D28, `docs/dev/HARDWARE-SIMULATION.md`): virtual pads and remote (C, R), synthetic HDR10+ and Dolby Vision media (M), receivers from public EDID data (A), headless Gamescope and Mutter HDR (D), a low-spec performance budget (P); the VA-API device (V) once the user picks an option (done: C, the virtual pads, 7.1-7.5; M, 6.6; A, 40 public sinks from the linuxhw EDID collection, Icefin's decisions 161/161; D, Gamescope 3.16.30.2 built from source, `gamescope_hdr.py` over six rows, Mutter can't: no HDR mode on its headless monitor; R, IR remotes through a fake lircd (`lirc_remote.py`), which found every IR press repeating until the next one (fixed: `LircKeys`; Bluetooth remotes are keyboards, covered by the keyboard rows); open: P, V)
 
 ## Phase 12 — Release 1.0 (1 wk)
 - [ ] **12.1** Stable Flatpak channel (signed self-hosted repo, `.flatpakrepo`/`.flatpakref`)

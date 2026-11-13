@@ -17,7 +17,7 @@ add_sources(audio/Eld.cpp audio/Eld.h audio/Passthrough.cpp audio/Passthrough.h
             capability/CapabilityModel.cpp capability/CapabilityModel.h
             log/Redact.cpp log/Redact.h log/Recent.cpp log/Recent.h diag/Report.cpp diag/Report.h
             input/GamepadNames.cpp input/GamepadNames.h input/GamepadComponent.cpp input/GamepadComponent.h
-            input/DuplicateGuard.cpp input/DuplicateGuard.h)
+            input/DuplicateGuard.cpp input/DuplicateGuard.h input/Lirc.cpp input/Lirc.h)
 
 # Native backdrop (PLAN 8.4): Qt ShaderTools bakes built-in themes' GLSL backdrops at load. Optional: without it
 # only precompiled .qsb backdrops load, and themes fall back to their web-layer effects.

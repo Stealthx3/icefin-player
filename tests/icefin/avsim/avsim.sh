@@ -47,7 +47,7 @@ PY
 }
 
 eld_for() { # eld_for PROFILE -> path of the binary ELD ("" for a sink without one)
-  mkdir -p "$ELD"
+  mkdir -p "$(dirname "$ELD/$1")"  # public/<name> profiles (edid_profiles.py) sit one level down
   python3 "$HERE/eld.py" build "$1" "$ELD/$1.eld" >/dev/null
   [ -s "$ELD/$1.eld" ] && echo "$ELD/$1.eld" || echo ""
 }

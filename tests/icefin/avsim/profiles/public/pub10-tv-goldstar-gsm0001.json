@@ -1,0 +1,44 @@
+{
+  "description": "Goldstar LG TV (tv), from the linuxhw EDID collection: Digital/Goldstar/GSM0001/009307C6E167 (CC BY 4.0); 120 EDIDs share this audio capability set",
+  "monitor_name": "LG TV",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "dts",
+      "channels": 6,
+      "rates": [
+        44100,
+        48000
+      ],
+      "max_kbps": 1536
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        96000,
+        192000
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "bitstream",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Goldstar/GSM0001/009307C6E167"
+}

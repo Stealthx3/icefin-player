@@ -1,0 +1,24 @@
+{
+  "description": "Insignia NS-PMG278 (tv), from the linuxhw EDID collection: Digital/Insignia/BBY0278/4247B5E5598F (CC BY 4.0); 817 EDIDs share this audio capability set",
+  "monitor_name": "NS-PMG278",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        96000
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "pcm",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Insignia/BBY0278/4247B5E5598F"
+}
