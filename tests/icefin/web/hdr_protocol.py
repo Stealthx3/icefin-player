@@ -20,9 +20,11 @@ It shows what Icefin sends; what a TV does with it is the hardware lab's job (5.
 Needs: Weston 15+ built with color management (WESTON, default ~/weston-16/bin/weston), the app installed as a
 Flatpak with the GL.default runtime extension, the lab's Jellyfin servers with make-media.sh's and
 make-hdr-media.sh's films.
-Usage: python3 hdr_protocol.py [--server jf12] [--app io.github.stealthx3.IcefinPlayer] [--rows hdr-idle,hdr-hdr10]
+In CI (5.10) there are no lab servers: --media DIR serves a folder of clips over local HTTP instead, found by the
+same names (tests/icefin/hdr/make-ci-clips.sh makes HDR10 and HLG clips with make-media.sh's metadata).
+Usage: python3 hdr_protocol.py [--server jf12 | --media DIR] [--app io.github.stealthx3.IcefinPlayer] [--rows hdr-idle,hdr-hdr10]
 """
-import argparse, glob, json, os, re, signal, subprocess, sys, tempfile, time
+import argparse, functools, glob, http.server, json, os, re, signal, subprocess, sys, tempfile, threading, time, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -58,19 +60,32 @@ def main():
     ap.add_argument("--app", default="io.github.stealthx3.IcefinPlayer")
     ap.add_argument("--port", type=int, default=9242)
     ap.add_argument("--rows", default=",".join(ROWS))
+    ap.add_argument("--media", help="a folder of clips served over local HTTP instead of a Jellyfin server (CI)")
     a = ap.parse_args()
     weston = os.environ.get("WESTON", os.path.expanduser("~/weston-16/bin/weston"))
     libdir = (glob.glob(os.path.join(os.path.dirname(os.path.dirname(weston)), "lib", "*-linux-gnu")) or [""])[0]
-    cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-    cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
-    srv = Server(cfg)
-    srv.wait()
-    srv.token = srv.call("POST", "/Users/AuthenticateByName", {"Username": cred["user"], "Pw": cred["password"]})["AccessToken"]
-    uid = srv.call("GET", "/Users/Me")["Id"]
+    if a.media:
+        root = os.path.abspath(a.media)
+        handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=root)
+        handler.log_message = lambda *args: None
+        httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        files = sorted(os.path.relpath(p, root) for p in glob.glob(os.path.join(root, "**", "*.mkv"), recursive=True))
 
-    def film(term):
-        items = srv.call("GET", f"/Items?Recursive=true&searchTerm={term.replace(' ', '%20')}&userId={uid}&IncludeItemTypes=Movie")["Items"]
-        return f"{srv.base}/Videos/{items[0]['Id']}/stream?static=true&api_key={srv.token}" if items else None
+        def film(term):
+            hit = next((f for f in files if os.path.basename(f).startswith(term)), None)
+            return f"http://127.0.0.1:{httpd.server_address[1]}/{urllib.parse.quote(hit)}" if hit else None
+    else:
+        cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+        cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        srv = Server(cfg)
+        srv.wait()
+        srv.token = srv.call("POST", "/Users/AuthenticateByName", {"Username": cred["user"], "Pw": cred["password"]})["AccessToken"]
+        uid = srv.call("GET", "/Users/Me")["Id"]
+
+        def film(term):
+            items = srv.call("GET", f"/Items?Recursive=true&searchTerm={term.replace(' ', '%20')}&userId={uid}&IncludeItemTypes=Movie")["Items"]
+            return f"{srv.base}/Videos/{items[0]['Id']}/stream?static=true&api_key={srv.token}" if items else None
 
     out = tempfile.mkdtemp(prefix="icefin-hdrproto-")
     runtime = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
@@ -93,7 +108,12 @@ def main():
         wenv = dict(os.environ, LD_LIBRARY_PATH=libdir, XDG_RUNTIME_DIR=runtime)
         w = subprocess.Popen([weston, f"--config={ini}", "--backend=headless", "--renderer=gl", "--width=1920", "--height=1080",
                               f"--socket={sock}", f"--log={d}/weston.log"], env=wenv, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        time.sleep(3)
+        # Wait for the socket: a cold runner's first Weston takes longer than the lab's, and Qt gives up without it.
+        for _ in range(60):
+            if os.path.exists(os.path.join(runtime, sock)):
+                break
+            time.sleep(0.5)
+        time.sleep(1)
         applog = os.path.join(d, "app.log")
         env = dict(os.environ, WAYLAND_DISPLAY=sock, WAYLAND_DEBUG="client", XDG_RUNTIME_DIR=runtime)
         cmd = ["flatpak", "run", "--user", "--socket=wayland", "--nosocket=x11", "--env=QT_QPA_PLATFORM=wayland",
