@@ -82,6 +82,10 @@ Three ways to reach it, best fidelity last:
 - **Proves:** regressions in UI and backdrop cost, early.
 - **Can't show:** real GPU performance; that stays with beta testers (`docs/BETA-CHECKLIST.md` V4).
 - **Cost:** a day.
+- **Built 2026-11-13:** in `lab-icefin-htpcsim` (its Weston TV session, the Flatpak on two CPUs), measuring Qt
+  Quick's own frames and mpv's drops; `tests/icefin/perf/perf_budget.py` and `budget.json` (docs/LAB.md). On the
+  way: the guest's cloud kernel had no GPU driver and its Weston locked after five idle minutes, so Qt never drew;
+  mpv's drop counter is `frame-drop-count` (the name upstream's debug text uses reads null).
 
 ### R. Five-way remotes
 - **How:** a `uinput` keyboard sending the keys an IR or Bluetooth remote sends (arrows, Enter, Back, media keys).

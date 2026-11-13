@@ -1,4 +1,9 @@
 #include "HardwareComponent.h"
+#include <MpvController>
+#include <algorithm>
+#include <QElapsedTimer>
+#include <QMutex>
+#include <QQuickWindow>
 #include <QClipboard>
 #include <QDateTime>
 #include <QDebug>
@@ -26,6 +31,88 @@
 
 namespace Icefin::Gpu
 {
+static MpvController* s_player = nullptr;
+void HardwareComponent::setPlayer(MpvController* mpv) { s_player = mpv; }
+
+namespace
+{
+struct FrameLog
+{
+  QMutex lock;
+  QElapsedTimer clock;
+  qint64 syncStart = -1, lastSwap = -1;
+  QList<double> costs, intervals;
+};
+FrameLog& frameLog() { static FrameLog f; return f; }
+
+double percentile(QList<double> v, double p)
+{
+  if (v.isEmpty()) return 0;
+  std::sort(v.begin(), v.end());
+  return v[qBound(0, int(p * (v.size() - 1) + 0.5), int(v.size() - 1))];
+}
+}
+
+QVariantMap HardwareComponent::summarizeFrames(const QList<double>& costs, const QList<double>& intervals, double seconds)
+{
+  const auto r1 = [](double x) { return qRound(x * 10) / 10.0; };
+  int jank = 0;
+  for (double i : intervals) if (i > 50) ++jank;
+  return {{"frames", int(costs.size())}, {"seconds", r1(seconds)},
+          {"fps", r1(seconds > 0 ? costs.size() / seconds : 0)},
+          {"cost_p50_ms", r1(percentile(costs, 0.5))}, {"cost_p95_ms", r1(percentile(costs, 0.95))},
+          {"cost_max_ms", r1(costs.isEmpty() ? 0 : *std::max_element(costs.begin(), costs.end()))},
+          {"interval_p95_ms", r1(percentile(intervals, 0.95))},
+          {"jank_pct", r1(intervals.isEmpty() ? 0 : 100.0 * jank / intervals.size())}};
+}
+
+void HardwareComponent::startFrameStats()
+{
+  for (const auto& c : m_frameHooks) disconnect(c);
+  m_frameHooks.clear();
+  FrameLog& f = frameLog();
+  { QMutexLocker l(&f.lock); f.costs.clear(); f.intervals.clear(); f.syncStart = f.lastSwap = -1; f.clock.start(); }
+  QStringList hooked;
+  for (QWindow* w : QGuiApplication::topLevelWindows()) {
+    auto* qw = qobject_cast<QQuickWindow*>(w);
+    if (!qw) continue;
+    hooked << QString("%1 (%2, %3x%4)").arg(qw->objectName().isEmpty() ? QString(qw->metaObject()->className()) : qw->objectName())
+                  .arg(qw->isExposed() ? "exposed" : "not exposed").arg(qw->width()).arg(qw->height());
+    m_frameHooks << connect(qw, &QQuickWindow::beforeSynchronizing, qw, [] {
+      FrameLog& f = frameLog(); QMutexLocker l(&f.lock); f.syncStart = f.clock.nsecsElapsed();
+    }, Qt::DirectConnection);
+    m_frameHooks << connect(qw, &QQuickWindow::frameSwapped, qw, [] {
+      FrameLog& f = frameLog(); QMutexLocker l(&f.lock);
+      const qint64 now = f.clock.nsecsElapsed();
+      if (f.syncStart >= 0) f.costs << (now - f.syncStart) / 1e6;
+      if (f.lastSwap >= 0) f.intervals << (now - f.lastSwap) / 1e6;
+      f.lastSwap = now; f.syncStart = -1;
+    }, Qt::DirectConnection);
+  }
+  qInfo().noquote() << "Icefin hardware: frame timing on" << (hooked.isEmpty() ? QString("no Qt Quick window") : hooked.join(", "));
+}
+
+QVariantMap HardwareComponent::frameStats()
+{
+  for (const auto& c : m_frameHooks) disconnect(c);
+  m_frameHooks.clear();
+  FrameLog& f = frameLog();
+  QMutexLocker l(&f.lock);
+  return summarizeFrames(f.costs, f.intervals, f.clock.isValid() ? f.clock.nsecsElapsed() / 1e9 : 0);
+}
+
+QVariantMap HardwareComponent::playbackStats() const
+{
+  if (!s_player || s_player->getProperty("idle-active").toBool()) return {};
+  QVariantMap m;
+  // frame-drop-count is the VO's drops (vo-drop-frame-count, the name upstream's debug text still uses, is null here).
+  for (const char* p : {"frame-drop-count", "vo-drop-frame-count", "decoder-frame-drop-count", "vo-delayed-frame-count", "mistimed-frame-count",
+                        "container-fps", "estimated-vf-fps", "estimated-display-fps", "hwdec-current", "width", "height",
+                        "playback-time", "avsync"})
+    m[QString::fromLatin1(p)] = s_player->getProperty(QString::fromLatin1(p));
+  return m;
+}
+
 static const char* kStateKey = "icefin_hw_selftest";
 static const QList<QPair<QString, QString>> kSamples{
   {"h264", "h264.mp4"}, {"hevc", "hevc10.mp4"}, {"av1", "av1.mp4"}, {"vp9", "vp9.webm"}};

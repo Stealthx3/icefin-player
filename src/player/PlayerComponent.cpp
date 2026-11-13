@@ -3,6 +3,7 @@
 #include "icefin/audio/AudioOutput.h"  // ICEFIN-HOOK: audio.backend mapping
 #include "icefin/audio/DeviceDelay.h"  // ICEFIN-HOOK: per-device audio delay (PLAN 3.7)
 #include "icefin/gpu/Hwdec.h"  // ICEFIN-HOOK: hardware decoding choices and renderer name (PLAN 4.2)
+#include "icefin/gpu/HardwareComponent.h"  // ICEFIN-HOOK: playback counters for the page (PLAN 11.5)
 #include "icefin/render/PlaybackRouter.h"  // ICEFIN-HOOK: playback routing (PLAN 6.2)
 #include "icefin/render/RouterComponent.h"  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
 #include "PlayerComponent.h"
@@ -95,6 +96,7 @@ void PlayerComponent::initializeMpv()
 {
   if (!m_mpv)
     throw FatalException(tr("Failed to load mpv."));
+  Icefin::Gpu::HardwareComponent::setPlayer(m_mpv);  // ICEFIN-HOOK: playback counters for the page (PLAN 11.5)
 
   // MpvQt already called mpv_initialize(), so mpv is ready
   // Properties that needed to be set before init were set in MpvVideoItem constructor
