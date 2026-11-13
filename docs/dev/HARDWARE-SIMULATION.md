@@ -87,6 +87,12 @@ Three ways to reach it, best fidelity last:
 - **How:** a `uinput` keyboard sending the keys an IR or Bluetooth remote sends (arrows, Enter, Back, media keys).
 - **Proves:** every theme works with five keys and Back.
 - **Cost:** an hour on top of C.
+- **Built 2026-11-12 (IR through LIRC):** a `uinput` keyboard never reaches an app on Xvfb, and Bluetooth remotes are
+  keyboards to the app, which the keyboard rows cover. IR remotes reach Icefin through lircd's socket instead:
+  `tests/icefin/web/lirc_remote.py` runs a fake lircd in a private `/run/lirc` (bubblewrap) and checks the five-way
+  keys, OK, Back, IR repeat bursts and a lircd that sends releases. It found that every IR press kept repeating
+  until the next button (lircd sends no release; upstream sent key-downs, and the auto-repeat waits for a key-up);
+  fixed with one-shot presses (`src/icefin/input/Lirc`), and offered for 10.2.
 
 ## Order
 
