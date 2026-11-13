@@ -47,7 +47,7 @@ Each goal has a test that passes or fails in the hardware lab; 1.0 ships when ev
 
 ## Baseline: jellyfin-desktop v2.0.0
 
-These findings come from reading the v2.0.0 source (commit `1634d3d`). Upstream `master` is at 2.1.0-pre1; Icefin rebases onto 2.1.0 once it is released.
+These findings come from reading the v2.0.0 source (commit `1634d3d`). Upstream `master` is at 2.1.0-pre1; Icefin stays on v2.0.0 through 1.0 and then breaks away (D33).
 
 | Area | What v2.0.0 does | Gap for Icefin |
 | --- | --- | --- |
@@ -629,7 +629,7 @@ Twelve phases, about 42 weeks for one developer. The Phase 2 spikes settle the s
 7. **Controller layer (2 wks).** SDL3 gamepad service replacing `InputSDL`, standard action map with per-controller remapping, Nintendo layout, glyph tokens, Steam Input layout and duplicate guard, web Gamepad API suppression, Controllers page. *Exit:* every controller in the acceptance row navigates all screens, including playback over HDR video, inside and outside Steam, with no double inputs.
 8. **Theme-engine layer (5 wks).** Web runtime, native backdrop, trust levels, per-user settings, stand-down, sounds, the Media Center theme and the Baseline control theme, building on Phase 6's token engine; Baseline comes first so every later plugin run has its control. *Exit:* Media Center benchmark and Baseline acceptance pass; plugin suite green with the engine off, with Baseline and with Media Center.
 9. **Benchmark clone themes (15 wks).** Reference captures of the eleven targets; the sixteen generic capabilities they need (about 5 weeks); then Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide (about 10 weeks). *Exit:* every clone passes its acceptance list from its package alone, and the lint finds no theme-specific engine code.
-10. **Upstream sync (1 wk).** Rebase onto 2.1.0 (or the latest release) and send generic fixes upstream. *Exit:* full suite passes on the new base.
+10. **Upstream (D33).** No upstream merge before 1.0 (the 2.1.0 rebase is cut); send generic fixes upstream. After 1.0 Icefin breaks away, adopting only what Jellyfin server API updates need.
 11. **Hardening and beta (2 wks).** Full lab matrix, log redaction check, beta on the nightly channel. *Exit:* no open P1 bugs; every acceptance row passes.
 12. **Release 1.0 (1 wk).** Stable channel, install docs (including device approval), compatibility table. *Exit:* 1.0 tagged with source published.
 
@@ -715,7 +715,7 @@ After 1.0, Icefin decouples from upstream completely and then drops X11, in that
 ## Open questions
 
 - [ ] Final app ID owner or domain for `io.github.<owner>.IcefinPlayer`, and whether Icefin is branded as part of IceSuite.
-- [ ] Rebase onto 2.1.0 during Phase 1 if it releases by then, or stay on v2.0.0 until the Phase 10 sync?
+- [x] Rebase onto 2.1.0 during Phase 1 if it releases by then, or stay on v2.0.0 until the Phase 10 sync? Neither: no upstream merge before 1.0 (D33).
 - [ ] Is HDR on NVIDIA a 1.0 requirement, or best effort if the Phase 2 spike finds driver gaps?
 - [ ] Is refresh-rate matching on KDE required for 1.0? KWin offers no output control to sandboxed apps.
 - [ ] When does decoupling from upstream start: right after 1.0, or after a stable 1.x?
