@@ -72,7 +72,8 @@ window.__reach = (() => {
   const keyOf = (el) => { if (!el.__rk) { window.__rkn = (window.__rkn || 0) + 1; el.__rk = 'k' + window.__rkn; }
     return el.__rk; };
   const label = (el) => { const t = (el.getAttribute('aria-label') || el.title || el.textContent || el.value || '').replace(/\s+/g, ' ').trim().slice(0, 40);
-    const c = typeof el.className === 'string' ? el.className.split(/\s+/).filter((x) => x && x !== 'icefin-focused' && x !== 'icefin-cs-here').slice(0, 2).join('.') : '';
+    const c = typeof el.className === 'string' ? el.className.split(/\s+/).filter((x) => x && x !== 'icefin-focused' && x !== 'icefin-cs-here' && !/-on$/.test(x)).slice(0, 2).join('.') : '';
+    // (a state class is not part of the name either: a tab that is on, pz-tab-on, follows the page's scroll)
     // ids jellyfin-web and Material UI generate per page load (embyselect484, :r6q:, mui-…) are not part of a control's name
     const id = el.id && !/^(embyselect\d+|:r|mui-component-select-.*\d|.*\d{3,})/.test(el.id) ? '#' + el.id : '';
     return `${el.tagName.toLowerCase()}${id}${c ? '.' + c : ''} "${t}"`; };
@@ -412,6 +413,10 @@ def main():
                 setup()
                 for d in paths[n]:
                     dpad(d)
+                    if a.host:
+                        # a page turn on the host's grids loads the next page from a real server: a replayed path's next
+                        # press must not land on the page being left
+                        time.sleep(0.5)
                 return snap()["id"]
 
             if sweep:
