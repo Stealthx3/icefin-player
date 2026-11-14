@@ -25,6 +25,11 @@ PKG = os.path.join(HERE, "theme_music")
 LIMITS = {"startup": (2.0, 8.0), "ambient": (20.0, 180.0), "jingle": (1.5, 8.0)}  # seconds
 
 
+def theme_dir(tid):
+    """themes/<id>: a recipe module can't hold a "-", so media_center.py is themes/media-center."""
+    return os.path.join(ROOT, "themes", tid.replace("_", "-"))
+
+
 def themes():
     return sorted(f[:-3] for f in os.listdir(PKG) if f.endswith(".py") and f not in ("__init__.py", "synth.py"))
 
@@ -76,7 +81,7 @@ def music_map(names):
 
 
 def write_theme_json(tid, want):
-    p = os.path.join(ROOT, "themes", tid, "theme.json")
+    p = os.path.join(theme_dir(tid), "theme.json")
     s = open(p).read()
     meta = json.loads(s)
     if meta.get("music") == want:
@@ -103,7 +108,7 @@ def render(tid):
     sys.path.insert(0, HERE)
     synth = importlib.import_module("theme_music.synth")
     mod = importlib.import_module(f"theme_music.{tid}")
-    out = os.path.join(ROOT, "themes", tid, "music")
+    out = os.path.join(theme_dir(tid), "music")
     os.makedirs(out, exist_ok=True)
     files = {}
     with tempfile.TemporaryDirectory() as tmp:
@@ -111,7 +116,8 @@ def render(tid):
             synth.reseed(zlib.crc32(f"{tid}/{name}".encode()))
             st = fn()
             if name != mod.AMBIENT:
-                st = synth.master(st)
+                # a recipe may set a piece's loudness (LEVELS: name -> RMS dB, -16 by default), matched by ear
+                st = synth.master(st, getattr(mod, "LEVELS", {}).get(name, -16.0))
             wav = os.path.join(tmp, name + ".wav")
             synth.save(wav, st)
             ogg = os.path.join(out, name + ".ogg")
@@ -138,12 +144,12 @@ def check():
         lock = json.load(open(lp))
         if lock.get("recipes") != recipe_hash(tid):
             bad.append(f"{tid}: the recipes changed since the files were rendered (run scripts/icefin/theme-music.py {tid})")
-        meta = json.load(open(os.path.join(ROOT, "themes", tid, "theme.json")))
+        meta = json.load(open(os.path.join(theme_dir(tid), "theme.json")))
         if meta.get("music") != lock.get("music"):
             bad.append(f"{tid}: theme.json \"music\" doesn't match the rendered files")
         for name, digest in sorted(lock.get("files", {}).items()):
             n += 1
-            path = os.path.join(ROOT, "themes", tid, "music", name + ".ogg")
+            path = os.path.join(theme_dir(tid), "music", name + ".ogg")
             if not os.path.exists(path):
                 bad.append(f"{tid}/{name}: missing")
                 continue
@@ -157,7 +163,7 @@ def check():
             lo, hi = LIMITS.get(name, LIMITS["jingle"])
             if (ch, rate) != (2, 48000) or not lo <= sec <= hi:
                 bad.append(f"{tid}/{name}: {ch} ch, {rate} Hz, {sec:.1f} s (want stereo 48 kHz, {lo:.0f}-{hi:.0f} s)")
-        extra = [f for f in os.listdir(os.path.join(ROOT, "themes", tid, "music")) if f.endswith(".ogg") and f[:-4] not in lock.get("files", {})]
+        extra = [f for f in os.listdir(os.path.join(theme_dir(tid), "music")) if f.endswith(".ogg") and f[:-4] not in lock.get("files", {})]
         bad += [f"{tid}/{f}: not rendered by a recipe" for f in extra]
     for b in bad:
         print("theme-music: FAIL " + b)
@@ -168,7 +174,7 @@ def check():
 def main():
     if "--check" in sys.argv:
         return check()
-    for tid in [a for a in sys.argv[1:] if not a.startswith("-")] or themes():
+    for tid in [a.replace("-", "_") for a in sys.argv[1:] if not a.startswith("-")] or themes():
         render(tid)
     return 0
 
