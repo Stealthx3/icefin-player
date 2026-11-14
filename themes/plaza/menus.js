@@ -65,7 +65,17 @@
                 tabEls = list.map((t) => {
                     const b = P.focusable(el('div', 'pz-tab' + (t.id === active ? ' pz-tab-on' : '') + (t.cls ? ' ' + t.cls : ''), t.label));
                     b.setAttribute('data-pz-tab', t.id);
-                    b.addEventListener('click', () => { if (t.go) { t.go(); return; } f.setActive(t.id); onTab(t.id, b); });
+                    b.addEventListener('click', () => {
+                        if (t.go) { t.go(); return; }
+                        const from = tabEls.findIndex((x) => x.classList.contains('pz-tab-on')), to = tabEls.indexOf(b);
+                        f.setActive(t.id);
+                        onTab(t.id, b);
+                        // the content arrives from the side of the tab picked (220 ms, eased); low motion: at once
+                        if (from >= 0 && to !== from && body.animate && document.documentElement.getAttribute('data-icefin-motion') !== 'low') {
+                            const dx = (to > from ? 1 : -1) * 40;
+                            body.animate([{ opacity: 0, transform: `translateX(${dx}px)` }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+                        }
+                    });
                     tabs.append(b);
                     return b;
                 });
@@ -74,7 +84,7 @@
             tab: (id) => tabEls.find((b) => b.getAttribute('data-pz-tab') === id),
             tabs: () => tabEls,
             setName(text) { nameText.textContent = text; },
-            focusText(text) { focusLine.textContent = text || ''; },
+            focusText(text) { P.caption(focusLine, text); },
             pageText(text) { pageText.textContent = text ? ` · ${text}` : ''; },
             hints(text) { hintText.textContent = ''; hintText.append(...P.hintNodes(text)); },
             stop() { clearInterval(timer); }
@@ -159,7 +169,19 @@
             if (opts.caption) c.append(el('div', 'pz-cell-cap', opts.caption(it)));
             c.append(el('div', 'pz-name', opts.name(it)));
             c.addEventListener('icefin-focus', () => { if (opts.frame) opts.frame.focusText(opts.focus ? opts.focus(it) : opts.name(it)); });
-            c.addEventListener('click', () => opts.select(it, c));
+            c.addEventListener('click', () => {
+                const a = art.getBoundingClientRect();
+                P.flight.from = { id: it.Id, rect: a, image: (art.style.backgroundImage.match(/url\("?(.*?)"?\)/) || [])[1] || '', at: Date.now() };
+                opts.select(it, c);
+            });
+            // back from this item's details: its picture shrinks home into this cell (once the grid has laid out)
+            // (a moment later: Back rebuilds this grid inside the same hashchange that tells the details page it is left)
+            setTimeout(() => {
+                const b = P.flight.back;
+                if (!b || b.id !== it.Id || Date.now() - b.at > 4000 || !c.isConnected) return;
+                P.flight.back = null;
+                P.fly({ from: b.rect, to: art.getBoundingClientRect(), image: b.image, ms: 320, radius: 18 });
+            }, 30);
             c.setAttribute('data-pz-index', String(i));
             return c;
         }
@@ -250,8 +272,9 @@
         T.ctx.focus(sorts.children[state.sort]);
         T.ctx.sound('select');
         const close = () => {
-            if (!panel.isConnected) return;
-            panel.remove();
+            if (!panel.isConnected || panel.classList.contains('pz-panel-out')) return;
+            const low = document.documentElement.getAttribute('data-icefin-motion') === 'low';
+            if (low) panel.remove(); else { panel.classList.add('pz-panel-out'); setTimeout(() => panel.remove(), 220); }
             F.root.removeAttribute('data-pz-panel');
             const t = F.tab('sort');
             if (t) { t.textContent = sortLabel(state); T.ctx.focus(t); }

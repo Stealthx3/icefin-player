@@ -51,6 +51,7 @@
         }
         d.append(head, bar);
         // ---- the hero: the framed art beside the title and facts; the actions and pickers in rows under both ----
+        const scroll0 = () => d.querySelector('.icefin-d-scroll');
         const main = d.querySelector('.icefin-d-main');
         const info = d.querySelector('.icefin-d-info');
         const art = d.querySelector('.icefin-d-art');
@@ -69,6 +70,29 @@
             heroArt.append(frame, reflect);
             if (item.Type === 'MusicAlbum' || item.Type === 'Audio') heroArt.append(el('div', 'pz-d-record'));
             main.prepend(heroArt);
+            // 15 · arriving from a grid cell: its picture flies into this frame while the page fades in under it
+            const fl = P.flight.from;
+            const picOf = () => { const e = frame.querySelector('.icefin-d-poster') || frame; return ((getComputedStyle(e).backgroundImage || '').match(/url\("?(.*?)"?\)/) || [])[1] || ''; };
+            if (fl && fl.id === item.Id && Date.now() - fl.at < 2500) {
+                P.flight.from = null;
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    const to = frame.getBoundingClientRect();
+                    if (!to.width) return;
+                    frame.style.visibility = 'hidden';
+                    if (d.animate && document.documentElement.getAttribute('data-icefin-motion') !== 'low') d.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, delay: 120, easing: 'ease', fill: 'backwards' });
+                    P.fly({ from: fl.rect, to, image: fl.image || picOf(), ms: 360, radius: 24 }).then(() => { frame.style.visibility = ''; });
+                }));
+            }
+            // 21 · leaving by Back: the grid this came from shrinks the picture home into its cell (menus.js)
+            const leave = () => {
+                window.removeEventListener('hashchange', leave);
+                const r = frame.pzRect;
+                if (r && r.width) P.flight.back = { id: item.Id, rect: r, image: picOf(), at: Date.now() };
+            };
+            const keep = () => { if (frame.isConnected) frame.pzRect = frame.getBoundingClientRect(); };
+            setTimeout(keep, 500);
+            if (scroll0()) scroll0().addEventListener('scroll', keep, { passive: true });
+            window.addEventListener('hashchange', leave);
             const kicker = info.querySelector('.icefin-d-kicker');
             const year = (d) => (d ? new Date(d).getFullYear() : '');
             const kick = item.Type === 'Person'
@@ -103,7 +127,7 @@
         root.addEventListener('icefin-focus', (e) => {
             const t = e.target;
             const label = t.getAttribute('aria-label') || (t.querySelector('.icefin-d-name') || t).textContent;
-            focusLine.textContent = (label || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+            P.caption(focusLine, (label || '').replace(/\s+/g, ' ').trim().slice(0, 90));
         }, true);
         const scroll = d.querySelector('.icefin-d-scroll');
         const drawTabs = () => {

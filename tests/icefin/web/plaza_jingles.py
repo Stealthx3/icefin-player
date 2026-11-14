@@ -104,8 +104,8 @@ def main():
             js(f"{tile(kind)}.click(); true")
 
         open_tile(first)
-        s = until(lambda s: s["jingle"] == first and s["ducked"], 5)
-        check(f"opening the {first} card plays its jingle with the ambient loop ducked", s["jingle"] == first and s["ducked"], json.dumps(s))
+        s = until(lambda s: s["jingle"] == first and s["held"], 5)
+        check(f"opening the {first} card plays its jingle with the ambient loop held off (the user, 2026-11-13)", s["jingle"] == first and s["held"] and s["ducked"], json.dumps(s))
         # the card swallows actions while it opens: wait until it's shown
         shown = "!!document.querySelector('.pz-card.pz-shown')"
         page.wait_for(shown, timeout=10)
@@ -125,14 +125,15 @@ def main():
         page.wait_for(shown, timeout=10)
         time.sleep(0.3)
         js("window.icefinTheme.handleAction('back')")
-        s = until(lambda s: s["jingle"] is None and not s["ducked"], 5)
-        check("closing the card stops the jingle and brings the loop back up", s["jingle"] is None and not s["ducked"] and s["ambient"], json.dumps(s))
+        s = until(lambda s: s["jingle"] is None and not s["ducked"] and not s["held"], 5)
+        check("closing the card stops the jingle and brings the loop back up", s["jingle"] is None and not s["ducked"] and not s["held"] and s["ambient"], json.dumps(s))
         if "favourite" in kinds:
             open_tile("favourite")
             page.wait_for(shown, timeout=10)
             time.sleep(0.5)
             s = st()
             check("a favourite's card plays no jingle", s["jingle"] is None, json.dumps(s))
+            check("a favourite's card holds the ambient loop off too", s["held"] and s["ducked"], json.dumps(s))
             js("window.icefinTheme.handleAction('back')")
             page.wait_for(idle, timeout=10)
 

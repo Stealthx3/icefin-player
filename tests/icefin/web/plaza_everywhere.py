@@ -21,12 +21,14 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-FRAME = r"""(() => { const h = document.documentElement, c = document.querySelector('#icefin-stock-chrome .pz-sc');
+FRAME = r"""(() => { const h = document.documentElement, own = document.querySelector('#icefin-theme-root[data-pz-view]');
+  // Plaza's own screen wins over a stock frame left hidden from an earlier page
+  const c = (own && own.querySelector('.pz-menu')) || document.querySelector('#icefin-stock-chrome .pz-sc');
   const vis = (e) => !!(e && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');
   const hdr = [...document.querySelectorAll('.skinHeader, header.MuiAppBar-root')].some(vis);
-  const tabs = c ? [...c.querySelectorAll('.pz-sc-tabs .pz-tab')].map(t => (t.classList.contains('pz-tab-on') ? '*' : '') + t.textContent) : [];
+  const tabs = c ? [...c.querySelectorAll('.pz-sc-tabs .pz-tab, .pz-tabs .pz-tab')].map(t => (t.classList.contains('pz-tab-on') ? '*' : '') + t.textContent) : [];
   return JSON.stringify({stock: h.getAttribute('data-icefin-stock'), dash: h.hasAttribute('data-icefin-dashboard'), frame: vis(c), name: c ? c.querySelector('.pz-mname-text').textContent : '',
-    home: !!(c && vis(c.querySelector('.pz-mround-home'))), tabs, header: hdr}); })()"""
+    home: !!(c && vis(c.querySelector('.pz-mround-home'))), tabs, header: hdr, view: own ? own.getAttribute('data-pz-view') : null}); })()"""
 STYLE = r"""((sel) => { const e = [...document.querySelectorAll(sel)].find(x => x.getClientRects().length); if (!e) return null; const cs = getComputedStyle(e); const r = e.getBoundingClientRect();
   return JSON.stringify({radius: parseFloat(cs.borderTopLeftRadius), w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), y: Math.round(r.top), bg: cs.backgroundColor, bgi: cs.backgroundImage.slice(0, 30), font: cs.fontFamily.slice(0, 20)}); })"""
 PAD = r"""(a => { if (window.icefinTheme && window.icefinTheme.handleAction(a)) return 'theme'; window.icefinInputManager.handleCommand({enter: 'select'}[a] || a, {}); return 'jellyfin-web'; })"""
@@ -90,8 +92,8 @@ def main():
         time.sleep(3)
         # ---- before signing in ----
         f = frame()
-        check("sign-in page: Plaza's frame, 'Sign in', no Home, no header", f["stock"] == "login" and f["frame"] and f["name"] == "Sign in" and not f["home"] and not f["header"], json.dumps(f))
-        st = style("#loginPage button[type=submit]")
+        check("sign-in page: Plaza's own screen, 'Sign in', no Home, no header", f["view"] == "signin" and f["frame"] and f["name"] == "Sign in" and not f["home"] and not f["header"], json.dumps(f))
+        st = style("#icefin-theme-root .pz-si-go")
         check("sign-in page: Sign In is a pill", bool(st) and st["radius"] >= st["h"] / 2 - 1, json.dumps(st))
         shot("01-sign-in")
         js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
@@ -114,15 +116,15 @@ def main():
 
         go("#/selectserver")
         f = frame()
-        check("servers page: framed 'Choose a server'", f["stock"] == "selectserver" and f["frame"] and f["name"] == "Choose a server", json.dumps(f))
+        check("servers page: Plaza's own 'Choose a server'", f["view"] == "signin" and f["frame"] and f["name"] == "Choose a server", json.dumps(f))
         shot("02-servers")
         # ---- user settings ----
         go(f"#/userprofile?userId={uid}")
         f = frame()
-        check("profile: framed 'Profile' with Home", f["stock"] == "userprofile" and f["frame"] and f["name"] == "Profile" and f["home"] and not f["header"], json.dumps(f))
-        st = style("#userProfilePage .detailSection")
-        check("profile: sections are rounded cards", bool(st) and st["radius"] >= 20, json.dumps(st))
-        js("document.getElementById('txtCurrentPassword').focus(); true")
+        check("profile: Plaza's own 'Profile' with Home", f["view"] == "profile" and f["frame"] and f["name"] == "Profile" and f["home"] and not f["header"], json.dumps(f))
+        st = style("#icefin-theme-root .pz-pf-save")
+        check("profile: its buttons are pills", bool(st) and st["radius"] >= st["h"] / 2 - 1, json.dumps(st))
+        js("window.icefinTheme.ctx.focus(document.querySelector('#icefin-theme-root .pz-pf-form .pz-input')); true")
         pad("enter")
         time.sleep(0.6)
         check("profile: a text field opens the on-screen keyboard", js("!!document.getElementById('icefin-osk') && document.getElementById('icefin-osk').getClientRects().length > 0"))
@@ -146,7 +148,7 @@ def main():
         shot("06-prefs-home")
         go("#/quickconnect")
         f = frame()
-        check("Quick Connect: framed", f["stock"] == "quickconnect" and f["name"] == "Quick Connect", json.dumps(f))
+        check("Quick Connect: Plaza's own screen", f["view"] == "quickconnect" and f["name"] == "Quick Connect", json.dumps(f))
         shot("07-quickconnect")
         # ---- the dashboard stays stock ----
         go("#/dashboard", 5)
@@ -194,8 +196,11 @@ def main():
             page.wait_for("!!document.querySelector('#icefin-theme-root[data-icefin-details-complete]')", timeout=20)
             order = lambda: js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{ParentId: '{ids['Playlist']}'}}).then(r => r.Items.map(i => i.Name))")
             before = order()
+            page.wait_for("!!document.querySelector('.icefin-d-row[data-icefin-reorder] .icefin-d-track')", timeout=20)
             js("window.icefinTheme.ctx.focus(document.querySelector('.icefin-d-row[data-icefin-reorder] .icefin-d-track')); true")
             pad("menu")
+            time.sleep(0.5)
+            js("(() => { const b = [...document.querySelectorAll('#icefin-theme-overlay [data-icefin-focus]')].find(x => x.textContent.trim() === 'Move in this playlist'); if (b) b.click(); return !!b; })()")
             time.sleep(0.3)
             lifted = js("!!document.querySelector('.icefin-d-track.icefin-d-moving')")
             shot("13-playlist-move")
@@ -203,9 +208,12 @@ def main():
             pad("enter")
             time.sleep(1.5)
             after = order()
-            check("playlist: Menu lifts an item, Down and OK move it, the server keeps it", lifted and len(before) >= 2 and after[:2] == [before[1], before[0]], f"{before} -> {after}")
+            check("playlist: Menu, then Move in this playlist, lifts an item; Down and OK move it, the server keeps it", lifted and len(before) >= 2 and after[:2] == [before[1], before[0]], f"{before} -> {after}")
+            page.wait_for("!!document.querySelector('.icefin-d-row[data-icefin-reorder] .icefin-d-track')", timeout=20)
             js("window.icefinTheme.ctx.focus(document.querySelector('.icefin-d-row[data-icefin-reorder] .icefin-d-track')); true")
             pad("menu")
+            time.sleep(0.5)
+            js("(() => { const b = [...document.querySelectorAll('#icefin-theme-overlay [data-icefin-focus]')].find(x => x.textContent.trim() === 'Move in this playlist'); if (b) b.click(); return !!b; })()")
             pad("down")
             pad("enter")
             time.sleep(1.5)
@@ -287,9 +295,9 @@ def main():
             shot("23-home-music")
             go("#/queue", 3)
             f = frame()
-            check("now playing: framed 'Music' with Now playing and Lyrics tabs", f["stock"] == "queue" and f["name"] == "Music" and f["tabs"] == ["*Now playing", "Lyrics"], json.dumps(f))
+            check("now playing: Plaza's own 'Music', Now playing on, with Lyrics", f["view"] == "music-now" and f["name"] == "Music" and "*Now playing" in f["tabs"] and "Lyrics" in f["tabs"], json.dumps(f))
             shot("24-now-playing")
-            go(f"#/userprofile?userId={uid}", 2)
+            go(f"#/mypreferencesplayback?userId={uid}", 3)  # still jellyfin-web's own page, in Plaza's frame
             st = style(".nowPlayingBar")
             check("music bar on jellyfin-web's pages: a capsule", bool(st) and st["radius"] >= st["h"] / 2 - 1 and st["w"] < W() - 20, json.dumps(st))
             shot("25-music-bar")
