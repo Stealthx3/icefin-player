@@ -43,6 +43,10 @@
 .icefin-settings .icefin-cs-rail .icefin-d-btn { text-align: left; white-space: normal; text-transform: capitalize; }
 .icefin-settings .icefin-cs-rail .icefin-d-btn.icefin-cs-here { box-shadow: inset 0.25em 0 0 var(--icefin-color-accent); }
 .icefin-settings .icefin-cs-host { min-height: 0; position: relative; }
+/* a controller's row: Remap at the row's right edge, in the column of the switches above and below it, so Down from a
+   switch reaches it (the user, 2026-11-13: every control reachable with the pad) */
+.icefin-settings .icefin-pad-row { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
+.icefin-settings .icefin-pad-row .icefin-pad-remap { flex: none; margin: 0; }
 .icefin-settings .icefin-cs-host > .dialog { position: absolute !important; inset: 0 !important; margin: 0 !important; width: auto !important; height: auto !important;
   max-width: none !important; max-height: none !important; transform: none !important; animation: none !important; box-shadow: none !important;
   border-radius: var(--icefin-shape-cardRadius, 0.6em); background: var(--icefin-color-surface); color: var(--icefin-color-text); display: flex; flex-direction: column; }

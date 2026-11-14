@@ -13,7 +13,7 @@ add_test(NAME test_icefin_theme COMMAND test_icefin_theme)
 
 add_executable(test_icefin_gpu test_gpu.cpp)
 target_link_libraries(test_icefin_gpu jmp_core Qt6::Test)
-target_include_directories(test_icefin_gpu PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(test_icefin_gpu PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/core)  # HardwareComponent's frame summary
 target_compile_definitions(test_icefin_gpu PRIVATE ICEFIN_TESTMEDIA="${CMAKE_SOURCE_DIR}/src/icefin/resources/testmedia")
 add_test(NAME test_icefin_gpu COMMAND test_icefin_gpu)
 
@@ -29,7 +29,7 @@ add_test(NAME test_icefin_log COMMAND test_icefin_log)
 
 add_executable(test_icefin_gamepad test_gamepad.cpp)
 target_link_libraries(test_icefin_gamepad jmp_core Qt6::Test)
-target_include_directories(test_icefin_gamepad PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(test_icefin_gamepad PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_SOURCE_DIR}/src/input)  # LircKeys uses InputBase
 add_test(NAME test_icefin_gamepad COMMAND test_icefin_gamepad)
 
 add_executable(test_icefin_iec958 test_iec958.cpp)

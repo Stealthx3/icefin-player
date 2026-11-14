@@ -47,7 +47,7 @@ Each goal has a test that passes or fails in the hardware lab; 1.0 ships when ev
 
 ## Baseline: jellyfin-desktop v2.0.0
 
-These findings come from reading the v2.0.0 source (commit `1634d3d`). Upstream `master` is at 2.1.0-pre1; Icefin rebases onto 2.1.0 once it is released.
+These findings come from reading the v2.0.0 source (commit `1634d3d`). Upstream `master` is at 2.1.0-pre1; Icefin stays on v2.0.0 through 1.0 and then breaks away (D33).
 
 | Area | What v2.0.0 does | Gap for Icefin |
 | --- | --- | --- |
@@ -206,6 +206,7 @@ It asks once, when the user presses play, from the feature's own video range and
 **Device profile.** The static force-transcode toggles become overrides under a new Auto mode:
 
 - On the Vulkan renderer, Auto direct-plays HDR10, HLG and Dolby Vision 5 and 8, because Icefin can display or tone-map them locally, which beats a server transcode.
+- Upstream's *Force Transcode Dolby Vision* defaults to on, which would have the server convert every profile 5 film. Icefin turns its default off (6.6), so profile 5 reaches the Vulkan renderer, and on OpenGL the capability prompt's *Play anyway* plays the original. Switched on, it stays an override.
 - Auto asks the server to transcode only codecs the decoder self-test finds unplayable in real time, plus whatever the user picked in a capability prompt.
 
 **Gamescope.** Under Gamescope, Icefin runs as an XWayland client: the Flatpak's X11 fallback is granted there because Gamescope offers no Wayland socket by default. It uses the same single-surface renderer on an X11 surface, with HDR through Gamescope's WSI and full-screen gamepad mode. Native Wayland inside Gamescope is a long-term item.
@@ -347,8 +348,9 @@ A *Nintendo layout* option swaps south and east, so the button marked A always c
 **Steam Input**
 
 - When Icefin is launched from Steam (a non-Steam shortcut on desktop, or Game Mode on a Deck), Steam Input takes the physical pad and offers a virtual one. Steam tells SDL which physical devices to ignore, and Icefin honors it, so each press arrives once.
-- Icefin ships a recommended Steam Input layout: a gamepad template with the Deck's trackpad as a mouse and back buttons mapped to Home and Info, so users don't build their own.
-- **Double-input guard.** When Steam's *desktop* layout is active, Steam may send keystrokes for the same press that SDL also reports. If Icefin sees a keyboard event and the same pad action within 50 ms, it drops the duplicate. The guard runs only while Icefin detects Steam running with its desktop layout, so ordinary keyboard use is never filtered.
+- Button prompts for Steam's virtual pad come from the pad behind it. SDL reads that from a file Steam names under `/tmp`, which the Flatpak's private `/tmp` hides; Icefin then takes the family of the devices Steam asked SDL to ignore (`SDL_GAMECONTROLLER_IGNORE_DEVICES`), or Xbox when they are mixed or unknown.
+- Icefin ships a recommended Steam Input layout: a gamepad template with the Deck's trackpad as a mouse and back buttons mapped to Home and Info, so users don't build their own. Until a layout exported from Steam is in hand (beta row C5), it ships as a recipe in INSTALL: Steam's *Gamepad with Mouse Trackpad* template, L4 to View (Home), R4 to X (the menu).
+- **Double-input guard.** When Steam's *desktop* layout is active, Steam may send keystrokes for the same press that SDL also reports. If Icefin sees a keyboard event and the same pad action within 50 ms, it drops the duplicate. The guard runs only while Icefin detects Steam running with its desktop layout, so ordinary keyboard use is never filtered. Icefin detects the desktop layout by that coincidence itself: Steam's process isn't visible from the sandbox, so the guard considers a key only while a pad is connected and drops it only when the same pad action came within the window (7.4).
 
 **Web-layer conflict.** Chromium inside Qt WebEngine has its own Gamepad API, and jellyfin-web contains gamepad-to-key handling. If both see the pad, every press would act twice. The injected `nativeshell.js` hides `navigator.getGamepads` from the page (returning no pads), so only the native SDL path drives input; the Phase 2 spike checks whether WebEngine exposes the API at all.
 
@@ -627,7 +629,7 @@ Twelve phases, about 42 weeks for one developer. The Phase 2 spikes settle the s
 7. **Controller layer (2 wks).** SDL3 gamepad service replacing `InputSDL`, standard action map with per-controller remapping, Nintendo layout, glyph tokens, Steam Input layout and duplicate guard, web Gamepad API suppression, Controllers page. *Exit:* every controller in the acceptance row navigates all screens, including playback over HDR video, inside and outside Steam, with no double inputs.
 8. **Theme-engine layer (5 wks).** Web runtime, native backdrop, trust levels, per-user settings, stand-down, sounds, the Media Center theme and the Baseline control theme, building on Phase 6's token engine; Baseline comes first so every later plugin run has its control. *Exit:* Media Center benchmark and Baseline acceptance pass; plugin suite green with the engine off, with Baseline and with Media Center.
 9. **Benchmark clone themes (15 wks).** Reference captures of the eleven targets; the sixteen generic capabilities they need (about 5 weeks); then Harbor, Spark, Plum, Plaza, Orbit, Pivot, Lumen, Marquee, Almanac, Arcade and Tide (about 10 weeks). *Exit:* every clone passes its acceptance list from its package alone, and the lint finds no theme-specific engine code.
-10. **Upstream sync (1 wk).** Rebase onto 2.1.0 (or the latest release) and send generic fixes upstream. *Exit:* full suite passes on the new base.
+10. **Upstream (D33).** No upstream merge before 1.0 (the 2.1.0 rebase is cut); send generic fixes upstream. After 1.0 Icefin breaks away, adopting only what Jellyfin server API updates need.
 11. **Hardening and beta (2 wks).** Full lab matrix, log redaction check, beta on the nightly channel. *Exit:* no open P1 bugs; every acceptance row passes.
 12. **Release 1.0 (1 wk).** Stable channel, install docs (including device approval), compatibility table. *Exit:* 1.0 tagged with source published.
 
@@ -713,7 +715,7 @@ After 1.0, Icefin decouples from upstream completely and then drops X11, in that
 ## Open questions
 
 - [ ] Final app ID owner or domain for `io.github.<owner>.IcefinPlayer`, and whether Icefin is branded as part of IceSuite.
-- [ ] Rebase onto 2.1.0 during Phase 1 if it releases by then, or stay on v2.0.0 until the Phase 10 sync?
+- [x] Rebase onto 2.1.0 during Phase 1 if it releases by then, or stay on v2.0.0 until the Phase 10 sync? Neither: no upstream merge before 1.0 (D33).
 - [ ] Is HDR on NVIDIA a 1.0 requirement, or best effort if the Phase 2 spike finds driver gaps?
 - [ ] Is refresh-rate matching on KDE required for 1.0? KWin offers no output control to sandboxed apps.
 - [ ] When does decoupling from upstream start: right after 1.0, or after a stable 1.x?

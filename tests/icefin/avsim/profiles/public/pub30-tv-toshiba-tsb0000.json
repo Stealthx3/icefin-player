@@ -1,0 +1,44 @@
+{
+  "description": "Toshiba TOSHIBA-TV (tv), from the linuxhw EDID collection: Digital/Toshiba/TSB0000/2460C786C3DE (CC BY 4.0); 2 EDIDs share this audio capability set",
+  "monitor_name": "TOSHIBA-TV",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "eac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "byte3": 1
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Toshiba/TSB0000/2460C786C3DE"
+}

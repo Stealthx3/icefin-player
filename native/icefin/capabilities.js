@@ -192,11 +192,20 @@
     }
 
     // ---- global overlay (9.3) ----
-    let overlaySpec = null, overlayEl = null, overlayPrevFocus = null, overlayScreenFocus = null;
+    let overlaySpec = null, overlayEl = null, overlayPrevFocus = null, overlayScreenFocus = null, overlayClosing = false, overlayCloseTimer = null;
     const overlay = {
         set(spec) { overlaySpec = spec; },
-        isOpen: () => !!overlayEl,
+        isOpen: () => !!overlayEl && !overlayClosing,
         open() {
+            // opening while the last one plays its closing animation: that one goes now (its unmount may clear the spec
+            // the caller has just set, so keep it)
+            if (overlayClosing) {
+                const spec = overlaySpec;
+                clearTimeout(overlayCloseTimer);
+                overlayClosing = false;
+                finishClose();
+                if (!overlaySpec) overlaySpec = spec;
+            }
             if (!overlaySpec || overlayEl) return !!overlayEl;
             overlayPrevFocus = document.activeElement;
             // The overlay is modal: the screen underneath gives up its focus ring until the overlay closes.
@@ -213,17 +222,37 @@
             E.sound('navigate');
             return true;
         },
+        // spec.leave(el), when given, starts the theme's closing animation and returns its length in ms: the overlay
+        // stays (taking no input) until it ends. Low motion closes at once. The screen has its focus back as soon as
+        // closing starts, so code that runs right after close() (a menu's Move, Play) acts on the screen's item.
         close() {
+            if (!overlayEl || overlayClosing) return;
+            let ms = 0;
+            try { ms = overlaySpec && overlaySpec.leave && !motion.reduced() ? Math.min(600, +overlaySpec.leave(overlayEl) || 0) : 0; } catch (e) { console.error(e); }
+            if (ms > 0) {
+                overlayClosing = true;
+                overlayEl.style.pointerEvents = 'none';
+                restoreFocus();
+                overlayCloseTimer = setTimeout(() => { overlayClosing = false; finishClose(); }, ms);
+                return;
+            }
+            finishClose();
+        }
+    };
+    function restoreFocus() {
+        if (overlayScreenFocus && overlayScreenFocus.isConnected) E.focus(overlayScreenFocus);
+        else if (overlayPrevFocus && overlayPrevFocus.focus) overlayPrevFocus.focus();
+        overlayScreenFocus = null;
+        overlayPrevFocus = null;
+    }
+    function finishClose() {
             if (!overlayEl) return;
             try { overlaySpec.unmount && overlaySpec.unmount(); } catch (e) { console.error(e); }
             overlayEl.remove();
             overlayEl = null;
-            if (overlayScreenFocus && overlayScreenFocus.isConnected) E.focus(overlayScreenFocus);
-            else if (overlayPrevFocus && overlayPrevFocus.focus) overlayPrevFocus.focus();
-            overlayScreenFocus = null;
+            restoreFocus();
             E.sound('back');
-        }
-    };
+    }
     function setOverlayFocus(el) {
         overlayEl.querySelectorAll('.icefin-focused').forEach((x) => x.classList.remove('icefin-focused'));
         el.classList.add('icefin-focused');
@@ -233,6 +262,8 @@
     const overlayHook = (a) => {
         if (a === 'icefin_overlay') { if (overlayEl) overlay.close(); else overlay.open(); return !!overlaySpec; }
         if (!overlayEl) return false;
+        // closing: the screen has its focus back already, so presses go to it (a fast Down after a menu's Move isn't lost)
+        if (overlayClosing) return false;
         if (a === 'back') { overlay.close(); return true; }
         if (isDir(a)) {
             const n = nearest(overlayEl, overlayEl.querySelector('.icefin-focused'), a);
@@ -1091,8 +1122,61 @@
     };
     E.onRoute(stockRoute);
 
+    // On a framed page the remote moves spatially, over the page's controls and the theme's frame (its tabs, Back and
+    // Home) as one screen. jellyfin-web's own navigation starts nowhere in desktop layout (nothing has focus), skips
+    // switches, and never leaves the page for the frame (the user, 2026-11-12: Plaza's settings pages with a controller).
+    // ◀▶ in a dropdown or a text field stay that control's own; a jellyfin-web dialog keeps its own navigation.
+    const STOCK_CTL = 'button, a[href], input:not([type=hidden]):not([tabindex="-1"]):not([aria-hidden="true"]), select, textarea, '
+        + '[tabindex="0"], [role="button"], [role="combobox"], [role="switch"], [role="tab"], .listItem-button, .cardBox';
+    const stockBox = (el) => (el.matches('input[type=checkbox], input[type=radio]') && el.closest('label')) || el;
+    const stockShown = (el) => {
+        const b = stockBox(el);
+        if (!b.getClientRects().length) return false;
+        const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+        return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0 && r.width >= 4 && r.height >= 4;
+    };
+    function stockControls() {
+        const page = [...document.querySelectorAll('.page:not(.hide)')].filter((x) => x.getClientRects().length).pop();
+        const out = [];
+        for (const area of [page, stockEl && !stockEl.hidden ? stockEl : null]) {
+            if (!area) continue;
+            for (const el of area.querySelectorAll(STOCK_CTL)) {
+                if (el.disabled || el.closest('[hidden], .hide, [aria-hidden="true"]') || !stockShown(el)) continue;
+                out.push(el);
+            }
+        }
+        // the outermost of nested controls (a button inside a card is the card), but a switch's input over its label
+        return out.filter((el) => !out.some((o) => o !== el && o.contains(el)));
+    }
+    const stockDialog = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length
+        && getComputedStyle(d).display !== 'none' && !d.closest('#icefin-theme-root'));
+    const stockNavHook = (a) => {
+        if (!isDir(a) || !document.documentElement.hasAttribute('data-icefin-stock') || osk || (overlayEl && !overlayClosing) || stockDialog()) return false;
+        const act = document.activeElement;
+        if ((a === 'left' || a === 'right') && act && (act.tagName === 'SELECT' || isText(act) || act.matches('[role="combobox"], input[type=range]'))) return false;
+        const all = stockControls();
+        if (!all.length) return false;
+        const cur = act && all.includes(act) ? act : null;
+        let next = null;
+        if (!cur) {
+            // nothing yet: the page's first control (not the frame's)
+            next = all.find((el) => !(stockEl && stockEl.contains(el))) || all[0];
+        } else {
+            const others = all.filter((el) => el !== cur);
+            const hit = E.pick(others.map(stockBox), stockBox(cur), a);
+            next = hit ? others[others.map(stockBox).indexOf(hit)] : null;
+        }
+        if (next) {
+            next.focus({ preventScroll: true });
+            if (!(stockEl && stockEl.contains(next))) stockBox(next).scrollIntoView({ block: 'center', behavior: 'smooth' });
+            E.sound('focus');
+        }
+        return true;  // a framed page keeps the arrows even at its edge
+    };
+
     E.addActionHook(oskHook);
     E.addActionHook(overlayHook);
+    E.addActionHook(stockNavHook);
     E.onReset(() => {
         cap = 'normal';
         attr('data-icefin-motion', userReduced() ? 'low' : 'normal');
@@ -1117,9 +1201,11 @@
         stockEl = null;
         attr('data-icefin-stock', false);
         attr('data-icefin-dashboard', false);
-        // mount() cleared the hooks just before this runs: the keyboard's and the overlay's go back first (both are modal)
+        // mount() cleared the hooks just before this runs: the keyboard's and the overlay's go back first (both are modal),
+        // then the framed pages' navigation
         E.addActionHook(oskHook);
         E.addActionHook(overlayHook);
+        E.addActionHook(stockNavHook);
     });
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
