@@ -113,6 +113,28 @@
         l.input = i;
         return l;
     };
+    // A stepper row: ‹ value ›, ◀ and ▶ step it, select steps forward (checklist 2.4). values: [[value, label], …]
+    M.stepper = (label, values, at, changed) => {
+        let i = Math.max(0, values.findIndex((x) => x[0] === at));
+        const r = M.row(label, { value: ' ' });
+        const v = r.querySelector('.mc-li-value');
+        const show = () => { v.textContent = `‹ ${values[i][1]} ›`; r.setAttribute('aria-label', `${label}: ${values[i][1]}`); };
+        r.mcStep = (dir) => { i = (i + dir + values.length) % values.length; show(); T.ctx.sound('navigate'); if (changed) changed(values[i][0]); };
+        r.addEventListener('click', () => r.mcStep(1));
+        r.value = () => values[i][0];
+        show();
+        return r;
+    };
+    if (T._engine && T._engine.addActionHook && !window.icefinMediaCenterStepKey) {
+        window.icefinMediaCenterStepKey = true;
+        T._engine.addActionHook((a) => {
+            if (a !== 'left' && a !== 'right') return false;
+            const f = document.querySelector('#icefin-theme-overlay .icefin-focused');
+            if (!f || typeof f.mcStep !== 'function') return false;
+            f.mcStep(a === 'right' ? 1 : -1);
+            return true;
+        });
+    }
     M.foot = (...buttons) => { const f = el('div', 'mc-sp-foot'); f.append(...buttons); return f; };
     M.sec = (text) => el('div', 'mc-sec', text);
     M.note = (text) => el('div', 'mc-note mc-sp-note', text);

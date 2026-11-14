@@ -702,3 +702,13 @@ textarea.mc-sp-input { height: 16vh; padding: 1vh 1.4vh; resize: none; line-heig
 @keyframes mc-notice-out { to { opacity: 0; transform: translateY(2vh); } }
 html[data-icefin-motion="low"] .mc-sp-panel, html[data-icefin-motion="low"] .mc-sp-dim, html[data-icefin-motion="low"] .mc-sp-swap,
 html[data-icefin-motion="low"] .mc-notice { animation: none !important; }
+
+/* A drill-down list (9.60, the ListPage board): Play all and Shuffle at the left with what the list is; the grid
+   beside them. */
+#icefin-theme-root[data-mc="list"] .mc-lib-body { left: 34.4vw; }
+#icefin-theme-root[data-mc="list"] .mc-lib-info { left: 34.4vw; }
+.mc-lib-side { position: absolute; left: 21.67vh; top: 24vh; width: 34.7vh; display: flex; flex-direction: column; gap: 1.4vh; z-index: 2; }
+.mc-lib-side .mc-btn { height: 6.7vh; }
+.mc-lib-about { margin-top: 1.9vh; font-size: 2.4vh; line-height: 1.5; color: var(--icefin-color-textSecondary); }
+.mc-lib-sort { margin-left: auto; }
+.mc-lib-sort.on { color: var(--icefin-color-focus); }
