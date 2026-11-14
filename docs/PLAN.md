@@ -135,7 +135,7 @@ developer; total about 42 weeks, or about 38 weeks if Phase 2 switches to the tw
 
 ## Phase 10 — Upstream (no merges before 1.0: D33)
 - [x] **10.1** Cut (D33, the user, 2026-11-13): no upstream merge before 1.0. Icefin reaches 1.0 on jellyfin-desktop v2.0.0, then breaks away from upstream, adopting only what Jellyfin server API updates need
-- [ ] **10.2** Send generic fixes upstream (ELD, audio fallback, Flatpak CI, Wayland work, LIRC presses repeating forever)
+- [ ] **10.2** Send generic fixes upstream (ELD, audio fallback, Flatpak CI, Wayland work, LIRC presses repeating forever) (the working list, checked against upstream's issues and PRs on 2026-11-13: `docs/dev/UPSTREAM-CANDIDATES.md`; sent only with the user's go-ahead on the text)
 
 ## Phase 11 — Hardening and beta (2 wks)
 - [ ] **11.1** Full lab matrix (D28): every lab test passes on the release tree, the Virtual AV tier (audio and the virtual HDR display) and the simulated hardware that's built; the hardware rows (5.8's and 8.6's among them) are `docs/BETA-CHECKLIST.md` [Testing, CI and hardware lab]
