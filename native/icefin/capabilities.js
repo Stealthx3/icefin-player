@@ -74,7 +74,10 @@
     // Only a pointer that moved takes focus: when content changes under a still cursor (a page turns, a row scrolls) the
     // browser sends mouse events at the same coordinates, and those must not pull focus off what the remote just chose.
     function onMove(e) {
-        const still = e.clientX === px && e.clientY === py;
+        // still: the same place as the last event, or no movement at all (the browser's events for content moving under
+        // a resting cursor carry none, and the first of them came with nothing to compare: 9.60, a focus that jumped to
+        // Media Center's pivot row under a resting cursor)
+        const still = (e.clientX === px && e.clientY === py) || px === null || (e.movementX === 0 && e.movementY === 0);
         px = e.clientX; py = e.clientY;
         if (!pointer || still) return;
         const t = e.target.closest && e.target.closest(FOCUS);
@@ -192,11 +195,20 @@
     }
 
     // ---- global overlay (9.3) ----
-    let overlaySpec = null, overlayEl = null, overlayPrevFocus = null, overlayScreenFocus = null;
+    let overlaySpec = null, overlayEl = null, overlayPrevFocus = null, overlayScreenFocus = null, overlayClosing = false, overlayCloseTimer = null;
     const overlay = {
         set(spec) { overlaySpec = spec; },
-        isOpen: () => !!overlayEl,
+        isOpen: () => !!overlayEl && !overlayClosing,
         open() {
+            // opening while the last one plays its closing animation: that one goes now (its unmount may clear the spec
+            // the caller has just set, so keep it)
+            if (overlayClosing) {
+                const spec = overlaySpec;
+                clearTimeout(overlayCloseTimer);
+                overlayClosing = false;
+                finishClose();
+                if (!overlaySpec) overlaySpec = spec;
+            }
             if (!overlaySpec || overlayEl) return !!overlayEl;
             overlayPrevFocus = document.activeElement;
             // The overlay is modal: the screen underneath gives up its focus ring until the overlay closes.
@@ -213,17 +225,37 @@
             E.sound('navigate');
             return true;
         },
+        // spec.leave(el), when given, starts the theme's closing animation and returns its length in ms: the overlay
+        // stays (taking no input) until it ends. Low motion closes at once. The screen has its focus back as soon as
+        // closing starts, so code that runs right after close() (a menu's Move, Play) acts on the screen's item.
         close() {
+            if (!overlayEl || overlayClosing) return;
+            let ms = 0;
+            try { ms = overlaySpec && overlaySpec.leave && !motion.reduced() ? Math.min(600, +overlaySpec.leave(overlayEl) || 0) : 0; } catch (e) { console.error(e); }
+            if (ms > 0) {
+                overlayClosing = true;
+                overlayEl.style.pointerEvents = 'none';
+                restoreFocus();
+                overlayCloseTimer = setTimeout(() => { overlayClosing = false; finishClose(); }, ms);
+                return;
+            }
+            finishClose();
+        }
+    };
+    function restoreFocus() {
+        if (overlayScreenFocus && overlayScreenFocus.isConnected) E.focus(overlayScreenFocus);
+        else if (overlayPrevFocus && overlayPrevFocus.focus) overlayPrevFocus.focus();
+        overlayScreenFocus = null;
+        overlayPrevFocus = null;
+    }
+    function finishClose() {
             if (!overlayEl) return;
             try { overlaySpec.unmount && overlaySpec.unmount(); } catch (e) { console.error(e); }
             overlayEl.remove();
             overlayEl = null;
-            if (overlayScreenFocus && overlayScreenFocus.isConnected) E.focus(overlayScreenFocus);
-            else if (overlayPrevFocus && overlayPrevFocus.focus) overlayPrevFocus.focus();
-            overlayScreenFocus = null;
+            restoreFocus();
             E.sound('back');
-        }
-    };
+    }
     function setOverlayFocus(el) {
         overlayEl.querySelectorAll('.icefin-focused').forEach((x) => x.classList.remove('icefin-focused'));
         el.classList.add('icefin-focused');
@@ -233,6 +265,12 @@
     const overlayHook = (a) => {
         if (a === 'icefin_overlay') { if (overlayEl) overlay.close(); else overlay.open(); return !!overlaySpec; }
         if (!overlayEl) return false;
+        // closing: the screen has its focus back already, so presses go to it (a fast Down after a menu's Move isn't lost)
+        if (overlayClosing) return false;
+        // the theme's own use of an action inside its overlay first (a stepper's ◀▶, 9.60): spec.onAction(action, focused)
+        if (overlaySpec && overlaySpec.onAction) {
+            try { if (overlaySpec.onAction(a, overlayEl.querySelector('.icefin-focused'))) return true; } catch (e) { console.error(e); }
+        }
         if (a === 'back') { overlay.close(); return true; }
         if (isDir(a)) {
             const n = nearest(overlayEl, overlayEl.querySelector('.icefin-focused'), a);
@@ -1043,8 +1081,121 @@
         return views;
     }
 
+
+    // ---- stock chrome (9.42): the theme's frame around jellyfin-web's own pages ----
+    // jellyfin-web's own pages (sign-in, lists, settings, now playing, ...) keep every function; a theme can frame them
+    // (a title, a bar) through ui.stockChrome and restyle them under html[data-icefin-stock="<route>"]. The server
+    // dashboard and plugin configuration pages are never framed: html[data-icefin-dashboard] marks them, so a theme's
+    // rules can leave them stock. The player (#/video) has its own controls (9.19) and no frame.
+    const DASHBOARD = /^#\/(dashboard|configurationpage|wizard|addplugin|installedplugins|availableplugins|scheduledtasks?|scheduledtask|metadataimages|metadatanfo|networking|notificationsettings|apikeys|logs?|log|userprofiles|useredit|userlibraryaccess|userparentalcontrol|userpassword|usernew|devices?|serveractivity|encodingsettings|playbackconfiguration|streamingsettings|librarydisplay|library|livetvstatus|livetvsettings|livetvtuner|livetvguideprovider|edititemmetadata|repositories|branding|backups|activity|keys)(\b|\/|\?|$)/;
+    let stockSpec = null, stockEl = null, stockMounted = false, stockTimers = [];
+    const stockDashboard = () => DASHBOARD.test(location.hash) || !!(document.body && document.body.classList.contains('dashboardDocument'));
+    const stockTitle = () => {
+        const t = [...document.querySelectorAll('.skinHeader .pageTitle, .pageTitle')].find((x) => (x.textContent || '').trim());
+        return t ? t.textContent.trim() : '';
+    };
+    function stockRoute(info) {
+        const dash = !!(info.theme && stockDashboard());
+        const on = !!(info.theme && !info.screen && !dash && !/^#\/video\b/.test(location.hash));
+        attr('data-icefin-dashboard', dash);
+        attr('data-icefin-stock', on ? (info.route.replace(/^#\//, '') || 'home') : false);
+        stockTimers.forEach(clearTimeout);
+        stockTimers = [];
+        if (!on || !stockSpec) { if (stockEl) stockEl.hidden = true; return; }
+        if (!stockEl || !stockEl.isConnected) {
+            stockEl = document.createElement('div');
+            stockEl.id = 'icefin-stock-chrome';
+            stockEl.style.cssText = 'position:fixed;inset:0;z-index:998;pointer-events:none';
+            document.body.append(stockEl);
+            stockMounted = false;
+        }
+        stockEl.hidden = false;
+        const ctx = T.ctx;
+        const send = () => {
+            const i = { route: info.route, hash: location.hash, title: stockTitle(), back: () => history.back(), home: () => { location.hash = '#/home'; } };
+            try {
+                if (!stockMounted) { stockMounted = true; stockSpec.mount(stockEl, i, ctx); }
+                if (stockSpec.update) stockSpec.update(i, ctx);
+            } catch (e) { console.error('icefinTheme: stock chrome', e); }
+        };
+        send();
+        // jellyfin-web shows the page and sets its title a moment after the route changes; once it has, the page's first
+        // control has the focus (9.60, checklist 2.1: a controller starts on the page, not nowhere)
+        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 1200) stockArrive(); } }, ms));
+    }
+    // Not a text field (that would open the on-screen keyboard unasked), and never over a dialog, the overlay or
+    // something the user (or the page) has focused already.
+    function stockArrive() {
+        if (!document.documentElement.hasAttribute('data-icefin-stock') || osk || (overlayEl && !overlayClosing) || stockDialog()) return;
+        const all = stockControls();
+        const act = document.activeElement;
+        if (act && act !== document.body && all.includes(act)) return;
+        const first = all.find((el) => !(stockEl && stockEl.contains(el)) && !isText(el) && !el.matches('select, [role="combobox"]'))
+            || all.find((el) => !(stockEl && stockEl.contains(el)));
+        if (first) first.focus({ preventScroll: true });
+    }
+    const stockChrome = {
+        // spec: {mount(el, info, ctx), update?(info, ctx)}; info: {route, hash, title, back(), home()}
+        set(spec) { stockSpec = spec || null; },
+        element: () => stockEl
+    };
+    E.onRoute(stockRoute);
+
+    // On a framed page the remote moves spatially, over the page's controls and the theme's frame (its tabs, Back and
+    // Home) as one screen. jellyfin-web's own navigation starts nowhere in desktop layout (nothing has focus), skips
+    // switches, and never leaves the page for the frame (the user, 2026-11-12: Plaza's settings pages with a controller).
+    // ◀▶ in a dropdown or a text field stay that control's own; a jellyfin-web dialog keeps its own navigation.
+    const STOCK_CTL = 'button, a[href], input:not([type=hidden]):not([tabindex="-1"]):not([aria-hidden="true"]), select, textarea, '
+        + '[tabindex="0"], [role="button"], [role="combobox"], [role="switch"], [role="tab"], .listItem-button, .cardBox';
+    const stockBox = (el) => (el.matches('input[type=checkbox], input[type=radio]') && el.closest('label')) || el;
+    const stockShown = (el) => {
+        const b = stockBox(el);
+        if (!b.getClientRects().length) return false;
+        const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+        return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0 && r.width >= 4 && r.height >= 4;
+    };
+    function stockControls() {
+        const page = [...document.querySelectorAll('.page:not(.hide)')].filter((x) => x.getClientRects().length).pop();
+        const out = [];
+        for (const area of [page, stockEl && !stockEl.hidden ? stockEl : null]) {
+            if (!area) continue;
+            for (const el of area.querySelectorAll(STOCK_CTL)) {
+                if (el.disabled || el.closest('[hidden], .hide, [aria-hidden="true"]') || !stockShown(el)) continue;
+                out.push(el);
+            }
+        }
+        // the outermost of nested controls (a button inside a card is the card), but a switch's input over its label
+        return out.filter((el) => !out.some((o) => o !== el && o.contains(el)));
+    }
+    const stockDialog = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length
+        && getComputedStyle(d).display !== 'none' && !d.closest('#icefin-theme-root'));
+    const stockNavHook = (a) => {
+        if (!isDir(a) || !document.documentElement.hasAttribute('data-icefin-stock') || osk || (overlayEl && !overlayClosing) || stockDialog()) return false;
+        const act = document.activeElement;
+        if ((a === 'left' || a === 'right') && act && (act.tagName === 'SELECT' || isText(act) || act.matches('[role="combobox"], input[type=range]'))) return false;
+        const all = stockControls();
+        if (!all.length) return false;
+        const cur = act && all.includes(act) ? act : null;
+        let next = null;
+        if (!cur) {
+            // nothing yet: the page's first control (not the frame's)
+            next = all.find((el) => !(stockEl && stockEl.contains(el))) || all[0];
+        } else {
+            const others = all.filter((el) => el !== cur);
+            const hit = E.pick(others.map(stockBox), stockBox(cur), a);
+            next = hit ? others[others.map(stockBox).indexOf(hit)] : null;
+        }
+        if (next) {
+            next.focus({ preventScroll: true });
+            if (!(stockEl && stockEl.contains(next))) stockBox(next).scrollIntoView({ block: 'center', behavior: 'smooth' });
+            E.sound('focus');
+        }
+        return true;  // a framed page keeps the arrows even at its edge
+    };
+
     E.addActionHook(oskHook);
     E.addActionHook(overlayHook);
+    E.addActionHook(stockNavHook);
     E.onReset(() => {
         cap = 'normal';
         attr('data-icefin-motion', userReduced() ? 'low' : 'normal');
@@ -1063,12 +1214,20 @@
         attr('data-icefin-rail', false);
         keyboard.disable();
         timePalette.stop();
-        // mount() cleared the hooks just before this runs: the keyboard's and the overlay's go back first (both are modal)
+        stockSpec = null;
+        stockTimers.forEach(clearTimeout);
+        if (stockEl) stockEl.remove();
+        stockEl = null;
+        attr('data-icefin-stock', false);
+        attr('data-icefin-dashboard', false);
+        // mount() cleared the hooks just before this runs: the keyboard's and the overlay's go back first (both are modal),
+        // then the framed pages' navigation
         E.addActionHook(oskHook);
         E.addActionHook(overlayHook);
+        E.addActionHook(stockNavHook);
     });
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
+    T.ui = { motion, pointerFirst, chrome, stockChrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
 })();
