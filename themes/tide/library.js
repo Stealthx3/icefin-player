@@ -31,7 +31,18 @@
                 lv.load = async () => { const v = await viewFor(kind, p); lv.title = v.Name; return D.libraryEntries(v, { peek: false }); };
                 return lv;
             },
-            selfInTrail: true
+            selfInTrail: true,
+            nav: () => [{ icon: 'genre', label: 'Sort and filter', go: async () => {
+                const C = D.currentColumn;
+                if (!C) return;
+                if (!(C.level() && C.level().sortable)) {
+                    const all = C.S.entries.find((e) => e.open && /^All /.test(e.name));
+                    if (!all) { D.notice('Open a list to sort it', true); return; }
+                    await C.push(all.open());
+                    await new Promise((r) => setTimeout(r, 400));
+                }
+                D.sortPanel(D.currentColumn);
+            } }]
         });
     }
 
@@ -48,6 +59,12 @@
             else if (p.get('studioId')) { q.StudioIds = p.get('studioId'); icon = 'studio'; idKey = p.get('studioId'); }
             else if (p.get('personId')) { q.PersonIds = p.get('personId'); icon = 'person'; idKey = p.get('personId'); }
             else if (p.get('tag')) { q.Tags = p.get('tag'); title = p.get('tag'); }
+            else if (q.ParentId) {  // a folder (a collections library, a folder library): its own contents
+                const lv = D.listLevel('', 'folder', { ParentId: q.ParentId, Recursive: false, SortBy: 'IsFolder,SortName' });
+                const load0 = lv.load;
+                lv.load = async () => { if (!lv.title) { try { lv.title = (await Promise.resolve(c().getItem(uid(), q.ParentId))).Name; } catch (e) { lv.title = 'Folder'; } } return load0(); };
+                return lv;
+            }
             const lv = D.dropLevel(title, icon, q);
             const load = lv.load;
             lv.load = async () => {

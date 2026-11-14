@@ -113,7 +113,7 @@
             const now = !(S.item.UserData || {}).Played;
             try { if (now) await c().markPlayed(uid(), it.Id, new Date()); else await c().markUnplayed(uid(), it.Id); S.item.UserData = Object.assign({}, S.item.UserData, { Played: now }); D.notice(now ? 'Marked as watched' : 'Marked as not watched'); CC.replaceTop(rootLevel(S)); } catch (e) { D.notice('That didn’t work', true); }
         } });
-        out.push({ name: 'Options…', icon: 'reorder', shape: 'icon', sub: 'add to a playlist, edit, media info, delete', go: () => D.itemMenu(it, {}) });
+        out.push({ name: 'More options…', icon: 'reorder', shape: 'icon', sub: 'add to a playlist, edit, media info, delete', go: () => D.itemMenu(it, {}) });
         // the options of the item itself on ≡, from any of its entries
         for (const e of out) if (!e.menu && !e.item) e.menu = () => D.itemMenu(it, {});
         return out;

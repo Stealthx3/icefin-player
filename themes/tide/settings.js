@@ -60,6 +60,17 @@
                 }
             }
             D.hints([['OK', 'change'], ['▲ ▼', 'move'], ['Back', '']]);
+            // focus on arrival, sooner than the engine's 1.2 s: the first control that isn't a text field
+            clearTimeout(this.arrive);
+            this.arrive = setTimeout(() => {
+                const a = document.activeElement;
+                if (a && a !== document.body && a !== document.documentElement) return;
+                const page = [...document.querySelectorAll('.mainAnimatedPage:not(.hide), .page:not(.hide)')].find((x) => x.getClientRects().length && x.getBoundingClientRect().height > 100);
+                if (!page) return;
+                const first = [...page.querySelectorAll('select, input[type=checkbox], button, a[href], input:not([type=hidden]):not([type=file])')]
+                    .find((x) => !x.disabled && x.getClientRects().length && !/^(text|search|password|email|url|tel|number)$/i.test(x.type || ''));
+                if (first) first.focus({ preventScroll: true });
+            }, 450);
         }
     });
 
