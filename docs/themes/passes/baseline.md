@@ -40,6 +40,23 @@ and controller reach (focus on arrival, a visible focus, every control reachable
 Judged by the six principles: stock jellyfin-web's own motion (card focus lift on the TV layout, page fades, the
 action sheet's slide) is the measure; Baseline must match it, not improve on it.
 
+## Gate 1 decisions (the user, 2026-11-14)
+
+1. **How 1:1 is reached: Baseline's own copy of the styles.** Baseline's stylesheet carries stock's look itself
+   (not jellyfin-web's class names), so it stands on its own; the comparison with stock's captures catches drift.
+2. **The target is jellyfin-web's TV layout**, not the desktop layout Icefin shows today. The boards' screens are
+   re-captured from stock in the TV layout (walk with `ICEFIN_WALK_LAYOUT=tv`, labhost.py).
+3. **Branding:** "Within the theme, use server-side branding where possible. The app itself and client-specific
+   pages should use the Icefin-Player art assets." The theme shows the server's own branding (its logo and splash
+   where the server sets them); Icefin's pages (Client Settings, Icefin's own screens) and the app use Icefin-Player's
+   art (`/path/to/Personal/Projects/IceSuite/IceFin`, D15). Jellyfin's own marks are not used.
+4. **Focus: A**, stock's TV focus (the card grows and gets a light frame).
+5. **Controller additions: all four**: ≡ opens the item menu, ▶ plays the focused item, L1 R1 change tabs, and
+   "Exit Icefin?" on Back at the home; with focus on arrival, the hint line and the sounds.
+6. **Plugins: built in this pass.** Plugin UI on stock's pages (home sections, details buttons) gets its Baseline
+   version now, against the lab's plugin servers (theme_plugins.py, D10).
+7. **Sounds: the whole set made in this pass**, then the soundboard for the user's approval before Gate 2.
+
 ## Gate 1 map: every checklist item (2026-11-14)
 
 The target is stock jellyfin-web (the user's direction). Every item below is one of: **board** (on the Baseline Screens canvas, https://claude.ai/artifact/Ya6BBXs1bnLm5JbwVQy6LP: stock's screen Baseline draws again, or one of the additions), **tests** (behaviour the build's tests check), or **not in the target** (stock doesn't have it, so Baseline doesn't). None is missing. Totals: 97 on boards, 30 by tests, 16 not in the target.
