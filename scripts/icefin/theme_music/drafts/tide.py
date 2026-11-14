@@ -1,4 +1,8 @@
-"""Tide's music (PLAN 9.48, the soundboard for the pass): a startup swell and a looping ambient tide. Original, in the
+"""DRAFT, held out of the build until the user approves it (Tide's soundboard, 2026-11-14). To ship: move it back to
+scripts/icefin/theme_music/tide.py and run scripts/icefin/theme-music.py tide in the lab (it writes the music map and
+the lock).
+
+Tide's music (PLAN 9.48, the soundboard for the pass): a startup swell and a looping ambient tide. Original, in the
 same deep, rounded character as Tide's UI sounds (scripts/icefin/theme-sounds.py tide(): muffled low tocks, a
 crystalline confirm of bells at G6 and D7, soft rooms). Nothing from the target: no recorded or sampled audio, none of
 its music (CLAUDE.md clone rules). No jingle per category (the target has none). Rendered by
