@@ -34,15 +34,25 @@
 
     // ---- a Plaza card over everything (the engine's modal overlay) ----
     // spec: {title, kind, wide, danger, render(body, sheet)}; sheet.show(spec) replaces the card, sheet.close() closes.
-    let host = null;
+    let host = null, first = null;
+    // The engine's overlay hosts the sheets, registered only while one is up: a long press on View (the global
+    // overlay) must not bring back the last sheet. Closing reverses the rise (16): the engine waits the 150 ms leave()
+    // returns before it removes the card.
+    const HOST = {
+        mount(h) { host = h; draw(first); },
+        unmount() { host = null; first = null; ui.overlay.set(null); },
+        leave(h) { h.classList.add('pz-sheet-out'); return 150; }
+    };
     const sheet = {
         show(spec) {
             if (!host) {
-                ui.overlay.set({ mount(h) { host = h; draw(spec); }, unmount() { host = null; } });
+                first = spec;
+                ui.overlay.set(HOST);
                 ui.overlay.open();
             } else draw(spec);
         },
-        close() { ui.overlay.close(); }
+        // a sheet shown while this one fades out opens a new card, not one in the closing card
+        close() { host = null; ui.overlay.close(); }
     };
     P.sheet = sheet;
     function draw(spec) {

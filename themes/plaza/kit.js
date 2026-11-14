@@ -117,6 +117,54 @@
         node.classList.add(dir > 0 ? 'pz-in-right' : 'pz-in-left');
     };
 
+    // ---- polish (the user's Plaza Polish mock-ups, 2026-11-13) ----
+    const lowMotion = () => document.documentElement.getAttribute('data-icefin-motion') === 'low' || (T.ui && T.ui.motion && T.ui.motion.reduced && T.ui.motion.reduced());
+    // 20 · a bar caption cross-fades (120 ms) so a held D-pad reads as a steady line, not flicker
+    P.caption = (node, text) => {
+        const t = (text || '').replace(/\s+/g, ' ').trim();
+        if (!node || node.textContent === t) return;
+        if (lowMotion() || !node.animate || !node.textContent) { node.textContent = t; return; }
+        if (node.pzFade) node.pzFade.cancel();
+        node.textContent = t;
+        node.pzFade = node.animate([{ opacity: 0.15 }, { opacity: 1 }], { duration: 120, easing: 'ease-out' });
+    };
+    // 3 · the focused name pill stays inside the window (16 px from its edges)
+    const clampPill = (host) => {
+        const p = host && host.querySelector(':scope > .pz-name');
+        if (!p) return;
+        p.style.marginLeft = '0px';
+        requestAnimationFrame(() => {
+            const r = p.getBoundingClientRect();
+            if (!r.width) return;
+            if (r.left < 16) p.style.marginLeft = `${16 - r.left}px`;
+            else if (r.right > innerWidth - 16) p.style.marginLeft = `${innerWidth - 16 - r.right}px`;
+        });
+    };
+    if (!window.__pzPillWatch) {
+        window.__pzPillWatch = true;
+        document.addEventListener('icefin-focus', (e) => clampPill(e.target), true);
+    }
+    // 15, 19, 21 · a flier from one rectangle to another: a poster into its details, a settings tile into its page, and
+    // back again. {from, to: DOMRect-like, image?, background?, radius?, ms?, fadeOut?}; resolves when it has landed.
+    P.fly = (o) => new Promise((done) => {
+        if (lowMotion() || !o.from || !o.to || !o.from.width || !o.to.width) { done(); return; }
+        const f = P.el('div', 'pz-flier');
+        if (o.image) f.style.backgroundImage = `url("${o.image}")`;
+        if (o.background) f.style.background = o.background;
+        const box = (r) => ({ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: `${o.radius == null ? 18 : o.radius}px` });
+        Object.assign(f.style, box(o.from));
+        document.body.append(f);
+        const ms = o.ms || 360;
+        const a = f.animate([box(o.from), box(o.to)], { duration: ms, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
+        a.onfinish = () => {
+            const end = () => { f.remove(); done(); };
+            if (o.fadeOut) f.animate([{ opacity: 1 }, { opacity: 0 }], { duration: o.fadeOut, easing: 'ease', fill: 'forwards' }).onfinish = end; else end();
+        };
+        setTimeout(() => { if (f.isConnected) { f.remove(); done(); } }, ms + (o.fadeOut || 0) + 400);  // never left behind
+    });
+    // what a flight starts from: the cell last opened (a grid's select) and the details art last left (Back)
+    P.flight = { from: null, back: null };
+
     // Columns that fit: cells keep their reference size (px at 1080 lines); a wider screen shows more of them.
     P.fit = (cellPx, gapPx, sideMarginPx, min) => {
         const ref = innerWidth / innerHeight * 1080;

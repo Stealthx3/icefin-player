@@ -79,10 +79,15 @@
             document.addEventListener('focusin', (e) => {
                 if (!C || !C.info || !document.documentElement.hasAttribute('data-icefin-stock')) return;
                 const t = e.target;
-                if (!t || !t.closest || t.closest('#icefin-stock-chrome, #icefin-osk')) return;
-                const lab = t.id && document.querySelector(`label[for="${t.id}"]`);
-                const text = (lab && lab.textContent) || t.getAttribute('aria-label') || t.getAttribute('title') || (t.textContent || '').trim();
-                C.focusLine.textContent = (text || '').replace(/\s+/g, ' ').slice(0, 80);
+                // a card or dialog over the page has its own names; the caption keeps the page's (the 2026-11-13 walk:
+                // Play on's rows ran together as "TVThis IcefinThis devicePlaying here")
+                if (!t || !t.closest || t.closest('#icefin-osk, #icefin-theme-overlay, .dialogContainer')) return;
+                // a Material UI drop-down names itself through aria-labelledby (its value is its own text)
+                const by = (t.getAttribute('aria-labelledby') || '').split(/\s+/).map((id) => id && document.getElementById(id)).find((x) => x && x.tagName === 'LABEL');
+                const lab = (t.id && document.querySelector(`label[for="${t.id}"]`)) || by || (t.matches('input, select, textarea') && t.closest('label'));
+                const own = lab && (lab.querySelector('.checkboxLabel, .MuiFormControlLabel-label, .inputLabel') || lab);
+                const text = (own && own.textContent) || t.getAttribute('aria-label') || t.getAttribute('title') || (t.textContent || '').trim();
+                P.caption(C.focusLine, (text || '').replace(/\s+/g, ' ').slice(0, 80));
             });
         },
         update(info) {
