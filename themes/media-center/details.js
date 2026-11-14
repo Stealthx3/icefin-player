@@ -56,7 +56,7 @@
         });
     }
 
-    T.registerScreen('#/details', Object.assign({}, base, {
+    window.icefinMediaCenter.register('#/details', Object.assign({}, base, {
         mount(root, ctx) {
             const r = base.mount.call(this, root, ctx);
             let n = 0;

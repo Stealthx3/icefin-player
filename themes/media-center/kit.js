@@ -9,6 +9,16 @@
     const T = window.icefinTheme;
     const M = window.icefinMediaCenter = {};
 
+    // Media Center's screens register through M.register: its shared action handlers (M.onAction: ≡ on an item,
+    // Play/Pause on an item, the hints) see every action first, then the screen's own onAction.
+    M.actions = [];
+    M.onAction = (fn) => { M.actions.push(fn); };
+    M.register = (path, screen) => T.registerScreen(path, Object.assign({}, screen, {
+        onAction(action, ctx) {
+            for (const fn of M.actions) { try { if (fn(action, ctx)) return true; } catch (e) { console.error('media-center: action', e); } }
+            return screen.onAction ? screen.onAction.call(this, action, ctx) : false;
+        }
+    }));
     M.el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     M.focusable = (e) => { e.setAttribute('data-icefin-focus', ''); e.tabIndex = -1; return e; };
     M.client = () => T.ctx.apiClient();

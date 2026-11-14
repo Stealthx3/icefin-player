@@ -60,7 +60,7 @@
     // A drill-down list (a genre, studio, person: the ListPage board) is the library screen's (library.js, 9.60);
     // the wall keeps folders.
     let D = null;
-    T.registerScreen('#/list', {
+    window.icefinMediaCenter.register('#/list', {
         onBack() { return D && D.onBack ? D.onBack() : false; },
         onAction(action, ctx) {
             if (D) return false;

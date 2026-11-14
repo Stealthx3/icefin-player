@@ -323,17 +323,12 @@
 
     // ≡ on any item in Media Center's screens opens its menu (checklist 2.4): the focused tile's item, by reference
     // (library and start tiles keep it) or by id (the wall's posters, the details screen's cards)
-    if (T._engine && T._engine.addActionHook && !window.icefinMediaCenterMenuKey) {
-        window.icefinMediaCenterMenuKey = true;
-        T._engine.addActionHook((a) => {
-            const K = window.icefinMediaCenter;
-            if (a !== 'menu' || !K || !K.itemMenu || !T.active() || T.active().id !== 'media-center' || K.panel.isOpen()) return false;
-            const f = T._engine.focused && T._engine.focused();
-            if (!f) return false;
-            const it = f.mcItem || (f.dataset && (f.dataset.id || f.dataset.itemId) ? { Id: f.dataset.id || f.dataset.itemId } : null);
-            if (!it || !it.Id) return false;
-            K.itemMenu(it, {});
-            return true;
-        });
-    }
+    M.onAction((a, ctx) => {
+        if (a !== 'menu' || M.panel.isOpen()) return false;
+        const f = ctx.focused();
+        const it = f && (f.mcItem || (f.dataset && (f.dataset.id || f.dataset.itemId) ? { Id: f.dataset.id || f.dataset.itemId } : null));
+        if (!it || !it.Id) return false;
+        menu(it, {});
+        return true;
+    });
 })();
