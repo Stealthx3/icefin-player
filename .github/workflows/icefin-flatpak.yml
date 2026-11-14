@@ -31,6 +31,53 @@ jobs:
           run-tests: true
           cache-key: flatpak-builder-${{ hashFiles('flatpak/*.yml') }}
 
+  # The virtual HDR display (PLAN 5.10): this commit's bundle on a headless Weston 16 with colour management, as an HDR
+  # output and an SDR one; hdr_protocol.py checks what Icefin tells the compositor per routing row (the HDR10
+  # swapchain, the PQ / BT.2020 tag, the film's mastering metadata, HLG, HDR Output off). No lab servers here: the
+  # HDR10 and HLG clips are generated and served from a folder (--media). Vulkan on the runtime's lavapipe.
+  hdr:
+    needs: flatpak
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: icefin-player-*
+          path: dl
+          merge-multiple: true
+      - name: Weston 16 cache
+        uses: actions/cache@v4
+        with:
+          path: ~/weston-16
+          key: weston16-ubuntu-24.04-${{ hashFiles('tests/icefin/hdr/build-weston.sh') }}
+      - name: Weston 16 (built once, then cached)
+        run: sh tests/icefin/hdr/build-weston.sh
+      - name: Flatpak, this commit's bundle and its runtime
+        run: |
+          set -eu
+          sudo apt-get install -y -q flatpak ffmpeg dbus-user-session >/dev/null
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive "$(find dl -name '*.flatpak' | head -n1)"
+          flatpak install --user -y --noninteractive flathub org.freedesktop.Platform.GL.default//25.08 || true
+          flatpak list --user
+      - name: HDR10 and HLG clips
+        run: sh tests/icefin/hdr/make-ci-clips.sh "$HOME/clips"
+      - name: hdr_protocol.py
+        run: |
+          set -eu
+          export XDG_RUNTIME_DIR="$(mktemp -d)"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          dbus-run-session -- python3 tests/icefin/web/hdr_protocol.py --media "$HOME/clips" \
+            --rows hdr-idle,hdr-hdr10,hdr-hlg,sdr-display,hdr-off
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hdr-protocol-logs
+          path: /tmp/icefin-hdrproto-*
+          if-no-files-found: ignore
+
   # A stable download for testers: every green build of main replaces the rolling "nightly" pre-release, whose bundle
   # keeps one name (releases/download/nightly/icefin-player-x86_64.flatpak). The bundle names Flathub as its runtime
   # repo, so `flatpak install --user` fetches org.kde.Platform 6.11 itself.
