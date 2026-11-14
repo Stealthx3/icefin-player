@@ -4,6 +4,15 @@ Copied from docs/themes/CHECKLIST.md at the start of the pass (2026-11-14, main 
 when tide does it in its own look and a test checks it, or write the user's reason beside it. Motion is judged by the six
 principles (PIPELINE.md, The measure).
 
+## Where the pass ended (walk 5, 2026-11-14; Gate 2 approved by the user)
+
+58 of 69 walked entries drawn by Tide (from 16), 4 gaps (from 43), 0 failing checks (from 23), walked in the VM lab
+at the user's request (theme_walk.py --lab). The 4 gaps are the Display, Playback, Subtitles and Controls preference
+pages: jellyfin-web's pages in Tide's frame, as approved at Gate 1 (PrefsFramed). Tests: tide_pass.py and theme_tide.py
+in the lab. Every checklist item is mapped in the Gate 1 map below. Not built: the photo viewer's light frame, Find
+servers on this network and the profile's Easy PIN (no engine call). Held out of the merge: the startup swell and the
+ambient tide (scripts/icefin/theme_music/drafts/tide.py), until the user has heard them on the soundboard.
+
 ## Where the pass starts (walk 1, 2026-11-14)
 
 Walk: the workstation's Icefin 0.1.0~alpha.2, your server; **16 of 69** entries drawn by Tide, **43 gaps**, 23 failing
