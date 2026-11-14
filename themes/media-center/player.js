@@ -114,8 +114,9 @@
             if (s.aspects.length) list.append(spinner('Aspect ratio', s.aspects.map((x) => [x.id, x.name.toLowerCase()]), s.aspect, (v) => p.setAspect(v)));
             list.append(spinner('Repeat', REPEAT, s.repeat, (v) => p.setRepeat(v)));
             const info = row('Playback info'); info.addEventListener('click', () => openPanel('info')); list.append(info);
-            const wt = row('Watch together'); wt.addEventListener('click', () => { if (!p.watchTogether()) T.ctx.sound('error'); }); list.append(wt);
-            const po = row('Play on another device'); po.addEventListener('click', () => { if (!p.playOn()) T.ctx.sound('error'); }); list.append(po);
+            // Media Center's own panel (the PlayOn board, 9.60), else jellyfin-web's
+            const wt = row('Watch together'); wt.addEventListener('click', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('together'); else if (!p.watchTogether()) T.ctx.sound('error'); }); list.append(wt);
+            const po = row('Play on another device'); po.addEventListener('click', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('play'); else if (!p.playOn()) T.ctx.sound('error'); }); list.append(po);
             const web = row('Use the web player controls'); web.addEventListener('click', () => p.useWebControls('chosen in the controls')); list.append(web);
         }
         box.append(list);
