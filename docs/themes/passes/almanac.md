@@ -191,6 +191,30 @@ Every item below is one of: **board** (drawn on the Almanac Screens canvas, http
 | 8 | Polish tests | tests | in the lab (this pass) |
 | 8 | A lab walk and Gate 2 | tests | Verify and Gate 2 |
 
+## Build notes (2026-11-14, after Gate 1)
+
+Built in Almanac's own scripts (themes/almanac), forked from Tide's working modules where the behaviour is the same
+and drawn in Almanac's grammar: kit.js (helpers, the clock and song line, hints in the bottom bar, the pointer's Back
+and Home), panel.js (the list box: levels offset over the one under them, steppers, switches, fields, notices),
+grid.js (the rows engine: the info pane, the corner picture, the tab strip, the header, rows like channels, folder
+rows loading as they come into view, letter rows on long lists by name), data.js, home.js (the home's rows and
+Settings), itemmenu.js, details.js (details as rows), guide.js (the 9.15 guide on the Guide tab, with the tab strip,
+programme cards and recording marks), tv.js (Live TV's rows, programme cards), library.js (library routes, #/list,
+sort and filter, search), np.js, player.js (the info banner), settings.js (the frame, Settings › Home with the lift),
+account.js (profile, Quick Connect, forgot password, sign-in), interim.js (the engine's settings hub and the web
+player's bar layout). Tests: almanac_pass.py (PASS), theme_almanac.py (OK) and clone_layout.py --theme almanac (13
+boxes, OK), all in the lab; almanac_probe.py for looking.
+
+Found on the way: the engine hides every element at the body's top level except its own layers while a themed screen
+is up, so a hint bar or notice appended to the body is invisible there. Almanac's live in the open overlay or the
+screen's root (D.layer). Tide 0.3.0 has the same fault (its hints were never visible on its own screens; its test read
+the opacity, not the visibility): fixed on fix/9.48-tide-hints-layer.
+
+Not as drawn: a series' seasons are rows of episodes, not tabs (the rows engine has one tab strip, the app's places);
+the search keyboard is the engine's band across the bottom, not a grid in the channel column; the framed preference
+pages don't flip with the shoulders (the frame gets no actions); Photos and books use the rows, then jellyfin-web's
+viewers; the startup sting and ambient bed are not made (the soundboard first, as with Tide).
+
 ## 1. Themed elements: screens and surfaces
 
 ### 1.1 Home

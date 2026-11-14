@@ -244,7 +244,7 @@
                 row.level = lv;
                 let list = [];
                 if (lv) {
-                    try { list = lv.entries && !lv.reload ? lv.entries : ((await lv.load(C)) || []); } catch (e) { console.error('almanac: row', e); list = []; }
+                    try { list = lv.entries && !lv.reload ? lv.entries : ((await lv.load(C)) || []); } catch (e) { console.error('almanac: row', row.label, e && e.status ? e.status + ' ' + e.url : e); list = []; }
                     lv.entries = list;
                     lv.reload = false;
                 }
