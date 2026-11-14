@@ -222,7 +222,10 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   and the Flatpak installed from the same tree for `hdr_protocol` and `dbus_drop`.
 - **Sharing the VM:** before each test it waits while another session's test runs (the shared pads, displays and
   CPU), and the app runs under another process name so other sessions' `pkill -x icefin-player` leaves it alone.
-  A full run takes about 5 hours, most of it waiting. Run it in the background:
+  A full run takes about 5 hours, most of it waiting.
+- **Fixtures:** before the first theme test it rewrites the Live TV guide from now (`livetv.py`; a guide written a day
+  earlier has run out) and resets the test user's watch state (`reset-watch.py`; the app group's playback leaves
+  Next Up and Continue Watching with one item, where the theme tests expect full rows). `fixtures.log` has both. Run it in the background:
   ```
   scripts/lab.sh exec 'cd ~/src-matrix && nohup python3 -u scripts/icefin/lab-matrix.py > ~/lab-matrix.txt 2>&1 &'
   ```

@@ -135,6 +135,21 @@ def main():
             lines.append(f"| {r['name']} | {r['group']} | {'pass' if r['ok'] else 'FAIL'} | {r['seconds'] / 60:.1f} min | {'; '.join(r['fails'])[:300]} |")
         open(f"{a.out}/summary.md", "w").write("\n".join(lines) + "\n")
 
+    def fixtures():
+        """Fresh lab fixtures for the theme tests, which read home rows and the guide: a guide that starts now
+        (livetv.py writes it to cover the next hours only), and the test user's watch state reset, as the app
+        group's playback leaves Next Up and Continue Watching with one item (reset-watch.py, when the tree has it)."""
+        steps = [["python3", "tests/icefin/servers/livetv.py", "tests/icefin/servers/servers.json"]]
+        if os.path.exists(f"{a.src}/tests/icefin/servers/reset-watch.py"):
+            steps.append(["python3", "tests/icefin/servers/reset-watch.py"])
+        else:
+            print("lab-matrix: fixtures: no reset-watch.py in this tree; watch state left as it is", flush=True)
+        with open(f"{a.out}/fixtures.log", "a") as log:
+            for c in steps:
+                rc = subprocess.run(c, cwd=a.src, stdout=log, stderr=subprocess.STDOUT, timeout=600).returncode
+                print(f"lab-matrix: fixtures: {os.path.basename(c[1])}: {'ok' if rc == 0 else f'exit {rc} (see fixtures.log)'}", flush=True)
+
+    group = None
     for e in todo:
         waited = 0
         while (other := others_running({os.getpid()})) and waited < 7200:
@@ -142,6 +157,9 @@ def main():
                 print(f"lab-matrix: waiting for another session's test: {other[:120]}", flush=True)
             time.sleep(15)
             waited += 15
+        if e["group"] == "theme" and group != "theme":
+            fixtures()
+        group = e["group"]
         cmd = list(e["cmd"])
         if e["out"]:
             cmd += ["--out", f"{a.out}/{e['name']}"]
