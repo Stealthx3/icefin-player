@@ -47,6 +47,9 @@
             ['settings', () => { location.hash = '#/mypreferencesmenu'; }],
             ['search', () => { location.hash = '#/search'; }],
             ['favourites', () => { location.hash = '#/favorites'; }],
+            // Play on and Watch together (the PlayOn board, 9.60): the side panel, from the start strip as from the player
+            ['play on', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('play'); }],
+            ['watch together', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('together'); }],
             ['classic home', () => { location.hash = '#/home?icefin=stock'; }],
             ['close', () => askExit()]
         ] });
