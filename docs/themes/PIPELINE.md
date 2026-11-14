@@ -39,8 +39,11 @@ Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
 - **The completeness checklist** (`docs/themes/CHECKLIST.md`, made from everything Plaza does). Each pass copies it to
   `docs/themes/passes/<theme>.md` at Start. Every item is ticked when the theme does it **in its own look** and a
   test checks it, or carries the user's reason for leaving it out. The walk finds the screens; the checklist finds
-  everything a walk can't see (input, motion, effects, sounds, robustness). Mock-ups cover the checklist's open items
-  as well as the walk's gaps, and Verify needs the checklist done.
+  everything a walk can't see (input, motion, effects, sounds, robustness). The checklist is the guide for the
+  theme's full implementation in every pass, not the walk's gap list alone (the user, 2026-11-14): before Gate 1 the
+  pass doc maps **every** item to one of: a board on the canvas, checked by tests (behaviour the build's tests
+  cover), not in the target (a reason, for the user's call at Gate 1), or missing; nothing goes to Gate 1 while an
+  item is missing. Verify needs the checklist done, and Gate 2 reviews the same map.
 - **The six principles of UX animation** (timing, easing, spatial orientation, directing focus, visual continuity,
   clarity; [Adobe, 2019](https://blog.adobe.com/en/publish/2019/06/19/designing-animation-six-principles-using-animation-ux),
   also the checklist's section 3). Each motion in a pass is judged against them:
@@ -64,7 +67,7 @@ Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
 |---|---|---|---|---|
 | 1 | **Start** | `scripts/icefin/theme-pass.sh start <theme>` | `theme/<theme>` in its worktree, `main` merged in, the theme marked active | the worktree is clean and current |
 | 2 | **Walk** | `theme-pass.sh walk <theme>` (workstation) | `build-walk/<theme>/<stamp>/`: screenshots, `index.html` contact sheet, `coverage.json`; `docs/themes/coverage/<theme>.md` gap list | every inventory entry walked or skipped with a reason |
-| 3 | **Mock-ups** | a design canvas named "&lt;Theme&gt; Screens" | one artboard per gap, from the walk's screenshots, `docs/themes/references/<theme>.json`, the theme's tokens and the target's public material (`clone-theme-references`) | every gap has an artboard |
+| 3 | **Mock-ups** | a design canvas named "&lt;Theme&gt; Screens" | one artboard per gap and per open checklist item, from the walk's screenshots, `docs/themes/references/<theme>.json`, the theme's tokens and the target's public material (`clone-theme-references`) | every gap has an artboard, and the pass doc's checklist map has no item left missing |
 | 4 | **Gate 1: the user reviews the mock-ups** | comments on the canvas; phone alert | the approved canvas; changes asked for are made on it first | the user approves |
 | 5 | **Build** | on `theme/<theme>` (short `feat/` branches from it for large pieces); engine needs on `feat/` branches into `main` | the theme's files, a host test `tests/icefin/web/<theme>_pass.py` (on `host.py`), PLAN task text | the host test passes |
 | 6 | **Verify** | `theme-pass.sh walk <theme>` again | the coverage with no gaps (or each one listed with the user's reason), no failing checks | 0 gaps, 0 failing checks, `icefin-hooks` checks pass locally (contrast, lint, sounds, schemas, coverage) |

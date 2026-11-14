@@ -107,7 +107,14 @@ class Host:
         return {"id": active, "version": self.page.eval("(window.icefinTheme.active() || {}).version || ''"), "source": src}
 
     def capture_page(self, path):
-        open(path, "wb").write(base64.b64decode(self.page.send("Page.captureScreenshot", format="png")["data"]))
+        """The page as DevTools draws it; False when no frame came (Chromium draws none while Icefin's window is
+        covered or minimised): the walk records the entry without a picture rather than stopping."""
+        try:
+            open(path, "wb").write(base64.b64decode(self.page.send("Page.captureScreenshot", format="png")["data"]))
+            return True
+        except (TimeoutError, OSError):
+            self.page.reconnect()
+            return False
 
     def capture_screen(self, path):
         """What the screen shows (black or stale frames), Icefin's window only; deleted unviewed unless its title bar is Icefin's."""
