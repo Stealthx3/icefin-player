@@ -25,7 +25,13 @@
     const HOST = {
         mount(h) { host = h; build(); if (pending) draw(pending, false); pending = null; },
         unmount() { host = null; current = null; ui.overlay.set(null); },
-        leave(h) { h.classList.add('mc-sp-out'); return ui.motion.duration(200); }
+        leave(h) { h.classList.add('mc-sp-out'); return ui.motion.duration(200); },
+        // a stepper's ◀▶ (checklist 2.4); everything else is the overlay's (moving inside it, Back closes)
+        onAction(a, f) {
+            if (M.hints) setTimeout(M.hints, 30);
+            if ((a === 'left' || a === 'right') && f && typeof f.mcStep === 'function') { f.mcStep(a === 'right' ? 1 : -1); return true; }
+            return false;
+        }
     };
     function build() {
         host.className = 'mc-sp' + (/^#\/video\b/.test(location.hash) ? ' mc-sp-video' : '');
@@ -125,16 +131,6 @@
         show();
         return r;
     };
-    if (T._engine && T._engine.addActionHook && !window.icefinMediaCenterStepKey) {
-        window.icefinMediaCenterStepKey = true;
-        T._engine.addActionHook((a) => {
-            if (a !== 'left' && a !== 'right') return false;
-            const f = document.querySelector('#icefin-theme-overlay .icefin-focused');
-            if (!f || typeof f.mcStep !== 'function') return false;
-            f.mcStep(a === 'right' ? 1 : -1);
-            return true;
-        });
-    }
     M.foot = (...buttons) => { const f = el('div', 'mc-sp-foot'); f.append(...buttons); return f; };
     M.sec = (text) => el('div', 'mc-sec', text);
     M.note = (text) => el('div', 'mc-note mc-sp-note', text);

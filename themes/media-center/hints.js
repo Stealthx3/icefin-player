@@ -16,14 +16,18 @@
 
     const html = document.documentElement;
     const mode = (m) => { if (html.getAttribute('data-mc-input') !== m) { html.setAttribute('data-mc-input', m); draw(); } };
-    let lastKey = 0;
+    let lastKey = 0, lastMouse = 0;
     if (!window.icefinMediaCenterInput) {
         window.icefinMediaCenterInput = true;
         // arrows go through the same actions as a pad: a keydown just before an action means the keyboard
         window.addEventListener('keydown', () => { lastKey = Date.now(); const K = window.icefinMediaCenter; if (K && K.inputMode) K.inputMode('keys'); }, true);
-        window.addEventListener('mousemove', (e) => { const K = window.icefinMediaCenter; if ((e.movementX || e.movementY) && K && K.inputMode) K.inputMode('pointer'); }, true);
+        window.addEventListener('mousemove', (e) => { const K = window.icefinMediaCenter; if ((e.movementX || e.movementY) && K && K.inputMode) { lastMouse = Date.now(); K.inputMode('pointer'); } }, true);
+        // on jellyfin-web's framed pages the pad's moves are the engine's: a focus move with no key or mouse just
+        // before it is a pad or remote
+        document.addEventListener('focusin', () => { const K = window.icefinMediaCenter; if (K && K.sawFocus) K.sawFocus(); }, true);
     }
     M.inputMode = mode;
+    M.sawFocus = () => { if (html.hasAttribute('data-icefin-stock') && Date.now() - lastKey > 150 && Date.now() - lastMouse > 400) mode('pad'); else draw(); };
 
     const itemOf = (f) => (f && (f.mcItem || (f.dataset && (f.dataset.id || f.dataset.itemId) ? { Id: f.dataset.id || f.dataset.itemId } : null))) || null;
     const PLAYABLE = new Set(['Movie', 'Episode', 'Video', 'MusicVideo', 'Audio', 'Series', 'Season', 'MusicAlbum', 'MusicArtist', 'BoxSet', 'Playlist', 'TvChannel']);
@@ -37,7 +41,7 @@
     }
     function hintsNow() {
         const overlay = document.querySelector('#icefin-theme-overlay');
-        const f = (overlay && overlay.querySelector('.icefin-focused')) || (T._engine && T._engine.focused && T._engine.focused());
+        const f = (overlay && overlay.querySelector('.icefin-focused')) || T.ctx.focused();
         if (overlay) {
             const list = [['A', 'select']];
             if (f && typeof f.mcStep === 'function') list.push(['◀▶', 'change']);
@@ -73,22 +77,21 @@
     }
     M.hints = draw;
 
-    if (T._engine && T._engine.addActionHook && !window.icefinMediaCenterHints) {
-        window.icefinMediaCenterHints = true;
-        T._engine.addActionHook((a) => {
-            const K = window.icefinMediaCenter;
-            if (!K || !T.active() || T.active().id !== 'media-center') return false;
-            if (Date.now() - lastKey > 120 && K.inputMode) K.inputMode('pad');
-            setTimeout(() => K.hints && K.hints(), 30);  // after the action has moved the focus
-            // Play/Pause on a focused item plays it (not in the player or a panel: theirs)
-            if ((a === 'play_pause' || a === 'playpause') && !/^#\/video\b/.test(location.hash) && !document.querySelector('#icefin-theme-overlay')) {
-                const it = itemOf(T._engine.focused && T._engine.focused());
-                if (it && it.Id && (!it.Type || PLAYABLE.has(it.Type))) { T.ctx.sound('select'); T.ctx.play({ ids: [it.Id], serverId: M.sid() }); return true; }
-            }
-            return false;
-        });
-        if (T._engine.onRoute) T._engine.onRoute(() => setTimeout(() => { const K = window.icefinMediaCenter; if (K && K.hints) K.hints(); }, 60));
+    M.onAction((a, ctx) => {
+        if (Date.now() - lastKey > 120) mode('pad');
+        setTimeout(draw, 30);  // after the action has moved the focus
+        // Play/Pause on a focused item plays it (the player's own controls take it there)
+        if (a === 'play_pause' || a === 'playpause') {
+            const it = itemOf(ctx.focused());
+            if (it && it.Id && (!it.Type || PLAYABLE.has(it.Type))) { ctx.sound('select'); ctx.play({ ids: [it.Id], serverId: M.sid() }); return true; }
+        }
+        return false;
+    });
+    if (!window.icefinMediaCenterRoute) {
+        window.icefinMediaCenterRoute = true;
+        window.addEventListener('hashchange', () => setTimeout(() => { const K = window.icefinMediaCenter; if (K && K.hints) K.hints(); if (K && K.stockCaption) K.stockCaption(document.body); }, 80));
     }
+
     // ---- the caption on jellyfin-web's framed pages: the focused setting's name (its label, the switch's label or a
     // drop-down's aria-labelledby), never its value; it cross-fades like the library's (motion.js) ----
     let cap = null, capFill = null;
@@ -107,6 +110,7 @@
     }
     M.stockCaption = (target) => {
         if (!T.active() || T.active().id !== 'media-center' || !html.hasAttribute('data-icefin-stock') || html.hasAttribute('data-icefin-dashboard')) { if (cap) cap.hidden = true; return; }
+        if (target === document.body) { if (cap) cap.hidden = true; return; }
         if (target.closest && (target.closest('#icefin-stock-chrome') || target.closest('#icefin-osk') || target.closest('.dialogContainer'))) return;
         if (!cap || !cap.isConnected) {
             cap = el('div', 'mc-sc-caption');
@@ -117,6 +121,5 @@
         cap.hidden = !text;
         if (text) capFill(text);
     };
-    if (T._engine && T._engine.onRoute) T._engine.onRoute(() => { if (cap) cap.hidden = true; });
     draw();
 })();

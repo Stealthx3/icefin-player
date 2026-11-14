@@ -30,7 +30,7 @@
     }
 
     let N = null;
-    T.registerScreen('#/queue', {
+    window.icefinMediaCenter.register('#/queue', {
         onAction(action, ctx) {
             if (M.band.open && ['up', 'down', 'left', 'right'].includes(action)) { ctx.move(action, M.band.open.el); return true; }
             return false;
@@ -150,7 +150,7 @@
     }
 
     let Y = null;
-    T.registerScreen('#/lyrics', {
+    window.icefinMediaCenter.register('#/lyrics', {
         async mount(root) {
             root.setAttribute('data-mc', 'lyrics');
             const field = el('div', 'mc-field');

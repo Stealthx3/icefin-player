@@ -48,7 +48,7 @@
 
     // ---- choose a server ----
     let A = null;
-    T.registerScreen('#/selectserver', {
+    window.icefinMediaCenter.register('#/selectserver', {
         beforeSignIn: true,
         async mount(root) {
             const chrome = page(root, 'choose a server', 'servers');
@@ -92,7 +92,7 @@
     });
 
     // ---- add (connect to) a server ----
-    T.registerScreen('#/addserver', {
+    window.icefinMediaCenter.register('#/addserver', {
         beforeSignIn: true,
         mount(root) {
             const chrome = page(root, 'connect to a server', 'addserver');
@@ -122,7 +122,7 @@
 
     // ---- who's watching, and the password; Quick Connect ----
     let L = null;
-    T.registerScreen('#/login', {
+    window.icefinMediaCenter.register('#/login', {
         beforeSignIn: true,
         onBack() {
             if (M.band.open) { M.band.open.close(); return true; }

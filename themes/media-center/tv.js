@@ -148,7 +148,7 @@
         S.root.setAttribute('data-mc-ready', TABS[k][0]);
     }
 
-    T.registerScreen('#/livetv', {
+    window.icefinMediaCenter.register('#/livetv', {
         onAction(action, ctx) {
             if (!S) return false;
             if (M.band.open) {

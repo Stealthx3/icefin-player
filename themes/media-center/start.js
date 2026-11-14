@@ -70,7 +70,7 @@
         }).then(() => { const f = document.querySelector('#icefin-theme-root .mc-cat.current .mc-tile'); if (f && !T.ctx.focused()) T.ctx.focus(f); });
     }
 
-    T.registerScreen('#/home', {
+    window.icefinMediaCenter.register('#/home', {
         onBack() {
             if (M.band.open) { M.band.open.close(); return true; }
             askExit();

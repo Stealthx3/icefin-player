@@ -357,7 +357,7 @@
             }
         };
     }
-    for (const route of Object.keys(KINDS)) T.registerScreen(route, screenFor(() => ({ kind: KINDS[route] })));
+    for (const route of Object.keys(KINDS)) window.icefinMediaCenter.register(route, screenFor(() => ({ kind: KINDS[route] })));
     // #/list is the wall's (wall.js); a drill-down list goes here
     M.listScreen = screenFor((params) => M.listKind(params));
 })();
