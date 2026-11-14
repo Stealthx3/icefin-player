@@ -26,6 +26,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
 
 ### Fixed
+- A theme's startup jingle plays when Icefin starts with that theme already chosen; something briefly in its way at launch used to skip it for the whole run. The log says why it waits.
 - Client Settings -> Controllers: Remap is reachable with a controller (it sat out of line with the switches, so Down skipped it).
 - jellyfin-web's own pages inside a theme's frame (the preference pages, Quick Connect and others): the controller moves over the page and the frame's tabs, Back and Home as one screen.
 - Icefin no longer crashes on exit while a theme's sounds are loaded.

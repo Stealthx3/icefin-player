@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+import hostmode  # noqa: E402
 
 THEMES = ["media-center", "harbor", "spark", "plum", "plaza", "orbit", "mosaic", "lumen", "marquee", "almanac", "arcade", "tide"]
 LAYOUT = {"media-center": "poster", "harbor": "poster", "spark": "hero", "plum": "poster", "plaza": "banner", "orbit": "poster",
@@ -36,16 +37,23 @@ def main():
     ap.add_argument("--port", type=int, default=9263)
     ap.add_argument("--out", required=True)
     ap.add_argument("--themes", default=",".join(THEMES))
+    hostmode.add_args(ap)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-    cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
-    srv = Server(cfg)
-    srv.wait()
-    xv = start_x()
-    cfgdir = tempfile.mkdtemp(prefix="icefin-det-")
-    log = open(os.path.join(a.out, "app.log"), "w")
-    app = launch(a.app, a.port, cfgdir, log, "xcb")
+    app = xv = stop = None
+    if a.host:
+        # the host: one theme (the user's choice is switched once and put back), the user's own library, and nothing
+        # saved to their server (no Favourite or Played round trip, no playback)
+        page, stop = hostmode.start(a, a.out, theme=a.themes.split(",")[0])
+    else:
+        cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+        cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        srv = Server(cfg)
+        srv.wait()
+        xv = start_x()
+        cfgdir = tempfile.mkdtemp(prefix="icefin-det-")
+        log = open(os.path.join(a.out, "app.log"), "w")
+        app = launch(a.app, a.port, cfgdir, log, "xcb")
     fails = []
 
     def check(label, ok, detail=""):
@@ -54,26 +62,33 @@ def main():
             fails.append(label)
 
     try:
-        page = Page(a.port, timeout=90)
-        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
-        page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
-        time.sleep(5)
-        page.reconnect()
-        page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
-        page.eval(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
-        page.eval("location.hash = '#/home'; location.reload(); true", await_promise=False)
-        time.sleep(8)
-        page.reconnect()
-        page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!document.querySelector('.skinHeader')", timeout=90)
+        if not a.host:
+            page = Page(a.port, timeout=90)
+            page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
+            page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
+            time.sleep(5)
+            page.reconnect()
+            page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
+            page.eval(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
+            page.eval("location.hash = '#/home'; location.reload(); true", await_promise=False)
+            time.sleep(8)
+            page.reconnect()
+            page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!document.querySelector('.skinHeader')", timeout=90)
         js = lambda e: page.eval(e)
         act = lambda x: js(f"window.icefinTheme.handleAction({json.dumps(x)})")
         api = "window.icefinTheme.ctx.apiClient()"
         find = lambda types, name="": js(f"new Promise(r => {api}.getItems({api}.getCurrentUserId(), {{IncludeItemTypes: '{types}', Recursive: true, searchTerm: {json.dumps(name)}, Limit: 1}}).then(x => r((x.Items[0] || {{}}).Id || '')))")
-        movie2 = find("Movie", "TrueHD")
-        movie_sub = find("Movie", "H264 AAC")
+        if a.host:
+            # the user's library: a movie with two or more audio tracks, and one with a subtitle track
+            pick = lambda cond: js(f"new Promise(r => {api}.getItems({api}.getCurrentUserId(), {{IncludeItemTypes: 'Movie', Recursive: true, Fields: 'MediaStreams', Limit: 300}}).then(x => r(((x.Items || []).find(i => {cond}) || {{}}).Id || '')))")
+            movie2 = pick("(i.MediaStreams || []).filter(m => m.Type === 'Audio').length >= 2")
+            movie_sub = pick("(i.MediaStreams || []).some(m => m.Type === 'Subtitle')")
+        else:
+            movie2 = find("Movie", "TrueHD")
+            movie_sub = find("Movie", "H264 AAC")
         series = find("Series")
         album = find("MusicAlbum")
-        check("lab library has the fixtures", all([movie2, movie_sub, series, album]), json.dumps([movie2, movie_sub, series, album]))
+        check("the library has the fixtures" if a.host else "lab library has the fixtures", all([movie2, movie_sub, series, album]), json.dumps([movie2, movie_sub, series, album]))
 
         def switch(tid):
             for _ in range(3):
@@ -154,7 +169,7 @@ def main():
                 act("enter")
                 page.wait_for("!!document.querySelector('.icefin-d-picker .icefin-d-option.icefin-focused')", timeout=5)
                 n = js("document.querySelectorAll('.icefin-d-picker .icefin-d-option').length")
-                check("the Audio picker lists both tracks", n == 2, str(n))
+                check("the Audio picker lists both tracks", n >= 2 if a.host else n == 2, str(n))
                 second = js("document.querySelectorAll('.icefin-d-picker .icefin-d-option')[1].textContent")
                 act("down")
                 act("enter")
@@ -168,8 +183,8 @@ def main():
                 time.sleep(0.3)
                 check("Back closes a picker and keeps the choice", not js("!!document.querySelector('.icefin-d-picker')")
                       and js("document.querySelector('.icefin-d-select[data-option=audio] b').textContent") == chip and focused() == "audio")
-                # Favourite and Played round-trip to the server.
-                for action, field in (("favourite", "IsFavorite"), ("played", "Played")):
+                # Favourite and Played round-trip to the server (the lab only: they write to the user's data).
+                for action, field in (() if a.host else (("favourite", "IsFavorite"), ("played", "Played"))):
                     before = js(f"{api}.getItem({api}.getCurrentUserId(), '{movie2}').then(i => !!i.UserData.{field})")
                     js(f"document.querySelector('.icefin-d-btn[data-action={action}]').click(); true")
                     time.sleep(1.2)
@@ -182,18 +197,19 @@ def main():
                 # Subtitles: Off and the track; Play starts playback with the choice.
                 open_details(movie_sub)
                 subs = js("(() => { const c = document.querySelector('.icefin-d-select[data-option=subtitles]'); if (!c) return []; c.click(); const o = [...document.querySelectorAll('.icefin-d-picker .icefin-d-option')].map(x => x.textContent); return o; })()")
-                check("the Subtitles picker offers Off and the track", len(subs) == 2 and subs[0] == "Off", json.dumps(subs))
+                check("the Subtitles picker offers Off and the track", (len(subs) >= 2 if a.host else len(subs) == 2) and subs[0] == "Off", json.dumps(subs))
                 if subs:
                     js("document.querySelectorAll('.icefin-d-picker .icefin-d-option')[1].click(); true")
-                js("document.querySelector('.icefin-d-btn[data-action=play]').click(); true")
-                try:
-                    page.wait_for("!!window.icefinTheme.ctx.nowPlaying()", timeout=40)
-                    playing = True
-                except Exception:  # noqa: BLE001
-                    playing = False
-                check("Play starts playback", playing)
-                js("window.icefinPlaybackManager && window.icefinPlaybackManager.stop(); true")
-                time.sleep(3)
+                if not a.host:  # playing reports to the server: the lab only
+                    js("document.querySelector('.icefin-d-btn[data-action=play]').click(); true")
+                    try:
+                        page.wait_for("!!window.icefinTheme.ctx.nowPlaying()", timeout=40)
+                        playing = True
+                    except Exception:  # noqa: BLE001
+                        playing = False
+                    check("Play starts playback", playing)
+                    js("window.icefinPlaybackManager && window.icefinPlaybackManager.stop(); true")
+                    time.sleep(3)
                 # An album lists its tracks; a season and an episode open themed; More options opens the stock page.
                 open_details(album)
                 tracks = js("document.querySelectorAll('[data-section=tracks] .icefin-d-track').length")
@@ -230,22 +246,27 @@ def main():
                 check("More options opens jellyfin-web's own page", js("window.icefinTheme.active().route") is None)
             deep = False
         # Clean-up: theme off, and wait until the server has it, so the next test doesn't start in the last theme.
-        js("new Promise(r => window.api.theme.select('', '', '', r))")
-        time.sleep(1.5)
-        js("window.icefinThemeSync.idle().then(() => true)")
+        # (The host: the harness puts the user's own choice back.)
+        if not a.host:
+            js("new Promise(r => window.api.theme.select('', '', '', r))")
+            time.sleep(1.5)
+            js("window.icefinThemeSync.idle().then(() => true)")
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
-        try:
-            os.killpg(app.pid, signal.SIGTERM)
-            app.wait(15)
-        except Exception:  # noqa: BLE001
+        if stop:
+            stop()  # the host: the user's theme choice goes back
+        else:
             try:
-                os.killpg(app.pid, signal.SIGKILL)
+                os.killpg(app.pid, signal.SIGTERM)
+                app.wait(15)
             except Exception:  # noqa: BLE001
-                pass
-        if xv:
-            xv.terminate()
+                try:
+                    os.killpg(app.pid, signal.SIGKILL)
+                except Exception:  # noqa: BLE001
+                    pass
+            if xv:
+                xv.terminate()
     print("theme_details:", "OK" if not fails else f"FAILED {fails}", "->", a.out)
     return 1 if fails else 0
 
