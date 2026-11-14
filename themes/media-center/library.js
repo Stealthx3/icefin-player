@@ -192,9 +192,13 @@
         const c = M.client(), uid = c.getCurrentUserId();
         const o = Object.assign({ sortBy: 'SortName', order: 'Ascending' }, L.opts || {});
         const apply = () => { L.opts = o; L.sortBtn.classList.toggle('on', o.sortBy !== 'SortName' || o.order !== 'Ascending' || !!(o.unwatched || o.favourites || o.uhd || o.genre || o.year)); reload(); };
-        let genres = [], years = [];
-        try { genres = ((await c.getGenres(uid, { ParentId: L.parentId || undefined, IncludeItemTypes: L.kind.types, SortBy: 'SortName' })).Items || []); } catch (e) { genres = []; }
-        try { years = ((await c.getJSON(c.getUrl('Years', { UserId: uid, ParentId: L.parentId || undefined, IncludeItemTypes: L.kind.types, Recursive: true, SortBy: 'SortName', SortOrder: 'Descending' }))).Items || []); } catch (e) { years = []; }
+        // the panel opens at once; the genre and year steppers join it when the server has answered
+        let genres = [], years = [], redraw = null;
+        const lists = Promise.all([
+            Promise.resolve(c.getGenres(uid, { ParentId: L.parentId || undefined, IncludeItemTypes: L.kind.types, SortBy: 'SortName' })).then((r) => { genres = (r && r.Items) || []; }, () => {}),
+            Promise.resolve(c.getJSON(c.getUrl('Years', { UserId: uid, ParentId: L.parentId || undefined, IncludeItemTypes: L.kind.types, Recursive: true, SortBy: 'SortName', SortOrder: 'Descending' }))).then((r) => { years = (r && r.Items) || []; }, () => {})
+        ]);
+        lists.then(() => { if (redraw) redraw(); });
         M.panel.show({
             title: 'sort and filter',
             render(body, panel) {
@@ -221,6 +225,15 @@
                     body.append(M.foot(M.button('Done', () => { panel.close(); apply(); }, true), M.button('Clear', () => { for (const k of Object.keys(o)) delete o[k]; o.sortBy = 'SortName'; o.order = 'Ascending'; panel.close(); apply(); })));
                 };
                 draw();
+                // when the genres and years arrive: draw again, the focus kept on the same row
+                redraw = () => {
+                    if (!body.isConnected) return;
+                    const rows = [...body.querySelectorAll('.mc-sp-row')];
+                    const at = rows.indexOf(body.querySelector('.icefin-focused'));
+                    draw();
+                    const again = body.querySelectorAll('.mc-sp-row')[Math.max(0, at)];
+                    if (again) T.ctx.focus(again);
+                };
             }
         });
     }
