@@ -325,3 +325,83 @@ html[data-icefin-motion="low"] .td-panel-level.td-level-in, html[data-icefin-mot
 .td-pl-word { border: 0; background: none; color: rgb(255 255 255 / 0.8); font: inherit; font-size: 1vw; cursor: pointer; outline: none; padding: 0.3vh 0; }
 .td-pl-word.icefin-focused, .td-pl-word:hover { color: #fff; text-shadow: 0 0 0.6em var(--td-glow); box-shadow: inset 0 -2px 0 var(--td-light); }
 html[data-icefin-motion="low"] .td-pl * { transition: none !important; animation: none !important; }
+
+/* ---- jellyfin-web's pages in Tide's frame (PrefsFramed board) ---- */
+#icefin-stock-chrome .td-sc { position: fixed; inset: 0 0 auto 0; height: 15vh; pointer-events: none; color: var(--icefin-color-text); font-weight: 300;
+  background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveTop) 62%, transparent); }
+.td-sc-nav { position: absolute; left: 2.2vw; top: 1.4vh; display: flex; gap: 1.4vw; pointer-events: auto; opacity: 0; transition: opacity 200ms; }
+html[data-td-input="pointer"] .td-sc-nav { opacity: 0.8; }
+.td-sc-back { display: flex; align-items: center; gap: 0.4vw; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85vw; cursor: pointer; }
+.td-sc-back svg { width: 1.6vh; height: 1.6vh; }
+.td-sc-icon { position: absolute; left: 4.4vw; top: 5.4vh; opacity: 0.6; }
+.td-sc-icon svg { width: 4.2vh; height: 4.2vh; color: var(--icefin-color-text); }
+.td-sc-name { position: absolute; left: 7.8vw; top: 5.2vh; font-size: 1.9vw; }
+.td-sc-tabs { position: absolute; left: 19.5vw; top: 6.4vh; display: flex; gap: 1.4vw; pointer-events: auto; }
+.td-sc-tab { border: 0; background: none; color: rgb(255 255 255 / 0.55); font: inherit; font-size: 1vw; padding: 0; cursor: pointer; }
+.td-sc-tab.on { color: var(--icefin-color-text); }
+.td-sc-tab:hover, .td-sc-tab:focus { color: #fff; text-shadow: 0 0 0.6em var(--td-glow); outline: none; }
+.td-sc-clock { position: absolute; right: 5.42vw; top: 7.2vh; font-size: 1.4vw; font-variant-numeric: tabular-nums; }
+html[data-icefin-stock] body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveBottom) 100%); }
+html[data-icefin-stock] .skinHeader, html[data-icefin-stock] header.MuiAppBar-root, html[data-icefin-stock] .mainDrawerHandle,
+html[data-icefin-stock] .backdropContainer, html[data-icefin-stock] .backgroundContainer { visibility: hidden !important; }
+html[data-icefin-stock] .mainAnimatedPage, html[data-icefin-stock] .page { color: var(--icefin-color-text); font-weight: 300; background: transparent !important;
+  padding-top: 16vh !important; padding-left: 19.5vw !important; padding-right: 22vw !important; box-sizing: border-box; }
+html[data-icefin-stock], html[data-icefin-stock] .page, html[data-icefin-stock] .scrollY { scroll-padding: 17vh 0 8vh; }
+html[data-icefin-stock] .page h1, html[data-icefin-stock] .page h2, html[data-icefin-stock] .page .sectionTitle { font-weight: 300; color: rgb(255 255 255 / 0.6); font-size: 1vw; letter-spacing: 0.08em; text-transform: uppercase; margin: 3vh 0 1vh; }
+html[data-icefin-stock] .page .fieldDescription, html[data-icefin-stock] .page .secondaryText { color: var(--icefin-color-textSecondary); font-size: 0.85vw; }
+html[data-icefin-stock] .page .selectContainer, html[data-icefin-stock] .page .inputContainer, html[data-icefin-stock] .page .checkboxContainer { border-bottom: 1px solid rgb(255 255 255 / 0.1); padding: 0.8vh 0 !important; margin: 0 !important; }
+html[data-icefin-stock] .page .selectLabel, html[data-icefin-stock] .page .inputLabel, html[data-icefin-stock] .page .checkboxLabel { font-size: 1.15vw; color: var(--icefin-color-text); opacity: 1; }
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html[data-icefin-stock] .page select, html[data-icefin-stock] .page textarea {
+  font: inherit; font-size: 1.1vw; color: var(--icefin-color-text); background: transparent !important; border: 0 !important; border-bottom: 1px solid rgb(255 255 255 / 0.3) !important;
+  border-radius: 0 !important; padding: 0.6vh 0; box-shadow: none !important; }
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):focus, html[data-icefin-stock] .page select:focus, html[data-icefin-stock] .page textarea:focus {
+  border-bottom: 2px solid var(--td-light) !important; text-shadow: 0 0 0.5em var(--td-glow); outline: none; }
+html[data-icefin-stock] .page select option { color: var(--icefin-color-text); background: #0b1626; }
+html[data-icefin-stock] .page .selectContainer:focus-within, html[data-icefin-stock] .page .checkboxContainer:focus-within, html[data-icefin-stock] .page .inputContainer:focus-within {
+  background: linear-gradient(90deg, rgb(160 210 255 / 0), rgb(160 210 255 / 0.12) 20%, rgb(160 210 255 / 0)); }
+html[data-icefin-stock] .page .checkboxOutline { border-radius: 0.2vh !important; border: 1.5px solid rgb(255 255 255 / 0.7) !important; background: transparent !important; }
+html[data-icefin-stock] .page input[type=checkbox]:checked + span + .checkboxOutline { background: var(--td-light) !important; border-color: var(--td-light) !important; }
+html[data-icefin-stock] .page input[type=checkbox]:focus + span + .checkboxOutline { box-shadow: 0 0 1.4vh var(--td-glow) !important; }
+html[data-icefin-stock] .page .raised, html[data-icefin-stock] .page .button-submit, html[data-icefin-stock] .page .button-cancel, html[data-icefin-stock] .page .btnAddServer {
+  font: inherit; font-size: 1.2vw; font-weight: 300; text-transform: none; color: var(--icefin-color-text) !important; background: transparent !important; border: 0 !important;
+  border-radius: 0 !important; box-shadow: none !important; padding: 0.6vh 0 !important; margin-right: 2vw !important; opacity: 0.8; }
+html[data-icefin-stock] .page .raised:focus, html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page .raised:hover, html[data-icefin-stock] .page .button-submit:hover {
+  opacity: 1; text-shadow: 0 0 0.6em var(--td-glow); box-shadow: inset 0 -2px 0 var(--td-light) !important; outline: none; }
+/* jellyfin-web's leftover dialogs and action sheets as a quiet dark card (Notices board) */
+html[data-icefin-theme="tide"]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog { background: rgb(2 6 14 / 0.92) !important; color: var(--icefin-color-text);
+  border-radius: 0 !important; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18), 0 1.4vh 4vh rgb(0 0 0 / 0.4) !important; }
+html[data-icefin-theme="tide"]:not([data-icefin-dashboard]) .dialogContainer .actionSheetMenuItem:focus, html[data-icefin-theme="tide"]:not([data-icefin-dashboard]) .dialogContainer .listItem-button:focus {
+  background: linear-gradient(90deg, rgb(160 210 255 / 0), rgb(160 210 255 / 0.16) 30%, rgb(160 210 255 / 0)) !important; text-shadow: 0 0 0.6em var(--td-glow); outline: none; }
+html[data-icefin-theme="tide"]:not([data-icefin-dashboard]) .dialogContainer .button-flat[data-id="delete"], html[data-icefin-theme="tide"] .dialogContainer .btnDelete { color: #ffb4a8 !important; }
+html[data-icefin-theme="tide"] .toast { background: rgb(2 6 14 / 0.8) !important; border-left: 2px solid var(--td-light); border-radius: 0 !important; color: #fff !important; }
+
+/* ---- Settings › Home (HomeOrder board) ---- */
+.td-hp { position: absolute; left: 29.2vw; top: 9vh; width: 36vw; z-index: 2; }
+.td-hp-head { font-size: 0.85vw; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(255 255 255 / 0.55); margin: 2.4vh 0 0.8vh; }
+.td-hp-row { display: flex; align-items: center; gap: 1vw; padding: 1vh 1.2vw; margin: 0 -1.2vw; font-size: 1.3vw; opacity: 0.8; cursor: pointer; outline: none; }
+.td-hp-row.fixed { opacity: 0.4; cursor: default; }
+.td-hp-row.icefin-focused, .td-hp-row:hover:not(.fixed) { opacity: 1; text-shadow: 0 0 0.6em var(--td-glow); background: linear-gradient(90deg, rgb(160 210 255 / 0), rgb(160 210 255 / 0.12) 30%, rgb(160 210 255 / 0)); }
+.td-hp-row.td-lifted { opacity: 1; background: rgb(160 210 255 / 0.14); box-shadow: 0 0 1.6vh rgb(160 210 255 / 0.35), inset 0 0 0 1px var(--td-light); transform: translateX(1vw); transition: transform 140ms var(--td-ease); }
+.td-hp-grip { width: 1.4vw; display: flex; justify-content: center; cursor: grab; color: rgb(255 255 255 / 0.5); font-style: normal; }
+.td-hp-grip svg { width: 2.4vh; height: 2.4vh; }
+.td-hp-icon { width: 2.6vh; height: 2.6vh; color: var(--icefin-color-text); }
+.td-hp-name { flex: 1; }
+.td-hp-note { font-size: 0.85vw; color: rgb(255 255 255 / 0.6); }
+.td-hp .td-row { margin: 0 -1.2vw; padding-left: 1.2vw; }
+
+/* ---- Quick Connect and Forgot password (QuickConnect board) ---- */
+.td-qc { position: absolute; left: 29.2vw; top: 22vh; width: 42vw; z-index: 2; }
+.td-qc-path { font-size: 0.9vw; color: rgb(255 255 255 / 0.65); }
+.td-qc-title { font-size: 2.2vw; margin: 0.4vh 0 1.4vh; }
+.td-qc-text { font-size: 1.05vw; line-height: 1.5; color: rgb(255 255 255 / 0.82); margin-bottom: 3vh; }
+.td-qc-slots { display: flex; gap: 1.2vw; outline: none; }
+.td-qc-slot { width: 4.8vw; height: 10.5vh; display: flex; align-items: center; justify-content: center; font-size: 3.4vw; border-bottom: 1px solid rgb(255 255 255 / 0.4); font-variant-numeric: tabular-nums; }
+.td-qc-slots.icefin-focused .td-qc-slot.at { border-bottom: 2px solid var(--td-light); text-shadow: 0 0 0.5em var(--td-glow); background: linear-gradient(0deg, rgb(160 210 255 / 0.12), transparent); }
+.td-qc-typed { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.td-qc-buttons { display: flex; gap: 2.4vw; margin-top: 3.4vh; }
+.td-btn.td-btn-off { opacity: 0.35; }
+.td-qc-hint { font-size: 0.9vw; color: rgb(255 255 255 / 0.65); margin-top: 2vh; }
+.td-qc-note { font-size: 1vw; margin-top: 2vh; padding-left: 0.8vw; border-left: 2px solid var(--td-light); min-height: 1em; }
+.td-qc-note:empty { display: none; }
+.td-qc-show { font-size: 3.4vw; letter-spacing: 0.4em; margin: 2vh 0; text-shadow: 0 0 0.5em var(--td-glow); font-variant-numeric: tabular-nums; }

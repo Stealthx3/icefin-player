@@ -17,6 +17,8 @@
   "library.js",
   "np.js",
   "player.js",
+  "settings.js",
+  "account.js",
   "interim.js"
  ],
  "backdrop": {
