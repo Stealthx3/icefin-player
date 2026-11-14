@@ -83,6 +83,13 @@ walk)
     q=""; for x in "$@"; do q+=" $(printf '%q' "$x")"; done
     SSH_AUTH_SOCK= "$wt/scripts/lab.sh" run "python3 tests/icefin/web/theme_walk.py --lab --theme $t --themes \$HOME/src/themes --out \$HOME/build-walk/$t/$stamp$q" || rc=$?
     SSH_AUTH_SOCK= "$wt/scripts/lab.sh" pull "/home/lab/build-walk/$t/$stamp" "$wt/build-walk/$t/" >/dev/null || rc=1
+    # the guest's copy has no git history: the branch and commit come from the worktree that was pushed
+    [ -f "$out/coverage.json" ] && python3 - "$out/coverage.json" "$(git -C "$wt" branch --show-current)" "$(git -C "$wt" rev-parse --short HEAD)" <<'PY'
+import json, sys
+p, b, c = sys.argv[1:4]
+d = json.load(open(p)); d["run"]["branch"], d["run"]["commit"] = b, c
+json.dump(d, open(p, "w"), indent=1)
+PY
   else
     echo "theme-pass: walking $t from $wt/themes (results: $out)"
     python3 "$ROOT/tests/icefin/web/theme_walk.py" --theme "$t" --themes "$wt/themes" --port "$(port_of "$t")" --out "$out" "$@" || rc=$?
