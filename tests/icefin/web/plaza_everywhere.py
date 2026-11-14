@@ -186,6 +186,11 @@ def main():
             check("list: a filter applies and shows on the sort tab; Back closes the panel", fav == "0" and "1 filter" in sort_label and not js("document.getElementById('icefin-theme-root').hasAttribute('data-pz-panel')"), f"{fav} {sort_label}")
         # ---- playlists ----
         go(f"#/playlists?serverId={sid}", 4)
+        # New playlist ends the list: with more playlists than one page holds (the host's server), turn to the last page
+        for _ in range(60):
+            if not js("(() => { const n = document.querySelector('#icefin-theme-root .pz-next'); if (!n || n.classList.contains('pz-hidden')) return false; n.click(); return true; })()"):
+                break
+            time.sleep(0.8)
         cells = js("[...document.querySelectorAll('#icefin-theme-root .pz-cell')].map(c => c.classList.contains('pz-cell-new') ? '+' : c.plazaItem.Name)")
         check("playlists: a Plaza screen, its playlists then New playlist", bool(cells) and cells[-1] == "+" and len(cells) >= 2, json.dumps(cells))
         shot("11-playlists")

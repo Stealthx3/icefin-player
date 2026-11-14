@@ -254,7 +254,9 @@ def main():
                 visual_highlight.saved += 1
                 for tag, img in (("on", on), ("off", off)):
                     open(os.path.join(a.out, f"nohl-{visual_highlight.saved}-{tag}.png"), "wb").write(base64.b64decode(img))
-                tr("  no highlight saved as", visual_highlight.saved, k)
+                # the whole window too, with where the control was measured: a capture of the wrong place shows here
+                open(os.path.join(a.out, f"nohl-{visual_highlight.saved}-page.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
+                tr("  no highlight saved as", visual_highlight.saved, k, "area", r, js(f"(() => {{ const el = {FIND % json.dumps(k)}; return el ? JSON.stringify(el.getBoundingClientRect()) : null; }})()"))
             return on != off
 
         visual_highlight.saved = 0
