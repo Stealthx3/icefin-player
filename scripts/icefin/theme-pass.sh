@@ -11,7 +11,8 @@
 # One theme at a time (the user, 2026-11-12): start refuses while another theme is active, unless --force.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-MAIN_CHECKOUT="$(git -C "$ROOT" worktree list --porcelain | awk '/^worktree /{print $2; exit}')"
+# awk reads to the end (no early exit): git would take a SIGPIPE, and pipefail ends the script without a word
+MAIN_CHECKOUT="$(git -C "$ROOT" worktree list --porcelain | awk '/^worktree /{if (!w) w=$2} END{print w}')"
 PARENT="$(dirname "$MAIN_CHECKOUT")"
 die() { echo "theme-pass: $*" >&2; exit 1; }
 CFG="$ROOT/scripts/icefin/theme-pipeline.json"
@@ -19,7 +20,7 @@ cfg() { python3 -c "import json,sys; print(' '.join(json.load(open('$CFG')).get(
 themes() { local c; c=" $(cfg control) "; for d in "$ROOT"/themes/*/; do [ -f "$d/theme.json" ] || continue; case "$c" in *" $(basename "$d") "*) ;; *) basename "$d" ;; esac; done; }
 # the worktree that has theme/<id> checked out, wherever it is; a new one goes to ../icefin-wt-<id>
 wt_of() {
-  local w; w="$(git -C "$ROOT" worktree list --porcelain | awk -v b="refs/heads/theme/$1" '/^worktree /{w=$2} $0=="branch " b {print w; exit}')"
+  local w; w="$(git -C "$ROOT" worktree list --porcelain | awk -v b="refs/heads/theme/$1" '/^worktree /{w=$2} $0=="branch " b && !f {f=w} END{print f}')"
   echo "${w:-$PARENT/icefin-wt-$1}"
 }
 check_theme() { [ -n "${1:-}" ] || die "name a theme: $(themes | tr '\n' ' ')"; case " $(themes | tr "\n" " ") " in *" $1 "*) ;; *) die "no theme '$1' (themes/: $(themes | tr "\n" " "))" ;; esac; }
