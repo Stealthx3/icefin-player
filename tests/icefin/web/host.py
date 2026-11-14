@@ -116,10 +116,17 @@ class Host:
         subprocess.run(["spectacle", "-b", "-n", "-a", "-o", path], timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             from PIL import Image
-            ref = list(Image.open(TITLEBAR_REF).convert("L").crop((0, 0, 140, 14)).getdata())
-            strip = list(Image.open(path).convert("L").crop((0, 0, 140, 14)).getdata())
-            if sum(abs(a - b) for a, b in zip(strip, ref)) / len(strip) > 25:
+            # The strip with the fin mark and "Icefin Player" (a dark strip alone let another app's dark top through:
+            # 9.60, the Claude window kept as Icefin's), and the fin's own cyan in the icon's corner.
+            box = (0, 0, 160, 30)
+            ref = list(Image.open(TITLEBAR_REF).convert("L").crop(box).getdata())
+            shot = Image.open(path).convert("RGB")
+            strip = list(shot.convert("L").crop(box).getdata())
+            if len(ref) != len(strip) or sum(abs(a - b) for a, b in zip(strip, ref)) / len(strip) > 14:
                 raise ValueError("title bar")
+            fin = sum(1 for r, g, b in shot.crop((0, 0, 32, 30)).getdata() if b > 180 and g > 140 and r < 140)
+            if fin < 25:
+                raise ValueError("no fin mark")
             return "ok"
         except Exception as e:  # noqa: BLE001
             if os.path.exists(path):
