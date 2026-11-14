@@ -177,7 +177,8 @@ def main():
             return (None, missing) if missing else (re.sub(r"\{([\w:]+)\}", lambda m: str(v[m.group(1)]), s), [])
 
         def shot(name):
-            host.capture_page(os.path.join(a.out, f"{name}.png"))
+            if not host.capture_page(os.path.join(a.out, f"{name}.png")):
+                print(f"theme_walk: note {name}: no picture (no frame came: is Icefin's window covered or minimised?)", flush=True)
             if a.screen:
                 host.capture_screen(os.path.join(a.out, f"{name}-screen.png"))
 
