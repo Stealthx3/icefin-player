@@ -1,0 +1,43 @@
+{
+  "description": "Insignia NS-32D311NA17 (tv), from the linuxhw EDID collection: Digital/Insignia/BBY0050/47A5D28CD77E (CC BY 4.0); 315 EDIDs share this audio capability set",
+  "monitor_name": "NS-32D311NA17",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "eac3",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "byte3": 1
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Insignia/BBY0050/47A5D28CD77E"
+}

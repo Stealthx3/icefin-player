@@ -4,6 +4,8 @@
 
   matrix.py [--rows eld,hotplug,transport,pcm] [--player mpv] [--only CODEC,...]
   matrix.py --player icefin --app ~/build/src/icefin-player [--only CODEC,...]   (PLAN 3.9, icefin.py)
+  matrix.py --profiles public [--player icefin --app ...]   the public sinks (profiles/public/, edid_profiles.py,
+                                                             PLAN 11.5): ELD rows, and Icefin's decision per sink
 
 Rows:
   eld/<profile>        switch the sink to the profile; the client's /proc/asound eld text must contain the
@@ -107,10 +109,18 @@ def row(name, ok, **detail):
     return r
 
 
-def rows_eld():
+def profile_names(which="lab"):
+    """The lab's own sinks (profiles/*.json) or the public ones (profiles/public/*.json, as "public/<name>")."""
+    sub = "public/" if which == "public" else ""
+    d = f"{HERE}/profiles/{sub}"
+    return [sub + fn[:-5] for fn in sorted(os.listdir(d)) if fn.endswith(".json")]
+
+
+def rows_eld(which="lab"):
     out = []
-    for fn in sorted(os.listdir(f"{HERE}/profiles")):
-        p = eldmod.load(f"{HERE}/profiles/{fn}")
+    for name in profile_names(which):
+        p = eldmod.load(f"{HERE}/profiles/{name}.json")
+        p["name"] = name
         sh(AVSIM + ["profile", p["name"]], check=True)
         time.sleep(2)
         text = client_eld()
@@ -196,6 +206,7 @@ def main():
     ap.add_argument("--only", default=",".join(SAMPLE_SPEC))
     ap.add_argument("--player", default="mpv", choices=["mpv", "icefin"])
     ap.add_argument("--app", help="--player icefin: the native Icefin build to run in the client")
+    ap.add_argument("--profiles", default="lab", choices=["lab", "public"])
     a = ap.parse_args()
     if a.player == "icefin" and not a.app:
         raise SystemExit("matrix: --player icefin needs --app")
@@ -210,10 +221,12 @@ def main():
     if a.player == "icefin":
         import icefin  # noqa: E402
         ensure_samples(sorted(set(codecs) | {"ac3", "eac3"}))
-        results += icefin.rows(sys.modules[__name__], a.app, codecs)
+        results += icefin.rows(sys.modules[__name__], a.app, codecs, a.profiles)
         rows = []
+    if a.profiles == "public":
+        rows = [r for r in rows if r == "eld"]  # the public sinks add ELD rows; the transport rows stay on avr-full
     if "eld" in rows:
-        results += rows_eld()
+        results += rows_eld(a.profiles)
     if "hotplug" in rows:
         results += rows_hotplug()
     if {"transport", "limit", "pcm"} & set(rows):

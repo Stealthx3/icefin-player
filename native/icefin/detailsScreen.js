@@ -82,6 +82,12 @@
 .icefin-d-card .icefin-d-img { aspect-ratio: 2 / 3; border-radius: var(--icefin-shape-cardRadius, 0.3em); background: var(--icefin-color-surface) center / cover no-repeat; }
 .icefin-d-card.wide { width: 19vw; }
 .icefin-d-card.wide .icefin-d-img { aspect-ratio: 16 / 9; }
+.icefin-d-img, .icefin-d-poster { position: relative; }
+.icefin-d-initials { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: inherit; font-weight: 800; font-size: 1.6em;
+  color: var(--icefin-color-onAccent); background: linear-gradient(160deg, color-mix(in srgb, var(--icefin-color-accent) 45%, var(--icefin-color-surface)), var(--icefin-color-accent)); }
+.icefin-d-poster .icefin-d-initials { font-size: 3em; }
+.icefin-d-chtime { position: absolute; left: 0.5em; bottom: 0.5em; padding: 0.1em 0.6em; border-radius: 999px; font-size: 0.8em; font-weight: 700;
+  background: var(--icefin-color-surface); color: var(--icefin-color-text); box-shadow: 0 1px 4px rgb(var(--icefin-color-background-channel) / 0.45); }
 .icefin-d-card.square .icefin-d-img { aspect-ratio: 1; }
 .icefin-d-card.person { width: 9vw; }
 .icefin-d-card.person .icefin-d-img { aspect-ratio: 1; border-radius: 50%; }
@@ -207,12 +213,18 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
         const o = Object.assign({ layout: 'hero' }, opts || {});
         let S = null;  // per-mount state
 
+        function initials(name) {
+            const t = String(name || '').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+            return el('div', 'icefin-d-initials', t || '?');
+        }
         function card(client, item, shape, go, sub) {
             const c = focusable(el('div', `icefin-d-card ${shape || ''}`.trim()));
             c.dataset.id = item.Id;
             const img = el('div', 'icefin-d-img');
             const url = image(client, item, shape === 'wide' ? 'Thumb' : 'Primary', shape === 'wide' ? 480 : 420);
             if (url) img.style.backgroundImage = `url("${url}")`;
+            // no picture: the name's initials, so a person or an artist without a photo still reads (the user, 2026-11-13)
+            else if (shape !== 'wide') img.append(initials(item.Name));
             c.append(img);
             const ud = item.UserData || {};
             if (ud.PlayedPercentage > 0 && ud.PlayedPercentage < 100) {
@@ -315,6 +327,7 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
             const poster = el('div', 'icefin-d-poster');
             const purl = image(client, item, wrap.dataset.shape === 'wide' ? 'Thumb' : 'Primary', 720);
             if (purl) poster.style.backgroundImage = `url("${purl}")`;
+            else poster.append(initials(item.Name));
             const info = el('div', 'icefin-d-info');
             const logo = el('img', 'icefin-d-logo');
             const lurl = image(client, item, 'Logo');
@@ -596,7 +609,10 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 chapters.forEach((c, i) => {
                     const fake = { Id: `${item.Id}-ch${i}`, Name: c.Name || `Chapter ${i + 1}`, ImageTags: {} };
                     const k = card(client, fake, 'wide', () => playItem(c.StartPositionTicks), clock(c.StartPositionTicks));
-                    if (c.ImageTag) k.querySelector('.icefin-d-img').style.backgroundImage = `url("${client.getScaledImageUrl(item.Id, { type: 'Chapter', index: i, maxWidth: 480, tag: c.ImageTag })}")`;
+                    const im = k.querySelector('.icefin-d-img');
+                    if (c.ImageTag) im.style.backgroundImage = `url("${client.getScaledImageUrl(item.Id, { type: 'Chapter', index: i, maxWidth: 480, tag: c.ImageTag })}")`;
+                    // the start time on the picture: a chapter whose picture is a black frame still reads (the user, 2026-11-13)
+                    im.append(el('div', 'icefin-d-chtime', clock(c.StartPositionTicks)));
                     row.append(k);
                 });
             }

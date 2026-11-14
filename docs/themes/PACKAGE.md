@@ -90,6 +90,7 @@ and the engine absorbs that here instead of in every theme. `scripts/icefin/them
 | `ctx.sound(event)` | A UI sound: `focus`, `select`, `back`, `navigate`, `error` |
 | `ctx.music.jingle(key)` | Plays the package's jingle `key` (stopping the one playing, ducking the ambient piece); resolves false when there is none, music is off or something plays |
 | `ctx.music.stopJingle(fadeMs?)` | Fades the playing jingle out (default 350 ms) |
+| `ctx.music.hold(on)` | `true` while the theme shows something with its own sound (a preview): the ambient piece fades out in 0.4 s and waits; `false` brings it back where it was in 1.2 s |
 | `ctx.music.has(key)` | The package has a jingle `key` |
 | `icefinTheme.ctx` | The same `ctx`, for chrome, overlays and timers outside a screen. Overlay panels get it with `close()` added |
 | `icefinTheme.ui.*` | The engine capabilities: chrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop, pointerFirst, motion; details in *Engine capabilities for screens* below |
@@ -154,7 +155,7 @@ script while it loads, or from a screen's `mount()`. They all reset when the the
 | `ui.liveTile(el, {fetch, render, interval})` | Cycling content, frozen under reduced or low motion |
 | `ui.mutedPreview(el, {itemId \| src})` | A muted SDR preview in the page's own `<video>` (a small VP8 server transcode). Never mpv, never the passthrough device |
 | `ui.userViews()` | The signed-in user's libraries (a promise of view items). Waits for the session on a cold start and retries a failed or empty answer; use it instead of calling `getUserViews` at mount |
-| `ui.overlay.set({mount(el, ctx)})` | A global panel over any screen, themed or stock: a long press on View (`icefin_overlay`) opens it, and Back closes it. It's modal |
+| `ui.overlay.set({mount(el, ctx), unmount?, leave?(el)})` | A global panel over any screen, themed or stock: a long press on View (`icefin_overlay`) opens it, and Back closes it. It's modal. `leave(el)` starts the theme's closing animation and returns its length in ms (600 at most): the overlay stays, taking no input, until it ends; low motion closes at once |
 | `ui.pointerFirst(true)` | Hover moves focus, and `html[data-icefin-pointer]` lets the theme enlarge hit targets |
 | `ui.motion.cap('low')`, `ui.motion.duration(ms)` | A theme-level motion cap, separate from the user's reduced-motion setting. `html[data-icefin-motion]` follows it |
 | `ui.chrome.set('sideRail', {width, collapsedWidth, mount(el)})` | An expanding side rail (9.11): icons-only at `collapsedWidth`, widening to `width` over the content (which never reflows) while focus is inside. `data-icefin-rail="collapsed" \| "expanded"` on the rail and on `<html>`; mark labels `.icefin-rail-label` and hide them when collapsed |

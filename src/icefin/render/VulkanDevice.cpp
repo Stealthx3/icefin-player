@@ -322,9 +322,10 @@ bool VulkanDevice::attach(QQuickWindow* window)
       const QRhiSwapChain::Format f = sc->format();
       compositorState().output = f == QRhiSwapChain::HDR10 ? OutputEncoding::Hdr10
                                  : f == QRhiSwapChain::HDRExtendedSrgbLinear ? OutputEncoding::ScRgb : OutputEncoding::Sdr;
-      if (!QGuiApplication::platformName().startsWith("wayland")) {
+      if (!QGuiApplication::platformName().startsWith("wayland") && compositorState().hdrRequested) {
         // X11 / Gamescope (5.6): the swapchain Qt made is the display's answer; Vulkan gives no luminances, so these
-        // are Qt's defaults (1000 nits, SDR white 200).
+        // are Qt's defaults (1000 nits, SDR white 200). Only when HDR10 was asked for: with HDR Output off (or the
+        // compositor off) the SDR swapchain says nothing about the display, and the reason stays the setting's.
         const QRhiSwapChainHdrInfo hi = sc->hdrInfo();
         const int maxNits = hi.limitsType == QRhiSwapChainHdrInfo::LuminanceInNits ? qRound(hi.limits.luminanceInNits.maxLuminance) : 1000;
         const int white = hi.sdrWhiteLevel > 0 ? qRound(hi.sdrWhiteLevel) : 200;

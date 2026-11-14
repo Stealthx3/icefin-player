@@ -44,7 +44,10 @@
         box.append(el('div', { textContent: 'Home', style: `position:absolute;left:5%;top:6%;font-size:1.3em;font-weight:600` }));
         const row = el('div', { style: 'position:absolute;left:5%;right:5%;top:24%;display:flex;gap:4%' });
         for (let i = 0; i < 4; i++) {
-            const card = el('div', { style: `flex:1;aspect-ratio:2/3;border-radius:${radius};background:${c('surface', 'GrayText')}` });
+            // cards as artwork in the theme's own colours (plain surface cards read as empty boxes: the user, 2026-11-13)
+            const mix = [62, 38, 80, 24][i];
+            const art = `linear-gradient(180deg, color-mix(in srgb, ${c('accent', 'Highlight')} ${mix}%, ${c('surface', 'GrayText')}), color-mix(in srgb, ${c('accent', 'Highlight')} ${Math.min(100, mix + 25)}%, ${c('text', 'CanvasText')} 8%))`;
+            const card = el('div', { style: `flex:1;aspect-ratio:2/3;border-radius:${radius};background:${art}` });
             card.className = 'icefin-tm-card' + (i === 1 ? ' focused' : '');
             if (i === 1) card.style.boxShadow = `0 0 0 0.18em ${c('focus', 'Highlight')}, 0 0 1.2em 0.2em ${c('focusGlow', 'transparent')}`;
             row.append(card);
