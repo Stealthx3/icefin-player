@@ -118,6 +118,9 @@
             now.hidden = true;
             // The corner mark is the server's own brand (ui.brand: its icon and name), never an image from this package.
             start.append(M.brandMark(el('div', 'mc-brand'), { name: true }), clock, strip, now);
+            // Play on and Watch together, as on every frame (9.60); the strip keeps the arrows, so here they are the
+            // pointer's (the pad has them on the Tasks row)
+            if (M.extras) M.extras(start, false);
             root.append(field, start);
             root.setAttribute('data-mc', 'start');
 
