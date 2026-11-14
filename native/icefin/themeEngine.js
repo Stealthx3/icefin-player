@@ -229,13 +229,17 @@
     //   ambient  looped while the theme is up and nothing plays; it fades out for any playback (so it is off during
     //            passthrough too) and comes back a few seconds after playback ends;
     //   jingles  ctx.music.jingle(key) from the theme's scripts; the ambient piece ducks under a jingle.
+    //   hold     ctx.music.hold(true) while the theme shows something with its own sound (a channel's preview): the
+    //            ambient piece fades out and waits, and picks up where it was on hold(false).
     // Client Settings -> Theme decides (musicState: jingles, ambient, volume) and the native side mutes it during
     // passthrough and exclusive playback, as the interface sounds.
     const music = (() => {
         const DUCK = 0.3;
         let ac = null, master = null, ambBus = null, urls = null;
         let st = { jingles: true, ambient: true, volume: 0.6, muted: false };
-        let amb = null, jing = null, lastPlay = 0, timer = null, startupDone = false, played = [];
+        let amb = null, jing = null, lastPlay = 0, timer = null, startupDone = false, played = [], held = false;
+        // The ambient piece's level: off while the theme holds it, down under a jingle, else full.
+        const busTarget = () => (held ? 0 : jing ? DUCK : 1);
         const bufs = new Map();
         const audio = () => {
             if (!ac) {
@@ -285,19 +289,19 @@
             if (!jing) return;
             release(jing, sec == null ? 0.35 : sec);
             jing = null;
-            if (ac) ramp(ambBus.gain, 1, 0.8);
+            if (ac) ramp(ambBus.gain, busTarget(), 0.8);
         }
         async function startJingle(url, key) {
             const b = await buffer(url);
             if (!b || !pkg || !st.jingles || st.muted || playing()) return false;
             stopJingle(0.12);
-            ramp(ambBus.gain, DUCK, 0.25);
             const v = voice(b, master, false, 1);
             const mine = { ...v, key };
             jing = mine;
+            ramp(ambBus.gain, busTarget(), 0.25);
             played.push(key);
             if (played.length > 20) played.shift();
-            v.src.onended = () => { if (jing === mine) { jing = null; ramp(ambBus.gain, 1, 0.8); } };
+            v.src.onended = () => { if (jing === mine) { jing = null; ramp(ambBus.gain, busTarget(), 0.8); } };
             return true;
         }
         const ambientWanted = () => !!(pkg && urls && urls.ambient && st.ambient && !st.muted && !document.hidden && Date.now() - lastPlay > 3000);
@@ -349,7 +353,8 @@
             },
             // The theme went away: fade everything out and forget its files.
             reset() {
-                if (ac) { stopJingle(0.3); release(amb, 0.6); }
+                held = false;
+                if (ac) { stopJingle(0.3); release(amb, 0.6); ramp(ambBus.gain, 1, 0.05); }
                 amb = null;
                 urls = null;
                 bufs.clear();
@@ -364,11 +369,14 @@
                     return startJingle(url, key);
                 },
                 stopJingle(fadeMs) { if (ac) stopJingle(fadeMs == null ? 0.35 : fadeMs / 1000); },
+                // True while the theme shows something with its own sound: the ambient piece fades out (0.4 s) and
+                // comes back where it was (1.2 s) on false.
+                hold(on) { held = !!on; if (ac) ramp(ambBus.gain, busTarget(), held ? 0.4 : 1.2); },
                 has: (key) => !!(urls && urls.jingles && urls.jingles[key])
             },
             // For tests and diagnostics.
             state: () => ({ settings: { ...st }, context: ac ? ac.state : 'none', ambient: !!amb, jingle: jing ? jing.key : null,
-                ducked: !!(ambBus && ambBus.gain.value < 0.99), startupPlayed: startupDone, played: played.slice(),
+                ducked: !!(ambBus && ambBus.gain.value < 0.99), held, startupPlayed: startupDone, played: played.slice(),
                 urls: urls ? { startup: !!urls.startup, ambient: !!urls.ambient, jingles: Object.keys(urls.jingles || {}) } : null })
         };
     })();
