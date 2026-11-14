@@ -191,6 +191,14 @@ Every item below is one of: **board** (drawn on the Almanac Screens canvas, http
 | 8 | Polish tests | tests | in the lab (this pass) |
 | 8 | A lab walk and Gate 2 | tests | Verify and Gate 2 |
 
+## Where the pass ended (2026-11-14, Gate 2 approved)
+
+Walk 2 in the lab: **58 of 69** drawn by Almanac, **4 gaps** (the framed Display, Playback, Subtitles and Controls
+pages, as approved at Gate 1), 0 failing checks, 6 skipped for want of lab data. Tests in the lab: almanac_pass.py
+PASS, theme_almanac.py OK, clone_layout.py --theme almanac OK (the home's rows and the guide, 13 boxes). The user
+approved the built screens at Gate 2 ("Approved, merge it"). Left for later: the startup sting and ambient bed (a
+soundboard first, as with Tide), a season tab strip on series, the framed pages' checkbox spacing.
+
 ## Build notes (2026-11-14, after Gate 1)
 
 Built in Almanac's own scripts (themes/almanac), forked from Tide's working modules where the behaviour is the same
