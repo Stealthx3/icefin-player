@@ -125,9 +125,15 @@ def main():
             check(f"{tid}: the Audio picker for two audio tracks", "audio" in info["options"], json.dumps(info["options"]))
             check(f"{tid}: focus starts on Play", focused() == "play", focused())
             check(f"{tid}: Back and Home at the top", "back" in info["actions"] and "home" in info["actions"])
-            act("up")
-            time.sleep(0.3)
-            check(f"{tid}: Up from Play reaches Back or Home", focused() in ("back", "home"), focused())
+            # Back and Home above the actions: Up reaches them. A theme that keeps them in a bar under the page (Plaza)
+            # has the controller walk (plaza_reach) cover them instead.
+            above = js("(() => { const p = document.querySelector('.icefin-d-btn[data-action=play]').getBoundingClientRect(); return [...document.querySelectorAll('[data-action=back], [data-action=home]')].some(b => b.getClientRects().length && b.getBoundingClientRect().bottom <= p.top); })()")
+            if above:
+                act("up")
+                time.sleep(0.3)
+                check(f"{tid}: Up from Play reaches Back or Home", focused() in ("back", "home"), focused())
+            else:
+                print(f"theme_details: info {tid}: Back and Home sit below the page, in the theme's bar", flush=True)
             js("window.icefinTheme.ctx.focus(document.querySelector('.icefin-d-btn[data-action=play]')); true")
             info["actions"] = [x for x in info["actions"] if x not in ("back", "home")]
             # Down walks the actions (a vertical list in some layouts), then reaches the pickers.
@@ -136,7 +142,13 @@ def main():
                 time.sleep(0.25)
                 if focused() == "audio":
                     break
-            check(f"{tid}: Down reaches the pickers", focused() == "audio", focused())
+            # a layout whose actions are a list beside the art (Media Center, 9.46) has the pickers to its right
+            for _ in range(2):
+                if focused() == "audio":
+                    break
+                act("right")
+                time.sleep(0.25)
+            check(f"{tid}: Down (then Right, beside a list of actions) reaches the pickers", focused() == "audio", focused())
             shot(f"{tid}-movie.png")
             if deep:
                 act("enter")

@@ -5,6 +5,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 ## [Unreleased]
 
 ### Added
+- Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
 - Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
 - Media Center: library screens for movies, TV, music, pictures, books, music videos and playlists, with sorts and filters along the top, a sideways grid with the glass focus, and genres as stacks of covers.
 - Media Center's Home button and start screen corner show your server's own icon and name, loaded from the server.
@@ -25,6 +26,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
 
 ### Fixed
+- Client Settings -> Controllers: Remap is reachable with a controller (it sat out of line with the switches, so Down skipped it).
+- jellyfin-web's own pages inside a theme's frame (the preference pages, Quick Connect and others): the controller moves over the page and the frame's tabs, Back and Home as one screen.
+- Icefin no longer crashes on exit while a theme's sounds are loaded.
 - Media Center: Backspace and Escape go back on every screen and close menus and dialogs; the arrows work on the settings pages it frames; the poster wall has Back and Home; closing More options returns to Media Center's details page instead of leaving jellyfin-web's.
 - Opening a picture with a theme showed every item on the server in the slide show instead of the picture's folder.
 - Plaza: opening Sort and filter or New playlist turned the whole window black.
