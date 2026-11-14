@@ -7,10 +7,11 @@ principles (PIPELINE.md, The measure).
 ## Where the pass ended (walk 3, 2026-11-14; Gate 2 approved by the user)
 
 49 of 65 walked entries drawn by Media Center (from 33), 6 gaps (from 26), 0 failing checks (from 10). The gaps, with
-the user's approval at Gate 2: the five preference pages stay jellyfin-web's pages in Media Center's frame, restyled as
-the approved SettingsPage board (checklist 1.10); Play on from the start screen is Media Center's panel from the
-Tasks row, which the walk can't reach (media_center_pass.py checks it). Not built: the old content's fade on a screen
-change (the engine removes a screen at once). Tests: media_center_pass.py and item_actions.py on the host.
+the user's decision after Gate 2 ("Do it": as Plaza does): the five preference pages stay jellyfin-web's pages in
+Media Center's frame, restyled as the approved SettingsPage board (checklist 1.10), as Plaza's are; Play on and Watch
+together joined the frame, as Plaza's, which closed the walk's Play on gap (5 gaps left, all the preference pages).
+Not built, as in Plaza: the old content's fade on a screen change (the engine removes a screen at once). Tests:
+media_center_pass.py and item_actions.py on the host.
 
 ## Where the pass starts (walk 1, 2026-11-14)
 
