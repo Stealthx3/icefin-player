@@ -62,7 +62,13 @@
             else if (q.ParentId) {  // a folder (a collections library, a folder library): its own contents
                 const lv = D.listLevel('', 'folder', { ParentId: q.ParentId, Recursive: false, SortBy: 'IsFolder,SortName' });
                 const load0 = lv.load;
-                lv.load = async () => { if (!lv.title) { try { lv.title = (await Promise.resolve(c().getItem(uid(), q.ParentId))).Name; } catch (e) { lv.title = 'Folder'; } } return load0(); };
+                lv.load = async () => {
+                    let it = null;
+                    try { it = await Promise.resolve(c().getItem(uid(), q.ParentId)); } catch (e) { it = null; }
+                    if (!lv.title) lv.title = it ? it.Name : 'Folder';
+                    const list = await load0();
+                    return it && it.CollectionType === 'playlists' ? [D.newPlaylistEntry()].concat(list) : list;  // Playlists: New playlist first
+                };
                 return lv;
             }
             const lv = D.dropLevel(title, icon, q);

@@ -47,7 +47,10 @@
         const pp = btn('Pause', '❚❚', () => player.playPause());
         const fwd = btn('Forward 30 seconds', '30 ▶▶', () => { const s = player.state(); if (s.live) player.channelUp(); else player.seekBy(30000); });
         const next = btn('Next chapter', 'chapter ▶|', () => { const s = player.state(); if (s.next && !(s.chapters || []).length) player.nextItem(); else player.nextChapter(); });
-        btn('Options', '≡ options', () => options());
+        btn('Audio', 'audio', () => options('audio'));
+        btn('Subtitles', 'subtitles', () => options('subtitles'));
+        const opt = btn('Options and settings: speed, aspect, chapters, Play on', '≡ options', () => options());
+        opt.title = 'Options and settings';
         bottom.append(times, bar, tr);
         const archive = el('div', 'td-pl-archive');
         box.append(el('div', 'td-pl-shade-top'), el('div', 'td-pl-shade-bottom'), top, bottom, archive);
@@ -151,7 +154,7 @@
     function poke() { if (!S) return; clearTimeout(S.timer); if (S.shown) S.timer = setTimeout(() => hide(false), HIDE_MS); }
 
     // ---- the options panel (Player board) ----
-    function options() {
+    function options(open) {
         const p = S.player, s = p.state();
         const pick = (title, values, set) => D.panel.push({
             title, path: s.title,
@@ -185,6 +188,8 @@
                     D.row('Playback info', { go: () => { D.panel.close(); p.info(); } }),
                     D.row('Jellyfin’s own controls', { sub: 'for the rest of this video', go: () => { D.panel.close(); p.useWebControls('the user chose them'); } }),
                     D.row('Stop', { go: () => { D.panel.close(); p.stop(); } }));
+                // the transport's Audio and Subtitles words open their pickers straight away
+                if (open) setTimeout(() => { const r = [...body.querySelectorAll('.td-row')].find((x) => x.textContent.toLowerCase().startsWith(open)); if (r) r.click(); }, 0);
             }
         });
     }
