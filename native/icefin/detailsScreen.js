@@ -4,8 +4,8 @@
 //
 // One details screen for every theme, with the features of jellyfin-web's own page, so no theme can drop one:
 //   - Back and Home at the top (for a pointer or touch as well as the remote's Back key);
-//   - Play, Resume, Play from the start, Trailer, Shuffle, Instant mix, Favourite, Played, and More options (jellyfin-web's
-//     page, for editing, deleting, playlists and the like);
+//   - Play, Resume, Play from the start, Trailer, Shuffle, Instant mix, Favourite, Played, and More options (the theme's
+//     item menu through ui.items (9.60), else jellyfin-web's page, for editing, deleting, playlists and the like);
 //   - Version, Audio and Subtitles pickers for what plays (the choice goes to play());
 //   - the media in brief (resolution, HDR, audio format), chapters (play from one), cast and crew, More like this;
 //   - series: Next up, Seasons and the Episodes of the focused season; a season: its Episodes; an album: its Tracks; an
@@ -415,9 +415,9 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
             if (item.Type === 'Episode' && item.SeriesId) button('series', 'Series', () => T.ctx.navigate(`#/details?id=${item.SeriesId}&serverId=${client.serverId()}`));
             if (item.Type === 'Season' && item.SeriesId) button('series', 'Series', () => T.ctx.navigate(`#/details?id=${item.SeriesId}&serverId=${client.serverId()}`));
             if (item.Type === 'MusicAlbum' && (item.AlbumArtists || [])[0]) button('artist', 'Artist', () => T.ctx.navigate(`#/details?id=${item.AlbumArtists[0].Id}&serverId=${client.serverId()}`));
-            // jellyfin-web's own page keeps the rest (edit, delete, add to playlist or collection, download, identify).
-            // jellyfin-web's own item menu (every action it has), opened at once over its details page (PLAN 9.38).
-            button('more', 'More options', () => location.assign(`#/details?id=${item.Id}&serverId=${client.serverId()}&icefin=stock&icefinmore=1`));
+            // The rest (edit, delete, add to playlist or collection, download, identify): the theme's own item menu
+            // (ui.items, 9.60), else jellyfin-web's, opened at once over its details page (PLAN 9.38).
+            button('more', 'More options', () => (T.ui.items ? T.ui.items.open(item) : location.assign(`#/details?id=${item.Id}&serverId=${client.serverId()}&icefin=stock&icefinmore=1`)));
 
             // ---- versions and tracks ----
             const sources = (item.MediaSources || []).filter((s) => s.Type !== 'Placeholder');
