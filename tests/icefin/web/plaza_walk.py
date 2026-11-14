@@ -150,7 +150,7 @@ def main():
             go(f"#/details?id={iid}&serverId={sid}", "!!document.querySelector('#icefin-theme-root[data-icefin-details-complete]')", 1.5)
             f = js("JSON.stringify({head: !!document.querySelector('.pz-d-head .pz-mname'), tabs: [...document.querySelectorAll('.pz-d-tabs .pz-tab')].map(t => t.textContent), back: !!document.querySelector('.pz-d-bar .pz-mround-back'), home: !!document.querySelector('.pz-d-bar .pz-mround-home'), frame: !!document.querySelector('.pz-d-frame'), hero: document.querySelector('.icefin-details').getAttribute('data-pz-hero')})")
             fo = json.loads(f)
-            check(f"details ({k}): Plaza's frame, tabs, round Back and Home, framed art", fo["head"] and fo["back"] and fo["home"] and fo["frame"] and fo["tabs"][:1] == ["Overview"], f)
+            check(f"details ({k}): Plaza's frame, tabs, round Back and Home, framed art", fo["head"] and fo["back"] and fo["home"] and fo["frame"] and fo["tabs"][:1] == [{"MusicAlbum": "Tracks", "Person": "Biography"}.get(k, "Overview")], f)  # 0.9.0: an album's first tab is its tracks, a person's their biography
             ar = (rect(".icefin-d-options") if js("!!document.querySelector('.icefin-d-options') && document.querySelector('.icefin-d-options').childElementCount > 0") else None) or rect(".icefin-d-actions")
             sc = rect(".icefin-d-scroll")
             check(f"details ({k}): the actions and pickers are in view as it opens, clear of the fade above the bar", bool(ar and sc) and ar[3] <= sc[3] - 0.04 * H and ar[1] >= 0, f"actions/pickers {ar} scroll area {sc}")
@@ -182,7 +182,8 @@ def main():
                 s, m = rect(".icefin-d-sections"), rect(".icefin-d-main")
                 check("details (album): the tracks are beside the art", bool(s and m) and s[0] >= m[2] - 4, f"main {m} sections {s}")
         # ---- nothing of an earlier page above the video ----
-        mv = one("Movie")
+        # the SDR film: since 6.6 the lab's first movie is Dolby Vision 5, which raises the capability prompt on OpenGL (#158)
+        mv = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, searchTerm: 'SDR H264 AAC', Limit: 1}).then(r => r.Items[0] ? r.Items[0].Id : null)") or one("Movie")
         go("#/selectserver", None, 2.5)
         js(f"window.icefinTheme.ctx.play({{ids: ['{mv}'], serverId: '{sid}'}}); true")
         page.wait_for("location.hash.startsWith('#/video') && window.icefinPlaybackManager.currentTime() > 500", timeout=45)

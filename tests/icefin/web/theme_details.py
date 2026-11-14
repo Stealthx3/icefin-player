@@ -241,9 +241,15 @@ def main():
                 check("Home goes to the main menu", True)
                 open_details(ep)
                 js("document.querySelector('.icefin-d-btn[data-action=more]').click(); true")
-                page.wait_for("location.hash.includes('icefin=stock')", timeout=15)
+                # jellyfin-web's own page, or a theme's own item menu over the details (Plaza 0.9.0's sheet)
+                page.wait_for("location.hash.includes('icefin=stock') || !!document.getElementById('icefin-theme-overlay')", timeout=15)
                 time.sleep(2)
-                check("More options opens jellyfin-web's own page", js("window.icefinTheme.active().route") is None)
+                if js("!!document.getElementById('icefin-theme-overlay')"):
+                    check("More options opens the theme's own item menu", js("!!document.querySelector('#icefin-theme-overlay [data-icefin-focus]')") is True)
+                    js("window.icefinTheme.handleAction('back'); true")
+                    time.sleep(0.6)
+                else:
+                    check("More options opens jellyfin-web's own page", js("window.icefinTheme.active().route") is None)
             deep = False
         # Clean-up: theme off, and wait until the server has it, so the next test doesn't start in the last theme.
         # (The host: the harness puts the user's own choice back.)

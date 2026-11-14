@@ -381,6 +381,8 @@
             Object.assign(card.style, { left: `${21 * u}px`, top: `${18 * u}px`, width: `${r.width - 42 * u}px`, height: `${r.height - 36 * u}px` });
         }
         fillCard(ch, card);
+        // the preview has the stage: the ambient piece waits while a card is open (the user, 2026-11-13)
+        if (T.ctx.music && T.ctx.music.hold) T.ctx.music.hold(true);
         jingle(ch);
         const done = () => {
             if (!S || !S.card || S.card.el !== card) return;
@@ -398,6 +400,7 @@
         S.card = null;
         S.root.removeAttribute('data-pz-channel');
         if (T.ctx.music) T.ctx.music.stopJingle(leaving ? 150 : 350);
+        if (T.ctx.music && T.ctx.music.hold) T.ctx.music.hold(false);
         if (leaving) { card.remove(); dim.remove(); return true; }
         const page = t ? Number(t.getAttribute('data-pz-page')) : S.page;
         if (t && page !== S.page) show(page, false);
@@ -514,9 +517,37 @@
             const chan = P.items(r).find((x) => x.CurrentProgram) || P.items(r)[0];
             if (!chan) { body.append(textBlock('pz-side-info', [['pz-big', 'No Live TV channels'], ['pz-meta', 'This server has no tuner or guide set up.']])); return; }
             const now = chan.CurrentProgram;
-            const pic = now && P.thumbArt(now, 800);
-            P.bg(screen, pic || P.thumbArt(chan, 800));
-            screen.classList.toggle('pz-logo', !pic);
+            // 7 · what's on: the programme's picture, else the channel's logo, else its number and name on the screen's own
+            // gradient; a picture that won't load falls through the same way (the 2026-11-13 walk: a blank white screen)
+            const pic = now && P.thumbArt(now, 800), logo = P.thumbArt(chan, 800);
+            const label = () => {
+                screen.classList.remove('pz-logo');
+                screen.style.backgroundImage = '';
+                screen.classList.add('pz-tv-named');
+                screen.append(el('div', 'pz-tv-num', chan.ChannelNumber ? `CH ${chan.ChannelNumber}` : 'LIVE'), el('div', 'pz-tv-name', chan.Name || ''));
+            };
+            // a logo shows on the screen's light ground: a light logo (white on transparent, the host walk's 123GO!) would
+            // vanish there, so it falls through to the number and name too
+            const tooLight = (img) => {
+                try {
+                    const c = document.createElement('canvas'); c.width = 32; c.height = 32;
+                    const g = c.getContext('2d'); g.drawImage(img, 0, 0, 32, 32);
+                    const d = g.getImageData(0, 0, 32, 32).data;
+                    let lum = 0, n = 0;
+                    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128) { lum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; n++; }
+                    return n > 0 && lum / n > 200;
+                } catch (e) { return false; }  // a picture the page can't read: show it
+            };
+            const show = (url, isLogo, next, plain) => {
+                if (!url) { next(); return; }
+                const probe = new Image();
+                // read in CORS mode so a logo's colours can be checked; a server or proxy without CORS gets a plain load
+                if (!plain) probe.crossOrigin = 'anonymous';
+                probe.onload = () => { if (!live()) return; if (isLogo && !plain && tooLight(probe)) { next(); return; } P.bg(screen, url); screen.classList.toggle('pz-logo', isLogo); };
+                probe.onerror = () => { if (!live()) return; if (!plain) show(url, isLogo, next, true); else next(); };
+                probe.src = url;
+            };
+            show(pic, false, () => show(logo, true, label));
             const lines = [['pz-kicker', `NOW · ${chan.ChannelNumber ? 'CH ' + chan.ChannelNumber : chan.Name}`], ['pz-big', now ? now.Name : chan.Name]];
             const info = textBlock('pz-side-info', lines);
             if (now) {
@@ -712,8 +743,11 @@
             };
             tick();
             S.clockTimer = setInterval(tick, 15000);
-            // the server's status: a small card beside the icefin button (the walk's mock-up); a dot says whether it answers
-            const srv = el('div', 'pz-srv');
+            // the server's status: a small card beside the icefin button (the walk's mock-up); a dot says whether it answers.
+            // It is a button too: A or a click opens the choice of servers (the user, 2026-11-12)
+            const srv = P.focusable(el('div', 'pz-srv'));
+            srv.setAttribute('role', 'button');
+            srv.addEventListener('click', () => T.ctx.navigate('#/selectserver'));
             srv.innerHTML = '<svg viewBox="0 0 40 52" aria-hidden="true"><rect x="5" y="6" width="30" height="13" rx="3" fill="currentColor"/><rect x="5" y="24" width="30" height="13" rx="3" fill="currentColor" opacity=".7"/><circle cx="11" cy="12.5" r="2" fill="#fff"/><circle cx="11" cy="30.5" r="2" fill="#fff"/></svg>';
             const dot = el('span', 'pz-srv-dot');
             srv.append(dot);
@@ -723,9 +757,9 @@
                 Promise.resolve(c.getPublicSystemInfo ? c.getPublicSystemInfo() : null).then((i) => {
                     const ok = !!i;
                     srv.classList.toggle('pz-srv-down', !ok);
-                    srv.setAttribute('aria-label', `${(i && i.ServerName) || name}: ${ok ? 'connected' : 'not answering'}`);
+                    srv.setAttribute('aria-label', `${(i && i.ServerName) || name}: ${ok ? 'connected' : 'not answering'} · choose a server`);
                     srv.title = srv.getAttribute('aria-label');
-                }, () => { srv.classList.add('pz-srv-down'); srv.setAttribute('aria-label', `${name}: not answering`); srv.title = srv.getAttribute('aria-label'); });
+                }, () => { srv.classList.add('pz-srv-down'); srv.setAttribute('aria-label', `${name}: not answering · choose a server`); srv.title = srv.getAttribute('aria-label'); });
             };
             ping();
             S.srvTimer = setInterval(ping, 60000);
