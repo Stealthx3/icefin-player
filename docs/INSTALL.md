@@ -9,15 +9,22 @@ installs alongside Flathub's Jellyfin Desktop: separate app ID, separate setting
 > files come later (PLAN 12.1).
 
 ## Install from the test repository
-The test repository is a signed Flatpak remote with the current alpha and test builds, served by GitHub Pages
-(<https://stealthx3.github.io/icefin-flatpak-test/>). `flatpak update` then keeps Icefin current.
+The test repository is the shared Icesuite one: a signed Flatpak remote (also APT, F-Droid and Windows for other
+Icesuite apps) with the current alpha and test builds, served by GitHub Pages
+(<https://stealthx3.github.io/icesuite-test/>). `flatpak update` then keeps Icefin current.
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak remote-add --user --if-not-exists icefin-test https://stealthx3.github.io/icefin-flatpak-test/icefin-test.flatpakrepo
-flatpak install --user icefin-test io.github.stealthx3.IcefinPlayer
+flatpak remote-add --user --if-not-exists icesuite-test https://stealthx3.github.io/icesuite-test/flatpak/icesuite-test.flatpakrepo
+flatpak install --user icesuite-test io.github.stealthx3.IcefinPlayer
 ```
 A build installed from a bundle switches to the remote with
-`flatpak install --user --reinstall icefin-test io.github.stealthx3.IcefinPlayer`; settings and sign-in stay.
+`flatpak install --user --reinstall icesuite-test io.github.stealthx3.IcefinPlayer`; settings and sign-in stay.
+
+Added the old `icefin-test` remote (`icefin-flatpak-test`, before 2026-11-14)? It moved; point it at the new address
+once, and updates carry on:
+```bash
+flatpak remote-modify --user --url=https://stealthx3.github.io/icesuite-test/flatpak/repo/ icefin-test
+```
 
 ## Install a bundle
 ```bash
