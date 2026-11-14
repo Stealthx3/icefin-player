@@ -134,6 +134,15 @@ def main():
             act("left")
         for _ in range(cats.index("Movies") if "Movies" in cats else 1):
             act("right")
+        # into All movies (a folder opens as a column, 9.48), then the first film
+        for _ in range(8):
+            if js("(document.querySelector('.td-e.focused .td-e-name') || {}).textContent === 'All movies'"):
+                act("enter")
+                page.wait_for(f"!{R}.hasAttribute('data-td-loading') && !!document.querySelector('.td-e.focused .td-e-thumb')", timeout=20)
+                time.sleep(0.6)
+                break
+            act("down")
+            time.sleep(0.3)
         if int(js(f"{R}.dataset.tdCount")) >= 1 and js("!!document.querySelector('.td-e.focused .td-e-thumb')"):
             act("enter")
             page.wait_for("location.hash.startsWith('#/details')", timeout=15)
