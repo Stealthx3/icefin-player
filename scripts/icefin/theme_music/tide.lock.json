@@ -1,0 +1,11 @@
+{
+ "files": {
+  "ambient": "2bbe5fa649abf012e0d9b0555215f451f43414c8944c410360a0980d79a388f3",
+  "startup": "1547787b29dae5c35551e27ee1efc9d9e981548832d7a8ff1174681f05d8a1e0"
+ },
+ "music": {
+  "ambient": "music/ambient.ogg",
+  "startup": "music/startup.ogg"
+ },
+ "recipes": "0b24f6c306294549c11a12f16ee084922e9e6db8242ae838520f6aaa1e82b44d"
+}
