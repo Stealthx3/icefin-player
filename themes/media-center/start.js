@@ -10,6 +10,7 @@
 
     function tile(client, item, wide) {
         const t = el('div', 'mc-tile' + (wide ? ' wide' : ''));
+        t.mcItem = item;  // ≡ opens its menu (itemmenu.js)
         t.setAttribute('data-icefin-focus', '');
         t.tabIndex = -1;
         const tag = wide ? (item.ImageTags || {}).Thumb || (item.ImageTags || {}).Primary : (item.ImageTags || {}).Primary;

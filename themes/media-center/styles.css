@@ -645,3 +645,60 @@ html[data-icefin-stock][data-icefin-motion="low"] .mainAnimatedPage:not(.hide) {
 html[data-icefin-theme]:not([data-icefin-stock]) .page[data-mc-form] { visibility: hidden; }
 /* the player's side panel takes the right of the screen: the seek bar and its times end before it */
 .mc-player:has(.mc-p-panel) .mc-p-bottom { right: calc(36.7vw + 2.4vh); }
+
+/* ---- The side panel and the notice (PLAN 9.60, panel.js; the "Pass 9.60" boards). The panel lives off the right
+   edge: in 260 ms decelerating, out 200 ms accelerating, the dim with it; a dialog swaps its content with a 120 ms
+   fade; lists fade at their edges. Low motion: it appears and goes at once. ---- */
+.mc-sp { position: fixed; inset: 0; font-family: inherit; font-weight: 300; color: var(--icefin-color-text); }
+.mc-sp-dim { position: absolute; inset: 0; background: rgb(var(--icefin-color-glassEdge-channel) / 0.45); animation: mc-sp-dim-in 260ms ease-out both; }
+.mc-sp-video .mc-sp-dim { background: rgb(var(--icefin-color-glassEdge-channel) / 0.7); }
+.mc-sp-panel { display: flex; flex-direction: column; overflow: hidden; z-index: auto; animation: mc-sp-in 260ms cubic-bezier(0, 0, 0.2, 1) both; }
+.mc-sp-panel.mc-sp-wide { width: 48vw; }
+.mc-sp-out .mc-sp-panel { animation: mc-sp-out 200ms cubic-bezier(0.4, 0, 1, 1) both; }
+.mc-sp-out .mc-sp-dim { animation: mc-sp-dim-out 200ms ease-in both; }
+@keyframes mc-sp-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes mc-sp-out { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes mc-sp-dim-in { from { opacity: 0; } }
+@keyframes mc-sp-dim-out { to { opacity: 0; } }
+.mc-sp-head { flex: none; }
+.mc-sp-title { font-size: 4.2vh; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sp-sub { font-size: 2.2vh; color: var(--icefin-color-textSecondary); margin-top: 0.3vh; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sp-body { flex: 1; overflow-y: auto; margin: 1.2vh -0.8vh 0; padding: 1.2vh 0.8vh 3vh; scroll-padding: 4vh 0; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 2.4vh, #000 calc(100% - 4vh), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 2.4vh, #000 calc(100% - 4vh), transparent 100%); }
+.mc-sp-body::-webkit-scrollbar { display: none; }
+.mc-sp-swap { animation: mc-sp-swap 120ms ease-out both; }
+@keyframes mc-sp-swap { from { opacity: 0; } }
+.mc-sp-row { margin: 0.2vh 0; }
+.mc-sp-label { display: flex; flex-direction: column; min-width: 0; }
+.mc-sp-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sp-rowsub { display: block; font-size: 1.9vh; opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-sp-icon { width: 3vh; height: 3vh; flex: none; }
+.mc-sp-check { width: 2.6vh; height: 2.6vh; margin-left: auto; flex: none; color: var(--icefin-color-focus); }
+.mc-li.icefin-focused .mc-sp-check { color: inherit; }
+.mc-sp-danger:not(.icefin-focused) .mc-sp-label { color: var(--icefin-color-error); }
+.mc-sp-foot { display: flex; flex-wrap: wrap; gap: 1.4vh; margin-top: 2.4vh; }
+.mc-sp-btn { height: 5.6vh; font-size: 2.6vh; }
+.mc-sp-tabs { margin: 0.4vh 0 1.2vh; flex-wrap: wrap; gap: 2.4vh; }
+.mc-sp-field { display: block; margin: 1.2vh 0; }
+.mc-sp-flabel { display: block; font-size: 1.9vh; color: var(--icefin-color-textSecondary); margin-bottom: 0.5vh; }
+.mc-sp-input { width: 100%; box-sizing: border-box; height: 5.4vh; font: inherit; font-size: 2.6vh; font-weight: 300; padding: 0 1.4vh; color: var(--icefin-color-text);
+  background: rgb(var(--icefin-color-glass-channel) / 0.08); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.3); border-radius: 0.28vh; }
+textarea.mc-sp-input { height: 16vh; padding: 1vh 1.4vh; resize: none; line-height: 1.4; }
+.mc-sp-input.icefin-focused, .mc-sp-input:focus { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); outline: none;
+  box-shadow: 0 0 2.4vh rgb(var(--icefin-color-focus-channel) / 0.7); }
+.mc-sp-images { display: flex; flex-wrap: wrap; gap: 1.2vh; padding: 0.4vh; }
+.mc-sp-image { width: 13vh; height: 19.5vh; position: relative; border-radius: 0.28vh; background: center / cover no-repeat rgb(var(--icefin-color-glass-channel) / 0.08); }
+.mc-sp-image.icefin-focused { box-shadow: 0 0 0 0.1vh var(--icefin-color-glassEdge), inset 0 0 0 0.2vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 2.6vh 0.4vh var(--icefin-color-focusGlow); }
+.mc-sp-image-label { position: absolute; left: 0; right: 0; bottom: 0; font-size: 1.6vh; padding: 0.4vh 0.6vh; background: rgb(var(--icefin-color-background-channel) / 0.78);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-sp-note { margin: 1.2vh 1vh; }
+.mc-notice { position: fixed; right: 4vh; bottom: 4vh; z-index: 1100; max-width: 40vw; padding: 1.8vh 2.4vh; font-size: 2.6vh; font-weight: 300; color: var(--icefin-color-text);
+  background: rgb(var(--icefin-color-background-channel) / 0.9); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: 0 0 4vh rgb(0 0 0 / 0.4);
+  animation: mc-notice-in 250ms ease-out both; }
+.mc-notice-bad { border-color: var(--icefin-color-error); }
+.mc-notice-out { animation: mc-notice-out 200ms ease-in both; }
+@keyframes mc-notice-in { from { opacity: 0; transform: translateY(2vh); } }
+@keyframes mc-notice-out { to { opacity: 0; transform: translateY(2vh); } }
+html[data-icefin-motion="low"] .mc-sp-panel, html[data-icefin-motion="low"] .mc-sp-dim, html[data-icefin-motion="low"] .mc-sp-swap,
+html[data-icefin-motion="low"] .mc-notice { animation: none !important; }
