@@ -16,6 +16,7 @@
   "tv.js",
   "library.js",
   "np.js",
+  "player.js",
   "interim.js"
  ],
  "backdrop": {
