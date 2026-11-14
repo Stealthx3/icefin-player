@@ -92,7 +92,7 @@
         key: () => '#/home',
         root() {
             const bar = [{ label: 'Settings', icon: 'settings', count: false, load: D.settingsEntries }];
-            const R = { bar, at: 1, onBack: () => { D.exitAsk(); return true; } };
+            const R = { bar, at: 1, deferred: true, onBack: () => { D.exitAsk(); return true; } };
             // the libraries arrive after mount (ui.userViews waits for the session)
             R.loadViews = async () => {
                 const views = await ui.userViews();
@@ -116,6 +116,7 @@
             clearInterval(timer);
             timer = setInterval(ping, 60000);
             if (r.loadViews && r.bar.length === 1) {
+                C.rootEl.setAttribute('data-td-loading', '1');
                 await r.loadViews();
                 r.loadViews = null;
                 C.S.barIndex = Math.min(r.at || 1, r.bar.length - 1);  // the first library, as the home opens on its media
