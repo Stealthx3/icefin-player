@@ -4,6 +4,44 @@ Copied from docs/themes/CHECKLIST.md at the start of the pass (2026-11-14, main 
 when tide does it in its own look and a test checks it, or write the user's reason beside it. Motion is judged by the six
 principles (PIPELINE.md, The measure).
 
+## Where the pass starts (walk 1, 2026-11-14)
+
+Walk: the workstation's Icefin 0.1.0~alpha.2, your server; **16 of 69** entries drawn by Tide, **43 gaps**, 23 failing
+checks (all "nothing has focus"), 9 skipped (no books, photos, home videos, music videos or playlists on the server).
+Contact sheet: `build-walk/tide/20261114-024513/index.html`; gap list: `docs/themes/coverage/tide.md`.
+
+Tide today is a cross bar on the home and nothing else of its own: the engine's details panel, its settings list and
+jellyfin-web's player controls in Tide's colours. Everything a library, a list, search, Live TV, music, the item menu,
+sign-in or the preference pages shows is jellyfin-web's own page with its header and drawer (the walk's "stock").
+
+| Area | Walk | What is wrong |
+|---|---|---|
+| Home (1.1) | drawn, focus fails | each library's column is the whole library A–Z (up to 500), with no Continue Watching, Next Up, Recently added or favourites; the first column came up empty on the walk; no server status, no exit question, no music entry; nothing has focus for a pad until a key is pressed |
+| Frame (1.2, 1.12) | — | none: leaving the home drops into jellyfin-web's header, drawer and grids |
+| Libraries, lists, search (1.3) | 13 stock, sort-filter missing | every library, the genre and studio lists and search are jellyfin-web's |
+| Details (1.4) | 10 drawn, channel stock | the engine's panel layout, not the target's; a channel is jellyfin-web's |
+| Item menu (1.5) | missing + 8 restyled | no menu of Tide's own; the eight dialogs are jellyfin-web's in Tide's colours |
+| Live TV (1.6) | 3 stock | guide, channels and recordings are jellyfin-web's |
+| Music (1.7) | capsule drawn; queue, lyrics stock | |
+| Player (1.8) | 4 restyled | jellyfin-web's controls and its three pickers |
+| Play on, Watch together (1.9) | 2 restyled | jellyfin-web's dialogs |
+| Settings (1.10) | hub, client drawn; 7 stock | preference pages, profile and Quick Connect unframed |
+| Sign-in (1.11) | 4 stock | |
+| Input (2) | 23 focus failures | no focus on arrival; no ≡ on items; no hints; hover does not move focus outside the home |
+| Motion (3) | | categories slide (260 ms ease-out) and the column steps (220 ms); nothing else moves: no folder opening, no panel, no flights, no caption; the low-motion path is the wave only |
+| Effects (4) | | wave and month palette good; no focus glow on the column beyond a scale, no fallbacks beyond a generic icon, no fade at the column's edges |
+| Sound (5) | | five UI sounds; no startup sound |
+
+Judged by the six principles: **timing** and **easing** are close (short ease-out moves that keep up with a held
+D-pad); **spatial orientation** fails off the home (no sense of going deeper, as nested columns would give);
+**directing focus** fails wherever nothing has focus; **visual continuity** has nothing joining the home to details
+or a library; **clarity** is good on the home (one focus point) and lost everywhere else.
+
+The design for the pass (boards on the "Tide Screens" canvas, Gate 1): the target's grammar everywhere. Opening a
+folder or an item slides a new column in at the fixed point while the one it came from collapses to its icon on the
+left; an item's options come in a dark panel from the right edge; information and the player are light overlays on
+the wave. Icons stay original line drawings; no names, symbols, sounds or artwork from the target.
+
 ## 1. Themed elements: screens and surfaces
 
 ### 1.1 Home
