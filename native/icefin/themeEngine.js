@@ -612,7 +612,8 @@
         const action = KEYS[e.key];
         if (!action || e.altKey || e.ctrlKey || e.metaKey) return;
         // Escape on a jellyfin-web menu that left no history entry closes it here (closeLooseDialog), on any page
-        if (action === 'back' && e.key === 'Escape') {
+        // (not an open drop-down list inside it: the list's own Escape closes just the list)
+        if (action === 'back' && e.key === 'Escape' && !document.querySelector('.icefin-dd-list')) {
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }

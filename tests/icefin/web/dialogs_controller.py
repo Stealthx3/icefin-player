@@ -77,7 +77,7 @@ def main():
         js = page.eval
         pad = lambda x: js(f"{PAD}({json.dumps(x)})")
         sheet = lambda: (lambda r: json.loads(r) if r else None)(js(SHEET))
-        movie = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, Limit: 1}).then(r => r.Items[0].Id)")
+        movie = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, searchTerm: 'SDR H264 AAC', Limit: 1}).then(r => r.Items[0].Id)")
         themes = [t["id"] for t in js("new Promise(r => window.api.theme.themes(r))") if t.get("ok") and t.get("source") == "bundled"]
         for tid in themes:
             js(f"new Promise(r => window.api.theme.setActiveTheme('{tid}', '', r))")
