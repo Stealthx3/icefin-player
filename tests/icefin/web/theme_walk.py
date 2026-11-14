@@ -173,7 +173,7 @@ def main():
         types = sorted({m for e in inv["screens"] for m in re.findall(r"\{item:(\w+)\}", e["hash"])} | {"Movie", "Audio"})
         for t in types:
             # the lab's library leads with HDR fixtures, whose capability prompt waits for an answer: play an SDR one there
-            extra = ", SearchTerm: 'SDR'" if a.lab and t == "Movie" else ""
+            extra = ", SearchTerm: 'SDR', SortBy: 'Runtime', SortOrder: 'Descending'" if a.lab and t == "Movie" else ""
             v["item:" + t] = js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{IncludeItemTypes: '{t}', Recursive: true, Limit: 1{extra}}}).then(r => r.Items[0] ? r.Items[0].Id : null)")
         uid = "window.ApiClient.getCurrentUserId()"
         for k, expr in {"person": f"window.ApiClient.getPeople({uid}, {{Limit: 1}})", "genre": f"window.ApiClient.getGenres({uid}, {{Limit: 1, Recursive: true}})",
@@ -317,6 +317,8 @@ def main():
         if player and v.get("item:Movie"):
             js(f"window.icefinTheme.ctx.play({{ids: ['{v['item:Movie']}'], serverId: '{v['sid']}'}}); true")
             page.wait_for("location.hash.startsWith('#/video') && window.icefinPlaybackManager.currentTime() > 500", timeout=45)
+            if a.lab:  # the lab's films last seconds: keep this one playing through the player's entries
+                js("(() => { try { window.icefinTheme.ui.player.controls().setRepeat('RepeatOne'); } catch (e) {} return true; })()")
             time.sleep(1)
             W, H = run["window"][:2]
             for e in player:
