@@ -405,3 +405,6 @@ html[data-icefin-theme="tide"] .toast { background: rgb(2 6 14 / 0.8) !important
 .td-qc-note { font-size: 1vw; margin-top: 2vh; padding-left: 0.8vw; border-left: 2px solid var(--td-light); min-height: 1em; }
 .td-qc-note:empty { display: none; }
 .td-qc-show { font-size: 3.4vw; letter-spacing: 0.4em; margin: 2vh 0; text-shadow: 0 0 0.5em var(--td-glow); font-variant-numeric: tabular-nums; }
+
+/* entries are buttons (reachable by the pointer and the walk): no button look of their own */
+button.td-e { display: block; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; width: 100%; outline: none; }

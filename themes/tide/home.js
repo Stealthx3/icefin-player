@@ -58,6 +58,8 @@
             { name: 'Subtitles', sub: 'language, size, look', icon: 'subtitles', shape: 'icon', go: go('#/mypreferencessubtitles') },
             { name: 'Controls', sub: 'remote and pad', icon: 'controls', shape: 'icon', go: go('#/mypreferencescontrols') },
             { name: 'Client settings', sub: 'theme, audio output, display, updates', icon: 'client', shape: 'icon', go: go('#/mypreferencesmenu') },
+            { name: 'Play on…', sub: 'send what plays to another device', icon: 'cast', shape: 'icon', go: () => D.playOn && D.playOn('play', null) },
+            { name: 'Watch together…', sub: 'join or start a group', icon: 'together', shape: 'icon', go: () => D.playOn && D.playOn('together', null) },
             { name: `Server: ${D.serverName || 'this server'}`, sub: `${D.serverUp === false ? '○ not answering' : '● online'} · choose another`, icon: 'server', shape: 'icon', go: () => T.ctx.selectServer() },
             { name: 'Classic view', sub: 'jellyfin-web’s own pages, until you come back', icon: 'classic', shape: 'icon', go: () => { if (ui.settings && ui.settings.classic) ui.settings.classic(); else T.ctx.navigate('#/home?icefin=stock'); } },
             { name: 'Classic home', sub: 'jellyfin-web’s home, once', icon: 'home', shape: 'icon', go: go('#/home?icefin=stock') }

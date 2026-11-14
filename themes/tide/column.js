@@ -54,7 +54,8 @@
         return t;
     }
     function entryEl(e) {
-        const d = el('div', `td-e shape-${e.shape || 'icon'}`);
+        const d = el('button', `td-e shape-${e.shape || 'icon'}`);
+        d.type = 'button';
         const text = el('div', 'td-e-text');
         text.append(el('div', 'td-e-name', e.name || ''));
         if (e.sub) text.append(el('div', 'td-e-sub', e.sub));
@@ -81,7 +82,7 @@
         const back = el('div', 'td-backdrop');
         rootEl.prepend(back);
         const clock = D.clock(rootEl);
-        D.pointerNav(rootEl, () => C.back(true));
+        D.pointerNav(rootEl, () => C.back(true), opts.nav);
         const trail = el('div', 'td-trail');
         const bar = el('div', 'td-bar');
         const col = el('div', 'td-col');
@@ -158,10 +159,11 @@
                     if (d) d.remove();
                     d = entryEl(list[k]);
                     d.classList.add('td-fresh');
+                    // a click (the pointer, or OK on the focused one) brings the entry to the fixed point and opens it
                     d.addEventListener('click', () => {
                         const at = S.entries.indexOf(d.tdEntry);
-                        if (at !== curIndex()) { setIndex(at); T.ctx.sound('focus'); drawColumn(); return; }
-                        C.activate(d.tdEntry, d);
+                        if (at !== curIndex()) { setIndex(at); drawColumn(); }
+                        C.activate(d.tdEntry, S.drawn.get(at) || d);
                     });
                     S.drawn.set(k, d);
                     col.append(d);
@@ -245,7 +247,9 @@
             const none = !S.loading && !S.entries.length;
             empty.hidden = !none;
             if (!none) return;
-            const em = c.empty || {};
+            const em = Object.assign({}, c.empty || {});
+            // never a dead end: an empty column always offers a way on, so a pad has something to press
+            if (!em.way) em.way = S.stack.length > 1 ? { label: 'Go back', go: () => C.back() } : { label: 'Go back', go: () => { if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); } };
             empty.append(D.svg(em.icon || c.icon || 'folder', 'td-empty-icon'));
             empty.append(el('div', 'td-empty-title', em.title || 'Nothing here yet'));
             if (em.text) empty.append(el('div', 'td-empty-text', em.text));
@@ -436,7 +440,7 @@
             mount(root) {
                 const r = spec.root(D.params());
                 C = D.columns(root, { root: r, name: spec.name, key: spec.key ? spec.key(D.params()) : location.hash, fresh: spec.fresh, onFocus: spec.onFocus, onLevel: spec.onLevel, backdrops: spec.backdrops,
-                    selfInTrail: spec.selfInTrail, leave: spec.leave });
+                    selfInTrail: spec.selfInTrail, leave: spec.leave, nav: spec.nav ? spec.nav() : null });
                 if (spec.mounted) spec.mounted(C, root);
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },

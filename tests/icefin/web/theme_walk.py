@@ -155,7 +155,7 @@ def main():
     host = None
     try:
         if a.lab:
-            run["player"] = "lab build " + a.app
+            run["player"] = {"version": "lab build", "path": a.app}
             host = LabHost(a.themes, a.port, os.path.join(a.out, "app.log"), app=a.app, server=a.server)
         else:
             run["player"] = update()  # the user: check for updates to the player before each walk
@@ -172,7 +172,9 @@ def main():
             v.setdefault("view:" + ct, vid)
         types = sorted({m for e in inv["screens"] for m in re.findall(r"\{item:(\w+)\}", e["hash"])} | {"Movie", "Audio"})
         for t in types:
-            v["item:" + t] = js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{IncludeItemTypes: '{t}', Recursive: true, Limit: 1}}).then(r => r.Items[0] ? r.Items[0].Id : null)")
+            # the lab's library leads with HDR fixtures, whose capability prompt waits for an answer: play an SDR one there
+            extra = ", SearchTerm: 'SDR'" if a.lab and t == "Movie" else ""
+            v["item:" + t] = js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{IncludeItemTypes: '{t}', Recursive: true, Limit: 1{extra}}}).then(r => r.Items[0] ? r.Items[0].Id : null)")
         uid = "window.ApiClient.getCurrentUserId()"
         for k, expr in {"person": f"window.ApiClient.getPeople({uid}, {{Limit: 1}})", "genre": f"window.ApiClient.getGenres({uid}, {{Limit: 1, Recursive: true}})",
                         "musicgenre": f"window.ApiClient.getMusicGenres({uid}, {{Limit: 1, Recursive: true}})", "studio": f"window.ApiClient.getStudios({uid}, {{Limit: 1, Recursive: true}})",
