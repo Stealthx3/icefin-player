@@ -590,6 +590,9 @@
     window.addEventListener('keydown', (e) => {
         const action = KEYS[e.key];
         if (!action || e.altKey || e.ctrlKey || e.metaKey) return;
+        // An Icefin drop-down's open list (clientSettings.js) takes its own keys: Escape closes the list, not the dialog
+        // it sits in (theme_manager.py: Escape in Client Settings' theme list closed all of Client Settings)
+        if (window.icefinDropdown && window.icefinDropdown.isOpen && window.icefinDropdown.isOpen()) return;
         // Escape on a jellyfin-web menu that left no history entry closes it here (closeLooseDialog), on any page
         if (action === 'back' && e.key === 'Escape') {
             const d = foreignDialog();
