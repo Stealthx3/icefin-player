@@ -194,6 +194,6 @@
             });
             if (!SQ) setTimeout(() => { if (input.isConnected) { T.ctx.focus(input); if (ui.keyboard) ui.keyboard.open(input); } }, 300);
         },
-        unmounted() { input = null; }
+        unmounted() { input = null; if (ui.keyboard && ui.keyboard.isOpen && ui.keyboard.isOpen()) ui.keyboard.close(); }
     });
 })();

@@ -408,3 +408,18 @@ html[data-icefin-theme="tide"] .toast { background: rgb(2 6 14 / 0.8) !important
 
 /* entries are buttons (reachable by the pointer and the walk): no button look of their own */
 button.td-e { display: block; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; width: 100%; outline: none; }
+
+/* ---- the on-screen keyboard (Search board): a dark band across the bottom, keys as light words ---- */
+html[data-icefin-theme="tide"] #icefin-osk { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; padding: 2.6vh 19.5vw 3vh; box-sizing: border-box;
+  color: var(--icefin-color-text); font-family: "Noto Sans", sans-serif; font-weight: 300;
+  background: linear-gradient(180deg, rgb(2 6 14 / 0.4), rgb(2 6 14 / 0.9) 30%); box-shadow: 0 -1px 0 rgb(255 255 255 / 0.12); animation: td-osk-in 200ms ease-out both; }
+@keyframes td-osk-in { from { transform: translateY(30%); opacity: 0; } }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-preview { font-size: 1.5vw; min-height: 2.2em; padding: 0.4vh 0; margin-bottom: 1.2vh; border-bottom: 1px solid rgb(255 255 255 / 0.35); }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-preview:empty::before { content: attr(data-placeholder); color: rgb(255 255 255 / 0.5); }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-row { display: flex; gap: 0.5vw; margin: 0.5vh 0; }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-key { flex: 1; min-height: 5.4vh; display: flex; align-items: center; justify-content: center; font-size: 1.3vw; cursor: pointer; color: rgb(255 255 255 / 0.8); }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-wide { flex: 1.6; font-size: 1vw; }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-space { flex: 4; font-size: 1vw; }
+html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-key.icefin-focused, html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-key:hover { color: #fff; font-weight: 400;
+  text-shadow: 0 0 0.6em var(--td-glow); box-shadow: inset 0 -2px 0 var(--td-light); }
+html[data-icefin-motion="low"] #icefin-osk { animation: none; }
