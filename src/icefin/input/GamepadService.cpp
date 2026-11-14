@@ -87,6 +87,9 @@ void GamepadWorker::run()
     if (!SDL_WaitEventTimeout(&ev, 200)) continue;
     switch (ev.type) {
       case SDL_EVENT_GAMEPAD_ADDED: {
+        // SDL can announce one evdev pad twice (seen with xpad-style pads). Each SDL_OpenGamepad counts a reference
+        // and the removal closes one, so a second open would keep the unplugged pad open for good.
+        if (m_pads.contains(ev.gdevice.which)) break;
         SDL_Gamepad* g = SDL_OpenGamepad(ev.gdevice.which);
         if (!g) break;
         Pad p{g, QString::fromUtf8(SDL_GetGamepadName(g)), QString(), QString(), {}};

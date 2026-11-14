@@ -23,6 +23,9 @@ sudo apt-get install -y -qq --no-install-recommends \
 # Full kernel (the cloud kernel lacks uinput, needed for virtual gamepads in controller tests); takes effect after reboot
 sudo apt-get install -y -qq --no-install-recommends linux-image-amd64
 echo uinput | sudo tee /etc/modules-load.d/uinput.conf >/dev/null
+# Virtual controllers through the kernel's HID drivers (PLAN 7.6): uhid, and seat access to the pads' hidraw nodes
+echo uhid | sudo tee /etc/modules-load.d/uhid.conf >/dev/null
+sudo install -m 644 "$(dirname "$0")/lab/70-icefin-lab-pads.rules" /etc/udev/rules.d/
 # Flatpak packaging (task 1.5) and containerized Jellyfin servers (task 1.7)
 sudo apt-get install -y -qq --no-install-recommends flatpak flatpak-builder elfutils appstream librsvg2-common podman uidmap slirp4netns passt
 sudo loginctl enable-linger "$(id -un)"   # rootless podman without a login session

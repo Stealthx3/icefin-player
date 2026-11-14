@@ -1,0 +1,7 @@
+# Icefin lab (PLAN 7.6): virtual controllers through the kernel's own HID drivers. Installed by scripts/provision.sh.
+# /dev/uhid for the lab user: the emulated DualSense and Switch Pro (tests/icefin/web/vpads.py).
+KERNEL=="uhid", GROUP="lab", MODE="0660"
+# hidraw for the pads SDL drives through HIDAPI, as the steam-devices rules give real hosts (seat access). An
+# emulated pad's HID device is named <bus>:<vendor>:<product>.<n>, so match that as well as a USB parent's vendor id.
+KERNEL=="hidraw*", ATTRS{idVendor}=="054c|057e|28de|2dc8", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="*:054C:*|*:057E:*|*:28DE:*|*:2DC8:*", TAG+="uaccess"

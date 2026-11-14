@@ -16,7 +16,10 @@ private slots:
     QCOMPARE(familyFor("xboxone", "Xbox Series X Controller"), QString("xbox"));
     QCOMPARE(familyFor("ps4", "PS4 Controller"), QString("playstation"));
     QCOMPARE(familyFor("ps5", "DualSense Wireless Controller"), QString("playstation"));
-    QCOMPARE(familyFor("nintendo_switch_pro", "Nintendo Switch Pro Controller"), QString("nintendo"));
+    QCOMPARE(familyFor("switchpro", "Nintendo Switch Pro Controller"), QString("nintendo"));  // SDL3's own strings
+    QCOMPARE(familyFor("joyconleft", "Nintendo Switch Joy-Con (L)"), QString("nintendo"));
+    QCOMPARE(familyFor("joyconright", "Nintendo Switch Joy-Con (R)"), QString("nintendo"));
+    QCOMPARE(familyFor("joyconpair", "Nintendo Switch Joy-Con (L/R)"), QString("nintendo"));
     QCOMPARE(familyFor("standard", "Steam Deck"), QString("steamdeck"));
     QCOMPARE(familyFor("standard", "8BitDo Pro 2"), QString("generic"));
     QCOMPARE(familyFor("unknown", ""), QString("generic"));

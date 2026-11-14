@@ -8,7 +8,8 @@ QString familyFor(const QString& type, const QString& name)
   if (name.contains("Steam Deck", Qt::CaseInsensitive)) return "steamdeck";
   if (type.startsWith("xbox")) return "xbox";
   if (type.startsWith("ps")) return "playstation";
-  if (type.startsWith("nintendo")) return "nintendo";
+  // SDL3's type strings: "switchpro", "joyconleft", "joyconright", "joyconpair" (SDL_GetGamepadStringForType)
+  if (type.startsWith("switch") || type.startsWith("joycon") || type.startsWith("nintendo")) return "nintendo";
   return "generic";
 }
 
