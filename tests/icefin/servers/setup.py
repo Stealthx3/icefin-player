@@ -83,11 +83,11 @@ def libraries(s):
         s.call("POST", f"/Library/VirtualFolders?{q}", {"LibraryOptions": {"EnableTrickplayImageExtraction": True, "EnableLyricsDownload": False}})
 
 
-# The test user's library order (their home settings): Movies, Music, Shows, the order (by name) the theme tests and
-# clone specs were written against. Books, Collections, Photos and the rest came later; sorted by name they put Books
-# first, and a theme's first row turned into books (no preview, no runtime, jellyfin-web's own details page). The
-# rest keep their order after these.
-LIBRARY_ORDER = ["movies", "music", "tvshows"]
+# The test user's library order (their home settings): Live TV, Movies, Music, Shows, the order (by name) the theme
+# tests and clone specs were written against (Tide's spec opens on the first library and steps right into Movies).
+# Books, Collections, Photos and Playlists came later; sorted by name they put Books first, and a theme's first row
+# turned into books (no preview, no runtime, jellyfin-web's own details page). They keep their order after these.
+LIBRARY_ORDER = ["livetv", "movies", "music", "tvshows"]
 
 
 def library_order(s):

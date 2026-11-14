@@ -14,7 +14,8 @@ THEMED = ["Movie", "Episode", "Video", "MusicVideo", "Trailer", "Audio",
 # (no themed route, the page themed by tokens) for any other.
 DETAILS_OK = """(async () => {
   const id = new URLSearchParams(location.hash.split('?')[1] || '').get('id');
-  const it = id ? await window.ApiClient.getItem(window.ApiClient.getCurrentUserId(), id) : null;
+  // an id the server doesn't know (a test's stand-in items) gets jellyfin-web's page, as the details screen hands it over
+  const it = id ? await window.ApiClient.getItem(window.ApiClient.getCurrentUserId(), id).catch(() => null) : null;
   const want = !!it && %s.includes(it.Type);
   const route = (window.icefinTheme.active() || {}).route;
   const screen = !!document.querySelector('#icefin-theme-root:not([hidden]) .icefin-details');
