@@ -5,20 +5,47 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 ## [Unreleased]
 
 ### Added
+- Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
+- Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
+- Media Center: library screens for movies, TV, music, pictures, books, music videos and playlists, with sorts and filters along the top, a sideways grid with the glass focus, and genres as stacks of covers.
+- Media Center's Home button and start screen corner show your server's own icon and name, loaded from the server.
+- Media Center's settings: one list of everything with the focused entry described, This device (Client Settings) and your account's settings pages laid out as Media Center pages, each drop-down shown as ‹ value › that left and right step through.
+- Media Center's slide show: the picture's name, date, album and its place in the show, the buttons together at the bottom right, and a slow pan and zoom (none with less motion). A picture in the library opens its folder's show from it. The book reader shows the book's title as a page title, with round buttons.
+- Media Center: its own search (with a phone-style keypad), favourites, Live TV (guide, channels, recorded TV, scheduled and series recordings), now playing, lyrics and the play queue, and its own screens for choosing a server, adding one and signing in (with Quick Connect).
 - Plaza on every screen but the server dashboard: lists, playlists, photos, books and the other libraries as Plaza screens with sort and filter; sign-in, servers, your profile and preferences, Quick Connect, now playing and lyrics in Plaza's frame and look; every dialog as a Plaza card; the on-screen keyboard for text fields; the music capsule on the home.
 - A playlist's items can be moved on its details screen, with a controller (Menu, then up or down) or the mouse, in every theme.
 - Plaza: move channels around the home. Hold or drag one with the mouse, or press Menu (X) on it with a controller, and drop it on another slot; the sides turn the page. The order is kept for each user.
+- Client Settings -> Hardware -> Copy report: a diagnostics report for bug reports (versions, GPU and decoding, display and HDR, audio and receiver, recent log), with server addresses, sign-in tokens, user, host and home folder names removed. The bug report form asks for it.
+- Audio: Receiver in Standby (Switch When It Wakes, Always PCM, Keep Bitstream). By default a receiver that is in standby gets PCM, and the playing track switches to the bitstream 4 seconds after the receiver wakes.
+- Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
+- Plaza 0.9.0, from a walk of every element: tabs slide toward the tab you pick; menus and pickers rise in and fall out; the sort and filter panel slides from its edge; a poster grows into its details and Back shrinks it home; settings tiles grow into their pages; the bar's caption cross-fades; details fade under the frame; the focused name stays inside the window; sheets end above the bar; Display's tick boxes are switch rows and the bar names the focused setting.
+- Plaza's details page goes back to its top when focus returns to the actions or pickers (after a picker closes, or Up from a list), so the title isn't left under the band.
+- Plaza's background music is 15% quieter and waits while a channel's preview is open.
 - Plaza has its own details page: the name pill and clock, tabs for each section, the framed art, one row of action pills, and Back and Home in the bar; albums and playlists show their tracks beside the art.
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
+- Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
 
 ### Fixed
+- Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
+- Escape on an open drop-down in Client Settings closes just the list again, instead of the whole Client Settings page.
+- A theme's startup jingle plays when Icefin starts with that theme already chosen; something briefly in its way at launch used to skip it for the whole run. The log says why it waits.
+- Client Settings -> Controllers: Remap is reachable with a controller (it sat out of line with the switches, so Down skipped it).
+- jellyfin-web's own pages inside a theme's frame (the preference pages, Quick Connect and others): the controller moves over the page and the frame's tabs, Back and Home as one screen.
+- Icefin no longer crashes on exit while a theme's sounds are loaded.
+- Media Center: Backspace and Escape go back on every screen and close menus and dialogs; the arrows work on the settings pages it frames; the poster wall has Back and Home; closing More options returns to Media Center's details page instead of leaving jellyfin-web's.
+- Opening a picture with a theme showed every item on the server in the slide show instead of the picture's folder.
 - Plaza: opening Sort and filter or New playlist turned the whole window black.
 - A page left open before playback (Select Server, for example) showed above the video.
 - Plaza: the bottom row's channel name covered the clock; a series' episodes ran under the bar; Live TV logos were cropped; "1 seasons"; album favourites showed a resume time.
 - Leaving full screen now tells the web client and media controls (MPRIS) the window is windowed again; the full-screen state used to stay on after the first time.
+- Passthrough: a receiver whose HDMI audio can't carry a format (E-AC-3 or TrueHD on a receiver that stops at 48 kHz, for example) got silence; it gets PCM now. The decision also uses the track that is actually playing.
+- When another program holds the HDMI audio device, a track no longer freezes: Icefin tries PCM, then the default device, then plays on silently with a notice.
+- With Steam open on the desktop, a controller press no longer acts twice (Steam's desktop layout sends a key for it too).
+- IR remotes (LIRC): one press no longer keeps repeating until the next button.
+- Under Gamescope or X11 with HDR Output off, the Hardware page no longer says the display has no HDR.
 
 ## [0.1.0-alpha.2] - 2026-11-12
 

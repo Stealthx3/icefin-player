@@ -29,7 +29,7 @@ Package loadPackage(const QString& dir, Source source)
   if (!meta.isEmpty()) {
     if (meta.value("schema").toInt() != 1) p.errors << "theme.json: schema must be 1";
     // Same rule as docs/themes/schema/theme.schema.json: no unknown top-level keys.
-    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "presets", "schemes", "backdrop"};
+    static const QStringList known{"schema", "id", "name", "version", "description", "styles", "scripts", "fonts", "sounds", "music", "presets", "schemes", "backdrop"};
     for (const QString& k : meta.keys()) if (!known.contains(k)) p.errors << QString("theme.json: unknown key '%1'").arg(k);
     p.id = meta.value("id").toString();
     p.name = meta.value("name").toString();
@@ -52,6 +52,26 @@ Package loadPackage(const QString& dir, Source source)
       if (!soundEvents().contains(it.key())) { p.errors << QString("theme.json: unknown sound event '%1'").arg(it.key()); continue; }
       const QString s = asset(it.value().toString(), "sound");
       if (!s.isEmpty()) p.sounds[it.key()] = s;
+    }
+    if (meta.contains("music")) {
+      const QJsonObject music = meta.value("music").toObject();
+      auto track = [&](const QString& rel, const QString& what) {
+        const QString s = asset(rel, what);
+        static const QStringList kinds{"ogg", "opus", "wav"};
+        if (!s.isEmpty() && !kinds.contains(QFileInfo(s).suffix().toLower())) { p.errors << QString("theme.json: %1 '%2' must be .ogg, .opus or .wav").arg(what, rel); return QString(); }
+        return s;
+      };
+      for (const QString& k : music.keys())
+        if (k != "startup" && k != "ambient" && k != "jingles") p.errors << QString("theme.json: unknown music key '%1'").arg(k);
+      if (music.contains("startup")) p.musicStartup = track(music.value("startup").toString(), "music");
+      if (music.contains("ambient")) p.musicAmbient = track(music.value("ambient").toString(), "music");
+      static const QRegularExpression keyRe(QStringLiteral("^[a-z0-9][a-z0-9-]{0,31}$"));
+      const QJsonObject jingles = music.value("jingles").toObject();
+      for (auto it = jingles.begin(); it != jingles.end(); ++it) {
+        if (!keyRe.match(it.key()).hasMatch()) { p.errors << QString("theme.json: jingle key '%1' must be 1-32 characters of a-z, 0-9 and -").arg(it.key()); continue; }
+        const QString s = track(it.value().toString(), "jingle");
+        if (!s.isEmpty()) p.jingles[it.key()] = s;
+      }
     }
     for (const QJsonValue& v : meta.value("fonts").toArray()) {
       const QJsonObject f = v.toObject();

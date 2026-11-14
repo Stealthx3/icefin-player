@@ -7,7 +7,10 @@
 # Commands:
 #   build                 build QEMU with the device (qemu/build.sh)
 #   image                 download + verify the Debian 13 image, provision the client once (base disk)
-#   up [PROFILE]          start the client from a fresh overlay with the sink on PROFILE (default avr-full)
+#   icefin-image APP      a second base disk (avsim-icefin) with what the native Icefin build APP needs to run
+#                         (its libraries, Qt's QML modules, plugins and WebEngine, Xvfb, D-Bus); PLAN 3.9
+#   up [PROFILE]          start the client from a fresh overlay with the sink on PROFILE (default avr-full);
+#                         AVSIM_BASE=avsim-icefin starts it from the Icefin disk
 #   profile PROFILE       switch the sink to another profile at run time (hotplug event, like a new receiver)
 #   plug | unplug         monitor presence on/off
 #   ssh CMD...            run a command in the client
@@ -44,7 +47,7 @@ PY
 }
 
 eld_for() { # eld_for PROFILE -> path of the binary ELD ("" for a sink without one)
-  mkdir -p "$ELD"
+  mkdir -p "$(dirname "$ELD/$1")"  # public/<name> profiles (edid_profiles.py) sit one level down
   python3 "$HERE/eld.py" build "$1" "$ELD/$1.eld" >/dev/null
   [ -s "$ELD/$1.eld" ] && echo "$ELD/$1.eld" || echo ""
 }
@@ -90,15 +93,54 @@ EOF
   echo "avsim: base disk ready"
 }
 
+# The Debian packages a native Icefin build needs at run time: the owners of the libraries it links, and the QML
+# modules, Qt plugins and WebEngine packages the lab has (loaded at run time, so ldd can't see them).
+icefin_packages() {
+  local app="$1" f r
+  for f in $(ldd "$app" | awk '/=> \//{print $3}'); do
+    r="$(realpath "$f")"
+    dpkg -S "$r" 2>/dev/null || dpkg -S "${r#/usr}" 2>/dev/null || dpkg -S "/usr$r" 2>/dev/null || true
+  done | cut -d: -f1
+  dpkg-query -W -f '${Package}\n' 'qml6-module-*' 'libqt6webengine*' 'qt6-*plugin*' 'qt6-webengine*' 2>/dev/null
+  printf '%s\n' xvfb xauth dbus dbus-x11 fonts-dejavu-core
+}
+
+cmd_icefin_image() {
+  need_qemu
+  local app="${1:?usage: avsim.sh icefin-image APP (a native build, e.g. ~/build/src/icefin-player)}"
+  [ -f "$AV/img/avsim-base.qcow2" ] || die "no base disk; run: avsim.sh image"
+  running && die "client running (avsim.sh down first)"
+  local disk="$AV/img/avsim-icefin.qcow2" pkgs
+  pkgs="$(icefin_packages "$app" | sort -u | tr '\n' ' ')"
+  rm -f "$disk"
+  "$AV/qemu/bin/qemu-img" create -q -f qcow2 -F qcow2 -b "$AV/img/avsim-base.qcow2" "$disk"
+  mkdir -p "$RUN"
+  "$QEMU" -name avsim-provision -enable-kvm -cpu host -m "$MEM_MB" -smp "$CPUS" \
+    -display none -serial "file:$RUN/provision-icefin.log" -daemonize -pidfile "$RUN/qemu.pid" \
+    -drive file="$disk",if=virtio -nic "user,model=virtio-net-pci,hostfwd=tcp:127.0.0.1:$PORT-:22" 2> "$RUN/qemu.log" \
+    || { cat "$RUN/qemu.log" >&2; die "QEMU failed to start"; }
+  wait_ssh
+  echo "avsim: installing $(echo "$pkgs" | wc -w) packages for Icefin..."
+  # Packages the lab VM keeps but the archive no longer offers (no candidate) are skipped and listed.
+  "${SSH[@]}" "sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq || exit 1
+    have=''; for p in $pkgs; do if apt-cache policy \"\$p\" | grep -q 'Candidate: [^(]'; then have=\"\$have \$p\"; else echo \"avsim: skipped \$p (no candidate)\"; fi; done
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \$have >/tmp/apt.log 2>&1 || { tail -20 /tmp/apt.log; exit 1; }" \
+    || { "${SSH[@]}" "sudo poweroff" >/dev/null 2>&1 || true; die "package install failed"; }
+  "${SSH[@]}" "sudo apt-get clean; sync; sudo poweroff" >/dev/null 2>&1 || true
+  for _ in $(seq 1 60); do running || break; sleep 1; done
+  rm -f "$RUN/qemu.pid"
+  echo "avsim: Icefin disk ready ($disk); start with AVSIM_BASE=avsim-icefin avsim.sh up"
+}
+
 cmd_up() {
   need_qemu
-  local profile="${1:-avr-full}" eld
-  [ -f "$AV/img/avsim-base.qcow2" ] || die "no base disk; run: avsim.sh image"
+  local profile="${1:-avr-full}" eld base="$AV/img/${AVSIM_BASE:-avsim-base}.qcow2"
+  [ -f "$base" ] || die "no base disk $base; run: avsim.sh image (and icefin-image for avsim-icefin)"
   running && die "client already running (avsim.sh down first)"
   mkdir -p "$RUN" "$CAP"
   rm -f "$RUN/client.qcow2" "$RUN/qmp.sock"
   rm -rf "${CAP:?}"/*
-  "$AV/qemu/bin/qemu-img" create -q -f qcow2 -F qcow2 -b "$AV/img/avsim-base.qcow2" "$RUN/client.qcow2"
+  "$AV/qemu/bin/qemu-img" create -q -f qcow2 -F qcow2 -b "$base" "$RUN/client.qcow2"
   eld="$(eld_for "$profile")"
   "$QEMU" -name avsim-client -enable-kvm -cpu host -m "$MEM_MB" -smp "$CPUS" \
     -display none -serial "file:$RUN/serial.log" -daemonize -pidfile "$RUN/qemu.pid" \
@@ -138,6 +180,7 @@ cmd_down() {
 case "${1:-}" in
   build)   bash "$HERE/qemu/build.sh" ;;
   image)   cmd_image ;;
+  icefin-image) shift; cmd_icefin_image "$@" ;;
   up)      shift; cmd_up "$@" ;;
   profile) [ -n "${2:-}" ] || die "usage: avsim.sh profile PROFILE"; cmd_profile "$2" ;;
   plug)    cmd_presence true ;;

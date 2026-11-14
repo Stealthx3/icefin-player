@@ -32,6 +32,31 @@ decision D31).
   screens before the merge to `main`.
 - Clone rules hold throughout (CLAUDE.md): layout, proportions, navigation, timing and colours only; no logos, icons,
   artwork, sounds, fonts or product names of the target. The engine stays theme-agnostic (theme lint).
+- **Themes first** (the user, 2026-11-14): other development waits until every theme in the queue is done.
+
+## The measure
+Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
+- **The completeness checklist** (`docs/themes/CHECKLIST.md`, made from everything Plaza does). Each pass copies it to
+  `docs/themes/passes/<theme>.md` at Start. Every item is ticked when the theme does it **in its own look** and a
+  test checks it, or carries the user's reason for leaving it out. The walk finds the screens; the checklist finds
+  everything a walk can't see (input, motion, effects, sounds, robustness). Mock-ups cover the checklist's open items
+  as well as the walk's gaps, and Verify needs the checklist done.
+- **The six principles of UX animation** (timing, easing, spatial orientation, directing focus, visual continuity,
+  clarity; [Adobe, 2019](https://blog.adobe.com/en/publish/2019/06/19/designing-animation-six-principles-using-animation-ux),
+  also the checklist's section 3). Each motion in a pass is judged against them:
+  - **timing**: quick but readable, short enough to keep up with a held D-pad (most moves 120–450 ms); the target's
+    signature moves keep their own length;
+  - **easing**: nothing moves at constant speed; entries decelerate, exits accelerate;
+  - **spatial orientation**: things leave and arrive by where they went or came from (a page turn travels the way of
+    the press, a closed card shrinks back into its item);
+  - **directing focus**: motion only where the user should look (the focus, a new arrival, a state change);
+    decoration stays still or loops slowly behind;
+  - **visual continuity**: what stays across two screens stays in place (the frame, the item that opened the screen),
+    rather than everything clearing and coming back;
+  - **clarity**: one thing at a time (staggered or overlapped, never everything at once), and every motion has a
+    stated purpose: a motion without one is cut.
+  Mock-ups that change motion say each motion's purpose, length and easing; the pass's polish test measures them, low
+  motion included.
 
 ## Stages
 

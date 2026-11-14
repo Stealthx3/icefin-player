@@ -123,6 +123,7 @@
         screens = {};
         actionHooks = [];
         resetHooks.forEach((f) => { try { f(); } catch (e) { console.error('icefinTheme: reset hook', e); } });
+        music.reset();
         pkg = next && next.id && !(api && standDown(api)) ? next : null;
         document.documentElement.toggleAttribute('data-icefin-theme', !!pkg);
         // The native backdrop (8.4) draws under the page: html[data-icefin-backdrop] lets the adapter and the theme
@@ -149,6 +150,7 @@
         if (gen !== generation) return;
         loadingTheme = null;
         route_();
+        if (api) music.mounted(pkg, api);
     }
 
     // ---- router ----
@@ -196,7 +198,8 @@
         if (current && current.route === path && current.screen === screen && current.hash === location.hash) return;
         unmountScreen();
         if (!screen) return;  // jellyfin-web's own page
-        if (!signedIn()) {
+        // A screen waits for a signed-in session, except one made for signing in (beforeSignIn: sign-in, servers, 9.44)
+        if (!signedIn() && !screen.beforeSignIn) {
             if (!signInWait) signInWait = setTimeout(() => { signInWait = null; route_(); }, 250);
             return;
         }
@@ -220,12 +223,192 @@
     let apiRef = null;
     const sound = (name) => { if (apiRef && pkg) apiRef.theme.playSound(name); };
 
+    // ---- music (9.33) ----
+    // The package's music, played here with Web Audio (gapless loops, fades; Chromium decodes Ogg Vorbis and Opus):
+    //   startup  once per run of the app, when the theme's first screen comes up (ThemeComponent.claimStartup);
+    //   ambient  looped while the theme is up and nothing plays; it fades out for any playback (so it is off during
+    //            passthrough too) and comes back a few seconds after playback ends;
+    //   jingles  ctx.music.jingle(key) from the theme's scripts; the ambient piece ducks under a jingle.
+    //   hold     ctx.music.hold(true) while the theme shows something with its own sound (a channel's preview): the
+    //            ambient piece fades out and waits, and picks up where it was on hold(false).
+    // Client Settings -> Theme decides (musicState: jingles, ambient, volume) and the native side mutes it during
+    // passthrough and exclusive playback, as the interface sounds.
+    const music = (() => {
+        const DUCK = 0.3;
+        let ac = null, master = null, ambBus = null, urls = null;
+        let st = { jingles: true, ambient: true, volume: 0.6, muted: false };
+        let amb = null, jing = null, lastPlay = 0, timer = null, startupDone = false, played = [], held = false;
+        // the startup jingle: claimed only when it can play, tried until this time (the theme came up + 20 s), and why it waits
+        let startupUntil = 0, claiming = false, waitWhy = '', apiRef = null;
+        // The ambient piece's level: off while the theme holds it, down under a jingle, else full.
+        const busTarget = () => (held ? 0 : jing ? DUCK : 1);
+        const bufs = new Map();
+        const audio = () => {
+            if (!ac) {
+                ac = new AudioContext({ latencyHint: 'playback' });
+                master = ac.createGain();
+                master.gain.value = st.volume;
+                master.connect(ac.destination);
+                ambBus = ac.createGain();
+                ambBus.connect(master);
+            }
+            if (ac.state === 'suspended') ac.resume().catch(() => {});
+            return ac;
+        };
+        const ramp = (param, to, sec) => {
+            const t = ac.currentTime;
+            param.cancelScheduledValues(t);
+            param.setValueAtTime(param.value, t);
+            param.linearRampToValueAtTime(to, t + Math.max(0.01, sec));
+        };
+        function buffer(url) {
+            if (!bufs.has(url)) {
+                bufs.set(url, fetch(url).then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.arrayBuffer(); })
+                    .then((b) => audio().decodeAudioData(b))
+                    .catch((e) => { console.warn('icefinTheme: music', url, e && e.message); bufs.delete(url); return null; }));
+            }
+            return bufs.get(url);
+        }
+        // Something is playing (or paused) in the player, or the video page is up.
+        const playing = () => { try { return !!ctx.nowPlaying() || location.hash.startsWith('#/video'); } catch (e) { return false; } };
+        function voice(b, dest, loop, level) {
+            const src = ac.createBufferSource();
+            src.buffer = b;
+            src.loop = !!loop;
+            const g = ac.createGain();
+            g.gain.value = 0;
+            src.connect(g);
+            g.connect(dest);
+            src.start();
+            ramp(g.gain, level, loop ? 2.5 : 0.01);
+            return { src, g };
+        }
+        function release(v, sec) {
+            if (!v) return;
+            try { ramp(v.g.gain, 0, sec); v.src.stop(ac.currentTime + sec + 0.05); } catch (e) { /* stopped already */ }
+        }
+        function stopJingle(sec) {
+            if (!jing) return;
+            release(jing, sec == null ? 0.35 : sec);
+            jing = null;
+            if (ac) ramp(ambBus.gain, busTarget(), 0.8);
+        }
+        async function startJingle(url, key) {
+            const b = await buffer(url);
+            if (!b || !pkg || !st.jingles || st.muted || playing()) return false;
+            stopJingle(0.12);
+            const v = voice(b, master, false, 1);
+            const mine = { ...v, key };
+            jing = mine;
+            ramp(ambBus.gain, busTarget(), 0.25);
+            played.push(key);
+            if (played.length > 20) played.shift();
+            v.src.onended = () => { if (jing === mine) { jing = null; ramp(ambBus.gain, busTarget(), 0.8); } };
+            return true;
+        }
+        const ambientWanted = () => !!(pkg && urls && urls.ambient && st.ambient && !st.muted && !document.hidden && Date.now() - lastPlay > 3000);
+        let starting = false;
+        // The startup jingle plays once per run of the app (ThemeComponent.claimStartup), when the theme first comes up.
+        // Anything in its way at that moment (Theme Jingles off, passthrough, something playing) used to spend the claim and
+        // skip it for good (the 2026-11-13 host check: no startup jingle on the user's HTPC setup); now it waits for up to
+        // 20 s and says why in the log.
+        function tryStartup() {
+            if (startupDone || claiming || !urls || !urls.startup || !apiRef || !apiRef.theme.claimStartup || Date.now() > startupUntil) return;
+            const why = !st.jingles ? 'Theme Jingles is off' : st.muted ? 'passthrough or exclusive playback' : playing() ? 'something is playing' : '';
+            if (why) {
+                if (why !== waitWhy) console.info('icefin: the startup jingle waits: ' + why);
+                waitWhy = why;
+                return;
+            }
+            claiming = true;
+            apiRef.theme.claimStartup((first) => {
+                claiming = false;
+                if (!first) { startupUntil = 0; console.info('icefin: the startup jingle has played in this run'); return; }
+                startupDone = true;
+                audio();
+                startJingle(urls.startup, 'startup');
+                console.info('icefin: the startup jingle plays' + (waitWhy ? ' (after: ' + waitWhy + ')' : ''));
+            });
+        }
+        async function tick() {
+            tryStartup();
+            if (playing()) {
+                lastPlay = Date.now();
+                if (jing) stopJingle(0.2);
+            }
+            if (ambientWanted() && !amb && !starting) {
+                starting = true;
+                const url = urls.ambient;
+                const b = await buffer(url);
+                starting = false;
+                if (b && ambientWanted() && !amb && urls && urls.ambient === url) amb = voice(b, ambBus, true, 1);
+            } else if (amb && !ambientWanted()) {
+                release(amb, playing() ? 0.8 : 1.5);
+                amb = null;
+            }
+        }
+        function applyState(s) {
+            if (s) st = { jingles: s.jingles !== false, ambient: s.ambient !== false, volume: +s.volume >= 0 ? +s.volume : 0.6, muted: !!s.muted };
+            if (master) ramp(master.gain, st.volume, 0.3);
+            if ((st.muted || !st.jingles) && jing) stopJingle(st.muted ? 0.05 : 0.3);
+            tick();
+        }
+        return {
+            // The theme came up (or changed): its music, and the startup jingle the first time in this run.
+            mounted(p, api) {
+                urls = (p && p.music) || null;
+                apiRef = api;
+                if (!timer) {
+                    timer = setInterval(tick, 1000);
+                    document.addEventListener('visibilitychange', tick);
+                    if (api.theme.musicStateChanged) api.theme.musicStateChanged.connect(() => api.theme.musicState(applyState));
+                }
+                if (!urls) return;
+                if (urls.ambient) buffer(urls.ambient);
+                startupUntil = Date.now() + 20000;
+                waitWhy = '';
+                api.theme.musicState((s) => {
+                    applyState(s);  // its tick() tries the startup jingle with the real settings
+                });
+            },
+            // The theme went away: fade everything out and forget its files.
+            reset() {
+                held = false;
+                startupUntil = 0;
+                if (ac) { stopJingle(0.3); release(amb, 0.6); ramp(ambBus.gain, 1, 0.05); }
+                amb = null;
+                urls = null;
+                bufs.clear();
+            },
+            api: {
+                // Plays the package's jingle for key (stopping one that plays); false when there is none, music is off
+                // or something plays. Resolves once it starts.
+                jingle(key) {
+                    const url = urls && urls.jingles && urls.jingles[key];
+                    if (!url || !st.jingles || st.muted || playing()) return Promise.resolve(false);
+                    audio();
+                    return startJingle(url, key);
+                },
+                stopJingle(fadeMs) { if (ac) stopJingle(fadeMs == null ? 0.35 : fadeMs / 1000); },
+                // True while the theme shows something with its own sound: the ambient piece fades out (0.4 s) and
+                // comes back where it was (1.2 s) on false.
+                hold(on) { held = !!on; if (ac) ramp(ambBus.gain, busTarget(), held ? 0.4 : 1.2); },
+                has: (key) => !!(urls && urls.jingles && urls.jingles[key])
+            },
+            // For tests and diagnostics.
+            state: () => ({ settings: { ...st }, context: ac ? ac.state : 'none', ambient: !!amb, jingle: jing ? jing.key : null,
+                ducked: !!(ambBus && ambBus.gain.value < 0.99), held, startupPlayed: startupDone, played: played.slice(),
+                urls: urls ? { startup: !!urls.startup, ambient: !!urls.ambient, jingles: Object.keys(urls.jingles || {}) } : null })
+        };
+    })();
+
     // The theme script API (PLAN 8.7, docs/themes/PACKAGE.md "Theme script API"): themes reach Icefin and the server
     // only through this ctx (also window.icefinTheme.ctx) and window.icefinTheme. Host globals (the API client, the
     // playback manager, the native shell objects) stay private to the engine, so upstream and jellyfin-web changes are
     // absorbed here instead of in every theme.
     const ctx = {
         sound,
+        music: music.api,
         navigate: (hash) => { location.hash = hash; },
         apiClient: () => window.ApiClient,
         focus: (el) => focus(el),
@@ -429,7 +612,8 @@
         const action = KEYS[e.key];
         if (!action || e.altKey || e.ctrlKey || e.metaKey) return;
         // Escape on a jellyfin-web menu that left no history entry closes it here (closeLooseDialog), on any page
-        if (action === 'back' && e.key === 'Escape') {
+        // (not an open drop-down list inside it: the list's own Escape closes just the list)
+        if (action === 'back' && e.key === 'Escape' && !document.querySelector('.icefin-dd-list')) {
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }
@@ -494,6 +678,7 @@
         },
         handleAction,
         sound,
+        musicState: () => music.state(),
         active: () => (pkg ? { id: pkg.id, source: pkg.source, route: current ? current.route : null } : null),
         // For the engine's own capability library (capabilities.js), not for themes (theme-lint rule 4).
         _engine: {

@@ -11,7 +11,7 @@ Icefin uses a trunk-based workflow (decision D17). `main` is always buildable; e
 | `fix/…`, `docs/…`, `ci/…`, `chore/…` | Bug fixes, docs, CI, housekeeping | Same as `feat/`. |
 | `theme/<id>` | One bundled theme's completeness pass, for example `theme/plaza` (D29) | Long-lived, one per theme in `themes/`. Work for that theme only (its `themes/<id>/` files, its tests and reference spec) lands here, directly or from short `feat/` branches cut from it. It reaches `main` by pull request with a **merge commit**, not squashed, so the branch can keep going without conflicts. Open that pull request from a throwaway `merge/<theme>-<task>` branch at the same commit, not from `theme/<id>` itself: the repository deletes a pull request's head branch on merge. It takes engine changes by merging `main` in. Engine work that every theme needs still goes to `main` on `feat/` branches. One theme at a time, through the stages of `docs/themes/PIPELINE.md` (D31, `scripts/icefin/theme-pass.sh`). |
 | `upstream/master` | Read-only mirror of `jellyfin/jellyfin-desktop` `master` | Fast-forwarded daily by the `icefin-upstream-mirror` workflow. Never commit to it. |
-| `sync/upstream-<version>` | One upstream merge (see below) | Merged into `main` with a **merge commit**, not squashed, so upstream history stays intact. |
+| `sync/upstream-<version>` | One upstream merge (see below; none before 1.0, D33) | Merged into `main` with a **merge commit**, not squashed, so upstream history stays intact. |
 
 The old stacked layer branches (`icefin/base`, `icefin/infra` … `icefin/theme`) were retired on 2026-11-08. Every one of them was already contained in `main`; each is preserved as an `archive/layer-<name>` tag.
 
@@ -32,6 +32,11 @@ Rebasability comes from where code lives, not from branches:
 - Exempt from the hook rule: `README.md`, which Icefin replaces wholesale with upstream credited inside. Deleted upstream files are not checked; upstream's issue templates were replaced this way.
 
 ## Merging an upstream release
+
+**Not before 1.0 (D33).** Icefin reaches 1.0 on jellyfin-desktop v2.0.0 and then breaks away from upstream; after
+that, only changes a Jellyfin server API update needs are adopted, by hand (a cherry-pick or a rewrite on a `feat/`
+branch), not by merging releases. The steps below are kept for reference.
+
 
 1. Watch the daily `icefin-upstream-canary` run, which test-merges `upstream/master` into `main` and fails on conflicts.
 2. For a release, for example `v2.1.0`:

@@ -1,0 +1,45 @@
+{
+  "description": "Goldstar LG Monitor (tv), from the linuxhw EDID collection: Digital/Goldstar/GSM0001/05FB75D0AC3E (CC BY 4.0); 84 EDIDs share this audio capability set",
+  "monitor_name": "LG Monitor",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        96000,
+        192000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "eac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "byte3": 0
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "bitstream",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Goldstar/GSM0001/05FB75D0AC3E"
+}

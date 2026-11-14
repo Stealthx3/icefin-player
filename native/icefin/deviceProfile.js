@@ -6,7 +6,9 @@
 //     here; HDR and Dolby Vision are never removed from the profile, because the capability prompt (6.3) asks at play
 //     time where this renderer can't show them.
 //  2. The capability prompt's one-shot choice (6.3), if any.
-//  3. Upstream's force-transcode switches stay as overrides: they are already in the profile this wraps.
+//  3. Upstream's force-transcode switches stay as overrides: they are already in the profile this wraps. Force
+//     Transcode Dolby Vision defaults to off in Icefin (settings_description.json, 6.6): upstream's on would have the
+//     server convert every profile 5 film, past the Vulkan renderer and the prompt.
 (function () {
     'use strict';
     if (window.icefinAdjustProfile) return;

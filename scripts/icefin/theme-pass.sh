@@ -56,6 +56,16 @@ PY
     echo "theme-pass: merged $behind commit(s) of main into theme/$t"
   fi
   git submodule update -q --init 2>/dev/null || true
+  # The pass's own copy of the completeness checklist (PIPELINE.md, The measure): ticked as the pass goes.
+  if [ ! -f "docs/themes/passes/$t.md" ]; then
+    mkdir -p docs/themes/passes
+    { echo "# $t: completeness pass"; echo
+      echo "Copied from docs/themes/CHECKLIST.md at the start of the pass ($(date +%F), main $(git rev-parse --short origin/main)). Tick an item"
+      echo "when $t does it in its own look and a test checks it, or write the user's reason beside it. Motion is judged by the six"
+      echo "principles (PIPELINE.md, The measure)."; echo
+      sed -n '/^## 1\./,$p' docs/themes/CHECKLIST.md; } > "docs/themes/passes/$t.md"
+    git add "docs/themes/passes/$t.md" && git commit -q -m "$t pass: the completeness checklist to work through (PIPELINE.md)" && echo "theme-pass: checklist copied to docs/themes/passes/$t.md"
+  fi
   echo "theme-pass: theme/$t ready in $wt ($(git rev-parse --short HEAD)); next: theme-pass.sh walk $t"
   ;;
 walk)

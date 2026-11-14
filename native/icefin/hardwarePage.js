@@ -80,6 +80,21 @@
         }));
         btn.addEventListener('click', () => window.apiPromise.then((api) => { api.hardware.run(); render(section, Object.assign({}, r, { running: true })); }));
         body.append(btn);
+        // Diagnostics report (11.4): redacted text for a bug report, copied to the clipboard and shown below for
+        // sessions where the clipboard doesn't reach (Gamescope without a desktop).
+        if (window.api && window.api.hardware && window.api.hardware.copyReport) {
+            const copy = el('button', { className: 'raised emby-button icefin-hw-report', type: 'button', textContent: 'Copy report' });
+            const note = el('p', { className: 'fieldDescription icefin-hw-report-note',
+                textContent: 'A report for bug reports: renderer, decoding, display, audio, settings and recent log lines. Tokens, passwords, server addresses and your home folder are left out.' });
+            const box = el('textarea', { className: 'emby-textarea icefin-hw-report-text', readOnly: true, rows: 10 });
+            box.style.cssText = 'display:none;width:100%;font-family:monospace;font-size:0.8em;margin-top:0.5em';
+            copy.addEventListener('click', () => window.apiPromise.then((api) => api.hardware.copyReport((text) => {
+                note.textContent = 'Copied to the clipboard. Paste it into your bug report; it is also below.';
+                box.value = text;
+                box.style.display = '';
+            })));
+            body.append(copy, note, box);
+        }
         section.append(body);
     }
 
