@@ -66,7 +66,7 @@
         if (!any) Q.results.append(el('div', 'mc-note', `Nothing matches “${term}”.`));
     }
 
-    T.registerScreen('#/search', {
+    window.icefinMediaCenter.register('#/search', {
         onAction(action, ctx) {
             // Typing keys stay with the field; arrows leave it.
             if (!Q) return false;
@@ -115,7 +115,7 @@
     const FAV = [['Movies', 'Movie', 'poster'], ['Shows', 'Series', 'poster'], ['Episodes', 'Episode', 'wide'], ['Albums', 'MusicAlbum', 'square'],
         ['Songs', 'Audio', 'square'], ['Artists', 'MusicArtist', 'square'], ['Collections', 'BoxSet', 'poster'], ['People', 'Person', 'poster']];
     let F = null;
-    T.registerScreen('#/favorites', {
+    window.icefinMediaCenter.register('#/favorites', {
         onAction(action, ctx) {
             if (!F || !F.rows.length) return false;
             const f = ctx.focused();

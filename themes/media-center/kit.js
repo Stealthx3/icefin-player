@@ -9,6 +9,16 @@
     const T = window.icefinTheme;
     const M = window.icefinMediaCenter = {};
 
+    // Media Center's screens register through M.register: its shared action handlers (M.onAction: ≡ on an item,
+    // Play/Pause on an item, the hints) see every action first, then the screen's own onAction.
+    M.actions = [];
+    M.onAction = (fn) => { M.actions.push(fn); };
+    M.register = (path, screen) => T.registerScreen(path, Object.assign({}, screen, {
+        onAction(action, ctx) {
+            for (const fn of M.actions) { try { if (fn(action, ctx)) return true; } catch (e) { console.error('media-center: action', e); } }
+            return screen.onAction ? screen.onAction.call(this, action, ctx) : false;
+        }
+    }));
     M.el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     M.focusable = (e) => { e.setAttribute('data-icefin-focus', ''); e.tabIndex = -1; return e; };
     M.client = () => T.ctx.apiClient();
@@ -61,6 +71,27 @@
         return host;
     };
 
+    // ---- Play on and Watch together in the frame (9.60, as Plaza's frame has them): round glass buttons left of the
+    // clock, on Media Center's screens and around jellyfin-web's pages, opening Media Center's panel (itemmenu.js);
+    // hidden on the settings pages, as Plaza's are ----
+    const NO_EXTRA = /^#\/(mypreferences|userprofile|quickconnect|login|selectserver|addserver|forgotpassword)/;
+    M.extras = (host, focusable) => {
+        const box = M.el('div', 'mc-extras');
+        for (const [label, icon, tab] of [['Play on', M.ICON.cast, 'play'], ['Watch together', M.ICON.together, 'together']]) {
+            const b = M.el('button', 'mc-round mc-extra');
+            b.type = 'button';
+            b.setAttribute('aria-label', label);
+            b.title = label;
+            b.append(M.svg(icon));
+            if (focusable) M.focusable(b);
+            b.addEventListener('click', () => { const K = window.icefinMediaCenter; if (K && K.playOn) { T.ctx.sound('select'); K.playOn(tab); } else T.ctx.sound('error'); });
+            box.append(b);
+        }
+        box.hidden = NO_EXTRA.test(location.hash);
+        host.append(box);
+        return box;
+    };
+
     // ---- page chrome: Back, Home (larger, the server's icon), title, clock ----
     M.chrome = (root, title, opts) => {
         const o = opts || {};
@@ -80,7 +111,8 @@
         const clock = M.el('div', 'mc-clock');
         const timer = M.clock(clock);
         root.append(nav, head, clock);
-        return { nav, back, home, head, clock, stop: () => clearInterval(timer) };
+        const extras = o.extras === false ? null : M.extras(root, true);
+        return { nav, back, home, head, clock, extras, stop: () => clearInterval(timer) };
     };
 
     // ---- a band dialog across the screen (questions, notices with choices) ----
@@ -133,6 +165,7 @@
             const clock = M.el('div', 'mc-clock');
             M.clock(clock);
             frame.append(nav, this.title, clock);
+            this.extras = M.extras(frame, false);
             host.append(frame);
             this.update(info);
         },
@@ -140,6 +173,7 @@
             if (!this.title) return;
             const t = (STOCK_TITLES[(info.route || '').replace(/^#\//, '')] || info.title || '').trim();
             this.title.textContent = t.toLowerCase();
+            if (this.extras) this.extras.hidden = NO_EXTRA.test(info.hash || location.hash);
             for (const h of M.stockHooks) { try { h(info); } catch (e) { console.error('media-center: stock page', e); } }
         }
     });

@@ -114,8 +114,9 @@
             if (s.aspects.length) list.append(spinner('Aspect ratio', s.aspects.map((x) => [x.id, x.name.toLowerCase()]), s.aspect, (v) => p.setAspect(v)));
             list.append(spinner('Repeat', REPEAT, s.repeat, (v) => p.setRepeat(v)));
             const info = row('Playback info'); info.addEventListener('click', () => openPanel('info')); list.append(info);
-            const wt = row('Watch together'); wt.addEventListener('click', () => { if (!p.watchTogether()) T.ctx.sound('error'); }); list.append(wt);
-            const po = row('Play on another device'); po.addEventListener('click', () => { if (!p.playOn()) T.ctx.sound('error'); }); list.append(po);
+            // Media Center's own panel (the PlayOn board, 9.60), else jellyfin-web's
+            const wt = row('Watch together'); wt.addEventListener('click', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('together'); else if (!p.watchTogether()) T.ctx.sound('error'); }); list.append(wt);
+            const po = row('Play on another device'); po.addEventListener('click', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('play'); else if (!p.playOn()) T.ctx.sound('error'); }); list.append(po);
             const web = row('Use the web player controls'); web.addEventListener('click', () => p.useWebControls('chosen in the controls')); list.append(web);
         }
         box.append(list);
@@ -197,8 +198,7 @@
         const ends = s.endsAt ? `ends at ${M.time(s.endsAt)}` : '';
         V.sub.textContent = [s.subtitle, ch && `Chapter ${ch.index + 1} · ${ch.name}`, ends].filter(Boolean).join(' · ');
         const pct = s.duration > 0 ? Math.min(100, (s.position / s.duration) * 100) : 0;
-        V.fill.style.width = `${pct}%`;
-        V.knob.style.left = `${pct}%`;
+        if (!V.dragging) { V.fill.style.width = `${pct}%`; V.knob.style.left = `${pct}%`; }  // a pointer drag shows its own place
         V.pos.textContent = s.live ? 'live' : fmt(s.position);
         V.dur.textContent = s.live ? '' : `-${fmt(s.duration - s.position)}`;
         V.seek.classList.toggle('mc-p-live', !s.canSeek);
@@ -246,10 +246,28 @@
             const pos = el('span'), dur = el('span');
             times.append(pos, dur);
             seek.append(track, times);
-            seek.addEventListener('click', (e) => {
-                const r = track.getBoundingClientRect();
-                if (V && V.s && V.s.canSeek && e.clientX >= r.left && e.clientX <= r.right) player.seek(((e.clientX - r.left) / r.width) * V.s.duration);
+            // pointer seeking (checklist 2.5): press or drag anywhere on the line (a taller hit zone than the line), with
+            // pointer capture so a drag that leaves the bar keeps going; the knob follows at once, the seek lands on release
+            let drag = false;
+            const at = (e) => { const r = track.getBoundingClientRect(); return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); };
+            const show = (f) => { V.dragging = true; V.fill.style.width = `${f * 100}%`; V.knob.style.left = `${f * 100}%`; };
+            seek.addEventListener('pointerdown', (e) => {
+                if (!V || !V.s || !V.s.canSeek || e.button > 0) return;
+                drag = true;
+                seek.setPointerCapture(e.pointerId);
+                seek.classList.add('mc-p-dragging');
+                show(at(e));
             });
+            seek.addEventListener('pointermove', (e) => { if (drag) show(at(e)); });
+            const done = (e, go) => {
+                if (!drag) return;
+                drag = false;
+                seek.classList.remove('mc-p-dragging');
+                if (go && V && V.s && V.s.canSeek) player.seek(at(e) * V.s.duration);
+                if (V) V.dragging = false;
+            };
+            seek.addEventListener('pointerup', (e) => done(e, true));
+            seek.addEventListener('pointercancel', (e) => done(e, false));
             const transport = el('div', 'mc-p-transport');
             const pp = button('mc-tb-big mc-tb-on', 'Pause', ICON.pause, () => player.playPause());
             const chBtn = button('', 'Chapters', ICON.chapters, () => toggleChapters(!root.classList.contains('mc-p-chapters-up')));
