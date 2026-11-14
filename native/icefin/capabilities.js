@@ -264,6 +264,10 @@
         if (!overlayEl) return false;
         // closing: the screen has its focus back already, so presses go to it (a fast Down after a menu's Move isn't lost)
         if (overlayClosing) return false;
+        // the theme's own use of an action inside its overlay first (a stepper's ◀▶, 9.60): spec.onAction(action, focused)
+        if (overlaySpec && overlaySpec.onAction) {
+            try { if (overlaySpec.onAction(a, overlayEl.querySelector('.icefin-focused'))) return true; } catch (e) { console.error(e); }
+        }
         if (a === 'back') { overlay.close(); return true; }
         if (isDir(a)) {
             const n = nearest(overlayEl, overlayEl.querySelector('.icefin-focused'), a);
@@ -1112,8 +1116,20 @@
             } catch (e) { console.error('icefinTheme: stock chrome', e); }
         };
         send();
-        // jellyfin-web shows the page and sets its title a moment after the route changes
-        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) send(); }, ms));
+        // jellyfin-web shows the page and sets its title a moment after the route changes; once it has, the page's first
+        // control has the focus (9.60, checklist 2.1: a controller starts on the page, not nowhere)
+        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 1200) stockArrive(); } }, ms));
+    }
+    // Not a text field (that would open the on-screen keyboard unasked), and never over a dialog, the overlay or
+    // something the user (or the page) has focused already.
+    function stockArrive() {
+        if (!document.documentElement.hasAttribute('data-icefin-stock') || osk || (overlayEl && !overlayClosing) || stockDialog()) return;
+        const all = stockControls();
+        const act = document.activeElement;
+        if (act && act !== document.body && all.includes(act)) return;
+        const first = all.find((el) => !(stockEl && stockEl.contains(el)) && !isText(el) && !el.matches('select, [role="combobox"]'))
+            || all.find((el) => !(stockEl && stockEl.contains(el)));
+        if (first) first.focus({ preventScroll: true });
     }
     const stockChrome = {
         // spec: {mount(el, info, ctx), update?(info, ctx)}; info: {route, hash, title, back(), home()}
