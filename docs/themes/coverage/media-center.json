@@ -2,8 +2,8 @@
  "run": {
   "theme": "media-center",
   "where": "host",
-  "started": "2026-11-14T09:38:54Z",
-  "commit": "67bbdf75",
+  "started": "2026-11-14T09:49:35Z",
+  "commit": "cd8df802",
   "branch": "theme/media-center",
   "player": {
    "version": "0.1.0~alpha.2",
@@ -20,10 +20,10 @@
    1048,
    1
   ],
-  "finished": "2026-11-14T09:40:12Z",
+  "finished": "2026-11-14T09:50:42Z",
   "summary": {
-   "entries": 13,
-   "theme": 12,
+   "entries": 5,
+   "theme": 4,
    "gaps": 1,
    "checksFailing": 0,
    "skipped": 0
@@ -31,73 +31,15 @@
  },
  "entries": [
   {
-   "id": "lib-movies",
-   "group": "Libraries",
-   "name": "Movies",
+   "id": "home",
+   "group": "Home",
+   "name": "Home",
    "kind": "screen",
    "target": "theme",
    "state": "theme",
    "gap": false,
    "opened": "",
-   "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Movies",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "01-lib-movies.png",
-   "note": ""
-  },
-  {
-   "id": "list-genre",
-   "group": "Libraries",
-   "name": "A genre's list",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/list?genreId=ce06903d834d2c3417e0889dd4049f3b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Action",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "02-list-genre.png",
-   "note": ""
-  },
-  {
-   "id": "details-channel",
-   "group": "Details",
-   "name": "Live TV channel",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=0fbeeb75ab362ce7bf9f1c42249843fa&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
+   "hash": "#/home",
    "title": "",
    "dialogs": [],
    "osd": "panel",
@@ -114,7 +56,36 @@
     }
    ],
    "warnings": [],
-   "shot": "03-details-channel.png",
+   "shot": "01-home.png",
+   "note": ""
+  },
+  {
+   "id": "settings-hub",
+   "group": "Settings",
+   "name": "Settings hub",
+   "kind": "screen",
+   "target": "theme",
+   "state": "theme",
+   "gap": false,
+   "opened": "",
+   "hash": "#/mypreferencesmenu",
+   "title": "Settings",
+   "dialogs": [],
+   "osd": "panel",
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
+   "warnings": [],
+   "shot": "02-settings-hub.png",
    "note": ""
   },
   {
@@ -143,77 +114,19 @@
     }
    ],
    "warnings": [],
-   "shot": "04-prefs-playback.png",
+   "shot": "03-prefs-playback.png",
    "note": ""
   },
   {
-   "id": "profile",
-   "group": "Settings",
-   "name": "Profile",
-   "kind": "screen",
+   "id": "play-on",
+   "group": "Header",
+   "name": "Play on (cast to a device)",
+   "kind": "dialog",
    "target": "theme",
    "state": "theme",
    "gap": false,
-   "opened": "",
-   "hash": "#/userprofile?userId=9920fdc3e45143e499c2ac773a4ef3f7",
-   "title": "micah",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "05-profile.png",
-   "note": ""
-  },
-  {
-   "id": "quickconnect",
-   "group": "Settings",
-   "name": "Quick Connect",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/quickconnect",
-   "title": "Quick Connect",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "06-quickconnect.png",
-   "note": ""
-  },
-  {
-   "id": "forgotpassword",
-   "group": "Sign-in",
-   "name": "Forgot password",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/forgotpassword",
+   "opened": "theme:play on",
+   "hash": "#/home",
    "title": "",
    "dialogs": [],
    "osd": "panel",
@@ -230,167 +143,7 @@
     }
    ],
    "warnings": [],
-   "shot": "07-forgotpassword.png",
-   "note": ""
-  },
-  {
-   "id": "item-menu",
-   "group": "Item menu",
-   "name": "Item menu (More options)",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:[data-action=\"more\"]",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "08-item-menu.png",
-   "note": "",
-   "entries": [
-    "Add to a playlist\u2026",
-    "Add to a collection\u2026",
-    "Mark as watched",
-    "Favourite",
-    "Media info",
-    "Find subtitles\u2026",
-    "Refresh metadata\u2026",
-    "Edit details\u2026",
-    "Edit images\u2026",
-    "Identify\u2026",
-    "Copy stream URL",
-    "Download",
-    "Delete"
-   ]
-  },
-  {
-   "id": "menu-addtoplaylist",
-   "group": "Item menu",
-   "name": "Add to playlist",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Add to a playlist\u2026",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "09-menu-addtoplaylist.png",
-   "note": ""
-  },
-  {
-   "id": "menu-mediainfo",
-   "group": "Item menu",
-   "name": "Media info",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Media info",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "10-menu-mediainfo.png",
-   "note": ""
-  },
-  {
-   "id": "menu-edit",
-   "group": "Item menu",
-   "name": "Edit metadata",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Edit details\u2026",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "11-menu-edit.png",
-   "note": ""
-  },
-  {
-   "id": "sort-filter",
-   "group": "Libraries",
-   "name": "Sort and filter",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Sort and filter sort and filte",
-   "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Movies",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "12-sort-filter.png",
+   "shot": "04-play-on.png",
    "note": ""
   },
   {
@@ -419,7 +172,7 @@
     }
    ],
    "warnings": [],
-   "shot": "13-syncplay.png",
+   "shot": "05-syncplay.png",
    "note": ""
   }
  ]
