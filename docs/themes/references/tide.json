@@ -13,7 +13,7 @@
   },
   "tolerancePx": 16,
   "timingTolerance": 0.1,
-  "ready": "!!document.querySelector('.td-item.icefin-focused') && !!document.querySelector('.td-cat.current')",
+  "ready": "!!document.querySelector('.td-e.focused') && !!document.querySelector('.td-cat.current')",
   "states": [
     {
       "name": "xmb",
@@ -32,14 +32,14 @@
           "tol": 18
         },
         "focused item icon": {
-          "sel": ".td-item.icefin-focused .td-thumb",
+          "sel": ".td-e.focused .td-e-thumb",
           "cx": 561,
           "cy": 505,
           "h": 125,
           "tol": 18
         },
         "next item icon": {
-          "sel": ".td-item.icefin-focused + .td-item .td-thumb",
+          "sel": ".td-e[data-off=\"1\"] .td-e-thumb",
           "cx": 561,
           "cy": 681,
           "tol": 18
@@ -47,13 +47,13 @@
       },
       "text": {
         "focused item name": {
-          "sel": ".td-item.icefin-focused .td-name",
+          "sel": ".td-e.focused .td-e-name",
           "x": 759,
           "cy": 474,
           "tol": 18
         },
         "clock": {
-          "sel": ".td-clock",
+          "sel": ".td-clock-time",
           "right": 1816,
           "cy": 104
         }
