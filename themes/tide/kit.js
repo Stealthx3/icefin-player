@@ -290,6 +290,7 @@
     }
     D.keys = (e) => {
         if (!T.active() || T.active().id !== 'tide' || window.icefinTide !== D) return;
+        if (D.framedKeys && D.framedKeys(e)) return;  // the arrows on a framed jellyfin-web page (settings.js)
         if (e.key !== 'Backspace' && e.key !== 'Escape') return;
         if ((e.key === 'Backspace' && isText(e.target)) || (D.panel && D.panel.isOpen())) return;
         if (document.documentElement.hasAttribute('data-icefin-dashboard') || /^#\/video\b/.test(location.hash)) return;

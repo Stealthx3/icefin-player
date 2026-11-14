@@ -266,6 +266,7 @@
             S.loading = 0;
             rootEl.removeAttribute('data-td-loading');
             S.entries = c.entries;
+            drawTrail();  // a level may name itself as it loads (a library's or a user's name)
             for (const d of S.drawn.values()) d.remove();
             S.drawn.clear();
             col.className = 'td-col' + (how ? ` td-col-${how}` : '');
