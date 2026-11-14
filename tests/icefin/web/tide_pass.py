@@ -360,7 +360,7 @@ def main():
             nav("#/home")
             act("down")
             settle(0.3)
-            vis = js("getComputedStyle(document.querySelector('.td-hints')).opacity")
+            vis = js("(() => { const cs = getComputedStyle(document.querySelector('.td-hints')); return cs.visibility === 'visible' ? cs.opacity : 'hidden'; })()")
             words = js("document.querySelector('.td-hints').textContent")
             check("hints show for a pad, and say what the keys do here", vis == "1" and "OK" in words, f"{vis} {words}")
             # page-aware (checklist 2.3): a folder offers no options or play; an item offers both

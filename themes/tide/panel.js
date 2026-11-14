@@ -30,7 +30,7 @@
     let host = null, stack = [], pendingSpec = null;
     const HOST = {
         mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
-        unmount() { host = null; stack = []; ui.overlay.set(null); if (D.screenHints) D.screenHints(); },
+        unmount() { host = null; stack = []; ui.overlay.set(null); if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260)); },
         leave(h) { h.classList.add('td-panel-leave'); return ui.motion.duration(220); },
         onAction(a, f0) {
             D.sawAction(a);
@@ -139,7 +139,7 @@
         for (const old of document.querySelectorAll('.td-notice')) old.remove();
         const n = el('div', 'td-notice' + (bad ? ' td-notice-bad' : ''), text);
         n.setAttribute('role', 'status');
-        document.body.append(n);
+        (D.layer ? D.layer() : document.body).append(n);
         T.ctx.sound(bad ? 'error' : 'select');
         setTimeout(() => n.classList.add('td-notice-out'), 3000);
         setTimeout(() => n.remove(), 3000 + ui.motion.duration(200));
