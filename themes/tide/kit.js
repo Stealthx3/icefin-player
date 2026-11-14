@@ -244,13 +244,23 @@
     // ---- hints (the Hints board, option A: the remote's words, bottom right, page-aware) ----
     // A screen sets what its keys do now: D.hints([['OK', 'open'], ['≡', 'options'], ['Back', '']]). Shown only for a
     // pad or remote (html[data-td-input="pad"], always in Couch Mode); only keys that do something here.
+    // While a themed screen is up the engine hides everything at the body's top level except its own layers, so the
+    // hints (and a notice) live in the open overlay, else the screen's root, else the body (a framed jellyfin-web page).
+    D.layer = () => {
+        const o = document.getElementById('icefin-theme-overlay');
+        if (o && o.isConnected && o.childElementCount && !o.hidden) return o;
+        const r = document.getElementById('icefin-theme-root');
+        if (r && !r.hidden && document.documentElement.classList.contains('icefin-screen')) return r;
+        return document.body;
+    };
     let hintEl = null;
     D.hints = (list) => {
         if (!hintEl || !hintEl.isConnected) {
             hintEl = D.el('div', 'td-hints');
             hintEl.setAttribute('aria-hidden', 'true');
-            document.body.append(hintEl);
         }
+        const host = D.layer();
+        if (hintEl.parentElement !== host) host.append(hintEl);
         hintEl.textContent = '';
         for (const [key, what] of list || []) {
             const s = D.el('span', 'td-hint');
