@@ -137,7 +137,8 @@
         S.shown = true;
         S.box.classList.add('td-pl-shown');
         D.hints([['OK', 'choose'], ['▶', 'pause'], ['≡', 'options'], ['Back', 'hide']]);
-        if (focusIt || !S.box.contains(S.ctx.focused())) S.ctx.focus(S.pp);
+        // the options panel keeps its focus: the controls behind it never take it back
+        if (!(D.panel && D.panel.isOpen()) && (focusIt || !S.box.contains(S.ctx.focused()))) S.ctx.focus(S.pp);
         poke();
     }
     function hide(now) {
