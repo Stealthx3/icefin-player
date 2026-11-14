@@ -17,6 +17,7 @@
     "library.js",
     "browse.js",
     "tv.js",
+    "programme.js",
     "np.js",
     "details.js",
     "settings.js",

@@ -797,3 +797,21 @@ html[data-icefin-stock]:not([data-icefin-dashboard]) #icefin-stock-chrome::after
 .mc-qc-box { width: 8.6vh; height: 10.6vh; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 5.6vh; font-weight: 300;
   border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.55); background: rgb(var(--icefin-color-glass-channel) / 0.08); outline: none; cursor: text; }
 .mc-qc-box.icefin-focused { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass); box-shadow: 0 0 2.5vh rgb(var(--icefin-color-focus-channel) / 0.7); }
+
+/* ---- Program info (9.60, programme.js; the "a programme" board) ---- */
+.mc-pi-side { top: 16.7vh; }
+.mc-pi-pic { position: absolute; left: 34.4vw; top: 17.2vh; width: 25vw; height: 25vh; background: center / cover no-repeat, linear-gradient(150deg, var(--icefin-color-accent), var(--icefin-color-surface));
+  box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.4), 0 1.7vh 4.7vh rgb(0 0 0 / 0.5); display: flex; align-items: center; justify-content: center; }
+.mc-pi-fallback { font-size: 3.3vh; text-align: center; padding: 1vh; }
+.mc-pi-live { position: absolute; left: 1.1vh; top: 1.1vh; font-size: 1.7vh; font-weight: 600; padding: 0.1vh 0.8vh; background: var(--icefin-color-error); color: var(--icefin-color-onError); border-radius: 0.28vh; }
+.mc-pi-head { position: absolute; left: 61.7vw; right: 4.6vw; top: 16.4vh; }
+.mc-pi-title { font-size: 4.4vh; line-height: 1.2; }
+.mc-pi-when { font-size: 2.5vh; color: rgb(var(--icefin-color-text-channel) / 0.8); margin-top: 0.8vh; }
+.mc-pi-tags { margin-top: 1.4vh; font-size: 2.2vh; color: rgb(var(--icefin-color-text-channel) / 0.75); display: flex; flex-wrap: wrap; gap: 0.8vh; align-items: center; }
+.mc-pi-tag { padding: 0.1vh 1.1vh; border: 0.14vh solid rgb(var(--icefin-color-text-channel) / 0.5); border-radius: 0.28vh; font-size: 1.9vh; font-weight: 400; }
+.mc-pi-rec { border-color: var(--icefin-color-error); color: var(--icefin-color-text); }
+.mc-pi-bar { height: 0.7vh; background: rgb(var(--icefin-color-text-channel) / 0.2); margin-top: 1.9vh; }
+.mc-pi-bar > div { height: 100%; background: var(--icefin-color-focus); }
+.mc-pi-left { font-size: 2.1vh; color: var(--icefin-color-textSecondary); margin-top: 0.6vh; }
+.mc-pi-text { position: absolute; left: 34.4vw; right: 4.6vw; top: 45.8vh; font-size: 2.6vh; line-height: 1.55; max-height: 13vh; overflow: hidden; }
+.mc-pi-others { position: absolute; left: 34.4vw; right: 4.6vw; top: 59.7vh; bottom: 6vh; overflow: hidden; }
