@@ -239,7 +239,15 @@
                 D.fly(ghost, slot.getBoundingClientRect(), 360, () => { ghost.remove(); slot.style.opacity = ''; });
             }
         },
-        unmount() { if (S && S.C) S.C.stop(); S = null; },
+        unmount() {
+            // the poster flies home from the trail on the way back (MotionDetails): its place is kept for the list
+            if (S && S.item && S.root) {
+                const art = S.root.querySelector('.td-trail-step.near .td-trail-art');
+                D.flightHome = art ? { id: S.item.Id, rect: art.getBoundingClientRect(), art: art.style.backgroundImage, at: Date.now() } : null;
+            }
+            if (S && S.C) S.C.stop();
+            S = null;
+        },
         onAction(a) { return S && S.C ? S.C.onAction(a) : a === 'back' ? false : true; },
         onBack() { return S && S.C ? S.C.onAction('back') : false; }
     });

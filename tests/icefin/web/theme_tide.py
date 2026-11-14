@@ -68,14 +68,14 @@ def main():
         td = themes().get("tide", {})
         check("Tide offered as a built-in theme, usable", td.get("ok") is True and td.get("source") == "bundled", json.dumps(td)[:160])
         # Tide declares a backdrop: the page reloads once over it (8.4)
-        page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]') && !!document.querySelector('.td-item.icefin-focused')")
+        page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]') && !!document.querySelector('.td-e.focused')")
         time.sleep(1)
         R = "document.querySelector('#icefin-theme-root')"
         cat = lambda: js(f"{R}.dataset.tdCat")
         idx = lambda: int(js(f"{R}.dataset.tdIndex"))
         cats = json.loads(js("JSON.stringify([...document.querySelectorAll('.td-cat-label')].map(e => e.textContent))"))
         check("categories: Settings, the libraries, Search; opens on the first library", cats[0] == "Settings" and cats[-1] == "Search" and len(cats) >= 3 and cat() == cats[1], f"{cats} at {cat()}")
-        pos = lambda: json.loads(js("JSON.stringify((() => { const c = document.querySelector('.td-cat.current').getBoundingClientRect(), f = document.querySelector('.td-item.icefin-focused').getBoundingClientRect(); return {cx: (c.left + c.width / 2) / innerWidth, cy: (c.top + c.height / 2) / innerHeight, fy: f.top / innerHeight, fx: f.left / innerWidth}; })())"))
+        pos = lambda: json.loads(js("JSON.stringify((() => { const c = document.querySelector('.td-cat.current').getBoundingClientRect(), f = document.querySelector('.td-e.focused').getBoundingClientRect(); return {cx: (c.left + c.width / 2) / innerWidth, cy: (c.top + c.height / 2) / innerHeight, fy: f.top / innerHeight, fx: f.left / innerWidth}; })())"))
         time.sleep(0.5)
         p0 = pos()
         check("the focused category sits at the fixed point, the focused item just under it", abs(p0["cx"] - 561 / 1920) < 0.02 and 0.2 < p0["cy"] < 0.35 and p0["cy"] < p0["fy"] < p0["cy"] + 0.2, json.dumps(p0))
@@ -86,9 +86,12 @@ def main():
             time.sleep(0.5)
             p1 = pos()
             check("down moves through the column; the focused item stays at the point", idx() == 1 and abs(p1["fy"] - p0["fy"]) < 0.01
-                  and js("document.querySelectorAll('.td-item.above').length") == 1, f"{idx()} {json.dumps(p1)}")
+                  and js("document.querySelectorAll('.td-e.above').length") == 1, f"{idx()} {json.dumps(p1)}")
             act("back")
-            check("Back returns to the top of the column", idx() == 0, str(idx()))
+            time.sleep(0.6)
+            check("Back on the home asks to close (9.48), Cancel focused", js("!!document.querySelector('.td-panel') && /Cancel/.test((document.querySelector('#icefin-theme-overlay .icefin-focused') || {}).textContent || '')") is True)
+            act("back")
+            time.sleep(0.5)
         act("right")
         time.sleep(0.5)
         p2 = pos()
@@ -131,13 +134,13 @@ def main():
             act("left")
         for _ in range(cats.index("Movies") if "Movies" in cats else 1):
             act("right")
-        if int(js(f"{R}.dataset.tdCount")) >= 1 and js("!!document.querySelector('.td-item.icefin-focused .td-thumb')"):
+        if int(js(f"{R}.dataset.tdCount")) >= 1 and js("!!document.querySelector('.td-e.focused .td-e-thumb')"):
             act("enter")
             page.wait_for("location.hash.startsWith('#/details')", timeout=15)
             time.sleep(2)
             page.wait_for("!!(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details-ready')", timeout=20)
-            check("Enter opens Tide's themed details screen (9.18)", js("window.icefinTheme.active().route") == "#/details"
-                  and js("document.querySelector('.icefin-details').dataset.layout") == "panel")
+            check("Enter opens Tide's own details screen (9.18, 9.48)", js("window.icefinTheme.active().route") == "#/details"
+                  and js("document.querySelector('#icefin-theme-root').dataset.tdScreen") == "details")
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
         check("turning the theme off restores the stock UI, palette dropped", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False

@@ -53,7 +53,7 @@ Every item below is one of: **board** (drawn on the Tide Screens canvas), **test
 | 1.1 | The server's status | board | Home (dot under the clock), HomeSettings (Server entry opens Choose a server) |
 | 1.1 | Each library shows what it is | not in the target | Decisions: the target's categories are line icons; Continue and Next up show the item's own art (Home) |
 | 1.1 | A preview or focus state | board | Decisions: the target's focus state is the item grown at the fixed point with its facts (Folder), plus its backdrop fading in after a rest |
-| 1.1 | Sub-views of the home by query | tests | one #/home registration; folders are ?td= sub-views (build) |
+| 1.1 | Sub-views of the home by query | board | Home, Folder: one #/home registration; a folder is a level of the column, kept in memory per route, so Back from anywhere returns to it (no query needed) |
 | 1.1 | The order is the user's | board | HomeOrder |
 | 1.1 | The music capsule | board | HomeMusic (Now playing entry and the song line under the clock) |
 | 1.1 | Exit at the root | board | ExitPanel |
@@ -123,7 +123,7 @@ Every item below is one of: **board** (drawn on the Tide Screens canvas), **test
 | 2.2 | Hover apart from focus | board | Decisions (pointer) |
 | 2.3 | The focused item's caption | board | Folder, DetailsSeries (the focused entry's facts beside it are the caption) |
 | 2.3 | A name pill under the focused item | not in the target | Decisions: the name sits beside the item at the fixed point |
-| 2.3 | Controller hints | board | Hints (your choice of style) |
+| 2.3 | Page-aware controller hints | board | Hints (the remote's words): column.js builds them from the focused entry, the panel per level, each screen its own; tide_pass checks them |
 | 2.4 | Back, innermost first | board | MotionColumns, MotionPanel, ExitPanel; tests |
 | 2.4 | Menu acts on the focused item | board | ItemOptions, Servers |
 | 2.4 | Play/Pause acts on the focused item | board | Home, Folder hints; tests |
@@ -191,6 +191,19 @@ Every item below is one of: **board** (drawn on the Tide Screens canvas), **test
 | 8 | Player, menu, music, sign-in, framed pages | tests | to write |
 | 8 | Polish tests on your Icefin | tests | host, in Verify |
 | 8 | A host walk and Gate 2 | tests | Verify and Gate 2 |
+
+## Build notes (2026-11-14, after Gate 1)
+
+Built in Tide's own scripts (themes/tide): kit.js (helpers, the ground, the clock and song line, hints, the pointer's
+Back and Home), panel.js (the options panel with levels, steppers, switches, fields, notices), column.js (the column
+engine: the cross bar, nested levels, the trail, the letter strip, flights), data.js (entries and a library's
+sections), home.js, itemmenu.js, details.js, tv.js, library.js (library routes, #/list, sort and filter, search),
+np.js, player.js, settings.js (the frame, Settings › Home), account.js (profile, Quick Connect, forgot password,
+sign-in), interim.js (the engine's settings hub and web-player fallback, in Tide's look). Tests: tests/icefin/web/
+tide_pass.py and tide_probe.py, in the lab. Walks run in the lab at the user's request (theme_walk.py --lab).
+
+Not built yet, or not as drawn: the photo viewer's light frame (jellyfin-web's slideshow as it is), "Find servers on
+this network" (no engine call for it), the profile's Easy PIN (not in the engine's account calls).
 
 ## 1. Themed elements: screens and surfaces
 
@@ -373,10 +386,14 @@ Every item below is one of: **board** (drawn on the Tide Screens canvas), **test
       steps back while a sheet is up. Plaza: `P.caption`.
 - [ ] **A name pill under the focused item** where the target has one, kept 16 px inside the window and flipped above
       on the bottom row.
-- [ ] **Controller hints** (PLAN 9.28) in the theme's style, drawn A/B/X/Y keys, that change with the mode (move mode,
-      guide vs grid, a lifted queue entry, Client Settings) and per framed route. Shown for a pad or remote, gone for
-      the mouse or keyboard, always on in Couch Mode (`html[data-icefin-couch]`). Plaza tracks the input in
-      `html[data-pz-input]`. Every hint must match what the key does.
+- [ ] **Page-aware controller hints** (PLAN 9.28; a requirement for every theme, the user, 2026-11-14) in the theme's
+      style (drawn keys, or the remote's words where the target's own key marks aren't ours to use). Page-aware: each
+      screen, panel and framed route shows only the keys that do something there, for what is focused now (no ≡ where
+      there are no options, no ▶ on an entry that can't play), and the hints change with the mode (move mode, guide vs
+      grid, a lifted queue entry, an open panel, Client Settings). Shown for a pad or remote, gone for the mouse or
+      keyboard, always on in Couch Mode (`html[data-icefin-couch]`). Plaza tracks the input in `html[data-pz-input]`,
+      Media Center in `html[data-mc-input]`. Every hint must match what the key does, and a test checks that on each
+      kind of screen.
 
 ### 2.4 Keys and buttons
 - [ ] **Back, innermost first**: drag, then a card or panel, then the screen; in the player, a card, then the
