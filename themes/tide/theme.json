@@ -11,6 +11,8 @@
   "column.js",
   "data.js",
   "home.js",
+  "itemmenu.js",
+  "details.js",
   "interim.js"
  ],
  "backdrop": {

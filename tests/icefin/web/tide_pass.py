@@ -22,7 +22,12 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-GROUPS = ["home", "folder", "panel", "hints", "motion"]
+GROUPS = ["home", "folder", "panel", "details", "hints", "motion"]
+
+
+# Captures take the web layer alone: over the native backdrop (8.4) Tide's screens are transparent, and a capture drops
+# the alpha (a soft glow comes out opaque). For screenshots, the gradient goes under the screen, as without the backdrop.
+OPAQUE = "(() => { if (document.getElementById('td-test-opaque')) return true; const s = document.createElement('style'); s.id = 'td-test-opaque'; s.textContent = 'html[data-icefin-backdrop] [data-td-screen] { background: linear-gradient(180deg, var(--icefin-color-waveTop), var(--icefin-color-waveBottom)) !important; }'; document.head.append(s); return true; })()"
 
 
 def main():
@@ -67,6 +72,8 @@ def main():
         shot = lambda name: open(os.path.join(a.out, name), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
         page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]') && !!document.querySelector('.td-e.focused')")
         time.sleep(1.5)
+        js_ = page.eval
+        js_(OPAQUE)
         errors = js("JSON.stringify((window.__icefinErrors || []).slice(0, 5))")
         R = "document.querySelector('#icefin-theme-root')"
         cat = lambda: js(f"{R}.dataset.tdCat")
@@ -197,6 +204,33 @@ def main():
                 act("back")
                 settle(0.5)
                 check("Back again closes the panel, the focus back on the item", js("!document.querySelector('.td-panel')") is True and js("document.querySelector('.td-e.focused .td-e-name').textContent") == name, str(focused()))
+
+        if "details" in only and libs:
+            js("window.icefinTheme.ctx.navigate('#/home'); true")
+            settle(1)
+            to_cat(libs[0])
+            for _ in range(10):  # into All …, then the first item
+                e = js("(document.querySelector('.td-e.focused') || {}).tdEntry ? document.querySelector('.td-e.focused').tdEntry.name : ''")
+                if e and e.startswith("All"):
+                    act("enter")
+                    page.wait_for(f"!{R}.hasAttribute('data-td-loading') && !!document.querySelector('.td-e.focused .td-e-thumb')", timeout=20)
+                    settle(0.6)
+                    break
+                act("down"); settle(0.25)
+            name = js("document.querySelector('.td-e.focused .td-e-name').textContent")
+            act("enter")
+            page.wait_for("location.hash.startsWith('#/details') && !!document.querySelector('#icefin-theme-root[data-icefin-details-ready]') && !!document.querySelector('.td-e.focused')", timeout=20)
+            settle(1)
+            first = js("document.querySelector('.td-e.focused .td-e-name').textContent")
+            check(f"OK on an item ({name}) opens Tide's details: its actions at the fixed point, Play or Resume focused", first in ("Play", "Resume", "Read", "Continue reading", "Play all") or first.startswith("Next up"), first)
+            check("the poster in the trail, the facts on the right", js("!!document.querySelector('.td-trail-step.near .td-trail-art') && document.querySelector('.td-facts-title').textContent") == name, str(js("(document.querySelector('.td-facts-title') || {}).textContent")))
+            ents = colnames()
+            check("every function: Options…, favourite, and (for a film) cast, more like this, audio or subtitles", "Options…" in ents and any(x.startswith("Add to favourites") or x.startswith("Favourite") for x in ents), str(ents))
+            shot("details.png")
+            act("back")
+            page.wait_for("location.hash.startsWith('#/home')", timeout=15)
+            settle(1.2)
+            check("Back returns to the list with the same item focused", js("(document.querySelector('.td-e.focused .td-e-name') || {}).textContent") == name, str(js("(document.querySelector('.td-e.focused .td-e-name') || {}).textContent")))
 
         if "hints" in only:
             act("down")

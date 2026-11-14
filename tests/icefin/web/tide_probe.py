@@ -21,6 +21,11 @@ CAPTURE = """(() => { if (window.__tdErr) return true; window.__tdErr = [];
   window.addEventListener('unhandledrejection', (e) => keep('rejection')(e.reason)); return true; })()"""
 
 
+# Captures take the web layer alone: over the native backdrop (8.4) Tide's screens are transparent, and a capture drops
+# the alpha (a soft glow comes out opaque). For screenshots, the gradient goes under the screen, as without the backdrop.
+OPAQUE = "(() => { if (document.getElementById('td-test-opaque')) return true; const s = document.createElement('style'); s.id = 'td-test-opaque'; s.textContent = 'html[data-icefin-backdrop] [data-td-screen] { background: linear-gradient(180deg, var(--icefin-color-waveTop), var(--icefin-color-waveBottom)) !important; }'; document.head.append(s); return true; })()"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--app", required=True)
@@ -52,6 +57,7 @@ def main():
         page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui", timeout=90)
         page.switch_theme_reloading("tide", "!!document.querySelector('#icefin-theme-root[data-td-ready]')")
         page.eval(CAPTURE)
+        page.eval(OPAQUE)
         time.sleep(1.5)
         for st in steps:
             kind, arg = st[0], st[1] if len(st) > 1 else None
