@@ -124,6 +124,11 @@ def main():
             check("Back again keeps you in (the panel closes)", js("!document.querySelector('#icefin-theme-overlay')") is True and js("location.hash").startswith("#/home"))
 
         def to_cat(name):
+            # the home keeps where you were (a folder opened earlier): back to the cross bar first
+            for _ in range(6):
+                if js("!window.icefinTide.currentColumn || window.icefinTide.currentColumn.S.stack.length <= 1"):
+                    break
+                act("back"); settle(0.4)
             for _ in range(12):
                 if cat() == name:
                     break
@@ -225,7 +230,7 @@ def main():
             check(f"OK on an item ({name}) opens Tide's details: its actions at the fixed point, Play or Resume focused", first in ("Play", "Resume", "Read", "Continue reading", "Play all") or first.startswith("Next up"), first)
             check("the poster in the trail, the facts on the right", js("!!document.querySelector('.td-trail-step.near .td-trail-art') && document.querySelector('.td-facts-title').textContent") == name, str(js("(document.querySelector('.td-facts-title') || {}).textContent")))
             ents = colnames()
-            check("every function: Options…, favourite, and (for a film) cast, more like this, audio or subtitles", "Options…" in ents and any(x.startswith("Add to favourites") or x.startswith("Favourite") for x in ents), str(ents))
+            check("every function: Options…, favourite, and (for a film) cast, more like this, audio or subtitles", "More options…" in ents and any(x.startswith("Add to favourites") or x.startswith("Favourite") for x in ents), str(ents))
             shot("details.png")
             act("back")
             page.wait_for("location.hash.startsWith('#/home')", timeout=15)
@@ -259,9 +264,11 @@ def main():
                 check("▶ steps Sort by in place; the list behind re-sorts", js("document.querySelector('.td-panel-level:last-child .td-row .td-row-value').textContent").find("Date added") >= 0 and entries()[:2] != first, f"{entries()[:2]} was {first}")
                 shot("sort.png")
                 act("back"); settle(0.4); act("back"); settle(0.5)
-            gid = js("window.ApiClient.getGenres(window.ApiClient.getCurrentUserId(), {Limit: 1, Recursive: true}).then(r => r.Items[0] ? r.Items[0].Id : '')")
+            gid = js("window.ApiClient.getGenres(window.ApiClient.getCurrentUserId(), {Limit: 1, Recursive: true, IncludeItemTypes: 'Movie'}).then(r => r.Items[0] ? r.Items[0].Id : '')")
             if gid:
                 nav(f"#/list?genreId={gid}")
+                page.wait_for(f"!{R}.hasAttribute('data-td-loading')", timeout=20)
+                settle(0.5)
                 e = entries()
                 check("#/list (a genre): Tide's list, Play all and Shuffle first", js(f"{R}.dataset.tdScreen") == "list" and e[:2] == ["Play all", "Shuffle"], str(e[:4]))
 

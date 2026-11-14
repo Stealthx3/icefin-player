@@ -429,7 +429,7 @@
         if (saved) { const c0 = cur(); if (c0) c0.reload = true; }
         D.currentColumn = C;
         D.goLevel = (lv) => { if (D.currentColumn && D.currentColumn.S.alive) D.currentColumn.push(lv); };
-        C.redraw(saved ? null : 'first');
+        if (saved || !opts.root.deferred) C.redraw(saved ? null : 'first');
         return C;
     };
 

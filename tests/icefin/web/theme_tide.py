@@ -75,7 +75,7 @@ def main():
         idx = lambda: int(js(f"{R}.dataset.tdIndex"))
         cats = json.loads(js("JSON.stringify([...document.querySelectorAll('.td-cat-label')].map(e => e.textContent))"))
         check("categories: Settings, the libraries, Search; opens on the first library", cats[0] == "Settings" and cats[-1] == "Search" and len(cats) >= 3 and cat() == cats[1], f"{cats} at {cat()}")
-        pos = lambda: json.loads(js("JSON.stringify((() => { const c = document.querySelector('.td-cat.current').getBoundingClientRect(), f = document.querySelector('.td-e.focused').getBoundingClientRect(); return {cx: (c.left + c.width / 2) / innerWidth, cy: (c.top + c.height / 2) / innerHeight, fy: f.top / innerHeight, fx: f.left / innerWidth}; })())"))
+        pos = lambda: json.loads(js("JSON.stringify((() => { const c = document.querySelector('.td-cat.current').getBoundingClientRect(), f = document.querySelector('.td-e.focused .td-e-thumb').getBoundingClientRect(); return {cx: (c.left + c.width / 2) / innerWidth, cy: (c.top + c.height / 2) / innerHeight, fy: f.top / innerHeight, fx: f.left / innerWidth}; })())"))
         time.sleep(0.5)
         p0 = pos()
         check("the focused category sits at the fixed point, the focused item just under it", abs(p0["cx"] - 561 / 1920) < 0.02 and 0.2 < p0["cy"] < 0.35 and p0["cy"] < p0["fy"] < p0["cy"] + 0.2, json.dumps(p0))

@@ -90,12 +90,13 @@
     }
     D.panel = {
         show(spec) {
-            if (host) { stack.length ? draw(spec, 'replace') : draw(spec, 'open'); return; }
+            // an overlay still playing its closing animation is not open: the engine finishes it and opens ours anew
+            if (host && ui.overlay.isOpen()) { stack.length ? draw(spec, 'replace') : draw(spec, 'open'); return; }
             pendingSpec = spec;
             ui.overlay.set(HOST);
             ui.overlay.open();
         },
-        push(spec) { if (!host) { D.panel.show(spec); return; } draw(spec, 'push'); T.ctx.sound('navigate'); },
+        push(spec) { if (!host || !ui.overlay.isOpen()) { D.panel.show(spec); return; } draw(spec, 'push'); T.ctx.sound('navigate'); },
         pop() {
             if (!host) return;
             if (stack.length <= 1) { D.panel.close(); return; }
@@ -112,7 +113,7 @@
             T.ctx.sound('back');
         },
         close() { if (host) ui.overlay.close(); },
-        isOpen: () => !!host,
+        isOpen: () => !!host && ui.overlay.isOpen(),
         depth: () => stack.length,
         // A question in the panel (ExitPanel board): the safe choice is focused, so a second Back or a stray OK keeps you
         ask({ title, path, text, choices, push }) {
