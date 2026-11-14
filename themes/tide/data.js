@@ -201,7 +201,7 @@
             if (D.nowPlayingEntry) { const np = D.nowPlayingEntry(); if (np) out.push(np); }
             const albums = D.listLevel('Albums', 'album', { ParentId: view.Id, IncludeItemTypes: 'MusicAlbum' });
             out.push(folder(albums),
-                folder(D.groupLevel('Artists', 'person', async () => { const r = await Promise.resolve(c().getAlbumArtists({ UserId: uid(), ParentId: view.Id, SortBy: 'SortName', Fields: FIELDS })); return (r && r.Items) || []; },
+                folder(D.groupLevel('Artists', 'person', async () => { const r = await Promise.resolve(c().getAlbumArtists(uid(), { ParentId: view.Id, SortBy: 'SortName', Fields: FIELDS })); return (r && r.Items) || []; },
                     (a) => D.artistLevel(a))),
                 folder(D.listLevel('Songs', 'song', { ParentId: view.Id, IncludeItemTypes: 'Audio' }, { head: D.playAllHead() })),
                 folder(D.listLevel('Playlists', 'playlists', { IncludeItemTypes: 'Playlist', MediaTypes: 'Audio' }, { head: () => [D.newPlaylistEntry()] })),
