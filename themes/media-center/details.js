@@ -57,7 +57,13 @@
     }
 
     window.icefinMediaCenter.register('#/details', Object.assign({}, base, {
-        mount(root, ctx) {
+        async mount(root, ctx) {
+            // a Live TV channel or programme: program info (programme.js), which the engine's screen leaves to jellyfin-web
+            const id = new URLSearchParams(location.hash.split('?')[1] || '').get('id');
+            let it = null;
+            try { const c = M.client(); it = id ? await c.getItem(c.getCurrentUserId(), id) : null; } catch (e) { it = null; }
+            if (!root.isConnected) return undefined;
+            if (it && (it.Type === 'TvChannel' || it.Type === 'Program') && M.programInfo) { root.mcProgStop = await M.programInfo(root, it); return undefined; }
             const r = base.mount.call(this, root, ctx);
             let n = 0;
             const t = setInterval(() => { if (decorate(root) || ++n > 60) { clearInterval(t); if (M.flyIn && n <= 60) M.flyIn(root); } }, 50);
@@ -65,6 +71,7 @@
         },
         unmount() {
             const r = document.getElementById('icefin-theme-root');
+            if (r && r.mcProgStop) { r.mcProgStop(); r.mcProgStop = null; return undefined; }
             if (M.flyOut) M.flyOut(r);  // Back flies the poster home (motion.js)
             if (r && r.mcClock) { clearInterval(r.mcClock); r.mcClock = null; }
             if (base.unmount) return base.unmount.call(this);
