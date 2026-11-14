@@ -264,6 +264,10 @@
         if (!overlayEl) return false;
         // closing: the screen has its focus back already, so presses go to it (a fast Down after a menu's Move isn't lost)
         if (overlayClosing) return false;
+        // the theme's own use of an action inside its overlay first (a stepper's ◀▶, 9.60): spec.onAction(action, focused)
+        if (overlaySpec && overlaySpec.onAction) {
+            try { if (overlaySpec.onAction(a, overlayEl.querySelector('.icefin-focused'))) return true; } catch (e) { console.error(e); }
+        }
         if (a === 'back') { overlay.close(); return true; }
         if (isDir(a)) {
             const n = nearest(overlayEl, overlayEl.querySelector('.icefin-focused'), a);
