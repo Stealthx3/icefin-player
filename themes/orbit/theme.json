@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "orbit",
   "name": "Orbit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Channels stacked vertically, each a ring of tiles receding to the right behind a flat front tile, the channels above stacking their titles upward; a parallax backdrop and a guide panel over any screen. Green sky over a grey floor, lime tiles.",
   "styles": "styles.css",
   "scripts": [

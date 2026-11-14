@@ -8,7 +8,7 @@
     low-motion cap;
   - right/left move along the row and the focused card keeps the first slot; down/up change row and the focused row
     rises to the top; up from the first row reaches the bar, down returns; Back from a row goes to the bar;
-  - Enter opens jellyfin-web's details page (Marquee's tokens); Classic home shows the stock home; turning the theme
+  - Enter opens its details (9.18: the themed screen, or jellyfin-web's page for a book; Marquee's tokens); Classic home shows the stock home; turning the theme
     off restores the stock UI.
 Layout positions against the reference: clone_layout.py --theme marquee. Screenshots go to --out.
 Usage: python3 theme_marquee.py --app ~/build/src/icefin-player --server jf12 --out ~/r913/jf12
@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+from details_check import DETAILS_OK  # noqa: E402
 
 
 def main():
@@ -131,9 +132,9 @@ def main():
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
-        check("Enter on a card opens the details page, styled by Marquee's tokens",
-              js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim().toLowerCase()") == "#e50914")
+        check("Enter on a card opens its details (themed screen or, for a book, the stock page), styled by Marquee's tokens",
+              (det := js(DETAILS_OK))["ok"]
+              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-accent').trim().toLowerCase()") == "#e50914", json.dumps(det))
         shot("details.png")
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-mq-ready]')", timeout=30)

@@ -14,5 +14,37 @@
     "label": "the focused item's name centred under the pane at y ~887, white, larger than the dim names under the other items",
     "pulse": "none: the rim's brightness is constant while the focus rests (54-58 s)",
     "motion": "the closing row and the strip's slide move together; the opening row's items appear after the slide has started"
-  }
+  },
+  "tolerancePx": 14,
+  "ready": "+(document.querySelector('#icefin-theme-root') || {getAttribute: () => 0}).getAttribute('data-mc-ready') > 0 && !!document.querySelector('.mc-cat.current .mc-tile.icefin-focused')",
+  "states": [
+    {
+      "name": "start",
+      "actions": [],
+      "settleMs": 1200,
+      "note": "the lens's width is the measured 358 only on 16:9 tiles (Continue); a poster keeps 2:3 at the same height, so only y and h are checked",
+      "boxes": {
+        "lens": {"sel": ".mc-cat.current .mc-tile.icefin-focused", "y": 656, "h": 198}
+      },
+      "text": {
+        "current title": {"sel": ".mc-cat.current .mc-cat-title", "x": 331, "cy": 599},
+        "focused label": {"sel": ".mc-cat.current .mc-tile.icefin-focused .mc-label", "cy": 887}
+      }
+    },
+    {
+      "name": "next-category",
+      "actions": [
+        "down"
+      ],
+      "settleMs": 1200,
+      "note": "the categories slide through the fixed line: the new current title and its lens sit where the last ones were",
+      "boxes": {
+        "lens": {"sel": ".mc-cat.current .mc-tile.icefin-focused", "y": 656, "h": 198}
+      },
+      "text": {
+        "current title": {"sel": ".mc-cat.current .mc-cat-title", "x": 331, "cy": 599},
+        "focused label": {"sel": ".mc-cat.current .mc-tile.icefin-focused .mc-label", "cy": 887}
+      }
+    }
+  ]
 }

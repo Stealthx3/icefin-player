@@ -182,9 +182,22 @@ def main():
             show_osd()
             js("window.__osd().querySelector('.btnPause').focus(); true")
             time.sleep(0.3)
+            # A theme that draws its own player (D30: Plaza, Media Center) keeps jellyfin-web's controls hidden as the
+            # fallback, so .focus() doesn't take there (focus stays in the theme's player) and the button would read
+            # unfocused: force :focus on it through DevTools instead, which is the rule this check is about.
+            forced = None
+            if not js("window.__osd().querySelector('.btnPause').matches(':focus')"):
+                page.send("DOM.getDocument", depth=0)
+                obj = page.send("Runtime.evaluate", expression="window.__osd().querySelector('.btnPause')")["result"]["objectId"]
+                forced = page.send("DOM.requestNode", objectId=obj)["nodeId"]
+                page.send("CSS.enable")
+                page.send("CSS.forcePseudoState", nodeId=forced, forcedPseudoClasses=["focus"])
+                time.sleep(0.4)  # the buttons' 150 ms transition
             fill = js("getComputedStyle(window.__osd().querySelector('.btnPause')).backgroundColor")
             wfill = probe("backgroundColor", "var(--icefin-osd-focusFill, var(--icefin-color-focus))")
-            check(f"{tid}: the focused button in the theme's focus fill", fill == wfill, f"{fill} vs {wfill}")
+            check(f"{tid}: the focused button in the theme's focus fill", fill == wfill, f"{fill} vs {wfill}" + (" (:focus forced)" if forced else ""))
+            if forced:
+                page.send("CSS.forcePseudoState", nodeId=forced, forcedPseudoClasses=[])
             # Scrims fade out past the bars instead of ending at their edge (user report: a hard cut-off).
             show_osd()
             sc = json.loads(js("JSON.stringify((() => { const h = [...document.querySelectorAll('.skinHeader.osdHeader')].find(x => x.getClientRects().length) || document.querySelector('.skinHeader.osdHeader'); const hb = h.getBoundingClientRect(), hs = getComputedStyle(h, '::before'); const b = window.__osd().querySelector('.videoOsdBottom'), bb = b.getBoundingClientRect(), bs = getComputedStyle(b, '::before'); return {header: [getComputedStyle(h).backgroundImage, hs.backgroundImage.endsWith('transparent 100%)') || /rgba\\([^)]*, 0\\) 100%\\)$/.test(hs.backgroundImage), parseFloat(hs.bottom)], bar: [getComputedStyle(b).backgroundImage, bs.backgroundImage.endsWith('transparent 100%)') || /rgba\\([^)]*, 0\\) 100%\\)$/.test(bs.backgroundImage), parseFloat(bs.top)]}; })())"))

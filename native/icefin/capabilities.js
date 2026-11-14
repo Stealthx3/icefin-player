@@ -13,6 +13,7 @@
 //   ui.liveTile      a tile cycling content (Next Up, Latest, ...); frozen under reduced or low motion (9.2)
 //   ui.mutedPreview  a muted SDR preview in the page's own video element, never mpv or the audio device (9.2)
 //   ui.userViews     the signed-in user's libraries, once the client is ready (cold start), with a short retry
+//   ui.nextUpQuery   Next Up query options as jellyfin-web's home builds them: the user's cutoff and rewatching (11.1)
 //   ui.parallax      the focused item lifts, tilts and moves a highlight with pointer motion and arrow nudges (9.11)
 //   ui.material      translucent blurred panels from material.* tokens, opaque when the GPU can't hold 60 fps (9.11)
 //   ui.chrome        (9.11) a side rail with collapsedWidth collapses to icons and expands, labelled, while it has focus
@@ -1074,6 +1075,20 @@
         return views;
     }
 
+    // ---- Next Up as jellyfin-web's home asks for it (11.1) ----
+    // The user's "Max days in Next Up" (a cutoff on when the series was last watched; 365 unless set, 0 for none)
+    // and "Rewatching in Next Up", both kept per device by jellyfin-web under "<user id>-<name>"; in-progress episodes
+    // stay in Continue Watching. Without these a theme's Next Up listed series last watched years ago.
+    function nextUpQuery(extra) {
+        const c = window.ApiClient, uid = c && c.getCurrentUserId();
+        const get = (k) => { try { return uid ? localStorage.getItem(`${uid}-${k}`) : null; } catch (e) { return null; } };
+        const n = parseInt(get('maxDaysForNextUp'), 10);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - (n === 0 ? 0 : n || 365));
+        return Object.assign({ UserId: uid, NextUpDateCutoff: cutoff.toISOString().split('T')[0], EnableResumable: false,
+            EnableRewatching: get('enableRewatchingInNextUp') === 'true' }, extra || {});
+    }
+
 
     // ---- stock chrome (9.42): the theme's frame around jellyfin-web's own pages ----
     // jellyfin-web's own pages (sign-in, lists, settings, now playing, ...) keep every function; a theme can frame them
@@ -1210,5 +1225,5 @@
     const initMotion = () => attr('data-icefin-motion', motion.reduced() ? 'low' : 'normal');
     if (document.documentElement) initMotion(); else document.addEventListener('DOMContentLoaded', initMotion);
 
-    T.ui = { motion, pointerFirst, chrome, stockChrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
+    T.ui = { motion, pointerFirst, chrome, stockChrome, pivot, overlay, pagedGrid, carousel3d, liveTile, mutedPreview, userViews, nextUpQuery, parallax, material, cardExpand, guideGrid, keyboard, timePalette, backdrop };
 })();

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "arcade",
   "name": "Arcade",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A controller-first home of a recent row led by a wide hero, feed pills over a row of cards and a bar of button hints; a filterable, sortable library grid, a quick-access panel from the right and an on-screen keyboard. Near-black navy with a light focus ring.",
   "styles": "styles.css",
   "scripts": [

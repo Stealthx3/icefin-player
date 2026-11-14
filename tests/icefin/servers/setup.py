@@ -83,6 +83,26 @@ def libraries(s):
         s.call("POST", f"/Library/VirtualFolders?{q}", {"LibraryOptions": {"EnableTrickplayImageExtraction": True, "EnableLyricsDownload": False}})
 
 
+# The test user's library order (their home settings): Movies, Music, Shows, the order (by name) the theme tests and
+# clone specs were written against. Books, Collections, Photos and the rest came later; sorted by name they put Books
+# first, and a theme's first row turned into books (no preview, no runtime, jellyfin-web's own details page). The
+# rest keep their order after these.
+LIBRARY_ORDER = ["movies", "music", "tvshows"]
+
+
+def library_order(s):
+    """Put the signed-in user's libraries in LIBRARY_ORDER (idempotent; the user's configuration, nothing else)."""
+    me = s.call("GET", "/Users/Me")
+    views = s.call("GET", f"/UserViews?userId={me['Id']}")["Items"]
+    rank = lambda v: LIBRARY_ORDER.index(v.get("CollectionType")) if v.get("CollectionType") in LIBRARY_ORDER else len(LIBRARY_ORDER)
+    want = [v["Id"] for v in sorted(views, key=rank)]  # stable: the rest keep their order
+    if [v["Id"] for v in views] != want:
+        cfg = me["Configuration"]
+        cfg["OrderedViews"] = want
+        s.call("POST", f"/Users/{me['Id']}/Configuration", cfg)
+    return [v["Name"] for v in s.call("GET", f"/UserViews?userId={me['Id']}")["Items"]]
+
+
 def extras(s):
     """A music playlist and a movie collection (PLAN 9.42), once the libraries have been scanned."""
     uid = s.call("GET", "/Users/Me")["Id"]
@@ -202,6 +222,7 @@ def main():
                 break
             except urllib.error.HTTPError:
                 continue
+        library_order(s)
         status[sc["name"]] = {"version": version, "url": s.base, "plugins": final}
         bad = [k for k, v in final.items() if "Active" not in v]
         print(f"setup: {sc['name']} Jellyfin {version}: {len(final) - len(bad)}/{len(final)} plugins active"

@@ -69,7 +69,7 @@
             tiles: [
                 { size: 'large', label: 'continue', live: { fetch: () => safe(client.getResumableItems(uid, { Limit: 8, MediaTypes: 'Video', Fields: FIELDS })), art: (it) => wideArt(client, it) },
                     go: (it) => (it ? details(client, it) : (location.hash = '#/home?icefin=stock')) },
-                { size: 'wide', label: 'next up', live: { fetch: () => safe(client.getNextUpEpisodes({ UserId: uid, Limit: 8, Fields: FIELDS })), art: (it) => wideArt(client, it) },
+                { size: 'wide', label: 'next up', live: { fetch: () => safe(client.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 8, Fields: FIELDS }))), art: (it) => wideArt(client, it) },
                     go: (it) => (it ? details(client, it) : (location.hash = '#/home?icefin=stock')) },
                 ...views.slice(0, 4).map((v) => ({ size: 'small', label: v.Name.toLowerCase(), go: () => { location.hash = libraryHash(client, v); } })),
                 { size: 'wide', label: 'recently added', live: { fetch: () => safe(client.getLatestItems({ userId: uid, Limit: 10, Fields: FIELDS })), art: (it) => wideArt(client, it) },

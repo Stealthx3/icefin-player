@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "tide",
   "name": "Tide",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A horizontal row of category icons crossing a vertical list of items at a fixed focus point, over an animated wave on a gradient whose colour follows the month and the time of day; original line icons.",
   "styles": "styles.css",
   "scripts": [

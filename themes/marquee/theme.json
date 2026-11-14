@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "marquee",
   "name": "Marquee",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A navigation bar along the top and rows of titles: the focused row stands tall at the top with its focused card widened to 16:9, details under it and a muted preview after a dwell; the other rows small and wide below. Black with one red accent.",
   "styles": "styles.css",
   "scripts": [

@@ -90,7 +90,7 @@
         const base = { StartIndex: L.tiles.length, Limit: PAGE, Fields: 'PrimaryImageAspectRatio,ChildCount,OfficialRating,CommunityRating,ProductionYear,RunTimeTicks,ParentId',
             ImageTypeLimit: 1, EnableImageTypes: 'Primary,Thumb', EnableUserData: true };
         if (p.nextUp) {
-            const r = await c.getNextUpEpisodes({ UserId: uid, ParentId: L.parentId, ...base });
+            const r = await c.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ ParentId: L.parentId, ...base }));
             return { items: r.Items || [], total: r.TotalRecordCount || (r.Items || []).length };
         }
         if (p.latest) {

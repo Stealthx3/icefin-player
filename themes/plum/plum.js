@@ -42,7 +42,7 @@
         if (!section.view) {  // Home: the libraries first, then what's in progress and what's next
             const [resume, next] = await Promise.all([
                 safe(client.getResumableItems(uid, { Limit: 12, MediaTypes: 'Video', Fields: FIELDS })),
-                safe(client.getNextUpEpisodes({ UserId: uid, Limit: 12, Fields: FIELDS }))]);
+                safe(client.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 12, Fields: FIELDS })))]);
             const seen = new Set();
             const items = [...resume, ...next].filter((it) => !seen.has(it.Id) && seen.add(it.Id));
             return { cols: 3, wide: true, tiles: [

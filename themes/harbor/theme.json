@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "harbor",
   "name": "Harbor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A persistent left menu, a categories row and shelves of posters over the focused item's fanart, with a zooming focus and an info dialog. Dark menu beside a teal-lit field, cyan focus.",
   "styles": "styles.css",
   "scripts": [
