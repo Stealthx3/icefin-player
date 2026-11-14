@@ -35,11 +35,161 @@ Judged by the six principles: **timing** and **easing** are fine where anything 
 **directing focus** fails on 22 screens with nothing focused; **visual continuity** has nothing between the guide and
 the screens it opens; **clarity** is good in the guide (one lime cell, the info pane says what it is) and absent outside.
 
-The design for the pass (boards on the "Almanac Screens" canvas, Gate 1): the guide's grammar everywhere. Every
+The design for the pass (34 boards on the "Almanac Screens" canvas, https://claude.ai/artifact/VhqvpTKGm29uv2uZE5gUH9, Gate 1): the guide's grammar everywhere. Every
 screen is the info pane over a grid: a library's sections are rows like channels, its items run right like programmes;
 details, settings and search keep the same info pane and rows; options come as a list box; the player gets the
 target's kind of info banner; hints sit in the bottom bar the target has. No logos, icons, fonts, sounds or names from
 the target.
+
+## Gate 1 map: every checklist item (2026-11-14)
+
+Every item below is one of: **board** (drawn on the Almanac Screens canvas, https://claude.ai/artifact/VhqvpTKGm29uv2uZE5gUH9), **tests** (behaviour the build's tests check), or **not in the target** (a reason on the Decisions board or here, for your call at Gate 1). None is missing. Totals: 104 on boards, 30 by tests, 9 not in the target.
+
+| § | Item | Covered by | Where |
+|---|---|---|---|
+| 1.1 | The target's home | board | Home, HomeMusic (Decisions 1: rows of what to watch, the guide a tab) |
+| 1.1 | Home chrome (clock, Settings, Search) | board | Home (clock line; Search and Settings are tabs) |
+| 1.1 | The server's status | board | Home (dot in the clock line), Settings (reachable, Change server), Notices (server lost) |
+| 1.1 | Each library shows what it is | board | Home (Libraries row; Continue and Next up cells show the item), Effects (fallbacks) |
+| 1.1 | A preview or focus state | board | Home, Guide (the info pane says what the lime cell is; the corner preview fades in after 1.5 s) |
+| 1.1 | Sub-views of the home by query | board | Home (one #/home; Libraries row opens each library's own route), Library |
+| 1.1 | The order is the user's | board | HomeOrder |
+| 1.1 | The music capsule | board | HomeMusic (Now playing row and the song at the hint bar's right on every screen) |
+| 1.1 | Exit at the root | board | ExitPanel |
+| 1.2 | A shared frame | board | Home, Library, DetailsMovie, Settings, PrefsFramed (info pane, tabs, rows, hint bar) |
+| 1.2 | A colour per content kind | not in the target | the target is one palette (navy, denim, lime); kinds are told by the row's label and mark (▶ ↻ ● ✦ ★) |
+| 1.2 | Now playing on every framed screen | board | HomeMusic (song at the hint bar's right, every screen) |
+| 1.3 | Every library type on its routes | board | Library, Listing, PhotosBooks, Guide, Search; registration checked by tests |
+| 1.3 | Section tabs | board | Library (a library's sections are its rows) |
+| 1.3 | Drill-downs with Play all and Shuffle | board | Listing (note), DetailsAlbum |
+| 1.3 | Sort and filter, A–Z jump | board | SortFilter, Listing (letters are the channel column) |
+| 1.3 | Grids page like the target | board | Library (a row pages right at its end), Listing (▲▼ letters), MotionPanel (guide pages) |
+| 1.3 | Playlists (New), photos by day, books with a start position | board | MenuDialog (New playlist first), PhotosBooks |
+| 1.3 | Series: Next Up's season first, first unwatched focused | board | DetailsSeries |
+| 1.3 | Continue Watching and Next Up screens | board | Home, Library (rows; ▶ at the row's end opens the full listing) |
+| 1.3 | Search with type filters and keyboard | board | Search (a row per kind) |
+| 1.3 | Empty states | board | Notices |
+| 1.4 | Every item type with every function | board | DetailsMovie, DetailsSeries, DetailsAlbum, Programme, PhotosBooks; functions checked by tests |
+| 1.4 | In the theme's frame, tabs that follow the scroll | board | DetailsSeries (season tabs), DetailsAlbum; rows scroll by whole rows (MotionPanel) |
+| 1.4 | Clear labels | board | DetailsMovie (Resume from 42:10), DetailsSeries |
+| 1.4 | Placeholders | board | Notices (loading sheen), Effects |
+| 1.4 | Pickers as the theme's | board | DetailsMovie (Audio, Subtitles, Version cells open the list box) |
+| 1.4 | Back to the top | tests | Back on a details row below the first returns to Watch first; checked by tests |
+| 1.5 | The theme's own item menu, context-aware | board | ItemOptions |
+| 1.5 | Each dialog it opens | board | MenuDialog, WideDialog |
+| 1.5 | jellyfin-web's leftover dialogs as the theme's | board | MenuDialog (note), Notices |
+| 1.5 | A notice (toast) | board | Notices, MenuDialog |
+| 1.6 | Channels, guide, recordings, schedule | board | Guide, Programme (note), Notices (no guide data) |
+| 1.6 | A programme's sheet with steppers | board | Programme |
+| 1.6 | Previews that fall back | board | Guide (muted live corner), Notices |
+| 1.6 | Connecting dialog and its error | board | Notices (server lost) |
+| 1.7 | Now playing, Queue, Lyrics | board | NowPlaying |
+| 1.7 | Instant mix | board | DetailsAlbum |
+| 1.8 | The theme's controls | board | Player |
+| 1.8 | Pickers as the theme's cards | board | PlayerExtras (options list box) |
+| 1.8 | Skip prompts and Up next | board | PlayerExtras |
+| 1.8 | Live TV in the player | board | Player (note), Hints (◀▶ channel) |
+| 1.8 | The web fallback (ui.osd) | tests | osd tokens from Player's look; checked by tests |
+| 1.8 | A readability shade | board | Player (banner gradient) |
+| 1.8 | Photos and books | board | PhotosBooks |
+| 1.9 | Play on and Watch together | board | PlayOn |
+| 1.10 | The settings hub | board | Settings |
+| 1.10 | Client Settings in the frame | board | Settings (This player row), PrefsFramed |
+| 1.10 | Settings › Home | board | HomeOrder |
+| 1.10 | The preference pages | board | PrefsFramed (Decisions 3) |
+| 1.10 | The user's menu (You) | board | Settings (You row), Profile |
+| 1.10 | Profile and Quick Connect approve | board | Profile, QuickConnect |
+| 1.11 | Sign in | board | SignIn |
+| 1.11 | Choose and add a server | board | SignIn (Servers tab, note) |
+| 1.11 | Nothing before sign-in; stock without a theme | tests | checked by tests |
+| 1.12 | A frame around every page not drawn | board | PrefsFramed |
+| 1.12 | jellyfin-web's chrome hidden, a band | board | PrefsFramed |
+| 1.12 | The page's ground on its own layer | tests | build |
+| 1.12 | Content clears the frame | tests | build; the lab walk's cut-off audit |
+| 1.12 | Fields, buttons, switches, lists restyled | board | PrefsFramed, WideDialog |
+| 1.12 | The on-screen keyboard | board | Search |
+| 1.12 | Dashboard and plugin pages stay stock | tests | checked by tests |
+| 1.12 | A way out to stock | board | Settings (This player › Theme) |
+| 2.1 | Pad reaches everything the mouse can | tests | reach walk (lab) |
+| 2.1 | Reached by presses alone | tests | reach walk (lab) |
+| 2.1 | Only the visible page's items take focus | tests | build (rows window) |
+| 2.1 | Grids page at their edges | board | Library, MotionPanel (guide half-hours, rows by whole rows) |
+| 2.1 | Modal cards hold focus | tests | the list box; tests |
+| 2.1 | Framed pages as one screen | tests | reach walk |
+| 2.2 | Focus always shown | board | every board (one lime cell); tests |
+| 2.2 | Room for the glow | not in the target | the target's focus is a fill, not a glow; nothing to clear (cut-off audit still runs) |
+| 2.2 | Glow over an engine shadow | not in the target | as above: lime fill, no glow |
+| 2.2 | Hover apart from focus | tests | pointer: hover moves focus (the target has no separate hover); tests |
+| 2.3 | The focused item's caption | board | every screen's info pane (Home, Library, Guide, DetailsSeries) |
+| 2.3 | A name pill under the focused item | not in the target | the info pane names the lime cell at the top of the screen |
+| 2.3 | Page-aware controller hints | board | Hints (every row kind, remote and pad words), every board's hint bar |
+| 2.4 | Back, innermost first | board | MotionScreens, MotionPanel, ExitPanel; tests |
+| 2.4 | Menu acts on the focused item | board | ItemOptions, Programme |
+| 2.4 | Play/Pause acts on the focused item | board | Home, Library, Listing hints; tests |
+| 2.4 | Search and Home from anywhere | board | Home (Search tab), Hints; the Home key goes to #/home (tests) |
+| 2.4 | Steppers | board | SortFilter, Programme, PlayerExtras |
+| 2.4 | Destructive actions confirm | board | ExitPanel, ItemOptions (Delete…), Profile (Sign out) |
+| 2.4 | Focus comes back where it was | board | MotionScreens (Back returns to the cell); tests |
+| 2.5 | Hover moves focus | tests | pointer; tests |
+| 2.5 | Clicking outside a sheet closes it | tests | the list box's dim closes it; tests |
+| 2.5 | Pointer seeking | board | Player, NowPlaying |
+| 2.5 | The physical keyboard | board | Search, QuickConnect |
+| 2.5 | Text fields open the keyboard | board | Search, WideDialog, Profile |
+| 2.6 | One reorder model | board | HomeOrder, NowPlaying (the lift) |
+| 2.6 | Reorder by pointer | board | HomeOrder (note) |
+| 2.7 | Any input brings the controls back | board | Player (note); tests |
+| 2.7 | ◀▶ on the focused time line | board | Player, NowPlaying |
+| 2.7 | A new skip prompt takes focus | board | PlayerExtras |
+| 3 | A recognisable focus animation | board | MotionPanel (the lime fill moves), MotionTimings |
+| 3 | Page turns | board | MotionPanel (guide half-hour), MotionScreens (tab to tab) |
+| 3 | The preview opens from the item | board | MotionScreens (rows out from the lit cell, details in) |
+| 3 | Tabs move toward the tab picked | board | MotionScreens (rows slide the way you moved) |
+| 3 | The caption cross-fades | board | MotionPanel, MotionTimings (info pane) |
+| 3 | Shared-element flights | not in the target | the target cuts between screens; continuity is the fixed frame and the lit cell kept to last (MotionScreens) |
+| 3 | Sheets and dialogs leave through the engine | board | MotionPanel |
+| 3 | Side panels slide from their edge | board | MotionPanel (list box from the right) |
+| 3 | Caption and hints step back under a sheet | board | ItemOptions (dim), MotionPanel |
+| 3 | Now playing slides in and out | board | MotionTimings (notice and banner timings), HomeMusic |
+| 3 | Player chrome fades and slides | board | MotionPanel, MotionTimings (banner) |
+| 3 | Progress lines, lyrics, smooth scrolls | board | NowPlaying, MotionTimings |
+| 3 | Ambient loops on decoration only | board | Notices (loading sheen only) |
+| 3 | Low motion turns all of it off | board | MotionScreens, MotionTimings |
+| 4 | A signature ground | board | Effects (now-line sweep at startup), every board's navy gradient |
+| 4 | Item framing | board | DetailsMovie (poster and corner backdrop) |
+| 4 | Reflections | not in the target | none in the target |
+| 4 | Fade masks | board | Player (banner), MotionScreens (rows masked under the tabs) |
+| 4 | Original animated illustrations | not in the target | none in the target |
+| 4 | Live tiles | board | Guide (the muted live channel in the corner) |
+| 4 | Object metaphors | not in the target | none in the target |
+| 4 | A muted preview | board | Guide (ui.mutedPreview) |
+| 4 | Fallbacks for missing pictures | board | Notices, Effects |
+| 4 | Custom chrome geometry | board | Guide (reference geometry: pane, tabs, channel column) |
+| 4 | Glows on progress and now | board | Programme, Guide (the red now-line), NowPlaying |
+| 4 | A readability shade | board | Player |
+| 5 | Five UI sounds | board | Effects |
+| 5 | Each sound on its action | board | Effects |
+| 5 | A startup jingle and an ambient loop | board | Effects, Decisions 4 (soundboard first) |
+| 5 | Jingles where the target has them | not in the target | the target has none beyond startup |
+| 5 | The ambient loop waits | board | Effects (opt-in, ducks under playback) |
+| 5 | Client Settings apply | tests | tests |
+| 6 | theme.json complete | tests | build |
+| 6 | Every colour token, contrast | tests | icefin-hooks |
+| 6 | Shape tokens | board | every board (square cells, 2 px tab corners); build |
+| 6 | The fallback player's tokens | tests | build |
+| 6 | Type | board | every board (Noto Sans 400/600/700) |
+| 6 | Geometry from the reference | tests | clone_layout.py --theme almanac (references/almanac.json) |
+| 6 | Original illustrations and icons only | board | Effects, Decisions (no target assets) |
+| 7 | Nothing runs past the window | tests | lab walk cut-off audit |
+| 7 | 16:9, wider, 4K | tests | build; tests |
+| 7 | Custom CSS and plugins | tests | tests |
+| 7 | The theme's overlay use is its own | tests | tests |
+| 7 | The engine stays theme-agnostic | tests | theme lint |
+| 8 | theme_almanac.py and clone_layout | tests | to update in the build |
+| 8 | A reach walk | tests | lab walk in Verify |
+| 8 | A polish test | tests | almanac_pass.py, to write |
+| 8 | Player, menu, music, sign-in, framed pages | tests | almanac_pass.py groups |
+| 8 | Polish tests | tests | in the lab (this pass) |
+| 8 | A lab walk and Gate 2 | tests | Verify and Gate 2 |
 
 ## 1. Themed elements: screens and surfaces
 
