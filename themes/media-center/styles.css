@@ -776,3 +776,24 @@ html[data-icefin-stock]:not([data-icefin-dashboard]) #icefin-stock-chrome::after
   color: rgb(var(--icefin-color-text-channel) / 0.82); border: 0.14vh dashed rgb(var(--icefin-color-glass-channel) / 0.45); border-radius: 0.28vh; }
 .mc-lib-empty::before { content: ''; flex: none; width: 5vh; height: 4vh; border: 0.2vh solid rgb(var(--icefin-color-focus-channel) / 0.85); border-radius: 0.28vh;
   background: linear-gradient(180deg, transparent 32%, rgb(var(--icefin-color-focus-channel) / 0.85) 32%, rgb(var(--icefin-color-focus-channel) / 0.85) 38%, transparent 38%); }
+
+/* ---- Profile, Quick Connect approve, forgot password (9.60, you.js; the Profile and QuickConnectApprove boards) ---- */
+.mc-you-crumb { position: absolute; left: 21.67vh; top: 14.4vh; font-size: 2.5vh; color: var(--icefin-color-textSecondary); }
+.mc-you-side { position: absolute; left: 21.67vh; top: 22vh; width: 33.3vh; display: flex; flex-direction: column; gap: 1.4vh; }
+.mc-you-side .mc-btn { height: 6.4vh; }
+.mc-you-main { position: absolute; left: 34.4vw; right: 6vw; top: 21.7vh; display: flex; gap: 5.5vw; align-items: flex-start; flex-wrap: wrap; }
+.mc-you-who { width: 32vh; text-align: center; }
+.mc-you-pic { width: 27.8vh; height: 27.8vh; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11.7vh; font-weight: 300;
+  background: center / cover no-repeat, linear-gradient(160deg, var(--icefin-color-accent), var(--icefin-color-surface));
+  box-shadow: 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.6), 0 1.7vh 4.2vh rgb(0 0 0 / 0.45); }
+.mc-you-name { font-size: 3.9vh; margin-top: 1.9vh; }
+.mc-you-sub { font-size: 2.2vh; color: var(--icefin-color-textSecondary); }
+.mc-you-form { width: 58vh; max-width: 100%; }
+.mc-you-head { font-size: 3.9vh; width: 100%; }
+.mc-you-text { font-size: 2.6vh; line-height: 1.5; color: rgb(var(--icefin-color-text-channel) / 0.82); margin-top: 1.4vh; width: 100%; }
+.mc-you-msg { margin: 1.9vh 0 0; width: 100%; }
+.mc-qc-row { display: flex; gap: 1.4vh; align-items: center; margin-top: 3.9vh; width: 100%; }
+.mc-qc-gap { width: 1.7vh; }
+.mc-qc-box { width: 8.6vh; height: 10.6vh; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 5.6vh; font-weight: 300;
+  border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.55); background: rgb(var(--icefin-color-glass-channel) / 0.08); outline: none; cursor: text; }
+.mc-qc-box.icefin-focused { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass); box-shadow: 0 0 2.5vh rgb(var(--icefin-color-focus-channel) / 0.7); }
