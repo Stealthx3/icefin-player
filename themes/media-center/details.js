@@ -60,11 +60,12 @@
         mount(root, ctx) {
             const r = base.mount.call(this, root, ctx);
             let n = 0;
-            const t = setInterval(() => { if (decorate(root) || ++n > 60) clearInterval(t); }, 50);
+            const t = setInterval(() => { if (decorate(root) || ++n > 60) { clearInterval(t); if (M.flyIn && n <= 60) M.flyIn(root); } }, 50);
             return r;
         },
         unmount() {
             const r = document.getElementById('icefin-theme-root');
+            if (M.flyOut) M.flyOut(r);  // Back flies the poster home (motion.js)
             if (r && r.mcClock) { clearInterval(r.mcClock); r.mcClock = null; }
             if (base.unmount) return base.unmount.call(this);
         }

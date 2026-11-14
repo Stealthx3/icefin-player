@@ -118,7 +118,8 @@
             }
             await more();
             if (!W || W.root !== root) return;
-            if (W.tiles.length) T.ctx.focus(W.tiles[0]);
+            const home = Mc && Mc.flyHome ? Mc.flyHome((id) => W.tiles.find((x) => x.dataset.id === id) || null) : null;
+            if (home) focusAt(W.tiles.indexOf(home), T.ctx); else if (W.tiles.length) T.ctx.focus(W.tiles[0]);
             root.setAttribute('data-mc-ready', '1');
         },
         unmount() {

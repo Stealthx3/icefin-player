@@ -71,6 +71,7 @@
             t.append(art);
         }
         t.mcItem = it;
+        t.style.setProperty('--mc-col', String(Math.min(12, Math.floor(L.tiles.length / L.layout.rows))));
         t.addEventListener('click', () => {
             T.ctx.sound('select');
             if (group) { L.filter = { name: it.Name, key: L.pivot.group === 'studios' ? 'StudioIds' : 'GenreIds', id: it.Id }; reload(); return; }
@@ -162,6 +163,10 @@
         L.grid.textContent = '';
         L.grid.style.transform = '';
         L.grid.dataset.group = L.pivot.group && !L.filter ? '1' : '';
+        L.grid.style.setProperty('--mc-dir', String(L.dir || 1));
+        L.grid.classList.remove('mc-pivot-in');
+        void L.grid.offsetWidth;
+        L.grid.classList.add('mc-pivot-in');
         L.info.textContent = '';
         L.crumb.textContent = L.filter ? `${L.filter.name} · ` : '';
         more().then(() => { if (L && L.tiles[0]) T.ctx.focus(L.tiles[0]); });
@@ -174,9 +179,7 @@
         const left = tr.left - gr.left;
         const target = Math.min(0, Math.max(-(L.grid.scrollWidth - view.width), view.width * 0.3 - left));
         if (left + cur < view.width * 0.05 || left + tr.width + cur > view.width * 0.8) L.grid.style.transform = `translateX(${Math.round(target)}px)`;
-        const it = t.mcItem;
-        L.info.textContent = '';
-        L.info.append(el('div', 'mc-lib-info-name', it.Name), el('div', 'mc-lib-info-facts', facts(it)));
+        L.caption(t.mcItem);
         count();
         if (L.tiles.length - L.tiles.indexOf(t) < L.layout.rows * 6) more();
     }
@@ -263,6 +266,19 @@
         } catch (e) { /* the counts are extra */ }
     }
 
+    // The pivot row slides so the picked word stands first (the target's own move); the words before it fade back and
+    // never leave the window's left edge.
+    function shiftPivot(pivot, p, now) {
+        const items = [...pivot.querySelectorAll('.mc-pivot-item:not(.mc-lib-sort)')];
+        const k = items.indexOf(p);
+        if (k < 0) return;
+        const dx = Math.min(p.offsetLeft - items[0].offsetLeft, pivot.getBoundingClientRect().left - innerHeight * 0.02);
+        if (now) pivot.classList.add('mc-pivot-still');
+        pivot.style.setProperty('--mc-shift', `${-Math.max(0, Math.round(dx))}px`);
+        items.forEach((x, i) => x.classList.toggle('mc-pivot-past', i < k));
+        if (now) requestAnimationFrame(() => pivot.classList.remove('mc-pivot-still'));
+    }
+
     function screenFor(kindOf) {
         return {
             async mount(root) {
@@ -286,6 +302,8 @@
                 const countEl = el('div', 'mc-count');
                 root.append(pivot, body, info, countEl);
                 L = { root, kind, layout: kind.layout, parentId, pivot: null, filter: null, fixed: found.fixed || null, tiles: [], grid, body, info, count: countEl, crumb, chrome, gen: 0 };
+                L.caption = M.caption ? M.caption(info, (e, it) => e.append(el('div', 'mc-lib-info-name', it.Name), el('div', 'mc-lib-info-facts', facts(it))))
+                    : (it) => { info.textContent = ''; info.append(el('div', 'mc-lib-info-name', it.Name), el('div', 'mc-lib-info-facts', facts(it))); };
                 if (kind.list) listHead(root, found.fixed, kind.what);
                 L.io = new IntersectionObserver((entries) => {
                     for (const e of entries) {
@@ -302,9 +320,13 @@
                     p.type = 'button';
                     p.addEventListener('click', () => {
                         T.ctx.sound('select');
-                        pivot.querySelectorAll('.mc-pivot-item').forEach((x) => x.classList.toggle('on', x === p));
+                        const items = [...pivot.querySelectorAll('.mc-pivot-item:not(.mc-lib-sort)')];
+                        const was = items.findIndex((x) => x.classList.contains('on'));
+                        items.forEach((x) => x.classList.toggle('on', x === p));
+                        L.dir = items.indexOf(p) >= was ? 1 : -1;
                         L.pivot = spec;
                         L.filter = null;
+                        shiftPivot(pivot, p);
                         reload();
                     });
                     pivot.append(p);
@@ -317,10 +339,12 @@
                 L.sortBtn.setAttribute('aria-label', 'Sort and filter');
                 L.sortBtn.addEventListener('click', () => { T.ctx.sound('select'); sortPanel(); });
                 pivot.append(L.sortBtn);
+                requestAnimationFrame(() => { const on = pivot.querySelector('.mc-pivot-item.on'); if (on) shiftPivot(pivot, on, true); });
                 root.addEventListener('icefin-focus', (e) => { if (L && L.tiles.includes(e.target)) follow(e.target); });
                 await more();
                 if (!L || L.root !== root) return;
-                if (L.tiles[0]) T.ctx.focus(L.tiles[0]);
+                const home = M.flyHome ? M.flyHome((id) => L.tiles.find((x) => x.mcItem && x.mcItem.Id === id) || null) : null;
+                if (home || L.tiles[0]) T.ctx.focus(home || L.tiles[0]);
                 root.setAttribute('data-mc-ready', '1');
             },
             onBack() {
