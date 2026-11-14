@@ -25,6 +25,7 @@
             title: item.Name || 'Item', path: 'Options',
             hints: [['OK', 'choose'], ['Back', 'close']],
             render(body) {
+                if (where && where.sortWith && D.sortRow) body.append(D.sortRow(where.sortWith), el('div', 'td-rule'));
                 let group = null;
                 for (const a of m.actions) {
                     if (group !== null && a.group !== group) body.append(el('div', 'td-rule'));
