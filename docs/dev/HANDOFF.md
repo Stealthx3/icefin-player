@@ -25,7 +25,7 @@
 
 ## Open questions for the user
 - ~~App ID owner/domain~~ settled: D13 (`io.github.stealthx3.IcefinPlayer`). IceSuite branding?
-- Rebase onto 2.1.0 early if it releases, or wait for the Phase 10 sync?
+- Rebase onto 2.1.0? Settled by D33: no upstream merge before 1.0; break away after it.
 - Is HDR on NVIDIA a 1.0 requirement or best effort (after spike 2.8)?
 - Is refresh-rate matching on KDE required for 1.0?
 - When does the post-1.0 decoupling start?

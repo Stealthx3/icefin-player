@@ -4,6 +4,9 @@
 // - Syncs the choice with the server: DisplayPreferences "usersettings", client "icefin-player", custom pref
 //   "icefin.theme" = {"schema":1,"theme","preset","scheme","timestamp"} (scheme since 9.20; older entries have none). The newest timestamp wins, in either direction.
 // - Stands down when the server's theme plugin runtime is present: its settings API owns the choice then.
+// - Only with Client Settings -> Theme -> Sync Theme With Account on (theme.sync, off by default, alpha feedback):
+//   off, each device keeps its own choice (still per user on that device), so devices on one account can differ.
+//   Turning it on syncs at once, the newest choice winning as usual.
 (function () {
     'use strict';
     if (window.icefinThemeSync || !window.apiPromise) return;
@@ -64,24 +67,33 @@
     }
 
     const queue = (job) => { busy = busy.then(job).catch((e) => console.error('icefinThemeSync:', e)); return busy; };
+    const enabled = () => { try { return !!(window.jmpInfo && window.jmpInfo.settings && window.jmpInfo.settings.theme && window.jmpInfo.settings.theme.sync); } catch (e) { return false; } };
 
     window.icefinThemeSync = { user: () => user, synced: () => synced, idle: () => busy };
 
     window.apiPromise.then((api) => {
         if (!api.theme || !api.theme.setUser) return;
         // jellyfin-web has no stable sign-in event across versions: watch the current user.
+        let wasOn = enabled();
         setInterval(() => {
             if (window.icefinPluginRuntime) return;
             const c = client();
             const uid = c ? c.getCurrentUserId() : null;
-            if (!uid || uid === user) return;
-            user = uid;
-            synced = 0;
-            queue(() => syncUser(api, c, uid));
+            const on = enabled();
+            if (!uid || (uid === user && on === wasOn)) return;
+            const userChanged = uid !== user;
+            wasOn = on;
+            if (userChanged) {
+                user = uid;
+                synced = 0;
+                // This device's own choice for this user, whether or not the account syncs.
+                queue(() => qt(api.theme.setUser, uid));
+            }
+            if (on) queue(() => syncUser(api, c, uid));
         }, 1000);
         api.theme.changed.connect(() => {
             const c = client();
-            if (!c || !user || window.icefinPluginRuntime) return;
+            if (!c || !user || window.icefinPluginRuntime || !enabled()) return;
             const uid = user;
             queue(() => push(api, c, uid));
         });

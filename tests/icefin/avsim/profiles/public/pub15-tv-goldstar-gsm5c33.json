@@ -1,0 +1,25 @@
+{
+  "description": "Goldstar LG ULTRAGEAR+ (tv), from the linuxhw EDID collection: Digital/Goldstar/GSM5C33/4CCD4AB1B5CD (CC BY 4.0); 68 EDIDs share this audio capability set",
+  "monitor_name": "LG ULTRAGEAR+",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        96000,
+        192000
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "pcm",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Goldstar/GSM5C33/4CCD4AB1B5CD"
+}

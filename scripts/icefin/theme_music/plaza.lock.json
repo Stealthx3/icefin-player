@@ -1,0 +1,37 @@
+{
+ "files": {
+  "ambient": "cd4c5bf0fb1984cb02739311fd234e653584c803dff68bb89848986ce64c326a",
+  "books": "bc6501b172e56afb180564cf17d3d185065d450fedfe0566a98f658c232f5bdc",
+  "boxsets": "ec4e8ad3d982f83e2b7ced701cf5ff13c1de7db5e95f12668adb0d017e1fc583",
+  "folder": "d128ce549867397cd2d44c2f8c177c2dc7fcf568a676f66682588595f4b43edd",
+  "homevideos": "64d2c36e68acb39a22824f44e6dbf6bcbf7ca4dad3fdd2dde940b076e8f23282",
+  "livetv": "2c9484c311d25468bba2fe6da5ebf656505819d083741f7245fb02bb9cc232ca",
+  "movies": "2ba1dd3f01a0fbee5e3055b479e87af9f47d9a66a715ec60f104f936b2d04fed",
+  "music": "519ac6d2427aff88e04ea40f9f065b30d8dbd0ba235f35f54c32d6e66390346d",
+  "nextup": "65da9cc30ebdf515f8f56016eda5db21c914f653395c6673ba88a89d860a82cf",
+  "photos": "e687b7cb45f67c4a48d3911306eb7eb3062985361440c2dc96e55f44f9c699bf",
+  "playlists": "7c82094b435f1eda5960e9a685c1f472def97c01165dedf932ba8ca1205f2d67",
+  "resume": "da2d0b0f1cf577b4446359b8873eaee2157da6435695a7252fd3c50362c21034",
+  "startup": "963488900cc19139a0484974ec2af73cdcba00dea88af83895286759284559f8",
+  "tvshows": "e5f19863f4e0c00977ba80ac786506034b553a3fb923c7631b00d7939490f035"
+ },
+ "music": {
+  "ambient": "music/ambient.ogg",
+  "jingles": {
+   "books": "music/books.ogg",
+   "boxsets": "music/boxsets.ogg",
+   "folder": "music/folder.ogg",
+   "homevideos": "music/homevideos.ogg",
+   "livetv": "music/livetv.ogg",
+   "movies": "music/movies.ogg",
+   "music": "music/music.ogg",
+   "nextup": "music/nextup.ogg",
+   "photos": "music/photos.ogg",
+   "playlists": "music/playlists.ogg",
+   "resume": "music/resume.ogg",
+   "tvshows": "music/tvshows.ogg"
+  },
+  "startup": "music/startup.ogg"
+ },
+ "recipes": "c6219ad8cdf2bfa7c8a8008dfbc480dada2f8831973a0f8de11793731efc14dc"
+}

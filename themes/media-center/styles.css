@@ -67,16 +67,15 @@ html[data-icefin-motion="low"] .mc-tile, html[data-icefin-motion="low"] .mc-tile
 .mc-now { position: absolute; right: 4.5vw; bottom: 5vh; display: flex; gap: 1em; align-items: center; padding: 0.8em 1.2em;
   border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surfaceRaised); box-shadow: 0 0 1.5em var(--icefin-color-focusGlow); }
 .mc-now[hidden] { display: none; }
-.mc-now small { display: block; opacity: 0.7; }
+.mc-now small { display: block; opacity: 0.7; font-size: 1.7vh; letter-spacing: 0.04em; }
 
 html[data-icefin-backdrop] .mc-field { display: none; }
 
 /* Poster wall (wall.js): seven across; the grid slides so the focused row stays near the top. */
-.mc-wall-head { position: absolute; left: 4.5vw; right: 4.5vw; top: 4vh; display: flex; align-items: baseline; gap: 1.2em; }
-.mc-wall-title { font-size: 2.4em; font-weight: 300; }
+.mc-wall-head { position: absolute; left: 21.67vh; right: 4.06vw; top: 14.4vh; display: flex; align-items: baseline; gap: 1.2em; font-size: 2.5vh; font-weight: 300; }
 .mc-wall-count, .mc-wall-sort { opacity: 0.6; }
 .mc-wall-sort { margin-left: auto; }
-.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 15vh; bottom: 0; overflow: hidden; }
+.mc-wall-body { position: absolute; left: 4.5vw; right: 4.5vw; top: 19vh; bottom: 0; overflow: hidden; }
 .mc-wall { display: grid; grid-template-columns: repeat(7, 1fr); column-gap: 1.6vw; row-gap: 4.5vh; padding: 1.2em 0.6em;
   transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
 .mc-poster { width: auto; height: auto; aspect-ratio: 2 / 3; transition-property: transform, opacity, box-shadow; }  /* the wall sizes posters by its columns */
@@ -100,3 +99,725 @@ html[data-icefin-backdrop] .mc-field { display: none; }
 .icefin-details .icefin-d-card.icefin-focused { transform: scale(1.1); }
 .icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: inset 0 0.2vh 0 rgb(var(--icefin-color-glass-channel) / 0.6), 0 0 0 0.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.6),
   0 1.4vh 2.8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+
+/* ---- Page chrome (kit.js, 9.46), from the design canvas at 1280x720, in vh so it keeps its proportions:
+   Back 6.4vh and the larger Home 8.06vh (the server's icon, ui.brand), 2.92vh from the left edge and the same 2.92vh
+   from Home to the title (the user: equal spacing), the title in light lower case, the clock at the top right. ---- */
+.mc-nav { position: absolute; left: 2.92vh; top: 5vh; display: flex; align-items: center; gap: 1.39vh; z-index: 3; }
+.mc-round { width: 6.4vh; height: 6.4vh; border-radius: 50%; padding: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.6); color: var(--icefin-color-text); cursor: pointer; overflow: hidden;
+  background: radial-gradient(circle at 50% 28%, rgb(var(--icefin-color-glass-channel) / 0.5), rgb(var(--icefin-color-glass-channel) / 0.06) 62%); }
+.mc-round svg { width: 2.8vh; height: 2.8vh; }
+.mc-round-home { width: 8.06vh; height: 8.06vh; margin: -0.83vh 0; border-color: rgb(var(--icefin-color-text-channel) / 0.85);
+  background: radial-gradient(circle at 50% 28%, rgb(var(--icefin-color-focus-channel) / 0.95), var(--icefin-color-accent) 58%, var(--icefin-color-accentStrong)); }
+.mc-brand-icon { width: 4.6vh; height: 4.6vh; object-fit: contain; }
+.mc-brand-initial { font-size: 3.6vh; font-weight: 400; color: var(--icefin-color-onAccent); }
+.mc-round.icefin-focused, .mc-round:hover { box-shadow: 0 0 0 0.3vh var(--icefin-color-focus), 0 0 2.4vh 0.6vh var(--icefin-color-focusGlow); outline: none; }
+.mc-title { position: absolute; left: 21.67vh; top: 4.72vh; font-size: 6.1vh; font-weight: 300; letter-spacing: -0.02em; white-space: nowrap; line-height: 1.2; z-index: 2; }
+.mc-clock { position: absolute; right: 4.06vw; top: 4.2vh; font-size: 3.6vh; font-weight: 300; opacity: 0.9; z-index: 2; }
+
+/* Buttons and list rows: resting glass, focus a glossy light-blue bar. */
+.mc-btn { height: 6.7vh; padding: 0 3.3vh; display: flex; align-items: center; font: inherit; font-size: 3.05vh; font-weight: 300; color: var(--icefin-color-text); text-align: left;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.18); border-radius: 0.28vh; box-sizing: border-box; cursor: pointer; }
+.mc-btn.icefin-focused, .mc-btn:hover, .mc-li.icefin-focused, .mc-pivot-item.icefin-focused {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%);
+  border-color: rgb(var(--icefin-color-glass-channel) / 0.9); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); color: var(--icefin-color-onAccent);
+  text-shadow: 0 0.14vh 0.28vh rgb(var(--icefin-color-glassEdge-channel) / 0.65); outline: none; }
+.mc-li { min-height: 6.1vh; display: flex; align-items: center; gap: 1.7vh; padding: 0 1.9vh; font-size: 2.7vh; border-radius: 0.28vh; box-sizing: border-box; cursor: pointer; border: 0.14vh solid transparent; }
+.mc-li-value { margin-left: auto; font-size: 2.4vh; opacity: 0.85; white-space: nowrap; }
+.mc-radio { width: 3.3vh; height: 3.3vh; border-radius: 50%; border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.7); box-sizing: border-box; flex: none; display: flex; align-items: center; justify-content: center; }
+.mc-radio.on::after { content: ''; width: 1.4vh; height: 1.4vh; border-radius: 50%; background: currentColor; }
+.mc-pivot { display: flex; gap: 3.6vh; }
+.mc-pivot-item { font: inherit; font-size: 3.3vh; font-weight: 300; background: none; border: 0.14vh solid transparent; color: rgb(var(--icefin-color-text-channel) / 0.5); padding: 0.4vh 1vh; border-radius: 0.28vh; cursor: pointer; }
+.mc-pivot-item.on { color: var(--icefin-color-text); }
+.mc-rule { height: 0.14vh; background: var(--icefin-color-divider); margin: 1.9vh 0 1.7vh; }
+.mc-note { font-size: 2.1vh; opacity: 0.6; margin: 2.5vh 1.9vh 0; line-height: 1.45; }
+.mc-sec { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--icefin-color-focus); font-weight: 400; margin: 1.9vh 0 0.8vh; }
+
+/* A side panel from the right (menus, pickers, sort and filter) and a band across the screen (questions). */
+.mc-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 36.7vw; z-index: 6; padding: 4.7vh 4.7vh; box-sizing: border-box; overflow: auto;
+  background: linear-gradient(90deg, rgb(var(--icefin-color-background-channel) / 0.9), rgb(var(--icefin-color-surface-channel) / 0.97));
+  border-left: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: -4vh 0 8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-dim { position: absolute; inset: 0; background: rgb(var(--icefin-color-glassEdge-channel) / 0.55); z-index: 7; }
+.mc-band-dialog { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); min-height: 38vh; z-index: 8; display: flex; gap: 6vw; padding: 5.5vh 6vw 5.5vh 21.67vh; box-sizing: border-box;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.96), rgb(var(--icefin-color-surface-channel) / 0.96));
+  border-top: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); border-bottom: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); box-shadow: 0 0 11vh rgb(var(--icefin-color-glassEdge-channel) / 0.7); }
+.mc-band-body { flex: 1; max-width: 50vw; }
+.mc-band-title { font-size: 5.3vh; font-weight: 300; }
+.mc-band-text { font-size: 2.9vh; opacity: 0.85; margin-top: 2vh; line-height: 1.45; }
+.mc-band-note { font-size: 2.2vh; opacity: 0.6; margin-top: 2.5vh; }
+.mc-band-choices { width: 19.5vw; display: flex; flex-direction: column; gap: 1.4vh; }
+
+/* ---- Player controls (player.js, ui.player): over the video, transparent; scrims top and bottom fade in with the
+   controls; the transport is a cluster of round glass buttons at the bottom right, the title and seek bar at the left. */
+#icefin-theme-root.mc-player { color: var(--icefin-color-text); font-weight: 300; }
+.mc-player .mc-p-scrim-top, .mc-player .mc-p-scrim-bottom, .mc-player .mc-p-top, .mc-player .mc-p-bottom { opacity: 0; transition: opacity 250ms; pointer-events: none; }
+.mc-player.mc-p-up .mc-p-scrim-top, .mc-player.mc-p-up .mc-p-scrim-bottom, .mc-player.mc-p-up .mc-p-top, .mc-player.mc-p-up .mc-p-bottom { opacity: 1; pointer-events: auto; }
+.mc-p-scrim-top { position: absolute; left: 0; right: 0; top: 0; height: 22vh; background: linear-gradient(180deg, rgb(var(--icefin-color-glassEdge-channel) / 0.75), transparent); }
+.mc-p-scrim-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 32vh; background: linear-gradient(180deg, transparent, rgb(var(--icefin-color-background-channel) / 0.85) 40%, rgb(var(--icefin-color-surface-channel) / 0.95)); }
+.mc-p-bottom { position: absolute; left: 21.67vh; right: 4.06vw; bottom: 4vh; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; row-gap: 2.4vh; align-items: end; }
+.mc-p-meta { min-width: 0; }
+.mc-p-title { font-size: 4.2vh; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-p-logo { max-height: 9vh; max-width: 32vw; object-fit: contain; object-position: left bottom; display: block; }
+.mc-p-sub { font-size: 2.4vh; opacity: 0.78; margin-top: 0.6vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-p-transport { display: flex; align-items: center; gap: 1.4vh; }
+.mc-p-gap { width: 1.9vh; }
+.mc-tb { width: 7.2vh; height: 7.2vh; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--icefin-color-text); box-sizing: border-box;
+  border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.65);
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-glass-channel) / 0.42), rgb(var(--icefin-color-accent-channel) / 0.25) 55%, rgb(var(--icefin-color-glassEdge-channel) / 0.6)); }
+.mc-tb svg { width: 3vh; height: 3vh; }
+.mc-tb-big { width: 9.2vh; height: 9.2vh; }
+.mc-tb-big svg { width: 3.9vh; height: 3.9vh; }
+.mc-tb.icefin-focused, .mc-tb:hover { box-shadow: 0 0 0 0.28vh var(--icefin-color-glass), 0 0 3vh 0.6vh var(--icefin-color-focusGlow); outline: none;
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-glass-channel) / 0.95), rgb(var(--icefin-color-accent-channel) / 0.9) 55%, var(--icefin-color-accentStrong)); }
+.mc-tb[hidden] { display: none; }
+.mc-p-seek { grid-column: 1 / -1; padding: 1vh 0; border-radius: 0.28vh; outline: none; cursor: pointer; }
+.mc-p-track { position: relative; height: 0.85vh; border-radius: 0.5vh; background: rgb(var(--icefin-color-text-channel) / 0.2); }
+.mc-p-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0.5vh; background: linear-gradient(90deg, var(--icefin-color-accent), var(--icefin-color-focus)); }
+.mc-p-seg { position: absolute; top: 0; bottom: 0; background: rgb(var(--icefin-color-focus-channel) / 0.3); }
+.mc-p-tick { position: absolute; top: -0.4vh; width: 0.28vh; height: 1.7vh; background: rgb(var(--icefin-color-text-channel) / 0.6); }
+.mc-p-knob { position: absolute; top: 50%; width: 2.5vh; height: 2.5vh; margin: -1.25vh 0 0 -1.25vh; border-radius: 50%; background: var(--icefin-color-text); box-shadow: 0 0 1.7vh var(--icefin-color-focusGlow); opacity: 0; transition: opacity 150ms; }
+.mc-p-seek.icefin-focused .mc-p-knob, .mc-p-seek:hover .mc-p-knob { opacity: 1; }
+.mc-p-seek.icefin-focused .mc-p-track { box-shadow: 0 0 0 0.28vh rgb(var(--icefin-color-focus-channel) / 0.6); }
+.mc-p-seek.mc-p-live .mc-p-knob { display: none; }
+.mc-p-times { display: flex; justify-content: space-between; font-size: 2.2vh; opacity: 0.78; margin-top: 1.1vh; }
+.mc-p-skip { position: absolute; right: 4.06vw; bottom: 30vh; z-index: 4; }
+.mc-p-skip[hidden], .mc-p-next[hidden] { display: none; }
+.mc-p-next { position: absolute; right: 4.06vw; bottom: 30vh; width: 34vw; padding: 2.5vh; box-sizing: border-box; z-index: 4;
+  background: rgb(var(--icefin-color-background-channel) / 0.92); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: 0 0 5.5vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-p-next-count { font-size: 2.1vh; opacity: 0.7; }
+.mc-p-next-title { font-size: 2.9vh; margin: 0.4vh 0 2vh; }
+.mc-p-next-btns { display: flex; gap: 1.4vh; }
+.mc-p-chapters { position: absolute; left: 0; right: 0; top: 0; padding: 4.7vh 4.7vh 3vh; display: flex; gap: 2.2vh; overflow: hidden; z-index: 5; opacity: 0; pointer-events: none; transition: opacity 250ms;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.92), rgb(var(--icefin-color-background-channel) / 0.6) 75%, transparent); }
+.mc-player.mc-p-chapters-up .mc-p-chapters { opacity: 1; pointer-events: auto; }
+.mc-p-ch { flex: none; width: 23.6vh; background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; opacity: 0.75; }
+.mc-p-ch-img { width: 23.6vh; height: 13.3vh; background: var(--icefin-color-surface) center / cover no-repeat; border-radius: 0.28vh; }
+.mc-p-ch-label { font-size: 2vh; margin-top: 0.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-p-ch-time { font-size: 1.8vh; opacity: 0.7; }
+.mc-p-ch.icefin-focused { opacity: 1; outline: none; }
+.mc-p-ch.icefin-focused .mc-p-ch-img { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-p-panel .mc-p-list { display: flex; flex-direction: column; gap: 0.3vh; }
+.mc-p-info { width: auto; left: 21.67vh; right: auto; top: 15vh; bottom: auto; max-width: 60vw; border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); }
+.mc-p-info-title { font-size: 4.2vh; font-weight: 300; }
+.mc-p-info-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 4.7vh; margin-bottom: 2.5vh; }
+.mc-p-info dl { display: grid; grid-template-columns: 20vh 1fr; row-gap: 0.6vh; margin: 0; font-size: 2.35vh; }
+.mc-p-info dt { opacity: 0.62; }
+.mc-p-info dd { margin: 0; }
+
+/* The start screen's corner mark: the server's own icon and name (ui.brand). */
+.mc-brand { display: flex; align-items: center; gap: 1.4vh; }
+.mc-brand .mc-brand-icon { width: 5vh; height: 5vh; }
+.mc-brand .mc-brand-initial { font-size: 4vh; color: var(--icefin-color-text); }
+.mc-brand .mc-brand-name { font-size: inherit; }
+
+/* ---- Details, 9.46 (the canvas's "movie details"): the actions as a column at the left, the poster, then the facts;
+   the engine's markup re-flowed with CSS (its info block opens up into the main grid). ---- */
+.icefin-details .icefin-d-nav.mc-nav { left: 2.92vh; top: 5vh; gap: 1.39vh; }
+.icefin-details .icefin-d-nav .icefin-d-navbtn { padding: 0; font-size: 0; }
+.icefin-details > .mc-title, .icefin-details > .mc-clock { z-index: 3; }
+.icefin-details .icefin-d-scroll { top: 14vh; }
+.icefin-details .icefin-d-main { grid-template-columns: 19.5vw 17vw minmax(0, 1fr); column-gap: 2.6vw; row-gap: 0; padding: 2vh 4.06vw 4vh 21.67vh; align-items: start; }
+.icefin-details .icefin-d-info { display: contents; }
+.icefin-details .icefin-d-main > *, .icefin-details .icefin-d-info > * { grid-column: 3; }
+.icefin-details .icefin-d-actions { grid-column: 1; grid-row: 1 / span 12; flex-direction: column; flex-wrap: nowrap; gap: 0.97vh; margin-top: 0; align-self: start; }
+.icefin-details .icefin-d-poster { grid-column: 2; grid-row: 1 / span 12; width: 17vw; }
+.icefin-details[data-shape="wide"] .icefin-d-poster { width: 17vw; }
+.icefin-details .icefin-d-actions .icefin-d-btn { height: 6.1vh; padding: 0 2.8vh; justify-content: flex-start; font-size: 2.9vh; font-weight: 300; border-radius: 0.28vh;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.16); color: var(--icefin-color-text); transform: none; }
+.icefin-details .icefin-d-actions .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-options .icefin-d-select.icefin-focused {
+  transform: none; color: var(--icefin-color-onAccent); border-color: rgb(var(--icefin-color-glass-channel) / 0.9); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow);
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%); }
+.icefin-details .icefin-d-title { font-size: 5.3vh; margin-top: 0; }
+.icefin-details .icefin-d-facts, .icefin-details .icefin-d-genres { font-size: 2.5vh; opacity: 0.8; }
+.icefin-details .icefin-d-overview { font-size: 2.65vh; line-height: 1.55; }
+.icefin-details .icefin-d-sections { padding-left: 21.67vh; padding-right: 4.06vw; }
+.icefin-details .icefin-d-section h2 { font-size: 1.9vh; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.6; }
+
+/* ---- jellyfin-web's own pages and dialogs under Media Center (9.46; ui.stockChrome frames the pages with kit.js's
+   chrome). Never the server dashboard (html[data-icefin-dashboard]) and never menus over video (the web fallback's
+   look is ui.osd's). ---- */
+#icefin-stock-chrome .mc-sc { position: fixed; inset: 0 0 auto 0; height: 14vh; pointer-events: none; color: var(--icefin-color-text); font-weight: 300;
+  background: linear-gradient(180deg, var(--icefin-color-background) 55%, rgb(var(--icefin-color-background-channel) / 0)); }
+#icefin-stock-chrome .mc-sc .mc-nav { pointer-events: auto; }
+html[data-icefin-stock] body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 20% 10%, var(--icefin-color-surface) 0%, var(--icefin-color-background) 60%); }
+html[data-icefin-stock] .skinHeader, html[data-icefin-stock] header.MuiAppBar-root, html[data-icefin-stock] .mainDrawerHandle,
+html[data-icefin-stock] .backdropContainer, html[data-icefin-stock] .backgroundContainer { visibility: hidden !important; }
+html[data-icefin-stock] .mainAnimatedPage, html[data-icefin-stock] .page { color: var(--icefin-color-text); font-weight: 300; background: transparent !important;
+  padding-top: 15vh !important; padding-left: 21.67vh !important; padding-right: 4.06vw !important; box-sizing: border-box; }
+html[data-icefin-stock], html[data-icefin-stock] .page, html[data-icefin-stock] .scrollY { scroll-padding: 16vh 0 6vh; }
+html[data-icefin-stock] .page h1, html[data-icefin-stock] .page h2, html[data-icefin-stock] .page .sectionTitle { font-weight: 300; color: var(--icefin-color-text); }
+html[data-icefin-stock] .page .sectionTitle { font-size: 3.6vh; }
+html[data-icefin-stock] .page .fieldDescription, html[data-icefin-stock] .page .secondaryText { color: var(--icefin-color-textSecondary); font-size: 2.1vh; }
+
+/* fields: glass; focused, white with dark text and a glow */
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html[data-icefin-stock] .page select, html[data-icefin-stock] .page textarea,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog select,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog textarea {
+  font: inherit; font-size: 2.65vh; color: var(--icefin-color-text); background: rgb(var(--icefin-color-glass-channel) / 0.08) !important;
+  border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.45) !important; border-radius: 0.28vh; min-height: 6.1vh; padding: 0 1.7vh; box-sizing: border-box; }
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):focus, html[data-icefin-stock] .page select:focus, html[data-icefin-stock] .page textarea:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input:not([type=checkbox]):not([type=radio]):focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog select:focus, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog textarea:focus {
+  background: var(--icefin-color-glass) !important; color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass) !important; box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); outline: none; }
+
+/* buttons: resting glass, focused the glossy bar */
+html[data-icefin-stock] .page .raised, html[data-icefin-stock] .page .button-submit, html[data-icefin-stock] .page .button-cancel, html[data-icefin-stock] .page .btnAddServer,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .raised,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooterItem {
+  font: inherit; font-size: 2.9vh; font-weight: 300; text-transform: none; letter-spacing: 0; color: var(--icefin-color-text) !important; min-height: 6.7vh; padding: 0 3.3vh;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07) !important; border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.18) !important; border-radius: 0.28vh !important; box-shadow: none; }
+html[data-icefin-stock] .page .raised:focus, html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page .btnAddServer:focus, html[data-icefin-stock] .page .raised:hover,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .raised:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog .formDialogFooterItem:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheetMenuItem:focus,
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .listItem-button:focus {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%) !important;
+  color: var(--icefin-color-onAccent) !important; border-color: rgb(var(--icefin-color-glass-channel) / 0.9) !important; box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow) !important; outline: none; }
+/* tick boxes: glass squares */
+html[data-icefin-stock] .page .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog .checkboxOutline {
+  border-radius: 0.28vh !important; border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.7) !important; background: rgb(var(--icefin-color-glass-channel) / 0.06) !important; }
+html[data-icefin-stock] .page input[type=checkbox]:checked + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:checked + span + .checkboxOutline {
+  background: var(--icefin-color-accent) !important; border-color: var(--icefin-color-glass) !important; }
+html[data-icefin-stock] .page input[type=checkbox]:focus + span + .checkboxOutline, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .dialog input[type=checkbox]:focus + span + .checkboxOutline {
+  box-shadow: 0 0 2vh 0.3vh var(--icefin-color-focusGlow) !important; border-color: var(--icefin-color-glass) !important; }
+
+/* menus (action sheets: the item menu, pickers, sort): the side panel from the right */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet {
+  position: fixed !important; left: auto !important; right: 0 !important; top: 0 !important; bottom: 0 !important; width: 33.6vw !important; max-width: none !important; max-height: none !important; margin: 0 !important;
+  border-radius: 0 !important; padding: 4.2vh 4.7vh !important; box-sizing: border-box; color: var(--icefin-color-text);
+  background: linear-gradient(90deg, rgb(var(--icefin-color-background-channel) / 0.92), rgb(var(--icefin-color-surface-channel) / 0.98)) !important;
+  border-left: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: -4vh 0 8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheet .actionSheetTitle { font-size: 4.2vh; font-weight: 300; margin: 0 0 2vh; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .actionSheetMenuItem { min-height: 5.3vh; font-size: 2.8vh; font-weight: 300; border-radius: 0.28vh; border: 0.14vh solid transparent; }
+/* full-screen forms (add to playlist, media info, edit details, identify, subtitles): the panel, wider */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog:not(.actionSheet) {
+  left: auto !important; right: 0 !important; width: 52vw !important; max-width: none !important; border-radius: 0 !important; color: var(--icefin-color-text);
+  background: linear-gradient(90deg, rgb(var(--icefin-color-background-channel) / 0.94), rgb(var(--icefin-color-surface-channel) / 0.99)) !important;
+  border-left: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: -4vh 0 8vh rgb(var(--icefin-color-glassEdge-channel) / 0.5) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog .formDialogHeader { background: transparent !important; color: var(--icefin-color-text); }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog.formDialog .formDialogHeaderTitle { font-size: 4.2vh; font-weight: 300; }
+/* questions (confirm, alert, prompt): a band across the screen */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet):not(.slideshowDialog):not(#bookPlayer):not(#pdfPlayer):not(#comicsPlayer) {
+  position: fixed !important; left: 0 !important; right: 0 !important; top: 50% !important; transform: translateY(-50%) !important; width: 100vw !important; max-width: none !important; margin: 0 !important;
+  border-radius: 0 !important; padding: 5vh 6vw 5vh 21.67vh !important; box-sizing: border-box; color: var(--icefin-color-text);
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0.96), rgb(var(--icefin-color-surface-channel) / 0.96)) !important;
+  border-top: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); border-bottom: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.5); box-shadow: 0 0 11vh rgb(var(--icefin-color-glassEdge-channel) / 0.7) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog:not(.formDialog):not(.actionSheet):not(.slideshowDialog):not(#bookPlayer):not(#pdfPlayer):not(#comicsPlayer) h2 { font-size: 5.3vh; font-weight: 300; }
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogBackdrop { background: rgb(var(--icefin-color-glassEdge-channel) / 0.55) !important; }
+/* notices (toasts): bottom right, glass */
+html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !important; right: 4.06vw !important; bottom: 5vh !important; border-radius: 0 !important; font-size: 2.6vh; font-weight: 300;
+  background: rgb(var(--icefin-color-background-channel) / 0.92) !important; color: var(--icefin-color-text) !important; border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); }
+
+/* ---- Library screens (library.js, 9.46): a pivot along the top, the grid running sideways in rows, the lens on the
+   focused item, its name and facts under the grid, the count at the bottom right. ---- */
+#icefin-theme-root[data-mc="library"] { overflow: clip !important; }
+.mc-lib-pivot { position: absolute; left: 21.67vh; top: 14.4vh; right: 4.06vw; align-items: baseline; z-index: 2; }
+.mc-lib-crumb { font-size: 3.3vh; color: var(--icefin-color-focus); padding: 0.4vh 0; }
+.mc-lib-crumb:empty { display: none; }
+.mc-lib-body { position: absolute; left: 21.67vh; right: 0; top: 22vh; bottom: 18vh; overflow: hidden; padding: 2vh 0 0 1.5vh; }
+.mc-lib-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--mc-rows, 2), auto); gap: 2.5vh 2.2vh; align-content: start;
+  width: max-content; transition: transform var(--mc-ms, 300ms) cubic-bezier(.2,.7,.2,1); }
+.mc-lib-tile { position: relative; cursor: pointer; outline: none; transition: transform 180ms, opacity 180ms; opacity: 0.85; transform-origin: center; }
+.mc-lib-art { position: relative; background: var(--icefin-color-surface) center / cover no-repeat; border-radius: 0.14vh; overflow: hidden; }
+.mc-lib-poster .mc-lib-art { width: 17.2vh; height: 25.8vh; }
+.mc-lib-square .mc-lib-art { width: 17.8vh; height: 17.8vh; }
+.mc-lib-photo .mc-lib-art { width: 22.5vh; height: 16.9vh; }
+.mc-lib-wide .mc-lib-art { width: 27vh; height: 15.2vh; }
+.mc-lib-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 1vh; font-size: 2vh; opacity: 0.8; }
+.mc-lib-progress { position: absolute; left: 0; bottom: 0; height: 0.7vh; background: var(--icefin-color-focus); }
+/* the lens grows into the row's gap (9.60, walk 1: it spilled over its neighbours) and stays above them */
+.mc-lib-tile.icefin-focused { transform: scale(1.1); opacity: 1; z-index: 3; }
+.mc-lib-tile.icefin-focused .mc-lib-art, .mc-lib-tile.icefin-focused .mc-lib-stack i:last-child {
+  box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-lib-tile.icefin-focused .mc-lib-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(var(--icefin-color-glass-channel) / 0.28), transparent 36%); }
+/* groups (genres, networks): three covers stacked, the name under them */
+.mc-lib-grid[data-group="1"] { grid-template-rows: repeat(2, auto); }
+.mc-lib-group { width: 26vh; }
+.mc-lib-stack { position: relative; width: 23.6vh; height: 25vh; }
+.mc-lib-stack i { position: absolute; width: 14.4vh; height: 21.7vh; display: block; background: var(--icefin-color-surface) center / cover no-repeat; box-shadow: 0 0.3vh 1.1vh rgb(var(--icefin-color-glassEdge-channel) / 0.5); }
+.mc-lib-stack i:nth-child(1) { left: 0; top: 2.8vh; opacity: 0.6; }
+.mc-lib-stack i:nth-child(2) { left: 4.2vh; top: 1.4vh; opacity: 0.8; background-color: var(--icefin-color-surfaceRaised); }
+.mc-lib-stack i:nth-child(3) { left: 8.3vh; top: 0; }
+.mc-lib-name { font-size: 2.5vh; opacity: 0.8; margin-top: 0.6vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-lib-tile.icefin-focused .mc-lib-name { opacity: 1; }
+.mc-lib-empty { font-size: 3vh; opacity: 0.6; padding: 4vh 0; }
+.mc-lib-info { position: absolute; left: 21.67vh; right: 20vw; bottom: 6vh; }
+.mc-lib-info-name { font-size: 4.2vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-lib-info-facts { font-size: 2.5vh; opacity: 0.78; margin-top: 0.6vh; }
+.mc-count { position: absolute; right: 4.06vw; bottom: 3.6vh; font-size: 2.8vh; opacity: 0.7; }
+html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-lib-tile { transition-duration: 0ms !important; }
+
+/* ---- Live TV (tv.js, 9.46): the guide on ui.guideGrid, the programme under it with the channel's picture ---- */
+#icefin-theme-root[data-mc="livetv"] { overflow: clip !important; }
+.mc-tv-body { position: absolute; left: 21.67vh; right: 4.06vw; top: 21vh; bottom: 3vh; overflow: hidden; }
+.mc-tv-body[data-tab="guide"] { left: 4.06vw; }
+.mc-tv-guide { position: relative; height: 54vh; }
+.mc-tv-guide .icefin-guide-channel { background: rgb(var(--icefin-color-glass-channel) / 0.05); font-size: 2.4vh; display: flex; align-items: center; gap: 1.2vh; padding-left: 1vh; }
+.mc-tv-chno { font-weight: 400; opacity: 0.7; min-width: 3.5vh; }
+.mc-tv-guide .icefin-guide-cell { background: rgb(var(--icefin-color-accentStrong-channel) / 0.35); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.15); font-size: 2.4vh; font-weight: 300;
+  padding: 0 1.4vh; display: flex; align-items: center; gap: 1vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-cell.icefin-focused {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%);
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); outline: none; }
+.mc-tv-guide .icefin-guide-now { background: var(--icefin-color-focus); box-shadow: 0 0 1.1vh var(--icefin-color-focus); width: 0.28vh; }
+.mc-tv-rec { width: 1.4vh; height: 1.4vh; border-radius: 50%; background: var(--icefin-color-error); display: inline-block; flex: none; }
+.mc-tv-rec.series { width: 2.4vh; border-radius: 0.7vh; }
+.mc-tv-under { display: flex; gap: 2.8vh; margin-top: 2.5vh; }
+.mc-tv-inset { width: 33vh; height: 18.8vh; flex: none; background: var(--icefin-color-surface) center / contain no-repeat; box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.5); }
+.mc-tv-info-title { font-size: 3.4vh; }
+.mc-tv-info-when { font-size: 2.2vh; opacity: 0.75; margin-top: 0.4vh; }
+.mc-tv-info-text { font-size: 2.2vh; opacity: 0.88; margin-top: 0.8vh; line-height: 1.45; max-height: 6.4vh; overflow: hidden; }
+.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; scrollbar-width: none; }
+.mc-tv-channel, .mc-tv-rec-tile { cursor: pointer; outline: none; opacity: 0.85; transition: transform 180ms; }
+.mc-tv-logo, .mc-tv-rec-art { position: relative; height: 14.6vh; background: rgb(var(--icefin-color-glass-channel) / 0.06) center / contain no-repeat; display: flex; align-items: center; justify-content: center; font-size: 2.4vh; border-radius: 0.14vh; }
+.mc-tv-rec-art { background-size: cover; }
+.mc-tv-channel.icefin-focused, .mc-tv-rec-tile.icefin-focused { transform: scale(1.08); opacity: 1; }
+.mc-tv-channel.icefin-focused .mc-tv-logo, .mc-tv-rec-tile.icefin-focused .mc-tv-rec-art { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-tv-channel-name, .mc-tv-rec-name { font-size: 2.3vh; margin-top: 0.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-tv-channel-now, .mc-tv-rec-when { font-size: 1.9vh; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-tv-new { position: absolute; right: 0.8vh; top: 0.8vh; font-style: normal; font-size: 1.6vh; font-weight: 600; padding: 0.1vh 0.8vh; background: var(--icefin-color-accent); color: var(--icefin-color-onAccent); border-radius: 0.28vh; }
+.mc-tv-list { max-width: 64vw; overflow: auto; max-height: 100%; scrollbar-width: none; }
+.mc-tv-time { width: 14vh; font-size: 2.3vh; opacity: 0.75; flex: none; }
+
+/* ---- Search (browse.js): the field and keypad at the left, results grouped at the right ---- */
+.mc-search-left { position: absolute; left: 21.67vh; top: 16.7vh; width: 42vh; }
+.mc-search-label { display: block; font-size: 2.5vh; opacity: 0.75; margin-bottom: 1.1vh; }
+.mc-search-input { width: 100%; height: 6.9vh; box-sizing: border-box; padding: 0 1.9vh; font: inherit; font-size: 3.3vh; color: var(--icefin-color-text); outline: none;
+  background: rgb(var(--icefin-color-glass-channel) / 0.08); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.5); border-radius: 0; }
+.mc-search-input.icefin-focused, .mc-search-input:focus { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass); box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); }
+.mc-keypad { display: grid; grid-template-columns: repeat(3, 9.2vh); gap: 1.1vh; margin-top: 3vh; }
+.mc-key { height: 7.2vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font: inherit; color: var(--icefin-color-text); cursor: pointer;
+  background: rgb(var(--icefin-color-glass-channel) / 0.06); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.2); border-radius: 0.28vh; }
+.mc-key-main { font-size: 3vh; line-height: 1; }
+.mc-key small { font-size: 1.5vh; letter-spacing: 0.06em; opacity: 0.6; margin-top: 0.3vh; text-transform: uppercase; }
+.mc-key.icefin-focused, .mc-key:hover { background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96), rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96));
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); outline: none; }
+.mc-search-results { position: absolute; left: calc(21.67vh + 42vh + 6vh); right: 4.06vw; top: 16.4vh; bottom: 4vh; overflow: auto; scrollbar-width: none; }
+
+/* ---- Favourites (browse.js): a row per kind; the current row bright, the others dim ---- */
+#icefin-theme-root[data-mc="favorites"] { overflow: clip !important; }
+.mc-fav { position: absolute; left: 21.67vh; right: 0; top: 16vh; bottom: 0; overflow: auto; scrollbar-width: none; padding-bottom: 20vh; }
+.mc-fav-row { display: flex; align-items: center; gap: 2vh; min-height: 22vh; opacity: 0.55; transition: opacity 200ms; }
+.mc-fav-row.current { opacity: 1; }
+.mc-fav-title { width: 26vh; flex: none; font-size: 4.2vh; }
+.mc-fav-clip { flex: 1; overflow: hidden; padding: 2.5vh 1.5vh; }
+.mc-fav-strip { display: flex; gap: 2.2vh; transition: transform 300ms cubic-bezier(.2,.7,.2,1); width: max-content; }
+.mc-fav-strip .mc-lib-art { transform-origin: center; }
+.mc-fav-strip.mc-lib-poster .mc-lib-art { width: 12.5vh; height: 18.8vh; }
+.mc-fav-strip.mc-lib-square .mc-lib-art { width: 14.5vh; height: 14.5vh; }
+.mc-fav-strip.mc-lib-wide .mc-lib-art { width: 24vh; height: 13.5vh; }
+.mc-fav-strip .mc-lib-name { font-size: 2vh; max-width: 18vh; }
+/* the guide's geometry (ui.guideGrid leaves sizes to the theme): the canvas's 50 px rows and 150 px channel column at 720 */
+.mc-tv-guide .icefin-guide-times { position: relative; height: 4.7vh; margin-left: 21vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-time { top: 0; bottom: 0; padding-left: 0.8vh; line-height: 4.7vh; font-size: 2.2vh; opacity: 0.8; }
+.mc-tv-guide .icefin-guide-row { display: flex; height: 6.9vh; margin-bottom: 0.42vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-channel { width: 20.6vh; flex: none; margin-right: 0.42vh; box-sizing: border-box; }
+.mc-tv-guide .icefin-guide-lane { flex: 1; position: relative; }
+.mc-tv-guide .icefin-guide-cell { height: 100%; }
+.mc-tv-guide .icefin-guide-now { top: 4.7vh; bottom: 0; }
+.mc-tv-guide { height: 54.5vh; }
+
+/* ---- Now playing and lyrics (np.js, 9.46) ---- */
+.mc-np-actions { position: absolute; left: 21.67vh; top: 18vh; width: 32vh; display: flex; flex-direction: column; gap: 0.97vh; }
+.mc-np-art { position: absolute; left: calc(21.67vh + 36vh); top: 18vh; width: 45.8vh; height: 45.8vh; background: var(--icefin-color-surface) center / cover no-repeat;
+  box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.4), 0 2.2vh 5.5vh rgb(var(--icefin-color-glassEdge-channel) / 0.55); }
+.mc-np-info { position: absolute; left: calc(21.67vh + 36vh + 51vh); right: 4.06vw; top: 18.5vh; }
+.mc-np-title { font-size: 4.7vh; line-height: 1.2; }
+.mc-np-artist { font-size: 2.9vh; opacity: 0.85; margin-top: 1.1vh; }
+.mc-np-album { font-size: 2.5vh; opacity: 0.7; margin-top: 0.3vh; }
+.mc-np-next { font-size: 2.6vh; opacity: 0.8; line-height: 1.6; }
+.mc-np-bar { position: absolute; left: calc(21.67vh + 36vh); right: 4.06vw; top: 70vh; }
+.mc-np-transport { position: absolute; left: calc(21.67vh + 36vh); top: 76vh; display: flex; gap: 1.4vh; align-items: center; }
+.mc-np-empty { position: absolute; left: 21.67vh; top: 22vh; display: flex; flex-direction: column; gap: 2vh; align-items: flex-start; }
+#icefin-theme-root[data-mc="lyrics"] { overflow: clip !important; }
+.mc-ly-side { position: absolute; left: 21.67vh; top: 18vh; width: 36vh; }
+.mc-ly-side .mc-ly-art { position: static; width: 30.5vh; height: 30.5vh; }
+.mc-ly-side .mc-np-title { font-size: 3vh; margin-top: 2vh; }
+.mc-ly-side .mc-np-artist { font-size: 2.3vh; }
+.mc-ly-side .mc-p-track { margin-top: 2vh; width: 30.5vh; }
+.mc-ly-side .mc-p-times { width: 30.5vh; justify-content: flex-start; }
+.mc-ly-back { margin-top: 3vh; }
+.mc-ly-lines { position: absolute; left: calc(21.67vh + 44vh); right: 4.06vw; top: 0; transition: transform 500ms cubic-bezier(.2,.7,.2,1); }
+.mc-ly-line { font-size: 4.2vh; line-height: 1.25; margin: 0 0 2.5vh; color: rgb(var(--icefin-color-text-channel) / 0.38); transition: color 300ms, font-size 300ms; }
+.mc-ly-line.now { color: var(--icefin-color-text); font-size: 5.3vh; text-shadow: 0 0 2.5vh var(--icefin-color-focusGlow); }
+.mc-ly-lines .mc-note { margin-top: 20vh; font-size: 3vh; }
+
+/* ---- Connecting and signing in (account.js, 9.46) and the queue (np.js) ---- */
+.mc-acc-col { position: absolute; left: 21.67vh; top: 20vh; width: 36vh; display: flex; flex-direction: column; gap: 1.4vh; }
+.mc-acc-col.mc-acc-low, .mc-acc-right.mc-acc-low { top: 60vh; }
+.mc-acc-right { position: absolute; left: calc(21.67vh + 44vh); top: 20vh; width: 70vh; }
+.mc-acc-field { margin-bottom: 2.5vh; }
+.mc-acc-field[hidden] { display: none; }
+.mc-acc-list { position: absolute; left: calc(21.67vh + 44vh); right: 4.06vw; top: 19.4vh; display: flex; flex-direction: column; gap: 0.8vh; }
+.mc-acc-server { min-height: 10.8vh; display: flex; flex-direction: column; justify-content: center; padding: 0 3vh; cursor: pointer; border: 0.14vh solid transparent; border-radius: 0.28vh; }
+.mc-acc-server b { font-weight: 300; font-size: 3.9vh; }
+.mc-acc-server span { font-size: 2.2vh; opacity: 0.7; }
+.mc-acc-server.icefin-focused { background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96), rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96));
+  color: var(--icefin-color-onAccent); box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow); outline: none; }
+.mc-acc-users { position: absolute; left: 21.67vh; top: 22vh; right: 4.06vw; display: flex; align-items: center; gap: 4vh; }
+.mc-acc-user { text-align: center; cursor: pointer; outline: none; opacity: 0.65; transition: transform 180ms, opacity 180ms; }
+.mc-acc-face { width: 16.7vh; height: 16.7vh; display: flex; align-items: center; justify-content: center; font-size: 6.7vh; background: var(--icefin-color-surface) center / cover no-repeat;
+  border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.3); box-sizing: border-box; }
+.mc-acc-plus { background: rgb(var(--icefin-color-glass-channel) / 0.06); }
+.mc-acc-uname { font-size: 2.4vh; margin-top: 1.4vh; }
+.mc-acc-user.on, .mc-acc-user.icefin-focused { opacity: 1; }
+.mc-acc-user.icefin-focused { transform: scale(1.2); }
+.mc-acc-user.icefin-focused .mc-acc-face { box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
+.mc-note.bad { color: var(--icefin-color-error); opacity: 1; }
+.mc-q-list { position: absolute; left: calc(21.67vh + 40vh); right: 4.06vw; top: 18vh; bottom: 9vh; overflow: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 0.3vh; }
+.mc-q-n { width: 3.6vh; font-weight: 300; opacity: 0.6; flex: none; }
+.mc-q-row.now { background: rgb(var(--icefin-color-focus-channel) / 0.14); border-left: 0.42vh solid var(--icefin-color-focus); }
+.mc-q-row.now .mc-q-n { color: var(--icefin-color-focus); opacity: 1; }
+
+/* ---- Settings (settings.js, 9.46): the canvas's "settings", "playback settings" and "Client Settings" boards at
+   1280x720, in vh. ---- */
+.mc-crumb { position: absolute; left: 21.67vh; top: 14.4vh; font-size: 2.5vh; font-weight: 300; color: var(--icefin-color-textSecondary); z-index: 2; white-space: nowrap; }
+/* the hub: the list at the left, the focused entry described at the right */
+#icefin-theme-root[data-mc="settings"] .mc-set-list { position: absolute; left: 20.28vh; top: 15.56vh; width: 58.3vh; }
+#icefin-theme-root[data-mc="settings"] .mc-set-entry { min-height: 5.83vh; font-size: 3.6vh; font-weight: 300; padding: 0 2.2vh; }
+.mc-set-sep { height: 0.14vh; background: rgb(var(--icefin-color-glass-channel) / 0.14); margin: 0.97vh 2.2vh; }
+.mc-set-about { position: absolute; left: 88.9vh; top: 17.5vh; width: 77.8vh; padding: 3.33vh 3.9vh; box-sizing: border-box; font-weight: 300;
+  background: rgb(var(--icefin-color-background-channel) / 0.45); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.25); }
+.mc-set-about-name { font-size: 3.9vh; }
+.mc-set-about-text { font-size: 2.5vh; line-height: 1.6; opacity: 0.85; margin-top: 1.4vh; }
+.mc-set-about-note { font-size: 2.2vh; line-height: 1.6; opacity: 0.6; margin-top: 1.9vh; }
+.mc-set-about-note:empty { display: none; }
+.mc-set-foot { position: absolute; left: 88.9vh; top: 56.9vh; width: 77.8vh; font-size: 2.08vh; line-height: 1.5; opacity: 0.55; font-weight: 300; }
+
+/* spinners: ‹ value › */
+.mc-spin { background: none; border: 0; padding: 0 0.8vh; margin: 0; font: inherit; font-size: 3.2vh; line-height: 1; color: inherit; opacity: 0.8; cursor: pointer; flex: none; }
+.mc-spin:hover, .mc-spin:focus { opacity: 1; outline: none; color: var(--icefin-color-focus); text-shadow: 0 0 1.5vh var(--icefin-color-focusGlow); }
+
+/* This device: the engine's Client Settings page (ui.settings.screen) in the chrome; sections at the left, rows at
+   the right, the help under a row while it has focus */
+#icefin-theme-root[data-mc="client"] .icefin-settings .icefin-d-nav, #icefin-theme-root[data-mc="client"] .icefin-settings .icefin-s-title { display: none; }
+#icefin-theme-root[data-mc="client"] .icefin-settings { font-size: 2.64vh; font-weight: 300; }
+#icefin-theme-root[data-mc="client"] .icefin-settings .icefin-s-body { inset: 20.8vh 4.06vw 4vh 20.28vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-page { grid-template-columns: 34.7vh minmax(0, 1fr); gap: 4.7vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail { gap: 0; padding: 0; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail .icefin-d-btn { min-height: 5.83vh; display: flex; align-items: center; padding: 0 2.2vh; font-size: 3.6vh; font-weight: 300;
+  background: transparent; border: 0.14vh solid transparent; border-radius: 0.28vh; box-shadow: none; color: var(--icefin-color-text); text-shadow: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail .icefin-d-btn.icefin-cs-here { background: rgb(var(--icefin-color-focus-channel) / 0.14); border-left: 0.42vh solid var(--icefin-color-focus); }
+#icefin-theme-root[data-mc="client"] .icefin-cs-rail .icefin-d-btn.icefin-focused,
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer:has(.icefin-focused),
+#icefin-theme-root[data-mc="client"] .icefin-cs-host div.inputContainer:has(> .icefin-dd .icefin-focused),
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .raised.icefin-focused,
+html[data-icefin-stock] .page[data-mc-form] .selectContainer:focus-within,
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"]:focus-within {
+  background: linear-gradient(180deg, rgb(var(--icefin-color-focus-channel) / 0.96) 0%, rgb(var(--icefin-color-accent-channel) / 0.96) 50%, rgb(var(--icefin-color-accentStrong-channel) / 0.96) 53%, rgb(var(--icefin-color-accent-channel) / 0.96) 100%) !important;
+  border-color: rgb(var(--icefin-color-glass-channel) / 0.9) !important; box-shadow: 0 0 3vh 0.3vh var(--icefin-color-focusGlow) !important; color: var(--icefin-color-onAccent) !important;
+  text-shadow: 0 0.14vh 0.28vh rgb(var(--icefin-color-glassEdge-channel) / 0.65); outline: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host > .dialog { background: transparent !important; border-radius: 0 !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .formDialogContent { padding: 0 1vh 6vh 0 !important; scrollbar-width: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset { border: 0; margin: 0 0 2.5vh; padding: 0; min-width: 0; max-width: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset > legend { padding: 0; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host fieldset > legend h2 { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.5; margin: 1.67vh 0 0.4vh 1.94vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer,
+#icefin-theme-root[data-mc="client"] .icefin-cs-host div.inputContainer:has(> .icefin-dd) {
+  display: flex !important; flex-wrap: wrap; align-items: center; gap: 0 1.94vh; min-height: 6.4vh; margin: 0; padding: 0 1.94vh; box-sizing: border-box; border: 0.14vh solid transparent; border-radius: 0.28vh; font-size: 2.64vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .inputLabel { flex: 1; font-size: inherit; margin: 0; color: inherit; opacity: 1; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .mc-spin-prev { order: 2; margin-left: auto; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .inputLabel { order: 1; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd { order: 3; width: auto !important; flex: none !important; margin: 0 !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .icefin-dd::after { display: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .mc-spin-next { order: 4; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer select { appearance: none; background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none !important;
+  color: inherit; font: inherit; font-size: 2.5vh; min-height: 0; height: 5vh; width: auto; max-width: 42vh; padding: 0 0.4vh !important; text-align: right; text-align-last: right; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer select option { color: var(--icefin-color-text); background: var(--icefin-color-surface); }
+/* ticks: a glass square ahead of the text, the accent with a check when on */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox] { order: -1; appearance: none; width: 3.6vh; height: 3.6vh; margin: 0; flex: none; position: relative;
+  border: 0.28vh solid rgb(var(--icefin-color-text-channel) / 0.7); border-radius: 0.28vh; background: rgb(var(--icefin-color-glass-channel) / 0.06); outline: none !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox]:checked { background: var(--icefin-color-accent); border-color: var(--icefin-color-glass); }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host label.inputContainer > input[type=checkbox]:checked::after { content: ""; position: absolute; inset: 0.3vh; background: var(--icefin-color-text);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12l5 5 9-10' fill='none' stroke='black' stroke-width='3.4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12l5 5 9-10' fill='none' stroke='black' stroke-width='3.4'/%3E%3C/svg%3E") center / contain no-repeat; }
+/* help: hidden until its row has focus, then a line under it */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .tooltip { order: 9; flex-basis: 100%; padding: 0 0 0.8vh 5.5vh; box-sizing: border-box; display: none; position: static; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer:has(.icefin-focused) .tooltip { display: block; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .tooltip .material-icons { display: none; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .inputContainer .tooltip .tooltip-text { position: static !important; visibility: visible !important; opacity: 0.85 !important; display: block; width: auto !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; transform: none !important; font-size: 2.08vh; line-height: 1.35; color: inherit; text-align: left; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .fieldDescription { font-size: 2.08vh; opacity: 0.6; padding: 0 1.94vh; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .raised { font: inherit; font-size: 2.9vh; font-weight: 300; text-transform: none; color: var(--icefin-color-text); min-height: 6.4vh; padding: 0 3.3vh; margin: 0.7vh 1vh 0.7vh 0;
+  background: rgb(var(--icefin-color-glass-channel) / 0.07); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.18); border-radius: 0.28vh; box-shadow: none; outline: none !important; }
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .icefin-focused { outline: none !important; }
+
+/* jellyfin-web's account pages (settings.js adapts them): the page's buttons in a column at the left with Cancel, the
+   rows at the right; a drop-down shows its value as ‹ value ›, a tick sits ahead of its text */
+html[data-icefin-stock] .page[data-mc-form] { padding-top: 20.3vh !important; padding-left: 58.3vh !important; }
+html[data-icefin-stock] .page[data-mc-form] > .mc-crumb { position: fixed; }
+html[data-icefin-stock] .page[data-mc-form] > div:not(.mc-form-col):not(.mc-crumb) { max-width: 111vh; padding: 0 0 8vh !important; margin: 0 !important; }
+.mc-form-col { position: fixed; left: 21.67vh; top: 22.2vh; width: 30.6vh; display: flex; flex-direction: column; gap: 1.39vh; z-index: 2; }
+html[data-icefin-stock] .page[data-mc-form] .mc-form-col > button { width: 100%; margin: 0 !important; justify-content: flex-start; text-align: left; min-height: 6.4vh; font-size: 2.9vh; }
+html[data-icefin-stock] .page[data-mc-form] .sectionTitle, html[data-icefin-stock] .page[data-mc-form] .verticalSection > h2 {
+  font-size: 1.8vh !important; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400; opacity: 0.5; margin: 1.67vh 0 0.4vh 1.94vh !important; }
+html[data-icefin-stock] .page[data-mc-form] .verticalSection { margin: 0 0 1.4vh !important; padding: 0 !important; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.2vh; min-height: 6.4vh; margin: 0 !important; padding: 0 1.94vh;
+  box-sizing: border-box; border: 0.14vh solid transparent; border-radius: 0.28vh; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer > div:not(.selectArrowContainer):not(.fieldDescription) { display: contents; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .selectLabel { position: static; transform: none; flex: 1; margin: 0; font-size: 2.78vh; opacity: 1; color: inherit; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .mc-spin-prev { order: 2; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer select { order: 3; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .mc-spin-next { order: 4; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .selectArrowContainer { display: none; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer .fieldDescription { order: 9; flex-basis: 100%; padding: 0 0 0.8vh; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer select, html[data-icefin-stock] .page[data-mc-form] .selectContainer select:focus {
+  appearance: none; background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none; color: inherit; font-size: 2.64vh; min-height: 0; height: 5vh;
+  width: auto; max-width: 42vh; padding: 0 0.4vh; text-align: right; text-align-last: right; }
+html[data-icefin-stock] .page[data-mc-form] .selectContainer select option { color: var(--icefin-color-text); background: var(--icefin-color-surface); }
+html[data-icefin-stock] .page[data-mc-form] .checkboxContainer { margin: 0 !important; }
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"] { display: flex !important; align-items: center; width: 100%; min-height: 6.4vh; box-sizing: border-box; padding-left: 7.2vh !important;
+  border: 0.14vh solid transparent; border-radius: 0.28vh; }
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"] .checkboxLabel { font-size: 2.78vh; }
+html[data-icefin-stock] .page[data-mc-form] label[class*="checkbox-label"] .checkboxOutline { left: 1.94vh !important; top: 50% !important; transform: translateY(-50%); width: 3.6vh; height: 3.6vh; }
+html[data-icefin-stock] .page[data-mc-form] .checkboxFieldDescription { padding: 0 0 0.8vh 7.2vh !important; margin: 0 !important; }
+html[data-icefin-stock] .page[data-mc-form] .inputContainer { margin: 0 0 2vh !important; }
+
+/* ---- The slide show (viewers.js, the canvas's "slide show"): the picture with a slow pan and zoom; while the controls
+   are up, the name and "date · album · 12 of 204" at the bottom left, round glass buttons at the bottom right ---- */
+@keyframes mc-kb { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.08) translate(-1.5%, -1%); } }
+.slideshowDialog[data-mc-ss] .swiper-slide-active .swiper-slide-img { animation: mc-kb 9s ease-in-out infinite alternate; }
+html[data-icefin-motion="low"] .slideshowDialog[data-mc-ss] .swiper-slide-active .swiper-slide-img { animation: none; }
+.slideshowDialog[data-mc-ss] .mc-ss-scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 20.8vh; pointer-events: none; z-index: 1;
+  background: linear-gradient(180deg, rgb(var(--icefin-color-background-channel) / 0), rgb(var(--icefin-color-background-channel) / 0.88) 45%); transition: opacity 0.4s; }
+.slideshowDialog[data-mc-ss] .mc-ss-info { position: absolute; left: 21.67vh; top: 84.7vh; z-index: 2; color: var(--icefin-color-text); font-weight: 300; pointer-events: none; transition: opacity 0.4s; }
+.slideshowDialog[data-mc-ss] .mc-ss-name { font-size: 3.6vh; }
+.slideshowDialog[data-mc-ss] .mc-ss-line { font-size: 2.2vh; opacity: 0.8; }
+.slideshowDialog[data-mc-ss]:has(.slideshowBottomBar.hide) .mc-ss-info, .slideshowDialog[data-mc-ss]:has(.slideshowBottomBar.hide) .mc-ss-scrim { opacity: 0; }
+.slideshowDialog[data-mc-ss] .slideshowBottomBar { position: absolute !important; left: auto !important; right: 7.2vh !important; top: 85vh !important; bottom: auto !important; width: auto !important;
+  display: flex; gap: 1.39vh; padding: 0 !important; margin: 0; background: none !important; z-index: 2; }
+.slideshowDialog[data-mc-ss] .slideshowBottomBar .btnSlideshowPrevious, .slideshowDialog[data-mc-ss] .slideshowBottomBar .btnSlideshowNext {
+  display: flex !important; position: static !important; transform: none !important; margin: 0 !important; }
+.slideshowDialog[data-mc-ss] .btnDownload, .slideshowDialog[data-mc-ss] .btnFullscreen, .slideshowDialog[data-mc-ss] .btnFullscreenExit { display: none !important; }
+.slideshowDialog[data-mc-ss] .slideshowBottomBar .slideshowButton, .slideshowDialog[data-mc-ss] .btnSlideshowExit,
+#bookPlayer[data-mc-reader] .bookOsd .paper-icon-button-light, #pdfPlayer[data-mc-reader] .bookOsd .paper-icon-button-light, #comicsPlayer[data-mc-reader] .bookOsd .paper-icon-button-light {
+  width: 6.94vh; height: 6.94vh; padding: 0; margin: 0; border-radius: 50%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: var(--icefin-color-text);
+  border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.65);
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-glass-channel) / 0.42), rgb(var(--icefin-color-accentStrong-channel) / 0.35) 55%, rgb(var(--icefin-color-background-channel) / 0.75)); }
+.slideshowDialog[data-mc-ss] .slideshowButtonIcon, #bookPlayer[data-mc-reader] .bookOsd .material-icons, #pdfPlayer[data-mc-reader] .bookOsd .material-icons, #comicsPlayer[data-mc-reader] .bookOsd .material-icons { font-size: 3.1vh; }
+.slideshowDialog[data-mc-ss] .slideshowButton:focus, .slideshowDialog[data-mc-ss] .slideshowButton:hover,
+#bookPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:focus, #bookPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:hover,
+#pdfPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:focus, #comicsPlayer[data-mc-reader] .bookOsd .paper-icon-button-light:focus {
+  outline: none; color: var(--icefin-color-onAccent); box-shadow: 0 0 0 0.28vh var(--icefin-color-glass), 0 0 3vh 0.55vh var(--icefin-color-focusGlow);
+  background: radial-gradient(circle at 50% 25%, rgb(var(--icefin-color-focus-channel) / 0.95), rgb(var(--icefin-color-accent-channel) / 0.9) 55%, rgb(var(--icefin-color-accentStrong-channel) / 0.95)); }
+/* Back: the exit button, round at the top left */
+.slideshowDialog[data-mc-ss] .topActionButtons { position: absolute !important; left: 2.92vh !important; top: 5vh !important; right: auto !important; padding: 0 !important; z-index: 2; }
+.slideshowDialog[data-mc-ss] .btnSlideshowExit { width: 6.4vh; height: 6.4vh; }
+.slideshowDialog[data-mc-ss] .btnSlideshowExit .slideshowButtonIcon { display: none; }
+.slideshowDialog[data-mc-ss] .btnSlideshowExit::before { content: ""; width: 2.8vh; height: 2.8vh; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 5l-7 7 7 7' fill='none' stroke='black' stroke-width='2.6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 5l-7 7 7 7' fill='none' stroke='black' stroke-width='2.6'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+/* ---- The book reader (viewers.js): the title where a page title goes, Back at the top left, the reader's buttons along
+   the bottom right. The rows slide in with a transform, so the title is placed from its row (2.92vh in). ---- */
+#bookPlayer[data-mc-reader] .bookOsdRow, #pdfPlayer[data-mc-reader] .bookOsdRow, #comicsPlayer[data-mc-reader] .bookOsdRow { background: none !important; }
+#bookPlayer[data-mc-reader] .bookOsdRow:first-child, #pdfPlayer[data-mc-reader] .bookOsdRow:first-child, #comicsPlayer[data-mc-reader] .bookOsdRow:first-child {
+  position: fixed !important; left: 2.92vh; top: 5vh; right: auto; bottom: auto; padding: 0 !important; z-index: 5; }
+#bookPlayer[data-mc-reader] .bookOsdRow:first-child .paper-icon-button-light, #pdfPlayer[data-mc-reader] .bookOsdRow:first-child .paper-icon-button-light,
+#comicsPlayer[data-mc-reader] .bookOsdRow:first-child .paper-icon-button-light { width: 6.4vh; height: 6.4vh; }
+#bookPlayer[data-mc-reader] .bookOsdTitle, #pdfPlayer[data-mc-reader] .bookOsdTitle, #comicsPlayer[data-mc-reader] .bookOsdTitle {
+  position: absolute; left: 18.75vh; top: 0.2vh; font-size: 4.6vh; font-weight: 300; color: var(--icefin-color-text); white-space: nowrap;
+  padding: 0.4vh 2vh; border-radius: 0.28vh; background: rgb(var(--icefin-color-background-channel) / 0.75); }
+#bookPlayer[data-mc-reader] .bookOsdRow:nth-child(2), #pdfPlayer[data-mc-reader] .bookOsdRow:nth-child(2), #comicsPlayer[data-mc-reader] .bookOsdRow:nth-child(2) {
+  position: fixed !important; left: auto; right: 7.2vh; bottom: 6vh; top: auto; width: auto !important; display: flex; gap: 1.39vh; padding: 0 !important; z-index: 5; }
+#bookPlayer[data-mc-reader] .bookOsdSpacer, #pdfPlayer[data-mc-reader] .bookOsdSpacer, #comicsPlayer[data-mc-reader] .bookOsdSpacer { display: none; }
+
+/* ---- From the host walk (9.46) ---- */
+/* the frame's Back and Home take keyboard focus on jellyfin-web's pages (kit.js) */
+#icefin-stock-chrome .mc-round:focus { box-shadow: 0 0 0 0.3vh var(--icefin-color-focus), 0 0 2.4vh 0.6vh var(--icefin-color-focusGlow); outline: none; }
+/* More options: jellyfin-web's details page stays out of sight under the item menu */
+html[data-mc-more] .mainAnimatedPage, html[data-mc-more] .page { visibility: hidden !important; }
+html[data-mc-more] #icefin-stock-chrome .mc-title { visibility: hidden; }
+/* the player's side panel covers the top right: the clock steps aside while it is open */
+#icefin-theme-root:has(.mc-p-panel) .mc-clock { visibility: hidden; }
+/* long help and about lines wrap in Client Settings */
+#icefin-theme-root[data-mc="client"] .icefin-cs-host .fieldDescription { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+/* jellyfin-web's pages arrive a moment after their frame: they fade in rather than pop */
+/* opacity only: a transform would move the pages' fixed button column while it runs */
+@keyframes mc-page-in { from { opacity: 0; } to { opacity: 1; } }
+html[data-icefin-stock]:not([data-icefin-dashboard]) .mainAnimatedPage:not(.hide) { animation: mc-page-in 0.24s ease-out both; }
+html[data-icefin-stock][data-icefin-motion="low"] .mainAnimatedPage:not(.hide) { animation: none; }
+/* leaving a settings page Media Center lays out (settings.js) for a themed screen: the page went on showing for a few
+   frames until the screen had mounted; with no frame up it stays hidden. Only these pages: the engine reads
+   jellyfin-web's other hidden pages (the library, the item menu, the viewers) and needs them visible. */
+html[data-icefin-theme]:not([data-icefin-stock]) .page[data-mc-form] { visibility: hidden; }
+/* the player's side panel takes the right of the screen: the seek bar and its times end before it */
+.mc-player:has(.mc-p-panel) .mc-p-bottom { right: calc(36.7vw + 2.4vh); }
+
+/* ---- The side panel and the notice (PLAN 9.60, panel.js; the "Pass 9.60" boards). The panel lives off the right
+   edge: in 260 ms decelerating, out 200 ms accelerating, the dim with it; a dialog swaps its content with a 120 ms
+   fade; lists fade at their edges. Low motion: it appears and goes at once. ---- */
+.mc-sp { position: fixed; inset: 0; font-family: inherit; font-weight: 300; color: var(--icefin-color-text); }
+.mc-sp-dim { position: absolute; inset: 0; background: rgb(var(--icefin-color-glassEdge-channel) / 0.45); animation: mc-sp-dim-in 260ms ease-out both; }
+.mc-sp-video .mc-sp-dim { background: rgb(var(--icefin-color-glassEdge-channel) / 0.7); }
+.mc-sp-panel { display: flex; flex-direction: column; overflow: hidden; z-index: auto; animation: mc-sp-in 260ms cubic-bezier(0, 0, 0.2, 1) both; }
+.mc-sp-panel.mc-sp-wide { width: 48vw; }
+.mc-sp-out .mc-sp-panel { animation: mc-sp-out 200ms cubic-bezier(0.4, 0, 1, 1) both; }
+.mc-sp-out .mc-sp-dim { animation: mc-sp-dim-out 200ms ease-in both; }
+@keyframes mc-sp-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes mc-sp-out { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes mc-sp-dim-in { from { opacity: 0; } }
+@keyframes mc-sp-dim-out { to { opacity: 0; } }
+.mc-sp-head { flex: none; }
+.mc-sp-title { font-size: 4.2vh; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sp-sub { font-size: 2.2vh; color: var(--icefin-color-textSecondary); margin-top: 0.3vh; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sp-body { flex: 1; overflow-y: auto; margin: 1.2vh -0.8vh 0; padding: 1.2vh 0.8vh 3vh; scroll-padding: 4vh 0; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 2.4vh, #000 calc(100% - 4vh), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 2.4vh, #000 calc(100% - 4vh), transparent 100%); }
+.mc-sp-body::-webkit-scrollbar { display: none; }
+.mc-sp-swap { animation: mc-sp-swap 120ms ease-out both; }
+@keyframes mc-sp-swap { from { opacity: 0; } }
+.mc-sp-row { margin: 0.2vh 0; }
+.mc-sp-label { display: flex; flex-direction: column; min-width: 0; }
+.mc-sp-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sp-rowsub { display: block; font-size: 1.9vh; opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-sp-icon { width: 3vh; height: 3vh; flex: none; }
+.mc-sp-check { width: 2.6vh; height: 2.6vh; margin-left: auto; flex: none; color: var(--icefin-color-focus); }
+.mc-li.icefin-focused .mc-sp-check { color: inherit; }
+.mc-sp-danger:not(.icefin-focused) .mc-sp-label { color: var(--icefin-color-error); }
+.mc-sp-foot { display: flex; flex-wrap: wrap; gap: 1.4vh; margin-top: 2.4vh; }
+.mc-sp-btn { height: 5.6vh; font-size: 2.6vh; }
+.mc-sp-tabs { margin: 0.4vh 0 1.2vh; flex-wrap: wrap; gap: 2.4vh; }
+.mc-sp-field { display: block; margin: 1.2vh 0; }
+.mc-sp-flabel { display: block; font-size: 1.9vh; color: var(--icefin-color-textSecondary); margin-bottom: 0.5vh; }
+.mc-sp-input { width: 100%; box-sizing: border-box; height: 5.4vh; font: inherit; font-size: 2.6vh; font-weight: 300; padding: 0 1.4vh; color: var(--icefin-color-text);
+  background: rgb(var(--icefin-color-glass-channel) / 0.08); border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.3); border-radius: 0.28vh; }
+textarea.mc-sp-input { height: 16vh; padding: 1vh 1.4vh; resize: none; line-height: 1.4; }
+.mc-sp-input.icefin-focused, .mc-sp-input:focus { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); outline: none;
+  box-shadow: 0 0 2.4vh rgb(var(--icefin-color-focus-channel) / 0.7); }
+.mc-sp-images { display: flex; flex-wrap: wrap; gap: 1.2vh; padding: 0.4vh; }
+.mc-sp-image { width: 13vh; height: 19.5vh; position: relative; border-radius: 0.28vh; background: center / cover no-repeat rgb(var(--icefin-color-glass-channel) / 0.08); }
+.mc-sp-image.icefin-focused { box-shadow: 0 0 0 0.1vh var(--icefin-color-glassEdge), inset 0 0 0 0.2vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 2.6vh 0.4vh var(--icefin-color-focusGlow); }
+.mc-sp-image-label { position: absolute; left: 0; right: 0; bottom: 0; font-size: 1.6vh; padding: 0.4vh 0.6vh; background: rgb(var(--icefin-color-background-channel) / 0.78);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-sp-note { margin: 1.2vh 1vh; }
+.mc-notice { position: fixed; right: 4vh; bottom: 4vh; z-index: 1100; max-width: 40vw; padding: 1.8vh 2.4vh; font-size: 2.6vh; font-weight: 300; color: var(--icefin-color-text);
+  background: rgb(var(--icefin-color-background-channel) / 0.9); border: 0.14vh solid rgb(var(--icefin-color-focus-channel) / 0.45); box-shadow: 0 0 4vh rgb(0 0 0 / 0.4);
+  animation: mc-notice-in 250ms ease-out both; }
+.mc-notice-bad { border-color: var(--icefin-color-error); }
+.mc-notice-out { animation: mc-notice-out 200ms ease-in both; }
+@keyframes mc-notice-in { from { opacity: 0; transform: translateY(2vh); } }
+@keyframes mc-notice-out { to { opacity: 0; transform: translateY(2vh); } }
+html[data-icefin-motion="low"] .mc-sp-panel, html[data-icefin-motion="low"] .mc-sp-dim, html[data-icefin-motion="low"] .mc-sp-swap,
+html[data-icefin-motion="low"] .mc-notice { animation: none !important; }
+
+/* A drill-down list (9.60, the ListPage board): Play all and Shuffle at the left with what the list is; the grid
+   beside them. */
+#icefin-theme-root[data-mc="list"] .mc-lib-body { left: 34.4vw; }
+#icefin-theme-root[data-mc="list"] .mc-lib-info { left: 34.4vw; }
+.mc-lib-side { position: absolute; left: 21.67vh; top: 24vh; width: 34.7vh; display: flex; flex-direction: column; gap: 1.4vh; z-index: 2; }
+.mc-lib-side .mc-btn { height: 6.7vh; }
+.mc-lib-about { margin-top: 1.9vh; font-size: 2.4vh; line-height: 1.5; color: var(--icefin-color-textSecondary); }
+.mc-lib-sort { margin-left: auto; }
+.mc-lib-sort.on { color: var(--icefin-color-focus); }
+
+/* ---- Motion between screens (PLAN 9.60, motion.js; the "Pass 9.60" boards) ---- */
+/* an item into its details and back: the flier, and the poster hidden under it until it lands */
+.mc-flier { position: fixed; z-index: 1002; pointer-events: none; background: center / cover no-repeat; border-radius: 0.28vh;
+  box-shadow: 0 1vh 4vh rgb(0 0 0 / 0.45); }
+#icefin-theme-root.mc-arriving .icefin-d-poster, .mc-landing { visibility: hidden; }
+/* a screen arrives: the frame (Back, Home, the clock) stays; the title cross-fades; the content rises into place */
+@keyframes mc-rise { from { opacity: 0; transform: translateY(1.6vh); } }
+@keyframes mc-fade { from { opacity: 0; } }
+#icefin-theme-root[data-mc] > .mc-title { animation: mc-fade 150ms ease-out both; }
+#icefin-theme-root:is([data-mc="library"], [data-mc="list"], [data-mc="wall"], [data-mc="search"], [data-mc="favorites"], [data-mc="settings"], [data-mc="queue"], [data-mc="livetv"]) > :is(.mc-lib-pivot, .mc-pivot, .mc-lib-side) { animation: mc-rise 240ms ease-out both; }
+#icefin-theme-root:is([data-mc="library"], [data-mc="list"], [data-mc="wall"], [data-mc="search"], [data-mc="favorites"], [data-mc="settings"], [data-mc="queue"], [data-mc="livetv"]) > :is(.mc-lib-body, .mc-wall-body, .mc-wall-head) { animation: mc-rise 240ms 40ms ease-out both; }
+#icefin-theme-root:is([data-mc="library"], [data-mc="list"]) > :is(.mc-lib-info, .mc-count) { animation: mc-fade 240ms 80ms ease-out both; }
+.icefin-details .icefin-d-info, .icefin-details .icefin-d-actions { animation: mc-rise 240ms 120ms ease-out both; }
+.icefin-details .icefin-d-sections { animation: mc-rise 240ms 160ms ease-out both; }
+/* a pivot: the row slides the picked word first; the content travels the same way, a column at a time */
+.mc-lib-pivot > .mc-pivot-item:not(.mc-lib-sort) { transform: translateX(var(--mc-shift, 0)); transition: transform 300ms ease-out, opacity 300ms ease-out; }
+.mc-lib-pivot > .mc-pivot-item.mc-pivot-past:not(.icefin-focused) { opacity: 0.3; }
+.mc-lib-pivot.mc-pivot-still > .mc-pivot-item { transition: none; }
+@keyframes mc-pivot-in { from { opacity: 0; translate: calc(var(--mc-dir, 1) * 4vh) 0; } }
+.mc-lib-grid.mc-pivot-in > .mc-lib-tile { animation: mc-pivot-in 300ms ease-out both; animation-delay: calc(var(--mc-col, 0) * 30ms); }
+/* the caption: a 120 ms cross-fade */
+.mc-lib-info { transition: opacity 60ms ease-out; }
+.mc-lib-info.mc-cap-out { opacity: 0; }
+html[data-icefin-motion="low"] #icefin-theme-root[data-mc] > *, html[data-icefin-motion="low"] .icefin-details .icefin-d-info,
+html[data-icefin-motion="low"] .icefin-details .icefin-d-actions, html[data-icefin-motion="low"] .icefin-details .icefin-d-sections,
+html[data-icefin-motion="low"] .mc-lib-grid.mc-pivot-in > .mc-lib-tile { animation: none !important; }
+html[data-icefin-motion="low"] .mc-lib-pivot > .mc-pivot-item, html[data-icefin-motion="low"] .mc-lib-info { transition: none !important; }
+
+/* ---- Controller hints (PLAN 9.60, hints.js): drawn keys in the glass, bottom right; a pad or remote only ---- */
+.mc-hints { position: fixed; right: 4.06vw; bottom: 3vh; z-index: 1003; display: flex; gap: 2.6vh; pointer-events: none; font-weight: 300; color: rgb(var(--icefin-color-text-channel) / 0.88);
+  animation: mc-fade 200ms ease-out both; }
+.mc-hints[hidden] { display: none; }
+.mc-hint { display: flex; align-items: center; gap: 0.8vh; font-size: 2.2vh; }
+.mc-hint-key { min-width: 3.3vh; height: 3.3vh; padding: 0 0.5vh; border-radius: 1.65vh; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.7vh; font-weight: 600; color: var(--icefin-color-text); border: 0.16vh solid rgb(var(--icefin-color-glass-channel) / 0.75);
+  background: radial-gradient(circle at 50% 30%, rgb(var(--icefin-color-glass-channel) / 0.45), rgb(var(--icefin-color-glass-channel) / 0.05) 65%); }
+/* the count stands above the hints while they show */
+html:is([data-mc-input="pad"], [data-icefin-couch]) .mc-count { bottom: 8.4vh; }
+html[data-icefin-motion="low"] .mc-hints { animation: none; }
+/* the caption on jellyfin-web's framed pages: the focused setting's name, bottom left above the page's edge */
+.mc-sc-caption { position: fixed; left: 21.67vh; bottom: 3vh; z-index: 999; max-width: 55vw; font-size: 2.6vh; font-weight: 300; color: var(--icefin-color-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; transition: opacity 60ms ease-out; }
+.mc-sc-caption.mc-cap-out { opacity: 0; }
+.mc-sc-caption[hidden] { display: none; }
+html[data-icefin-motion="low"] .mc-sc-caption { transition: none; }
+
+/* ---- Pointer seeking (9.60): a taller hit zone, a grabber that grows on hover and while dragging ---- */
+.mc-p-seek { padding: 1.6vh 0; margin: -0.6vh 0; touch-action: none; }
+.mc-p-knob { transition: transform 120ms ease-out, opacity 120ms; }
+.mc-p-seek:hover .mc-p-knob, .mc-p-seek.mc-p-dragging .mc-p-knob { opacity: 1; transform: scale(1.3); }
+.mc-p-seek.mc-p-dragging .mc-p-fill { transition: none; }
+
+/* ---- Fallbacks and effects (9.60, the Fallbacks board) ---- */
+/* scrolling pages fade under the frame and into the bottom edge instead of being cut by it */
+html[data-icefin-stock]:not([data-icefin-dashboard]) #icefin-stock-chrome::after,
+#icefin-theme-root:has(.icefin-details)::after { content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: 7vh; pointer-events: none; z-index: 5;
+  background: linear-gradient(0deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0) 100%); }
+/* an empty list: a dashed shelf with what to do next */
+.mc-lib-empty { display: inline-flex; align-items: center; gap: 2vh; max-width: 60vw; margin: 3vh 0; padding: 2.6vh 3.3vh; font-size: 2.8vh; line-height: 1.4; opacity: 1;
+  color: rgb(var(--icefin-color-text-channel) / 0.82); border: 0.14vh dashed rgb(var(--icefin-color-glass-channel) / 0.45); border-radius: 0.28vh; }
+.mc-lib-empty::before { content: ''; flex: none; width: 5vh; height: 4vh; border: 0.2vh solid rgb(var(--icefin-color-focus-channel) / 0.85); border-radius: 0.28vh;
+  background: linear-gradient(180deg, transparent 32%, rgb(var(--icefin-color-focus-channel) / 0.85) 32%, rgb(var(--icefin-color-focus-channel) / 0.85) 38%, transparent 38%); }
+
+/* ---- Profile, Quick Connect approve, forgot password (9.60, you.js; the Profile and QuickConnectApprove boards) ---- */
+.mc-you-crumb { position: absolute; left: 21.67vh; top: 14.4vh; font-size: 2.5vh; color: var(--icefin-color-textSecondary); }
+.mc-you-side { position: absolute; left: 21.67vh; top: 22vh; width: 33.3vh; display: flex; flex-direction: column; gap: 1.4vh; }
+.mc-you-side .mc-btn { height: 6.4vh; }
+.mc-you-main { position: absolute; left: 34.4vw; right: 6vw; top: 21.7vh; display: flex; gap: 5.5vw; align-items: flex-start; flex-wrap: wrap; }
+.mc-you-who { width: 32vh; text-align: center; }
+.mc-you-pic { width: 27.8vh; height: 27.8vh; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11.7vh; font-weight: 300;
+  background: center / cover no-repeat, linear-gradient(160deg, var(--icefin-color-accent), var(--icefin-color-surface));
+  box-shadow: 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.6), 0 1.7vh 4.2vh rgb(0 0 0 / 0.45); }
+.mc-you-name { font-size: 3.9vh; margin-top: 1.9vh; }
+.mc-you-sub { font-size: 2.2vh; color: var(--icefin-color-textSecondary); }
+.mc-you-form { width: 58vh; max-width: 100%; }
+.mc-you-head { font-size: 3.9vh; width: 100%; }
+.mc-you-text { font-size: 2.6vh; line-height: 1.5; color: rgb(var(--icefin-color-text-channel) / 0.82); margin-top: 1.4vh; width: 100%; }
+.mc-you-msg { margin: 1.9vh 0 0; width: 100%; }
+.mc-qc-row { display: flex; gap: 1.4vh; align-items: center; margin-top: 3.9vh; width: 100%; }
+.mc-qc-gap { width: 1.7vh; }
+.mc-qc-box { width: 8.6vh; height: 10.6vh; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 5.6vh; font-weight: 300;
+  border: 0.14vh solid rgb(var(--icefin-color-glass-channel) / 0.55); background: rgb(var(--icefin-color-glass-channel) / 0.08); outline: none; cursor: text; }
+.mc-qc-box.icefin-focused { background: var(--icefin-color-glass); color: var(--icefin-color-onFocus); border-color: var(--icefin-color-glass); box-shadow: 0 0 2.5vh rgb(var(--icefin-color-focus-channel) / 0.7); }
+
+/* ---- Program info (9.60, programme.js; the "a programme" board) ---- */
+.mc-pi-side { top: 16.7vh; }
+.mc-pi-pic { position: absolute; left: 34.4vw; top: 17.2vh; width: 25vw; height: 25vh; background: center / cover no-repeat, linear-gradient(150deg, var(--icefin-color-accent), var(--icefin-color-surface));
+  box-shadow: 0 0 0 0.14vh rgb(var(--icefin-color-focus-channel) / 0.4), 0 1.7vh 4.7vh rgb(0 0 0 / 0.5); display: flex; align-items: center; justify-content: center; }
+.mc-pi-fallback { font-size: 3.3vh; text-align: center; padding: 1vh; }
+.mc-pi-live { position: absolute; left: 1.1vh; top: 1.1vh; font-size: 1.7vh; font-weight: 600; padding: 0.1vh 0.8vh; background: var(--icefin-color-error); color: var(--icefin-color-onError); border-radius: 0.28vh; }
+.mc-pi-head { position: absolute; left: 61.7vw; right: 4.6vw; top: 16.4vh; }
+.mc-pi-title { font-size: 4.4vh; line-height: 1.2; }
+.mc-pi-when { font-size: 2.5vh; color: rgb(var(--icefin-color-text-channel) / 0.8); margin-top: 0.8vh; }
+.mc-pi-tags { margin-top: 1.4vh; font-size: 2.2vh; color: rgb(var(--icefin-color-text-channel) / 0.75); display: flex; flex-wrap: wrap; gap: 0.8vh; align-items: center; }
+.mc-pi-tag { padding: 0.1vh 1.1vh; border: 0.14vh solid rgb(var(--icefin-color-text-channel) / 0.5); border-radius: 0.28vh; font-size: 1.9vh; font-weight: 400; }
+.mc-pi-rec { border-color: var(--icefin-color-error); color: var(--icefin-color-text); }
+.mc-pi-bar { height: 0.7vh; background: rgb(var(--icefin-color-text-channel) / 0.2); margin-top: 1.9vh; }
+.mc-pi-bar > div { height: 100%; background: var(--icefin-color-focus); }
+.mc-pi-left { font-size: 2.1vh; color: var(--icefin-color-textSecondary); margin-top: 0.6vh; }
+.mc-pi-text { position: absolute; left: 34.4vw; right: 4.6vw; top: 45.8vh; font-size: 2.6vh; line-height: 1.55; max-height: 13vh; overflow: hidden; }
+.mc-pi-others { position: absolute; left: 34.4vw; right: 4.6vw; top: 59.7vh; bottom: 6vh; overflow: hidden; }
+
+/* ---- Play on and Watch together in the frame (9.60): left of the clock ---- */
+.mc-extras { position: absolute; right: 15.5vw; top: 3.6vh; display: flex; gap: 1.2vh; z-index: 3; pointer-events: auto; }
+.mc-extras[hidden] { display: none; }
+.mc-extra { width: 5.4vh; height: 5.4vh; }
+.mc-extra svg { width: 2.8vh; height: 2.8vh; }

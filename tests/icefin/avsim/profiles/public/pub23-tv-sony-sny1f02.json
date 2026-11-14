@@ -1,0 +1,75 @@
+{
+  "description": "Sony SONY AVAMP (tv), from the linuxhw EDID collection: Digital/Sony/SNY1F02/86C8D1AA541C (CC BY 4.0); 11 EDIDs share this audio capability set",
+  "monitor_name": "SONY AVAMP",
+  "speakers": "0x5f",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    },
+    {
+      "codec": "lpcm",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    },
+    {
+      "codec": "lpcm",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 680
+    },
+    {
+      "codec": "dts",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000
+      ],
+      "max_kbps": 1536
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "bitstream",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Sony/SNY1F02/86C8D1AA541C"
+}

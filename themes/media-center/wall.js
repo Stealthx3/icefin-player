@@ -1,6 +1,6 @@
 // Media Center: the poster wall (Icefin reference theme, PLAN 8.6). A library as a wall of posters, seven across, the
 // focused row held on a fixed line, art loaded only near the visible rows and the next page fetched before the end.
-// Opened from the start strip's "All ..." tile (#/list?parentId=...); a list without a library goes to jellyfin-web.
+// Opened from the start strip's "All ..." tile (#/list?parentId=...); a genre, studio or person list is library.js's.
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -57,14 +57,20 @@
         if (W.tiles.length - i <= COLS * 2) more();
     }
 
-    T.registerScreen('#/list', {
+    // A drill-down list (a genre, studio, person: the ListPage board) is the library screen's (library.js, 9.60);
+    // the wall keeps folders.
+    let D = null;
+    window.icefinMediaCenter.register('#/list', {
+        onBack() { return D && D.onBack ? D.onBack() : false; },
         onAction(action, ctx) {
+            if (D) return false;
             if (!W || !W.tiles.length) return false;
             const i = W.tiles.indexOf(ctx.focused());
             if (i < 0) return false;
             const step = { left: -1, right: 1, up: -COLS, down: COLS }[action];
             if (step === undefined) return false;  // Enter clicks; Back is the engine's
             if ((action === 'left' && i % COLS === 0) || (action === 'right' && i % COLS === COLS - 1)) return true;
+            if (action === 'up' && i < COLS) return false;  // the top row: up reaches Back and Home
             let n = i + step;
             if (action === 'down' && n >= W.tiles.length) n = W.done ? W.tiles.length - 1 : i;  // the last row is short
             if (n >= 0 && n < W.tiles.length && n !== i) focusAt(n, ctx);
@@ -72,19 +78,27 @@
         },
         async mount(root) {
             const params = new URLSearchParams(location.hash.split('?')[1] || '');
+            const Mc = window.icefinMediaCenter;
+            D = Mc && Mc.listKind && Mc.listKind(params) ? Mc.listScreen : null;
+            if (D) return D.mount(root);
             const parentId = params.get('parentId') || params.get('topParentId');
             if (!parentId) { location.replace(location.hash + (location.hash.includes('?') ? '&' : '?') + 'icefin=stock'); return; }
             root.setAttribute('data-mc', 'wall');
             const views = await ui.userViews();
             const view = (views || []).find((v) => v.Id === parentId);
+            // Live TV has its own screen (tv.js); a wall of its folder is empty
+            if (view && view.CollectionType === 'livetv') { location.replace('#/livetv'); return; }
             W = { root, parentId, client: T.ctx.apiClient(), tiles: [], loading: false, done: false, total: 0,
                   types: view ? TYPES[view.CollectionType] : null };
             const field = el('div', 'mc-field');
             field.append(el('div', 'mc-ribbon one'), el('div', 'mc-ribbon two'));
+            // the page chrome (Back, Home, the title in lower case, the clock); the count and order under the title
+            const M = window.icefinMediaCenter;
+            W.chrome = M ? M.chrome(root, view ? view.Name.toLowerCase() : '') : null;
+            const title = W.chrome ? W.chrome.head : el('div');
             const head = el('div', 'mc-wall-head');
-            const title = el('div', 'mc-wall-title', view ? view.Name : '');
             W.count = el('div', 'mc-wall-count');
-            head.append(title, W.count, el('div', 'mc-wall-sort', 'A to Z'));
+            head.append(W.count, el('div', 'mc-wall-sort', 'A to Z'));
             const body = el('div', 'mc-wall-body');
             W.grid = el('div', 'mc-wall');
             W.grid.style.setProperty('--mc-ms', `${ui.motion.duration(300)}ms`);
@@ -100,15 +114,18 @@
                 }
             }, { root: body, rootMargin: '60% 0px' });
             if (!view) {
-                try { title.textContent = (await W.client.getItem(W.client.getCurrentUserId(), parentId)).Name || ''; } catch (e) { /* a name is optional */ }
+                try { title.textContent = ((await W.client.getItem(W.client.getCurrentUserId(), parentId)).Name || '').toLowerCase(); } catch (e) { /* a name is optional */ }
             }
             await more();
             if (!W || W.root !== root) return;
-            if (W.tiles.length) T.ctx.focus(W.tiles[0]);
+            const home = Mc && Mc.flyHome ? Mc.flyHome((id) => W.tiles.find((x) => x.dataset.id === id) || null) : null;
+            if (home) focusAt(W.tiles.indexOf(home), T.ctx); else if (W.tiles.length) T.ctx.focus(W.tiles[0]);
             root.setAttribute('data-mc-ready', '1');
         },
         unmount() {
+            if (D) { D.unmount(); D = null; return; }
             if (W && W.io) W.io.disconnect();
+            if (W && W.chrome) W.chrome.stop();
             W = null;
         }
     });
