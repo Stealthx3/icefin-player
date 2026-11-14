@@ -20,14 +20,14 @@
         const kind = section.view ? section.view.CollectionType : 'home';
         if (kind === 'home') {
             add('In progress', client.getResumableItems(uid, { Limit: 16, MediaTypes: 'Video', Fields: FIELDS }));
-            add('Next up', client.getNextUpEpisodes({ UserId: uid, Limit: 16, Fields: FIELDS }));
+            add('Next up', client.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 16, Fields: FIELDS })));
             add('Recently added', client.getLatestItems({ userId: uid, Limit: 16, Fields: FIELDS }));
         } else if (kind === 'movies') {
             add('In progress', client.getResumableItems(uid, { ParentId: pid, Limit: 16, Fields: FIELDS }));
             add('Recently added', client.getLatestItems({ userId: uid, parentId: pid, Limit: 16, Fields: FIELDS }));
             add('Unwatched', client.getItems(uid, { ParentId: pid, Recursive: true, IncludeItemTypes: 'Movie', Filters: 'IsUnplayed', SortBy: 'Random', Limit: 16, Fields: FIELDS }));
         } else if (kind === 'tvshows') {
-            add('Next up', client.getNextUpEpisodes({ UserId: uid, ParentId: pid, Limit: 16, Fields: FIELDS }));
+            add('Next up', client.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ ParentId: pid, Limit: 16, Fields: FIELDS })));
             add('In progress', client.getResumableItems(uid, { ParentId: pid, Limit: 16, Fields: FIELDS }));
             add('Recently added', client.getLatestItems({ userId: uid, parentId: pid, Limit: 16, Fields: FIELDS }));
         } else {

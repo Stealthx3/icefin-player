@@ -8,7 +8,7 @@
   - five-way navigation: up/down on the menu change section, right enters the grid, arrows move cell by cell and stop
     at the grid's right edge, left from the first column and Back return to the menu;
   - Enter on a library tile opens that library in the grid and moves the menu with it; Enter on an item opens
-    jellyfin-web's details page styled by Plum's tokens;
+    its details (9.18: the themed screen, or jellyfin-web's page for a book) styled by Plum's tokens;
   - motion (user feedback 2026-11-11): rows and one focus frame glide (no theme motion cap; the target's frame jumps)
     and lifts the cap when the screen goes; a long grid steps a row at a time with the focused row on screen, and
     art is requested only near the visible rows (lowest-spec HTPC budget).
@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+from details_check import DETAILS_OK  # noqa: E402
 
 PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
 
@@ -179,9 +180,9 @@ def main():
             act("enter")
             page.wait_for("location.hash.startsWith('#/details')", timeout=15)
             time.sleep(3)
-            check("Enter on an item opens the details page, styled by Plum's tokens",
-                  js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-                  and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase()") == "#2b0f45")
+            check("Enter on an item opens its details (themed screen or, for a book, the stock page), styled by Plum's tokens",
+                  (det := js(DETAILS_OK))["ok"]
+                  and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase()") == "#131e67", json.dumps(det))  # palette.indigo (9.6)
             check("leaving the screen lifts the theme's motion cap", motion() != "low", str(motion()))
             shot("details.png")
             js("location.hash = '#/home'; true")

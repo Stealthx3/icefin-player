@@ -11,6 +11,9 @@
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const FIELDS = 'PrimaryImageAspectRatio,ProductionYear,ChildCount,AlbumArtist';
     const WINDOW = 9;  // items above and below the focused one kept in the DOM
+    // The items a library's column lists, by its collection type (live TV has the guide; unknown kinds, their top level).
+    const TYPES = { movies: 'Movie', tvshows: 'Series', music: 'MusicAlbum', books: 'Book', boxsets: 'BoxSet', homevideos: 'Video,Photo',
+        musicvideos: 'MusicVideo', playlists: 'Playlist' };
 
     // Original line icons (24x24, stroke = currentColor).
     const A = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
@@ -72,11 +75,17 @@
             { name: 'Display', hash: '#/mypreferencesdisplay', icon: 'settings' }, { name: 'Playback', hash: '#/mypreferencesplayback', icon: 'settings' },
             { name: 'Client settings', hash: '#/mypreferencesmenu', icon: 'settings' }, { name: 'Classic home', hash: '#/home?icefin=stock', icon: 'folder' }] }];
         for (const v of views) {
-            const type = v.CollectionType === 'tvshows' ? 'Series' : v.CollectionType === 'music' ? 'MusicAlbum' : v.CollectionType === 'livetv' ? null : 'Movie';
+            // Each kind of library lists its own items (books, collections, photos and playlists too, not movies: a
+            // first library of books opened on an empty column, with nothing to focus); an unknown kind lists its
+            // top level.
+            const type = TYPES[v.CollectionType || ''];
             cats.push({ id: v.Id, label: v.Name, icon: ICON[v.CollectionType] ? v.CollectionType : 'folder', items: async () => {
-                if (!type) return [{ name: 'Guide', hash: '#/livetv', icon: 'livetv' }];
-                const r = await Promise.resolve(c.getItems(uid, { ParentId: v.Id, Recursive: true, IncludeItemTypes: type, SortBy: 'SortName', Fields: FIELDS, Limit: 500 })).catch(() => null);
-                return ((r && r.Items) || []).map((it) => ({ name: it.Name, sub: it.ProductionYear || it.AlbumArtist || (it.ChildCount ? `${it.ChildCount} seasons` : ''), item: it }));
+                if (v.CollectionType === 'livetv') return [{ name: 'Guide', hash: '#/livetv', icon: 'livetv' }];
+                const q = type ? { ParentId: v.Id, Recursive: true, IncludeItemTypes: type } : { ParentId: v.Id };
+                const r = await Promise.resolve(c.getItems(uid, Object.assign(q, { SortBy: 'SortName', Fields: FIELDS, Limit: 500 }))).catch(() => null);
+                const list = ((r && r.Items) || []).map((it) => ({ name: it.Name, sub: it.ProductionYear || it.AlbumArtist || (it.ChildCount ? `${it.ChildCount} seasons` : ''), item: it }));
+                // Never an empty column: the focus needs somewhere to be, and the library's own page is one step away.
+                return list.length ? list : [{ name: `Open ${v.Name}`, hash: `#/list?parentId=${v.Id}&serverId=${c.serverId()}`, icon: 'folder' }];
             } });
         }
         cats.push({ id: 'search', label: 'Search', icon: 'search', items: async () => [{ name: 'Search', hash: '#/search', icon: 'search' }] });

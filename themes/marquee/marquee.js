@@ -224,7 +224,7 @@
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
             const [resume, nextUp] = await Promise.all([
                 get(c.getResumableItems(uid, { Limit: 40, MediaTypes: 'Video', Fields: FIELDS })),
-                get(c.getNextUpEpisodes({ UserId: uid, Limit: 40, Fields: FIELDS }))
+                get(c.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 40, Fields: FIELDS })))
             ]);
             const rows = [];
             if (resume.length) rows.push(['Continue Watching', resume]);

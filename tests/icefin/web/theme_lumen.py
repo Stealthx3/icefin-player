@@ -8,7 +8,7 @@
   - the top shelf shows the focused item's art and text, and dims while a lower row has focus;
   - the focused poster lifts and tilts (ui.parallax); at a row's end an arrow only tilts it;
   - the tab bar is a translucent material (backdrop blur), opaque when forced;
-  - Back from a row goes to the first row, then the tab bar; Enter opens jellyfin-web's details page (Lumen's tokens);
+  - Back from a row goes to the first row, then the tab bar; Enter opens its details (9.18: the themed screen, or jellyfin-web's page for a book; Lumen's tokens);
   - Classic home shows the stock home; turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_lumen.py --app ~/build/src/icefin-player --server jf12 --out ~/r912/jf12
@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+from details_check import DETAILS_OK  # noqa: E402
 
 
 def main():
@@ -121,9 +122,9 @@ def main():
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
-        check("Enter on a poster opens the details page, styled by Lumen's tokens",
-              js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-surface').trim().toLowerCase()") == "#1c1c20")
+        check("Enter on a poster opens its details (themed screen or, for a book, the stock page), styled by Lumen's tokens",
+              (det := js(DETAILS_OK))["ok"]
+              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-surface').trim().toLowerCase()") == "#1c1c20", json.dumps(det))
         shot("details.png")
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-lm-ready]')", timeout=30)

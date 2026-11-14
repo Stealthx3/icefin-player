@@ -168,7 +168,7 @@
             const get = (p) => Promise.resolve(p).then((r) => (r && (r.Items || r)) || [], () => []);
             const [resume, nextUp] = await Promise.all([
                 get(c.getResumableItems(uid, { Limit: 24, MediaTypes: 'Video', Fields: FIELDS })),
-                get(c.getNextUpEpisodes({ UserId: uid, Limit: 24, Fields: FIELDS }))
+                get(c.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 24, Fields: FIELDS })))
             ]);
             const rows = [];
             const upNext = resume.concat(nextUp.filter((n) => !resume.some((r) => r.Id === n.Id)));

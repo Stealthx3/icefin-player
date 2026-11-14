@@ -34,7 +34,7 @@
             sub: it.Type === 'Episode' ? it.Name : (it.ProductionYear ? String(it.ProductionYear) : ''), art: art(client, it), go: () => { location.hash = detailsHash(client, it); } });
         const [resume, next, ...latest] = await Promise.all([
             safe(client.getResumableItems(uid, { Limit: 10, MediaTypes: 'Video', Fields: FIELDS })),
-            safe(client.getNextUpEpisodes({ UserId: uid, Limit: 10, Fields: FIELDS })),
+            safe(client.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 10, Fields: FIELDS }))),
             ...views.map((v) => safe(client.getLatestItems({ userId: uid, parentId: v.Id, Limit: 10, Fields: FIELDS })))]);
         const out = [];
         const spotlight = [...resume, ...next];

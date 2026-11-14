@@ -7,7 +7,7 @@
   - the hero: left/right step through its items (wrapping); after a short dwell a muted preview plays in the page's
     own <video> (a server transcode, never mpv); leaving the hero stops it; no preview under the low-motion cap;
   - five-way navigation: down from the bar to the hero to the rows, up back; each row keeps its position; Back from a
-    row returns to the hero and from the hero to the bar; Enter opens jellyfin-web's details page (Spark's tokens);
+    row returns to the hero and from the hero to the bar; Enter opens its details (9.18: the themed screen, or jellyfin-web's page for a book; Spark's tokens);
   - long rows recycle: a 300-item row keeps nine tiles in the DOM while focus moves along it;
   - Classic home shows the stock home; turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+from details_check import DETAILS_OK  # noqa: E402
 
 
 def main():
@@ -155,9 +156,9 @@ def main():
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
-        check("Enter on a tile opens the details page, styled by Spark's tokens",
-              js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#ffffff")
+        check("Enter on a tile opens its details (themed screen or, for a book, the stock page), styled by Spark's tokens",
+              (det := js(DETAILS_OK))["ok"]
+              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-focus').trim().toLowerCase()") == "#ffffff", json.dumps(det))
         shot("details.png")
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-sp-ready]')", timeout=30)

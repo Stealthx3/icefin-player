@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "plum",
   "name": "Plum",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The classic home: a header band, a menu of marks that widens with labels, a grid of large 4:3 tiles three across with an info panel beside it, and a focus frame that jumps. Deep blue-violet under a violet-to-magenta band.",
   "styles": "styles.css",
   "scripts": [

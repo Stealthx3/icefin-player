@@ -244,7 +244,7 @@
             const [latest, resume, nextUp] = await Promise.all([
                 get(c.getItems(uid, { Recursive: true, IncludeItemTypes: 'Movie,Series', SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 5, Fields: FIELDS })),
                 get(c.getResumableItems(uid, { Limit: 40, MediaTypes: 'Video', Fields: FIELDS })),
-                get(c.getNextUpEpisodes({ UserId: uid, Limit: 40, Fields: FIELDS }))
+                get(c.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 40, Fields: FIELDS })))
             ]);
             if (!S || S.root !== root) return;
             hero.items = latest;

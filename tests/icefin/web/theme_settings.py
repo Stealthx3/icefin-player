@@ -21,7 +21,11 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-THEMES = ["media-center", "harbor", "spark", "plum", "plaza", "orbit", "mosaic", "lumen", "marquee", "almanac", "arcade", "tide"]
+# A hub entry by id: the engine's .icefin-s-entry or a theme's own (any element with data-entry in the theme root).
+entry = lambda k: f"#icefin-theme-root [data-entry={k}]"
+# The full Client settings / Classic View / Server Settings flow runs on the first theme: one on the engine's hub
+# (Media Center's own hub and its flow are media_center_settings.py's).
+THEMES = ["harbor", "spark", "plum", "plaza", "orbit", "mosaic", "lumen", "marquee", "almanac", "arcade", "tide", "media-center"]
 ROOT = "document.querySelector('#icefin-theme-root')"
 
 
@@ -100,10 +104,17 @@ def main():
             except Exception as e:  # noqa: BLE001
                 check(f"{tid}: Settings opens the themed settings area", False, str(e))
                 continue
-            entries = js("[...document.querySelectorAll('.icefin-settings .icefin-s-entry')].map(e => e.dataset.entry)")
+            # The engine's hub (ui.settings), or a theme's own one (Media Center's, 9.46) with more entries: either way
+            # its entries carry data-entry, and Client settings, Classic View and Server Settings must be among them.
+            own = js("!document.querySelector('#icefin-theme-root .icefin-settings')")
+            sel = "#icefin-theme-root [data-entry]" if own else ".icefin-settings .icefin-s-entry"
+            # only what carries data-entry (Plaza's hub, #152, has more .icefin-s-entry elements without one)
+            entries = js(f"[...document.querySelectorAll({json.dumps(sel)})].map(e => e.dataset.entry).filter(Boolean)")
             want = ["client", "classic"] + (["server"] if admin else [])
-            check(f"{tid}: Settings has Client settings, Classic View{', Server Settings' if admin else ''}", entries == want, json.dumps(entries))
-            check(f"{tid}: and the profile and preferences link", js("!!document.querySelector('.icefin-settings .icefin-d-btn[data-action=profile]')") is True)
+            check(f"{tid}: Settings has Client settings, Classic View{', Server Settings' if admin else ''}",
+                  all(w in entries for w in want) if own else entries == want, json.dumps(entries))
+            check(f"{tid}: and the profile and preferences link",
+                  "profile" in entries if own else js("!!document.querySelector('.icefin-settings .icefin-d-btn[data-action=profile]')") is True)
             if a.out:
                 import base64  # noqa: E402
                 os.makedirs(a.out, exist_ok=True)
@@ -117,14 +128,14 @@ def main():
                 continue
             first = False
             # Client settings: the dialog.
-            js("document.querySelector('.icefin-s-entry[data-entry=client]').click(); true")
+            js(f"document.querySelector({json.dumps(entry('client'))}).click(); true")
             page.wait_for("location.hash.includes('pane=client') && !!document.querySelector('#icefin-theme-root .icefin-cs-host .formDialogHeaderTitle')", timeout=15)
             check("Client settings opens the themed Client Settings page", js("!document.querySelector('body > .dialogContainer')") is True)
             js("location.hash = '#/mypreferencesmenu'; true")
-            page.wait_for("!!document.querySelector('#icefin-theme-root[data-icefin-settings-ready] .icefin-s-entry[data-entry=classic]')", timeout=15)
+            page.wait_for(f"!!document.querySelector('#icefin-theme-root[data-icefin-settings-ready]') && !!document.querySelector({json.dumps(entry('classic'))})", timeout=15)
             # Classic View: the stock look now, the saved choice untouched, the way back in Client Settings.
             saved = js("new Promise(r => window.api.theme.selection(r))")
-            js("document.querySelector('.icefin-s-entry[data-entry=classic]').click(); true")
+            js(f"document.querySelector({json.dumps(entry('classic'))}).click(); true")
             page.wait_for("!window.icefinTheme.active() && !document.documentElement.hasAttribute('data-icefin-theme')", timeout=20)
             time.sleep(1)
             check("Classic View turns the theme off at once", js("new Promise(r => window.api.theme.classic(r))") is True and js("location.hash").startswith("#/home"))
@@ -143,11 +154,13 @@ def main():
             # Server Settings and the profile link: jellyfin-web's own pages.
             if admin:
                 open_hub()
-                js("document.querySelector('.icefin-s-entry[data-entry=server]').click(); true")
+                js(f"document.querySelector({json.dumps(entry('server'))}).click(); true")
                 page.wait_for("location.hash.startsWith('#/dashboard')", timeout=15)
                 time.sleep(2)
                 check("Server Settings opens the dashboard as jellyfin-web's page", js("window.icefinTheme.active().route") is None)
             open_hub()
+            if own:  # a theme's own hub lays out the profile page itself (Media Center's account pages, 9.46)
+                continue
             js("document.querySelector('.icefin-settings .icefin-d-btn[data-action=profile]').click(); true")
             page.wait_for("location.hash.includes('icefin=stock')", timeout=15)
             time.sleep(1)

@@ -27,7 +27,10 @@ SHEET = r"""(() => { const d = [...document.querySelectorAll('.dialogContainer .
   const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const n = [...document.querySelectorAll('.dialogContainer .dialog')].filter(x => x.getClientRects().length).length;
   return JSON.stringify({n, active: a ? a.tagName + '.' + (a.className || '').toString().split(' ').slice(0, 2).join('.') : '', inside: !!(a && d.contains(a)), text: a ? (a.textContent || '').trim().slice(0, 30) : '', focusBg: fs ? fs.backgroundColor : '',
-    surface: cs.backgroundColor, radius: cs.borderTopLeftRadius, tokFocus: tok('--icefin-color-focus'), tokRadius: tok('--icefin-shape-cardRadius')}); })()"""
+    focusImg: fs ? fs.backgroundImage : '', surface: cs.backgroundColor, surfaceImg: cs.backgroundImage, radius: cs.borderTopLeftRadius,
+    rect: (r => [r.left, r.top, r.right, r.bottom].map(Math.round))(d.getBoundingClientRect()), win: [innerWidth, innerHeight],
+    panel: (r => r.height >= innerHeight * 0.9 && (r.left <= innerWidth * 0.02 || r.right >= innerWidth * 0.98))(d.getBoundingClientRect()),
+    tokFocus: tok('--icefin-color-focus'), tokRadius: tok('--icefin-shape-cardRadius')}); })()"""
 
 
 def rgb(hexstr):
@@ -107,10 +110,15 @@ def main():
             check(f"{tid}: More options opens jellyfin-web's item menu, and Down moves focus inside it", bool(moved), f"{r1}; {s0 and s0['text']} -> {s1 and s1['text']} -> {s2 and s2['text']}; dialogs {s1 and s1['n']}, active {s1 and s1['active']}")
             tf = rgb(s2["tokFocus"]) if s2 else None
             fb = s2["focusBg"] if s2 else ""
-            filled = bool(tf) and fb.replace(" ", "").startswith(f"rgb({tf[0]},{tf[1]},{tf[2]}")
-            check(f"{tid}: the focused item is filled with the theme's focus colour", filled, f"{fb} vs {s2 and s2['tokFocus']}")
-            check(f"{tid}: the menu sits on the theme's surface with its radius", bool(s2) and s2["radius"] not in ("", "0px") and "0, 0, 0, 0" not in s2["surface"],
-                  f"{s2 and s2['surface']} radius {s2 and s2['radius']}")
+            # The fill is the focus colour, or a gradient that starts from it (Media Center's glass bar, 9.46).
+            fi = (s2["focusImg"] if s2 else "").replace(" ", "")
+            filled = bool(tf) and (fb.replace(" ", "").startswith(f"rgb({tf[0]},{tf[1]},{tf[2]}")
+                                   or ("gradient(" in fi and f"({tf[0]},{tf[1]},{tf[2]}" in fi.split("),", 1)[0]))
+            check(f"{tid}: the focused item is filled with the theme's focus colour", filled, f"{fb} {fi[:80]} vs {s2 and s2['tokFocus']}")
+            # A card with the theme's radius, or a full-height panel at the window's edge (square by design: Media Center).
+            surfaced = bool(s2) and ("0, 0, 0, 0" not in s2["surface"] or s2["surfaceImg"] not in ("", "none"))
+            check(f"{tid}: the menu sits on the theme's surface with its radius (or as an edge panel)", surfaced and (s2["radius"] not in ("", "0px") or s2["panel"]),
+                  f"{s2 and s2['surface']} {s2 and s2['surfaceImg'][:60]} radius {s2 and s2['radius']} panel {s2 and s2['panel']} {s2 and s2['rect']} in {s2 and s2['win']}")
             open(os.path.join(a.out, f"{tid}-menu.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
             pad("back")
             time.sleep(0.8)

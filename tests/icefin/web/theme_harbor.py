@@ -90,7 +90,11 @@ def main():
         check("Home focused first and its shelves shown", foc() == "rail/Home" and section() == "Home" and nshelves() >= 1, f"{foc()} {section()} {nshelves()}")
         shot("home.png")
 
-        # Down the menu to the library with the most shelves (at least two if the server has them).
+        # Down the menu to the library with the most shelves (at least two if the server has them), among those whose
+        # items open themed details: books and photos keep jellyfin-web's own page (9.18), and with an empty Continue
+        # Watching and Next Up (reset-watch.py) Books tied with Shows and won.
+        stock_kinds = ("books", "homevideos", "photos", "playlists", "livetv")
+        stock_libs = set(js("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => r.Items.filter(v => %s.includes(v.CollectionType)).map(v => v.Name))" % json.dumps(list(stock_kinds))))
         best, best_n = 0, nshelves()
         for i in range(1, len(rail) - 3):
             act("down")
@@ -98,7 +102,7 @@ def main():
             time.sleep(0.8)
             if i == 1:
                 check("down on the menu changes section", foc() == f"rail/{rail[1]}" and section() == rail[1], f"{foc()} {section()}")
-            if nshelves() > best_n:
+            if nshelves() > best_n and rail[i] not in stock_libs:
                 best, best_n = i, nshelves()
         for _ in range(len(rail)):
             act("up")
@@ -189,7 +193,8 @@ def main():
                 try:
                     page.wait_for("[...document.querySelectorAll('.Mui-selected, .emby-tab-button-active')].some(e => e.offsetParent) && !document.querySelector('#icefin-theme-root[data-hb]:not([hidden])')", timeout=15)
                     time.sleep(1.5)
-                    got = js("([...document.querySelectorAll('.Mui-selected, .emby-tab-button-active')].find(e => e.offsetParent) || {}).textContent || ''").strip()
+                    # The last selected entry: jellyfin-web 12.4 also marks the library's own entry ("Shows") in its menu
+                    got = js("([...document.querySelectorAll('.Mui-selected, .emby-tab-button-active')].filter(e => e.offsetParent).pop() || {}).textContent || ''").strip()
                 except Exception:  # noqa: BLE001
                     got = "(no tabs)"
                 if got.lower() != names.get(name, name).lower():

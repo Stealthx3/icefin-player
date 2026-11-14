@@ -232,7 +232,7 @@
             const get = (p) => Promise.resolve(p).then((x) => (x && (x.Items || x)) || [], () => []);
             const [resume, nextUp] = await Promise.all([
                 get(c.getResumableItems(uid, { Limit: 20, MediaTypes: 'Video', Fields: FIELDS })),
-                get(c.getNextUpEpisodes({ UserId: uid, Limit: 20, Fields: FIELDS }))
+                get(c.getNextUpEpisodes(window.icefinTheme.ui.nextUpQuery({ Limit: 20, Fields: FIELDS })))
             ]);
             let recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id)));
             const feeds = [];
