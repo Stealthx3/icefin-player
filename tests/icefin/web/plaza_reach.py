@@ -20,7 +20,13 @@ Usage: ICEFIN_LAB_DISPLAY=:97 python3 plaza_reach.py --app ~/build-sdl3/src/icef
 """
 import argparse, base64, json, os, re, signal, sys, tempfile, time
 
-from evdev import UInput, AbsInfo, ecodes as e
+try:
+    from evdev import UInput, AbsInfo, ecodes as e
+except ImportError:  # the host (--host): no virtual pad there, presses go through the engine's actions
+    UInput = AbsInfo = None
+
+    class e:  # noqa: N801 (the evdev names the walk uses, as the actions they stand for)
+        BTN_SOUTH, BTN_EAST, BTN_NORTH = "enter", "back", "menu"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -28,13 +34,16 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+import hostmode  # noqa: E402
 
-CAPS = {e.EV_KEY: [e.BTN_SOUTH, e.BTN_EAST, e.BTN_NORTH, e.BTN_WEST, e.BTN_TL, e.BTN_TR, e.BTN_SELECT, e.BTN_START,
+CAPS = None if UInput is None else {e.EV_KEY: [e.BTN_SOUTH, e.BTN_EAST, e.BTN_NORTH, e.BTN_WEST, e.BTN_TL, e.BTN_TR, e.BTN_SELECT, e.BTN_START,
                    e.BTN_MODE, e.BTN_THUMBL, e.BTN_THUMBR],
         e.EV_ABS: [(a, AbsInfo(0, -32768, 32767, 16, 128, 0)) for a in (e.ABS_X, e.ABS_Y, e.ABS_RX, e.ABS_RY)]
                   + [(a, AbsInfo(0, 0, 255, 0, 0, 0)) for a in (e.ABS_Z, e.ABS_RZ)]
                   + [(a, AbsInfo(0, -1, 1, 0, 0, 0)) for a in (e.ABS_HAT0X, e.ABS_HAT0Y)]}
-DIRS = {"up": (e.ABS_HAT0Y, -1), "down": (e.ABS_HAT0Y, 1), "left": (e.ABS_HAT0X, -1), "right": (e.ABS_HAT0X, 1)}
+DIRS = None if UInput is None else {"up": (e.ABS_HAT0Y, -1), "down": (e.ABS_HAT0Y, 1), "left": (e.ABS_HAT0X, -1), "right": (e.ABS_HAT0X, 1)}
+# --host: an action through the engine first, then jellyfin-web's input layer (as the app's input manager does)
+PAD = r"""(a => { if (window.icefinTheme && window.icefinTheme.handleAction(a)) return 'theme'; window.icefinInputManager.handleCommand({enter: 'select'}[a] || a, {}); return 'jellyfin-web'; })"""
 
 # The page's helpers: what counts as a control, a stable key for one, the focused one, and its look.
 LIB = r"""
@@ -126,17 +135,22 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", default="")
     ap.add_argument("--max", type=int, default=90, help="controls tried per screen")
+    hostmode.add_args(ap)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-    cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
-    srv = Server(cfg)
-    srv.wait()
-    xv = start_x()
-    ui = UInput(CAPS, name="Microsoft X-Box 360 pad reach-pad", vendor=0x045E, product=0x028E, version=0x110, bustype=e.BUS_USB)
-    time.sleep(1)
-    log = open(os.path.join(a.out, "app.log"), "w")
-    app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-reach-"), log, "xcb")
+    app = xv = ui = stop = None
+    if a.host:
+        page, stop = hostmode.start(a, a.out)
+    else:
+        cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+        cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        srv = Server(cfg)
+        srv.wait()
+        xv = start_x()
+        ui = UInput(CAPS, name="Microsoft X-Box 360 pad reach-pad", vendor=0x045E, product=0x028E, version=0x110, bustype=e.BUS_USB)
+        time.sleep(1)
+        log = open(os.path.join(a.out, "app.log"), "w")
+        app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-reach-"), log, "xcb")
     report, fails = {}, []
     trace = open(os.path.join(a.out, "trace.log"), "w")
 
@@ -151,29 +165,37 @@ def main():
 
     def btn(code, hold=0.08):
         tr("btn", code)
+        if a.host:
+            page.eval(f"{PAD}({json.dumps(code)})"); time.sleep(0.35 + hold)
+            return
         ui.write(e.EV_KEY, code, 1); ui.syn(); time.sleep(hold)
         ui.write(e.EV_KEY, code, 0); ui.syn(); time.sleep(0.35)
 
     def dpad(d):
         tr("dpad", d)
+        if a.host:
+            page.eval(f"{PAD}({json.dumps(d)})"); time.sleep(0.37)
+            return
         axis, v = DIRS[d]
         ui.write(e.EV_ABS, axis, v); ui.syn(); time.sleep(0.07)
         ui.write(e.EV_ABS, axis, 0); ui.syn(); time.sleep(0.3)
 
     try:
-        page = Page(a.port, timeout=90)
+        if not a.host:
+            page = Page(a.port, timeout=90)
         js = page.eval
 
         def shot(name):
             open(os.path.join(a.out, f"{name}.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
 
-        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
-        js(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
-        time.sleep(5)
-        page.reconnect()
-        page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
-        js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
-        time.sleep(3)
+        if not a.host:
+            page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
+            js(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
+            time.sleep(5)
+            page.reconnect()
+            page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
+            js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
+            time.sleep(3)
 
         def lib():
             js(LIB)
@@ -215,10 +237,13 @@ def main():
             if not r:
                 return None
             on = grab(r)
-            js(f"(() => {{ const el = {FIND % json.dumps(k)}; el.__had = el.classList.contains('icefin-focused'); el.__act = document.activeElement === el; el.classList.remove('icefin-focused'); if (el.__act) el.blur(); return true; }})()")
+            # the screen may have drawn the control again meanwhile (a home that refreshes its tiles): then no verdict
+            if not js(f"(() => {{ const el = {FIND % json.dumps(k)}; if (!el) return false; el.__had = el.classList.contains('icefin-focused'); el.__act = document.activeElement === el; el.classList.remove('icefin-focused'); if (el.__act) el.blur(); return true; }})()"):
+                tr("  redrawn before its picture:", k)
+                return None
             time.sleep(0.05)
             off = grab(r)
-            js(f"(() => {{ const el = {FIND % json.dumps(k)}; if (el.__had) el.classList.add('icefin-focused'); if (el.__act) el.focus({{preventScroll: true}}); return true; }})()")
+            js(f"(() => {{ const el = {FIND % json.dumps(k)}; if (!el) return true; if (el.__had) el.classList.add('icefin-focused'); if (el.__act) el.focus({{preventScroll: true}}); return true; }})()")
             if on == off and visual_highlight.saved < 8:
                 visual_highlight.saved += 1
                 for tag, img in (("on", on), ("off", off)):
@@ -244,6 +269,10 @@ def main():
             """True when the focused control looks different on screen than without focus; None when it can't be told."""
             js("window.__reach.focusedEl() && (window.__reach.focusedEl().__rk = window.__reach.keyOf(window.__reach.focusedEl())) && true")
             k = js("(() => { const f = window.__reach.focusedEl(); return f ? window.__reach.keyOf(f) : null; })()")
+            if k and not js(f"!!{FIND % json.dumps(k)}"):
+                # focus on something the page's own tree doesn't hold (a plugin's frame or shadow root on the host's server)
+                tr("  focus outside the page's tree:", js("(() => { const a = document.activeElement; return a ? a.tagName + '.' + String(a.className).slice(0, 60) + ' ' + (a.id || '') : null; })()"))
+                return None
             return visual_highlight(k) if k else None
 
         CLICKY = {"click", "pointerdown", "pointerup", "mousedown", "mouseup", "dblclick", "contextmenu"}
@@ -286,12 +315,13 @@ def main():
             keyboard a text field opens), Right along the bar, Up to the tabs, then Left and Right along them."""
             if only and name not in only:
                 return
-            for _ in range(120):  # wait (up to 20 min) until no other test's pad is plugged in
+            for _ in range(0 if a.host else 120):  # wait (up to 20 min) until no other test's pad is plugged in (lab)
                 if not other_pads():
                     break
                 time.sleep(10)
             else:
-                check(f"{name}: no other pad in the guest", False)
+                if not a.host:
+                    check(f"{name}: no other pad in the guest", False)
             start_hash = js("location.hash")
 
             def setup():
@@ -465,23 +495,24 @@ def main():
         # ---- the pad works at all ----
         page.wait_for("!!window.icefinTheme && !!window.icefinTheme._engine", timeout=60)
         hook()
-        # ---- sign-in (Plaza's own) ----
-        walk("signin")
-        js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
-        js("location.hash = '#/home'; location.reload(); true", await_promise=False)
-        time.sleep(8)
-        page.reconnect()
-        page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!window.icefinPlaybackManager && !!window.icefinInputManager", timeout=90)
-        js = page.eval
-        time.sleep(2)
-        js("window.icefinThemeSync ? window.icefinThemeSync.idle().then(() => true) : true")
-        js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
-        time.sleep(4)
+        # ---- sign-in (Plaza's own; the lab only: the host's user stays signed in) ----
+        if not a.host:
+            walk("signin")
+            js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
+            js("location.hash = '#/home'; location.reload(); true", await_promise=False)
+            time.sleep(8)
+            page.reconnect()
+            page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!window.icefinPlaybackManager && !!window.icefinInputManager", timeout=90)
+            js = page.eval
+            time.sleep(2)
+            js("window.icefinThemeSync ? window.icefinThemeSync.idle().then(() => true) : true")
+            js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
+            time.sleep(4)
         hook()
         gl = js("JSON.stringify(window.api.gamepads ? window.api.gamepads : null)")
         dpad("right")
         acts = js("JSON.stringify(window.__reachActions)")
-        check("the virtual pad reaches the focus engine", "right" in (acts or ""), f"{acts} pads={gl}")
+        check("the virtual pad reaches the focus engine" if not a.host else "the engine's actions reach the focus engine (host)", "right" in (acts or ""), f"{acts} pads={gl}")
         uid = js("window.ApiClient.getCurrentUserId()")
         sid = js("window.ApiClient.serverId()")
         one = lambda q: js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {json.dumps(dict({'Recursive': True, 'Limit': 1}, **q))}).then(r => r.Items[0] ? r.Items[0].Id : null)")
@@ -581,14 +612,15 @@ def main():
             page.send("Input.dispatchMouseEvent", type="mouseMoved", x=2, y=2); time.sleep(0.25)
             js(f"window.__reach.teleport({json.dumps(h['key'])})"); time.sleep(0.4)
             foc = grab(r)
-            js(f"(() => {{ const el = {FIND % json.dumps(h['key'])}; el.classList.remove('icefin-focused'); el.blur(); return true; }})()")
+            js(f"(() => {{ const el = {FIND % json.dumps(h['key'])}; if (el) {{ el.classList.remove('icefin-focused'); el.blur(); }} return true; }})()")
             rows.append({"label": h["label"], "pointer": hov != base, "focus": foc != base})
         page.send("Input.dispatchMouseEvent", type="mouseMoved", x=2, y=2)
         report["settings-hub-inputs"] = rows
         check("settings hub: every tile shows the pad's focus", bool(rows) and all(r["focus"] for r in rows), json.dumps([r["label"] for r in rows if not r["focus"]])[:400])
         check("settings hub: every tile shows the pointer over it", bool(rows) and all(r["pointer"] for r in rows), json.dumps([r["label"] for r in rows if not r["pointer"]])[:400])
         # ---- the player (Plaza's controls) ----
-        clip = one({"IncludeItemTypes": "Movie,Episode,Video"})
+        # (the lab only: playing reports to the server, which keeps the user's watch data)
+        clip = None if a.host else one({"IncludeItemTypes": "Movie,Episode,Video"})
         if clip:
             js(f"window.icefinTheme.ctx.play({{ids: ['{clip}'], serverId: '{sid}'}}); true")
             page.wait_for("location.hash.startsWith('#/video') && !!document.querySelector('.pz-pl')", timeout=60)
@@ -607,21 +639,24 @@ def main():
             time.sleep(2)
         json.dump(report, open(os.path.join(a.out, "reach.json"), "w"), indent=1)
     except Exception as ex:  # noqa: BLE001
-        check("run", False, f"{type(ex).__name__}: {ex} (app exit code {app.poll()})")
+        check("run", False, f"{type(ex).__name__}: {ex}" + ("" if a.host else f" (app exit code {app.poll()})"))
         json.dump(report, open(os.path.join(a.out, "reach.json"), "w"), indent=1)
     finally:
-        try:
-            page.eval("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
-        except Exception:  # noqa: BLE001
-            pass
-        app.send_signal(signal.SIGTERM)
-        try:
-            app.wait(10)
-        except Exception:  # noqa: BLE001
-            app.kill()
-        ui.close()
-        if xv:
-            xv.terminate()
+        if stop:
+            stop()  # the host: the user's theme choice goes back
+        else:
+            try:
+                page.eval("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+            except Exception:  # noqa: BLE001
+                pass
+            app.send_signal(signal.SIGTERM)
+            try:
+                app.wait(10)
+            except Exception:  # noqa: BLE001
+                app.kill()
+            ui.close()
+            if xv:
+                xv.terminate()
     print(f"plaza_reach: {'OK' if not fails else 'FAIL ' + str(len(fails))} -> {a.out}", flush=True)
     sys.exit(1 if fails else 0)
 

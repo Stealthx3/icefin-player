@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+import hostmode  # noqa: E402
 
 # flier watcher: counts .pz-flier elements as they appear
 FLIERS = "(() => { window.__fl = 0; if (!window.__flObs) { window.__flObs = new MutationObserver((rs) => { for (const r of rs) for (const n of r.addedNodes) if (n.classList && n.classList.contains('pz-flier')) window.__fl++; }); window.__flObs.observe(document.body, {childList: true}); } return true; })()"
@@ -32,14 +33,19 @@ def main():
     ap.add_argument("--server", default="jf12")
     ap.add_argument("--port", type=int, default=9333)
     ap.add_argument("--out", required=True)
+    hostmode.add_args(ap)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-    cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
-    srv = Server(cfg)
-    srv.wait()
-    xv = start_x()
-    app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-pp-"), open(os.path.join(a.out, "app.log"), "w"), "xcb")
+    app = xv = stop = None
+    if a.host:
+        page, stop = hostmode.start(a, a.out)
+    else:
+        cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+        cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        srv = Server(cfg)
+        srv.wait()
+        xv = start_x()
+        app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-pp-"), open(os.path.join(a.out, "app.log"), "w"), "xcb")
     fails = []
 
     def check(label, ok, detail=""):
@@ -48,7 +54,8 @@ def main():
             fails.append(label)
 
     try:
-        page = Page(a.port, timeout=90)
+        if not a.host:
+            page = Page(a.port, timeout=90)
         js = page.eval
 
         def shot(name):
@@ -62,20 +69,21 @@ def main():
             t = json.dumps(text) if text else "null"
             return js(f"(() => {{ const re = {t} ? new RegExp({t}, 'i') : null; const b = [...document.querySelectorAll({json.dumps(sel)})].find(x => x.getClientRects().length && (!re || re.test((x.getAttribute('aria-label') || '') + ' ' + x.textContent))); if (!b) return false; b.click(); return true; }})()")
 
-        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
-        js(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
-        time.sleep(5)
-        page.reconnect()
-        page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
-        js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
-        js("location.hash = '#/home'; location.reload(); true", await_promise=False)
-        time.sleep(8)
-        page.reconnect()
-        page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!window.icefinPlaybackManager", timeout=90)
-        js = page.eval
-        js("window.icefinThemeSync ? window.icefinThemeSync.idle().then(() => true) : true")
-        js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
-        time.sleep(4)
+        if not a.host:  # the lab: its server, a sign-in, then Plaza (the host harness has done all of this)
+            page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
+            js(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
+            time.sleep(5)
+            page.reconnect()
+            page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
+            js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
+            js("location.hash = '#/home'; location.reload(); true", await_promise=False)
+            time.sleep(8)
+            page.reconnect()
+            page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!window.icefinPlaybackManager", timeout=90)
+            js = page.eval
+            js("window.icefinThemeSync ? window.icefinThemeSync.idle().then(() => true) : true")
+            js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
+            time.sleep(4)
         uid = js("window.ApiClient.getCurrentUserId()")
         sid = js("window.ApiClient.serverId()")
         views = {ct: vid for vid, ct in js("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => r.Items.map(v => [v.Id, v.CollectionType || '']))")}
@@ -106,8 +114,8 @@ def main():
 
         # ---- sheets: rise, fit, caption, fall ----
         js("window.icefinTheme.handleAction('menu'); true")
-        time.sleep(0.05)
-        anim = js("(() => { const c = document.querySelector('#icefin-theme-overlay .pz-sheet-card'); return c ? getComputedStyle(c).animationName : null; })()")
+        # the menu asks the server for the item first (slower on a real server): read the card's animation as it appears
+        anim = js("new Promise((res) => { const t0 = performance.now(); const look = () => { const c = document.querySelector('#icefin-theme-overlay .pz-sheet-card'); if (c) return res(getComputedStyle(c).animationName); if (performance.now() - t0 > 5000) return res(null); requestAnimationFrame(look); }; look(); })")
         check("16 · a sheet rises in", anim == "pz-sheet-in", str(anim))
         time.sleep(0.6)
         fit = js("(() => { const c = document.querySelector('#icefin-theme-overlay .pz-sheet-card'); const b = document.querySelector('#icefin-theme-root .pz-d-bar'); if (!c || !b) return null; return [c.getBoundingClientRect().bottom, b.getBoundingClientRect().top + 30]; })()")
@@ -144,8 +152,14 @@ def main():
         time.sleep(0.5)
 
         # ---- placeholders ----
-        chap = one({"IncludeItemTypes": "Movie,Episode,Video", "HasChapterImages": True}) or one({"IncludeItemTypes": "Movie,Episode,Video"})
-        go(f"#/details?id={chap}&serverId={sid}", 5)
+        # a video with chapters (the lab's clips have none: then any video, and the check passes empty)
+        chap = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {Recursive: true, IncludeItemTypes: 'Movie,Episode', Fields: 'Chapters', Limit: 60}).then(r => (r.Items.find(i => (i.Chapters || []).length > 1) || r.Items[0] || {}).Id || null)")
+        go(f"#/details?id={chap}&serverId={sid}", 2)
+        try:
+            page.wait_for("!!document.querySelector('#icefin-theme-root[data-icefin-details-complete]')", timeout=20)
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(1)
         n = js("document.querySelectorAll('#icefin-theme-root [data-section=chapters] .icefin-d-card').length")
         t = js("document.querySelectorAll('#icefin-theme-root [data-section=chapters] .icefin-d-chtime').length")
         check("9 · every chapter shows its time on the picture", (n or 0) == 0 or t == n, f"{t}/{n} (no chapters in the lab is a pass)")
@@ -249,17 +263,21 @@ def main():
         lm = js("(() => { const e = document.createElement('div'); e.className = 'pz-pl'; const k = document.createElement('div'); k.className = 'pz-pl-name'; e.append(k); document.body.append(e); const d = [getComputedStyle(e).transitionDuration, getComputedStyle(k).transitionDuration]; e.remove(); return d; })()")
         check("low motion: the player's controls don't move either", bool(lm) and all(x.split(',')[0].strip() in ('0s', '0ms') for x in lm), str(lm))
         js("document.documentElement.setAttribute('data-icefin-motion', 'normal'); true")
-        js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+        if not a.host:
+            js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
-        app.send_signal(signal.SIGTERM)
-        try:
-            app.wait(10)
-        except Exception:  # noqa: BLE001
-            app.kill()
-        if xv:
-            xv.terminate()
+        if stop:
+            stop()
+        else:
+            app.send_signal(signal.SIGTERM)
+            try:
+                app.wait(10)
+            except Exception:  # noqa: BLE001
+                app.kill()
+            if xv:
+                xv.terminate()
     print(f"plaza_polish: {'OK' if not fails else 'FAIL ' + str(len(fails))} -> {a.out}", flush=True)
     sys.exit(1 if fails else 0)
 

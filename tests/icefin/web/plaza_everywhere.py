@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+import hostmode  # noqa: E402
 
 FRAME = r"""(() => { const h = document.documentElement, own = document.querySelector('#icefin-theme-root[data-pz-view]');
   // Plaza's own screen wins over a stock frame left hidden from an earlier page
@@ -40,15 +41,21 @@ def main():
     ap.add_argument("--server", default="jf12")
     ap.add_argument("--port", type=int, default=9265)
     ap.add_argument("--out", required=True)
+    hostmode.add_args(ap)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-    cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
-    srv = Server(cfg)
-    srv.wait()
-    xv = start_x()
-    log = open(os.path.join(a.out, "app.log"), "w")
-    app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-pe-"), log, "xcb")
+    app = xv = log = stop = None
+    if a.host:
+        # the host: the user's server stays as it is: no sign-in or sign-out, nothing made, moved, deleted or played
+        page, stop = hostmode.start(a, a.out)
+    else:
+        cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+        cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        srv = Server(cfg)
+        srv.wait()
+        xv = start_x()
+        log = open(os.path.join(a.out, "app.log"), "w")
+        app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-pe-"), log, "xcb")
     fails = []
 
     def check(label, ok, detail=""):
@@ -57,7 +64,8 @@ def main():
             fails.append(label)
 
     try:
-        page = Page(a.port, timeout=90)
+        if not a.host:
+            page = Page(a.port, timeout=90)
         js = page.eval
 
         def shot(name):
@@ -83,30 +91,31 @@ def main():
                 js("history.back(); true")
                 time.sleep(0.8)
 
-        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
-        js(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
-        time.sleep(5)
-        page.reconnect()
-        page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
-        js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
-        time.sleep(3)
-        # ---- before signing in ----
-        f = frame()
-        check("sign-in page: Plaza's own screen, 'Sign in', no Home, no header", f["view"] == "signin" and f["frame"] and f["name"] == "Sign in" and not f["home"] and not f["header"], json.dumps(f))
-        st = style("#icefin-theme-root .pz-si-go")
-        check("sign-in page: Sign In is a pill", bool(st) and st["radius"] >= st["h"] / 2 - 1, json.dumps(st))
-        shot("01-sign-in")
-        js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
-        js("location.hash = '#/home'; location.reload(); true", await_promise=False)
-        time.sleep(8)
-        page.reconnect()
-        page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!window.icefinPlaybackManager && !!window.icefinInputManager", timeout=90)
-        js = page.eval
-        time.sleep(2)
-        # the signed-in user has a theme choice of their own (8.5): Plaza for them too
-        js("window.icefinThemeSync ? window.icefinThemeSync.idle().then(() => true) : true")
-        js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
-        time.sleep(3)
+        if not a.host:  # the lab: its server, the sign-in page, a sign-in, then Plaza (the host harness has done this)
+            page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
+            js(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
+            time.sleep(5)
+            page.reconnect()
+            page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
+            js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
+            time.sleep(3)
+            # ---- before signing in ----
+            f = frame()
+            check("sign-in page: Plaza's own screen, 'Sign in', no Home, no header", f["view"] == "signin" and f["frame"] and f["name"] == "Sign in" and not f["home"] and not f["header"], json.dumps(f))
+            st = style("#icefin-theme-root .pz-si-go")
+            check("sign-in page: Sign In is a pill", bool(st) and st["radius"] >= st["h"] / 2 - 1, json.dumps(st))
+            shot("01-sign-in")
+            js(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
+            js("location.hash = '#/home'; location.reload(); true", await_promise=False)
+            time.sleep(8)
+            page.reconnect()
+            page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ui && !!window.icefinPlaybackManager && !!window.icefinInputManager", timeout=90)
+            js = page.eval
+            time.sleep(2)
+            # the signed-in user has a theme choice of their own (8.5): Plaza for them too
+            js("window.icefinThemeSync ? window.icefinThemeSync.idle().then(() => true) : true")
+            js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
+            time.sleep(3)
         uid = js("window.ApiClient.getCurrentUserId()")
         sid = js("window.ApiClient.serverId()")
         one = lambda q: js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {json.dumps(dict({'Recursive': True, 'Limit': 1}, **q))}).then(r => r.Items[0] ? r.Items[0].Id : null)")
@@ -180,18 +189,26 @@ def main():
         cells = js("[...document.querySelectorAll('#icefin-theme-root .pz-cell')].map(c => c.classList.contains('pz-cell-new') ? '+' : c.plazaItem.Name)")
         check("playlists: a Plaza screen, its playlists then New playlist", bool(cells) and cells[-1] == "+" and len(cells) >= 2, json.dumps(cells))
         shot("11-playlists")
-        js("document.querySelector('#icefin-theme-root .pz-cell-new').click(); true")
-        time.sleep(0.6)
-        js("(() => { const i = document.querySelector('.pz-panel .pz-input'); i.value = 'Plaza test list'; return true; })()")
-        shot("12-new-playlist")
-        js("[...document.querySelectorAll('.pz-panel .pz-tab')].find(b => b.textContent === 'Create').click(); true")
-        time.sleep(2.5)
-        made = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Playlist', Recursive: true, SearchTerm: 'Plaza test list'}).then(r => r.Items.map(i => i.Id))")
-        check("playlists: New playlist makes one", len(made) == 1, json.dumps(made))
-        for pid in made:
-            js(f"window.ApiClient.deleteItem('{pid}').then(() => true)")
+        if a.host:
+            # the host: New playlist opens its panel, and Back closes it without making one
+            js("document.querySelector('#icefin-theme-root .pz-cell-new').click(); true")
+            time.sleep(0.6)
+            check("playlists: New playlist opens its name panel (host: closed unmade)", js("!!document.querySelector('.pz-panel .pz-input')") is True)
+            pad("back")
+            time.sleep(0.6)
+        else:
+            js("document.querySelector('#icefin-theme-root .pz-cell-new').click(); true")
+            time.sleep(0.6)
+            js("(() => { const i = document.querySelector('.pz-panel .pz-input'); i.value = 'Plaza test list'; return true; })()")
+            shot("12-new-playlist")
+            js("[...document.querySelectorAll('.pz-panel .pz-tab')].find(b => b.textContent === 'Create').click(); true")
+            time.sleep(2.5)
+            made = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Playlist', Recursive: true, SearchTerm: 'Plaza test list'}).then(r => r.Items.map(i => i.Id))")
+            check("playlists: New playlist makes one", len(made) == 1, json.dumps(made))
+            for pid in made:
+                js(f"window.ApiClient.deleteItem('{pid}').then(() => true)")
         # ---- a playlist's items move ----
-        if ids["Playlist"]:
+        if ids["Playlist"] and not a.host:  # moving saves to the server: the lab only
             go(f"#/details?id={ids['Playlist']}&serverId={sid}", 2)
             page.wait_for("!!document.querySelector('#icefin-theme-root[data-icefin-details-complete]')", timeout=20)
             order = lambda: js(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{ParentId: '{ids['Playlist']}'}}).then(r => r.Items.map(i => i.Name))")
@@ -240,13 +257,14 @@ def main():
             n = js("document.querySelectorAll('#icefin-theme-root .pz-cell').length")
             check("books: a Plaza screen with the books", n >= 1, str(n))
             shot("16-books")
-            js("document.querySelector('#icefin-theme-root .pz-cell').click(); true")
-            time.sleep(6)
-            shot("17-book-reader")
-            check("books: A opens the reader", js("!!document.querySelector('#bookPlayer, #pdfPlayer, #comicsPlayer, .bookPlayerContainer')"))
-            js("window.icefinPlaybackManager.stop(); true")
-            js("history.back(); true")
-            time.sleep(2)
+            if not a.host:  # the reader reports a reading position to the server: the lab only
+                js("document.querySelector('#icefin-theme-root .pz-cell').click(); true")
+                time.sleep(6)
+                shot("17-book-reader")
+                check("books: A opens the reader", js("!!document.querySelector('#bookPlayer, #pdfPlayer, #comicsPlayer, .bookPlayerContainer')"))
+                js("window.icefinPlaybackManager.stop(); true")
+                js("history.back(); true")
+                time.sleep(2)
         # ---- dialogs from the item menu ----
         go(f"#/details?id={ids['Movie']}&serverId={sid}&icefin=stock", 4)
         click(".btnMoreCommands")
@@ -264,9 +282,10 @@ def main():
             check("add to playlist: a card inset from the screen, its title a tab at the top right", bool(d and t) and d["w"] < W() - 20 and d["radius"] >= 20 and t["x"] + t["w"] >= d["x"] + d["w"] - 4 and abs(t["y"] - d["y"]) <= 4, f"{d} {t}")
             shot("19-add-to-playlist")
             close_dialogs()
-        click(".btnMoreCommands")
-        time.sleep(1.2)
-        if click(".actionSheet [data-id=delete]"):
+        if not a.host:  # never open a delete confirmation on the user's server
+            click(".btnMoreCommands")
+            time.sleep(1.2)
+        if not a.host and click(".actionSheet [data-id=delete]"):
             time.sleep(1.5)
             d = style(".dialogContainer .dialog.centeredDialog")
             check("delete: a small card in the middle", bool(d) and d["w"] < W() * 0.9 and d["h"] < H() * 0.9, json.dumps(d))
@@ -287,7 +306,7 @@ def main():
             shot("22-edit-details")
             close_dialogs()
         # ---- music: the capsule on the home, now playing, the bar on jellyfin-web's pages ----
-        if ids["MusicAlbum"]:
+        if ids["MusicAlbum"] and not a.host:  # playing reports to the server: the lab only
             js(f"window.icefinPlaybackManager.play({{ids: ['{ids['MusicAlbum']}'], serverId: '{sid}'}}); true")
             time.sleep(4)
             go("#/home", 3)
@@ -313,14 +332,17 @@ def main():
         traceback.print_exc()
         check("run", False, f"{type(e).__name__}: {e}")
     finally:
-        try:
-            os.killpg(app.pid, signal.SIGTERM)
-            app.wait(15)
-        except Exception:  # noqa: BLE001
-            pass
-        if xv:
-            xv.terminate()
-        log.close()
+        if stop:
+            stop()  # the host: the user's theme choice goes back
+        else:
+            try:
+                os.killpg(app.pid, signal.SIGTERM)
+                app.wait(15)
+            except Exception:  # noqa: BLE001
+                pass
+            if xv:
+                xv.terminate()
+            log.close()
     print("plaza_everywhere:", "OK" if not fails else f"FAILED {fails}", "->", a.out)
     return 1 if fails else 0
 
