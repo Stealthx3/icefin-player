@@ -28,6 +28,10 @@
     "navigate": "sounds/navigate.wav",
     "error": "sounds/error.wav"
   },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg"
+  },
   "presets": {
     "teal": {
       "color": {
