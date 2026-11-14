@@ -108,6 +108,25 @@
             }
         };
         tiles.forEach(tile);
+        // 19 · a tile grows into its page (400 ms) as a channel zooms into its card; coming back, the page shrinks into
+        // its tile (320 ms). Exit and Classic View leave Plaza, so they go at once.
+        entries.addEventListener('click', (e) => {
+            const t = e.target.closest && e.target.closest('.pz-s-tile');
+            if (!t || t.classList.contains('pz-k-exit')) return;
+            const name = (t.querySelector('.icefin-s-name') || t).textContent.trim();
+            if (/classic view/i.test(name)) return;
+            P.hubBack = { name, at: Date.now() };
+            P.fly({ from: t.getBoundingClientRect(), to: { left: 0, top: 0, width: innerWidth, height: innerHeight }, background: getComputedStyle(t).backgroundImage,
+                ms: 400, radius: 27 * innerHeight / 1080, fadeOut: 180 });
+        }, true);
+        const hb = P.hubBack;
+        if (hb && Date.now() - hb.at < 120000) {
+            P.hubBack = null;
+            setTimeout(() => {
+                const t = [...entries.querySelectorAll('.pz-s-tile')].find((x) => (x.querySelector('.icefin-s-name') || x).textContent.trim() === hb.name);
+                if (t) P.fly({ from: { left: 0, top: 0, width: innerWidth, height: innerHeight }, to: t.getBoundingClientRect(), background: getComputedStyle(t).backgroundImage, ms: 320, radius: 27 * innerHeight / 1080 });
+            }, 40);
+        }
         // the engine adds the dashboard's entry once it knows the user is an administrator: dress it when it comes
         new MutationObserver(() => { for (const t of entries.querySelectorAll('.icefin-s-entry:not(.pz-s-tile)')) tile(t); }).observe(entries, { childList: true });
     }

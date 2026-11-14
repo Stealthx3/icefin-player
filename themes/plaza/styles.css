@@ -433,6 +433,9 @@ html[data-icefin-pointer] .pz-arrow { width: calc(78 * var(--pz)); height: calc(
 
 /* Low motion: no loops, instant turns and zooms. */
 html[data-icefin-motion="low"] [data-pz] *, html[data-icefin-motion="low"] [data-pz] *::before, html[data-icefin-motion="low"] [data-pz] *::after { animation: none !important; transition-duration: 0ms !important; transition-delay: 0ms !important; }
+/* the player's controls and the stock frame sit outside [data-pz]: the same for them */
+html[data-icefin-motion="low"] .pz-pl, html[data-icefin-motion="low"] .pz-pl *, html[data-icefin-motion="low"] .pz-pl *::before, html[data-icefin-motion="low"] .pz-pl *::after,
+html[data-icefin-motion="low"] #icefin-stock-chrome *, html[data-icefin-motion="low"] #icefin-stock-chrome *::before, html[data-icefin-motion="low"] #icefin-stock-chrome *::after { animation: none !important; transition-duration: 0ms !important; transition-delay: 0ms !important; }
 
 /* Details (9.43, from the walk's mock-ups): the engine's details screen in Plaza's frame (details.js): the name pill and
    section tabs on top, the framed art beside the title and facts, one row of action pills and the pickers under them, the
@@ -553,6 +556,10 @@ html[data-icefin-theme] { --pz: calc(100vh / 1080); --pz-ink-on: #ffffff;
 #icefin-stock-chrome .pz-sc-extra[hidden], #icefin-stock-chrome .pz-mround[hidden] { display: none; }
 #icefin-stock-chrome .pz-tab { font-family: inherit; border: 0; }
 #icefin-stock-chrome .pz-tab:hover, #icefin-stock-chrome .pz-mround:hover { box-shadow: var(--pz-glow); }
+/* the frame's buttons take the remote too (the engine's navigation on framed pages): the focus they have on Plaza's own
+   screens (the user, 2026-11-12) */
+#icefin-stock-chrome .pz-tab:focus { outline: none; box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 0 calc(21 * var(--pz)) calc(5 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6); }
+#icefin-stock-chrome .pz-mround:focus { outline: none; transform: scale(1.06); box-shadow: 0 0 0 calc(5 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.35), 0 0 calc(24 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6); }
 #icefin-stock-chrome .pz-sc-extra-btn { height: calc(56 * var(--pz)); font-size: calc(22 * var(--pz)); }
 #icefin-stock-chrome .pz-mbar { pointer-events: none; }
 #icefin-stock-chrome .pz-mbar > .pz-mround { pointer-events: auto; border: calc(6 * var(--pz)) solid var(--icefin-color-accent); font-family: inherit; font-weight: 700;
@@ -922,7 +929,12 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 #icefin-theme-root[data-pz="settings"] .pz-s-tile { position: relative; height: calc(240 * var(--pz)); padding: calc(18 * var(--pz)) calc(24 * var(--pz)) !important; border-radius: calc(27 * var(--pz)) !important; box-sizing: border-box;
   display: flex !important; flex-direction: column; align-items: center; gap: calc(10 * var(--pz)); text-align: center; color: var(--pz-ink-on) !important;
   background: linear-gradient(180deg, var(--pz-ch-a), var(--pz-ch-b)) !important; box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-surface), var(--pz-lift) !important; }
-#icefin-theme-root[data-pz="settings"] .pz-s-tile.icefin-focused { animation: pz-glow 2.6s ease-in-out infinite; transform: none; }
+#icefin-theme-root[data-pz="settings"] .pz-s-tile.icefin-focused { transform: none; }
+/* The tile's own shadow is !important (over ui.settings' look), and an animation can't override that: the focus glow
+   pulses on a layer over the tile instead, as the home's tiles do; the pointer gets the steady glow (the user, 2026-11-12) */
+#icefin-theme-root[data-pz="settings"] .pz-s-tile.icefin-focused::after, #icefin-theme-root[data-pz="settings"] .pz-s-tile:hover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+#icefin-theme-root[data-pz="settings"] .pz-s-tile.icefin-focused::after { animation: pz-glow 2.6s ease-in-out infinite; }
+#icefin-theme-root[data-pz="settings"] .pz-s-tile:not(.icefin-focused):hover::after { box-shadow: var(--pz-glow); }
 #icefin-theme-root[data-pz="settings"] .pz-s-tile .icefin-s-name { font-size: calc(30 * var(--pz)); font-weight: 700; text-shadow: 0 1px calc(3 * var(--pz)) rgb(0 0 0 / 0.25); }
 #icefin-theme-root[data-pz="settings"] .pz-s-tile .icefin-s-desc { font-size: calc(19 * var(--pz)); opacity: 0.95; line-height: 1.35; }
 #icefin-theme-root[data-pz="settings"] .pz-s-icon { width: calc(76 * var(--pz)); height: calc(76 * var(--pz)); color: var(--pz-ink-on); }
@@ -1031,6 +1043,9 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 .pz-srv-dot { position: absolute; right: calc(-6 * var(--pz)); top: calc(-6 * var(--pz)); width: calc(16 * var(--pz)); height: calc(16 * var(--pz)); border-radius: 50%; background: #2f9e44; box-shadow: 0 0 0 calc(3 * var(--pz)) var(--icefin-color-surface); }
 .pz-srv.pz-srv-down .pz-srv-dot { background: #e03131; }
 .pz-srv.pz-srv-down { color: var(--icefin-color-textSecondary); }
+.pz-srv { cursor: pointer; outline: none; }
+.pz-srv:hover { box-shadow: var(--pz-glow); }
+.pz-srv.icefin-focused { transform: scale(1.06); box-shadow: 0 0 0 calc(5 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.35), 0 0 calc(24 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.6); }
 /* the Live TV card: what comes on next */
 .pz-side-info .pz-next-kicker { margin-top: calc(30 * var(--pz)); }
 /* the guide: the day it shows over the channels, and NOW on the now-line */
@@ -1382,3 +1397,80 @@ html[data-icefin-stock="mypreferencesdisplay"] .page .MuiTypography-root { font-
 .pz-qa-key.pz-qa-del { font-size: calc(22 * var(--pz)); }
 .pz-qa-key:hover { box-shadow: var(--pz-glow); }
 .pz-qa-key.icefin-focused { transform: scale(1.04); box-shadow: inset 0 0 0 calc(4.5 * var(--pz)) var(--icefin-color-accent), 0 0 calc(18 * var(--pz)) rgb(var(--icefin-color-focus-channel) / 0.55); }
+
+/* ==== Polish from the 2026-11-13 host walk (the user approved the Plaza Polish mock-ups) ==== */
+/* 1 · nothing reads through the top frame: a band behind the frame's pills on framed pages, a soft top edge on details */
+#icefin-stock-chrome .pz-sc::before { content: ''; position: fixed; left: 0; right: 0; top: 0; height: calc(150 * var(--pz)); pointer-events: none;
+  background: linear-gradient(180deg, var(--icefin-color-background) 80%, rgb(var(--icefin-color-background-channel) / 0)); }
+/* 1, 2 · details: whole pictures under the tabs, and the first section below the fold (no heading alone above the bar) */
+#icefin-theme-root[data-pz="details"] .icefin-d-scroll {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(36 * var(--pz)), #000 calc(100% - 90 * var(--pz)), transparent);
+          mask-image: linear-gradient(180deg, transparent 0, #000 calc(36 * var(--pz)), #000 calc(100% - 90 * var(--pz)), transparent); }
+#icefin-theme-root[data-pz="details"] .icefin-d-sections { margin-top: calc(120 * var(--pz)); }
+/* 4 · the focused name pill floats over the row below (kit.js keeps it inside the window: 3) */
+.pz-name { box-shadow: 0 calc(6 * var(--pz)) calc(18 * var(--pz)) rgb(0 0 0 / 0.22); }
+/* 5 · sheets fit above the bar; the bar's caption and hints step back while one is up */
+.pz-sheet-card { max-height: calc(100vh - 380 * var(--pz)); }
+html:has(#icefin-theme-overlay .pz-sheet-card) .pz-mfocus, html:has(#icefin-theme-overlay .pz-sheet-card) .pz-mhints { opacity: 0; transition: opacity 120ms; }
+/* 6 · a sheet whose list scrolls says so: the last row fades */
+.pz-sheet-scroll { -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 50 * var(--pz)), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 50 * var(--pz)), transparent); }
+/* 9, 10 · the engine's chapter times and initials in Plaza's look */
+#icefin-theme-root[data-pz="details"] .icefin-d-chtime { left: calc(10 * var(--pz)); bottom: calc(10 * var(--pz)); padding: calc(3 * var(--pz)) calc(12 * var(--pz));
+  background: rgb(255 255 255 / 0.92); color: var(--icefin-color-text); font: 700 calc(18 * var(--pz)) var(--pz-font); }
+#icefin-theme-root[data-pz="details"] .icefin-d-chtime::before { content: '▶ '; }
+#icefin-theme-root .icefin-d-initials { background: linear-gradient(160deg, #a3b8c8, #6f8798); color: #fff; font: 800 calc(44 * var(--pz)) var(--pz-font); letter-spacing: 0.02em; }
+#icefin-theme-root .icefin-d-poster .icefin-d-initials { font-size: calc(96 * var(--pz)); }
+/* 12 · the Display page's tick boxes (Material UI) are Plaza switch rows: the name on the left, the switch on the right */
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControlLabel-root { display: flex !important; flex-direction: row-reverse !important; justify-content: space-between !important;
+  align-items: center !important; width: 100% !important; margin: 0 !important; padding: calc(10 * var(--pz)) calc(18 * var(--pz)) !important; box-sizing: border-box !important; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControlLabel-label { font-size: calc(22 * var(--pz)) !important; text-align: left !important; color: var(--icefin-color-text) !important; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiCheckbox-root svg { display: none !important; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiCheckbox-root { width: calc(64 * var(--pz)) !important; height: calc(34 * var(--pz)) !important; padding: 0 !important; border-radius: 999px !important;
+  background: var(--icefin-color-divider) !important; position: relative !important; flex: none !important; transition: background 160ms; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiCheckbox-root::after { content: ''; position: absolute; top: calc(4 * var(--pz)); left: calc(4 * var(--pz)); width: calc(26 * var(--pz)); height: calc(26 * var(--pz));
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); transition: left 160ms; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiCheckbox-root.Mui-checked { background: var(--icefin-color-accent) !important; }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiCheckbox-root.Mui-checked::after { left: calc(34 * var(--pz)); }
+html[data-icefin-stock="mypreferencesdisplay"] .page .MuiFormControlLabel-root:has(input:focus) { box-shadow: var(--pz-glow); border-radius: calc(24 * var(--pz)); }
+/* 13 · Save is Plaza's pill on every page */
+html[data-icefin-stock] .page .button-submit, html[data-icefin-stock] .page button[type=submit] { background: var(--pz-pill) !important; color: var(--icefin-color-text) !important;
+  border-radius: 999px !important; box-shadow: var(--pz-lift) !important; max-width: calc(420 * var(--pz)) !important; margin-left: auto !important; margin-right: auto !important;
+  display: block !important; font-weight: 700 !important; }
+html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page button[type=submit]:focus { box-shadow: var(--pz-glow) !important; }
+/* 14 · Client Settings scrolls with Plaza's thin scrollbar */
+#icefin-theme-root[data-pz="settings"] ::-webkit-scrollbar { width: calc(10 * var(--pz)); background: transparent; }
+#icefin-theme-root[data-pz="settings"] ::-webkit-scrollbar-thumb { background: rgb(var(--icefin-color-focus-channel) / 0.5); border-radius: 999px; }
+#icefin-theme-root[data-pz="settings"] ::-webkit-scrollbar-track { background: transparent; }
+/* the settings hub's round Back and Home glow under the pointer too (the controller walk) */
+#icefin-theme-root[data-pz="settings"] .pz-s-bar .icefin-d-navbtn.pz-mround:hover { box-shadow: var(--pz-glow); }
+/* 25 · Play on and Watch together only where something plays: not on the preference pages */
+html[data-icefin-stock^="mypreferences"] #icefin-stock-chrome .pz-sc-extra { display: none !important; }
+
+/* ---- motion (15–21): one family of eased timings; low motion turns all of it off ---- */
+@keyframes pz-sheet-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 14 * var(--pz))) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes pz-sheet-out { from { opacity: 1; transform: translate(-50%, -50%); } to { opacity: 0; transform: translate(-50%, calc(-50% + 10 * var(--pz))) scale(0.98); } }
+@keyframes pz-dim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pz-panel-in { from { transform: translateX(calc(100% + 40 * var(--pz))); } to { transform: none; } }
+@keyframes pz-panel-out { from { transform: none; } to { transform: translateX(calc(100% + 40 * var(--pz))); } }
+/* 16 · sheets, dialogs and pickers rise from what opened them; closing reverses (itemmenu.js: 150 ms) */
+.pz-sheet-card { animation: pz-sheet-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.pz-sheet-dim { animation: pz-dim-in 200ms ease; }
+.pz-sheet-host.pz-sheet-out .pz-sheet-card { animation: pz-sheet-out 150ms ease-in forwards; }
+.pz-sheet-host.pz-sheet-out .pz-sheet-dim { animation: pz-dim-in 150ms ease reverse forwards; }
+/* 17 · the sort and filter panel slides in from its edge (menus.js closes it in 220 ms) */
+.pz-panel .pz-panel-card:not(.pz-panel-narrow) { animation: pz-panel-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.pz-panel .pz-dim { animation: pz-dim-in 220ms ease; }
+.pz-panel.pz-panel-out .pz-panel-card:not(.pz-panel-narrow) { animation: pz-panel-out 220ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+.pz-panel.pz-panel-out .pz-dim { animation: pz-dim-in 220ms ease reverse forwards; }
+/* 15, 19, 21 · the flier that carries a poster into its details, a settings tile into its page, and back (kit.js P.fly) */
+.pz-flier { position: fixed; z-index: 2000; pointer-events: none; background: var(--icefin-color-surface) center / cover no-repeat; box-shadow: 0 calc(12 * var(--pz)) calc(36 * var(--pz)) rgb(0 0 0 / 0.28); }
+html[data-icefin-motion="low"] .pz-sheet-card, html[data-icefin-motion="low"] .pz-sheet-dim, html[data-icefin-motion="low"] .pz-panel .pz-panel-card,
+html[data-icefin-motion="low"] .pz-panel .pz-dim { animation: none !important; }
+html[data-icefin-motion="low"] .pz-flier { display: none !important; }
+/* 16 · the small centred panels (New playlist) fade in like the sheets */
+.pz-panel .pz-panel-narrow { animation: pz-dim-in 200ms ease; }
+html[data-icefin-motion="low"] .pz-panel .pz-panel-narrow { animation: none !important; }
+/* 7 · a channel with no picture or logo: its number and name on the TV's screen */
+.pz-tv-screen.pz-tv-named { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(6 * var(--pz)); color: #fff; text-align: center; }
+.pz-tv-num { font: 800 calc(26 * var(--pz)) var(--pz-font); letter-spacing: 0.08em; opacity: 0.8; }
+.pz-tv-name { font: 800 calc(40 * var(--pz)) var(--pz-font); padding: 0 calc(20 * var(--pz)); text-shadow: 0 2px 6px rgb(0 0 0 / 0.35); }
