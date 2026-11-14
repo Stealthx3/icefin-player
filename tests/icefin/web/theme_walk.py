@@ -38,7 +38,8 @@ CLASSIFY = r"""(() => {
   return JSON.stringify({
     hash: location.hash,
     screen: vis(root) && root.childElementCount > 0,
-    overlay: !!document.getElementById('icefin-theme-overlay'),
+    // the engine's overlay, or the details screen's own pickers (version, audio, subtitles), which open in the screen
+    overlay: !!document.getElementById('icefin-theme-overlay') || (!!root && [...root.querySelectorAll('.icefin-d-picker')].some(vis)),
     dialogs: dialogs.map((d) => (d.className || '').toString().trim().split(/\s+/).slice(0, 2).join('.')),
     framed: vis(chrome) && chrome.childElementCount > 0,
     stock: h.getAttribute('data-icefin-stock'),
