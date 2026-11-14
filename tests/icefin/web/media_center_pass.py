@@ -102,8 +102,11 @@ def main():
         time.sleep(1.2)
         js("window.icefinTheme.ctx.focus(document.querySelector('.mc-lib-tile')); true")
         time.sleep(0.6)
+        # the first press updates at once; quick repeats after it hold that text until the presses stop
+        act("right")
+        time.sleep(0.5)
         cap0 = js("(document.querySelector('.mc-lib-info-name') || {}).textContent || ''")
-        for _ in range(5):
+        for _ in range(4):
             act("right")
             time.sleep(0.06)
         held = js("(document.querySelector('.mc-lib-info-name') || {}).textContent || ''")
@@ -166,6 +169,22 @@ def main():
         js("window.dispatchEvent(new MouseEvent('mousemove', {movementX: 3, movementY: 2})); true")
         time.sleep(0.2)
         check("hints: a pad shows them (≡ more on a poster), the mouse hides them", "≡more" in hints and "Bback" in hints and js("!document.querySelector('.mc-hints') || document.querySelector('.mc-hints').hidden") is True, json.dumps(hints))
+        # page-aware (the user: only the keys usable on that page)
+        H = "[...document.querySelectorAll('.mc-hints:not([hidden]) .mc-hint')].map(h => h.textContent)"
+        seen = {}
+        def hints_on(name, hash, ready, prep=None):
+            go(hash, ready)
+            if prep:
+                prep()
+            act("right"); act("left")
+            time.sleep(0.4)
+            seen[name] = js(H)
+        hints_on("library", "#/movies", "!!document.querySelector('#icefin-theme-root[data-mc-ready] .mc-lib-tile')")
+        hints_on("details", f"#/details?id={movie['Id']}&serverId={sid}", "!!document.querySelector('#icefin-theme-root[data-icefin-details-ready]')")
+        hints_on("profile", "#/userprofile", "!!document.querySelector('#icefin-theme-root[data-mc=\"you\"][data-mc-ready]')")
+        check("hints are page-aware: ≡ and ▶ only where an item is, never on profile",
+              {"Aopen", "≡more", "▶play", "Bback"} <= set(seen["library"]) and "≡more" in seen["details"] and "▶play" in seen["details"]
+              and not any(h.startswith("≡") or h.startswith("▶") for h in seen["profile"]), json.dumps(seen))
         js("window.icefinTheme.ui.motion.cap('low'); true")
         time.sleep(0.3)
         act("menu")

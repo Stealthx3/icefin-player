@@ -39,21 +39,54 @@
         h.append(el('span', 'mc-hint-key', k), el('span', 'mc-hint-label', label));
         return h;
     }
+    // Only the keys that do something here, and what they do (the user, 2026-11-14: glass orbs, page-aware).
+    const isText = (e) => !!e && (e.tagName === 'TEXTAREA' || (e.tagName === 'INPUT' && /^(text|search|password|email|url|tel|number|)$/i.test(e.type || '')));
+    // the item the screen itself is about: a details screen's (not program info, which has no menu)
+    M.screenItem = () => {
+        const d = document.querySelector('#icefin-theme-root .icefin-details[data-type]');
+        if (!d || !/^#\/details\b/.test(location.hash)) return null;
+        const id = new URLSearchParams(location.hash.split('?')[1] || '').get('id');
+        return id ? { Id: id, Type: d.dataset.type } : null;
+    };
     function hintsNow() {
         const overlay = document.querySelector('#icefin-theme-overlay');
-        const f = (overlay && overlay.querySelector('.icefin-focused')) || T.ctx.focused();
+        const f = (overlay && overlay.querySelector('.icefin-focused')) || T.ctx.focused() || document.activeElement;
+        if (document.getElementById('icefin-osk')) return [['A', 'type'], ['B', 'close keyboard']];
         if (overlay) {
-            const list = [['A', 'select']];
-            if (f && typeof f.mcStep === 'function') list.push(['◀▶', 'change']);
+            const list = [];
+            if (isText(f)) list.push(['A', 'type']);
+            else if (f && typeof f.mcStep === 'function') list.push(['A', 'next'], ['◀▶', 'change']);
+            else if (f) list.push(['A', 'select']);
             list.push(['B', 'close']);
             return list;
         }
-        if (document.getElementById('icefin-osk')) return [['A', 'type'], ['B', 'close keyboard']];
-        if (html.hasAttribute('data-icefin-stock')) return [['A', 'select'], ['B', 'back']];
+        if (document.querySelector('#icefin-theme-root .icefin-d-picker')) return [['A', 'choose'], ['B', 'close']];
+        if (html.hasAttribute('data-icefin-stock')) {
+            const a = document.activeElement;
+            const list = [];
+            if (isText(a)) list.push(['A', 'type']);
+            else if (a && a.tagName === 'SELECT') list.push(['A', 'choose']);
+            else if (a && a.type === 'checkbox') list.push(['A', 'switch']);
+            else if (a && a !== document.body) list.push(['A', 'select']);
+            list.push(['B', 'back']);
+            return list;
+        }
         const route = (T.active() && T.active().route) || '';
-        const it = itemOf(f);
-        const list = [['A', route === '#/livetv' ? 'watch' : 'open']];
-        if (it) list.push(['≡', 'more']);
+        const mc = (document.getElementById('icefin-theme-root') || { getAttribute: () => '' }).getAttribute('data-mc') || '';
+        const list = [];
+        if (f && f.classList && f.classList.contains('mc-qc-box')) return [['0–9', 'digit'], ['▲▼', 'change'], ['B', 'back']];
+        if (isText(f)) list.push(['A', 'type']);
+        else if (f) {
+            const it = itemOf(f);
+            const tile = !!it || (f.classList && (f.classList.contains('mc-tile') || f.classList.contains('mc-lib-tile')));
+            const label = f.classList && f.classList.contains('mc-pivot-item') ? (f.classList.contains('mc-lib-sort') ? 'open' : 'show')
+                : route === '#/livetv' ? 'watch' : tile ? 'open' : 'select';
+            list.push(['A', label]);
+        }
+        const it = itemOf(f) || (mc === 'programme' ? null : M.screenItem());
+        const track = !!(f && f.closest && f.closest('[data-icefin-reorder], .icefin-d-track'));
+        if (track) list.push(['≡', 'move']);
+        else if (it && M.itemMenu) list.push(['≡', 'more']);
         if (it && (!it.Type || PLAYABLE.has(it.Type))) list.push(['▶', 'play']);
         list.push(['B', route === '#/home' ? 'close' : 'back']);
         return list;
@@ -82,7 +115,7 @@
         setTimeout(draw, 30);  // after the action has moved the focus
         // Play/Pause on a focused item plays it (the player's own controls take it there)
         if (a === 'play_pause' || a === 'playpause') {
-            const it = itemOf(ctx.focused());
+            const it = itemOf(ctx.focused()) || M.screenItem();
             if (it && it.Id && (!it.Type || PLAYABLE.has(it.Type))) { ctx.sound('select'); ctx.play({ ids: [it.Id], serverId: M.sid() }); return true; }
         }
         return false;

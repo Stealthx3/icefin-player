@@ -326,7 +326,9 @@
     M.onAction((a, ctx) => {
         if (a !== 'menu' || M.panel.isOpen()) return false;
         const f = ctx.focused();
-        const it = f && (f.mcItem || (f.dataset && (f.dataset.id || f.dataset.itemId) ? { Id: f.dataset.id || f.dataset.itemId } : null));
+        if (f && f.closest && f.closest('[data-icefin-reorder], .icefin-d-track')) return false;  // ≡ lifts a track there (the engine's reorder)
+        // the focused item's menu, else (on a details screen) the item the screen is about
+        const it = (f && (f.mcItem || (f.dataset && (f.dataset.id || f.dataset.itemId) ? { Id: f.dataset.id || f.dataset.itemId } : null))) || (M.screenItem && M.screenItem());
         if (!it || !it.Id) return false;
         menu(it, {});
         return true;
