@@ -4,6 +4,42 @@ Copied from docs/themes/CHECKLIST.md at the start of the pass (2026-11-14, main 
 when baseline does it in its own look and a test checks it, or write the user's reason beside it. Motion is judged by the six
 principles (PIPELINE.md, The measure).
 
+## Where the pass starts (walk 1, 2026-11-14)
+
+Walk: in the VM lab (the user's choice for this pass), the lab's build and server; **0 of 69** entries drawn by
+Baseline, **62 gaps**, 41 failing checks (all "nothing has focus: a controller can't start"), 6 skipped (nothing in
+the lab library for them). Contact sheet: `build-walk/baseline/20261114-151457/index.html`; gap list:
+`docs/themes/coverage/baseline.md`.
+
+Baseline today registers no screens: every route is jellyfin-web's own page (the desktop layout: the app bar with the
+libraries, My Media and the home sections, the library pages with their tabs, the details pages), its dialogs and
+action sheets in jellyfin-web's own look, and the engine's layers (tokens, sounds off, the overlay) under it. Its
+sounds are none; there are no hints; a pad or remote finds nothing focused on 41 of the screens.
+
+**The user's direction for this pass** (2026-11-14): "visually baseline should just be a 1:1 re-implementation of the
+stock Jellyfin-web with the theme engine. As far as augmentations, we will still be adding the full spectrum of theme
+sounds, page-aware hints, and improving controller support." So the target is stock jellyfin-web itself (D31: the
+stock web client, engine off, stays the pure control; Baseline re-implements its layout with the engine and is where a
+plugin's themed UI is built first). Every look and motion item of the checklist is judged against stock: the same
+layout, colours, type, cards and transitions, drawn by the engine; the additions are the sound set, page-aware hints
+and controller reach (focus on arrival, a visible focus, every control reachable, Back innermost first).
+
+| Area | Walk | What is missing |
+|---|---|---|
+| Home (1.1) | stock | not drawn by the engine; nothing focused on arrival; no hints |
+| Frame (1.2, 1.12) | stock | jellyfin-web's app bar and drawer, not the engine's |
+| Libraries, lists, search (1.3) | 13 stock; sort-filter, new-playlist missing | jellyfin-web's pages; the walk can't open their menus with a pad |
+| Details (1.4) | 12 stock; pickers missing | jellyfin-web's pages (Baseline kept them as the control in 9.18) |
+| Item menu (1.5) | 9 restyled | jellyfin-web's action sheet and dialogs (already its look) |
+| Music (1.7) | 3 stock | |
+| Player (1.8) | osd stock; 3 restyled | jellyfin-web's controls |
+| Settings, account, sign-in (1.10, 1.11) | 13 stock | |
+| Input (2) | 41 failing focus checks | no focus on arrival; no hints; the app bar unreachable from the content by ▲ on some pages |
+| Sound (5) | | none |
+
+Judged by the six principles: stock jellyfin-web's own motion (card focus lift on the TV layout, page fades, the
+action sheet's slide) is the measure; Baseline must match it, not improve on it.
+
 ## 1. Themed elements: screens and surfaces
 
 ### 1.1 Home
