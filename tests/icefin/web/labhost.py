@@ -43,6 +43,9 @@ class LabHost:
         page.reconnect()
         page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
         page.eval(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
+        # ICEFIN_WALK_LAYOUT=tv|desktop|mobile: jellyfin-web's layout for the walk (Baseline's target is its TV layout, 9.51)
+        if os.environ.get("ICEFIN_WALK_LAYOUT"):
+            page.eval(f"localStorage.setItem('layout', {json.dumps(os.environ['ICEFIN_WALK_LAYOUT'])}); true")
         page.eval("location.hash = '#/home'; location.reload(); true", await_promise=False)
         time.sleep(8)
         page.reconnect()
