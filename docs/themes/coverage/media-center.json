@@ -2,121 +2,34 @@
  "run": {
   "theme": "media-center",
   "where": "host",
-  "started": "2026-11-14T08:46:26Z",
-  "commit": "3a23409a",
+  "started": "2026-11-14T09:38:54Z",
+  "commit": "67bbdf75",
   "branch": "theme/media-center",
   "player": {
    "version": "0.1.0~alpha.2",
-   "commit": "e853211a5e28",
+   "commit": "835e4a32242f",
    "date": "2026-11-14",
-   "previous": "063207174327",
-   "updated": true,
-   "remoteCommit": "e853211a5e28",
+   "previous": "835e4a32242f",
+   "updated": false,
+   "remoteCommit": "835e4a32242f",
    "current": true
   },
   "version": "",
   "window": [
-   2552,
-   1070,
-   1.25
+   1920,
+   1048,
+   1
   ],
-  "finished": "2026-11-14T08:51:03Z",
+  "finished": "2026-11-14T09:40:12Z",
   "summary": {
-   "entries": 69,
-   "theme": 33,
-   "gaps": 26,
-   "checksFailing": 10,
-   "skipped": 9
+   "entries": 13,
+   "theme": 12,
+   "gaps": 1,
+   "checksFailing": 0,
+   "skipped": 0
   }
  },
  "entries": [
-  {
-   "id": "home",
-   "group": "Home",
-   "name": "Home",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/home",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "01-home.png",
-   "note": ""
-  },
-  {
-   "id": "home-favourites",
-   "group": "Home",
-   "name": "Home: Favourites tab",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/home?tab=1",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "02-home-favourites.png",
-   "note": ""
-  },
-  {
-   "id": "search",
-   "group": "Home",
-   "name": "Search",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/search",
-   "title": "Search",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "03-search.png",
-   "note": ""
-  },
   {
    "id": "lib-movies",
    "group": "Libraries",
@@ -143,299 +56,7 @@
     }
    ],
    "warnings": [],
-   "shot": "04-lib-movies.png",
-   "note": ""
-  },
-  {
-   "id": "lib-movies-suggestions",
-   "group": "Libraries",
-   "name": "Movies: Suggestions tab",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&tab=1",
-   "title": "Movies",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "05-lib-movies-suggestions.png",
-   "note": ""
-  },
-  {
-   "id": "lib-tv",
-   "group": "Libraries",
-   "name": "Shows",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/tv?topParentId=a656b907eb3a73532e40e44b968d0225&collectionType=tvshows&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Shows",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "06-lib-tv.png",
-   "note": ""
-  },
-  {
-   "id": "lib-music",
-   "group": "Libraries",
-   "name": "Music",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/music?topParentId=7e64e319657a9516ec78490da03edccb&collectionType=music&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Music",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "07-lib-music.png",
-   "note": ""
-  },
-  {
-   "id": "lib-livetv",
-   "group": "Libraries",
-   "name": "Live TV",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/livetv?serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Music",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "08-lib-livetv.png",
-   "note": ""
-  },
-  {
-   "id": "lib-livetv-guide",
-   "group": "Libraries",
-   "name": "Live TV: Guide",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/livetv?tab=1&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Music",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "09-lib-livetv-guide.png",
-   "note": ""
-  },
-  {
-   "id": "lib-livetv-recordings",
-   "group": "Libraries",
-   "name": "Live TV: Recordings",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/livetv?tab=3&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Music",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "10-lib-livetv-recordings.png",
-   "note": ""
-  },
-  {
-   "id": "lib-homevideos",
-   "group": "Libraries",
-   "name": "Home videos and photos",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for view:homevideos",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "lib-photos",
-   "group": "Libraries",
-   "name": "Photos",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for view:photos",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "lib-books",
-   "group": "Libraries",
-   "name": "Books",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for view:books",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "lib-musicvideos",
-   "group": "Libraries",
-   "name": "Music videos",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for view:musicvideos",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "lib-collections",
-   "group": "Libraries",
-   "name": "Collections",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/list?parentId=9d7ad6afe9afa2dab1a2f6e00ad28fa6&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Collections",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "11-lib-collections.png",
-   "note": ""
-  },
-  {
-   "id": "lib-playlists",
-   "group": "Libraries",
-   "name": "Playlists",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for view:playlists",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "lib-mixed",
-   "group": "Libraries",
-   "name": "Mixed library",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/list?parentId=647e39a68f5196ca93e67284ccca2d46&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "Odds and Ends",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "12-lib-mixed.png",
+   "shot": "01-lib-movies.png",
    "note": ""
   },
   {
@@ -444,10 +65,10 @@
    "name": "A genre's list",
    "kind": "screen",
    "target": "theme",
-   "state": "framed",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
-   "hash": "#/list?genreId=ce06903d834d2c3417e0889dd4049f3b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock",
+   "hash": "#/list?genreId=ce06903d834d2c3417e0889dd4049f3b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "Action",
    "dialogs": [],
    "osd": "panel",
@@ -464,367 +85,8 @@
     }
    ],
    "warnings": [],
-   "shot": "13-list-genre.png",
+   "shot": "02-list-genre.png",
    "note": ""
-  },
-  {
-   "id": "list-musicgenre",
-   "group": "Libraries",
-   "name": "A music genre's list",
-   "kind": "screen",
-   "target": "theme",
-   "state": "framed",
-   "gap": true,
-   "opened": "",
-   "hash": "#/list?musicGenreId=c37cdf9048cb1b8de11b4a5d5ca9b7e4&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock",
-   "title": "1",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "14-list-musicgenre.png",
-   "note": ""
-  },
-  {
-   "id": "list-studio",
-   "group": "Libraries",
-   "name": "A studio's list",
-   "kind": "screen",
-   "target": "theme",
-   "state": "framed",
-   "gap": true,
-   "opened": "",
-   "hash": "#/list?studioId=b95e0f3b41b0f07b21b969cd340fbbab&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock",
-   "title": "2DUX\u00b2",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "15-list-studio.png",
-   "note": ""
-  },
-  {
-   "id": "details-movie",
-   "group": "Details",
-   "name": "Movie",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "16-details-movie.png",
-   "note": ""
-  },
-  {
-   "id": "details-series",
-   "group": "Details",
-   "name": "Series",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=65cb7e7a1de2465c7c6e9c0bb898b4d8&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "17-details-series.png",
-   "note": ""
-  },
-  {
-   "id": "details-season",
-   "group": "Details",
-   "name": "Season",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=272e0c415823a2fe91157feb921398e4&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "18-details-season.png",
-   "note": ""
-  },
-  {
-   "id": "details-episode",
-   "group": "Details",
-   "name": "Episode",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=dec53ea2c8f5f664eaf9dcf1cea4e6f7&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [
-    "console: \ud83e\udebc Jellyfin Enhanced: Reviews: Failed to fetch user reviews. Error: HTTP 400"
-   ],
-   "shot": "19-details-episode.png",
-   "note": ""
-  },
-  {
-   "id": "details-album",
-   "group": "Details",
-   "name": "Album",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=c957e600cbddd6c8936182f16c536147&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "20-details-album.png",
-   "note": ""
-  },
-  {
-   "id": "details-artist",
-   "group": "Details",
-   "name": "Artist",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=d72c5fb9b996427114d93aa247efc334&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "21-details-artist.png",
-   "note": ""
-  },
-  {
-   "id": "details-person",
-   "group": "Details",
-   "name": "Person",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=f7de3cd74843cd4adf10c64d5679490a&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "22-details-person.png",
-   "note": ""
-  },
-  {
-   "id": "details-collection",
-   "group": "Details",
-   "name": "Collection",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=9feafb159ff7312fe6b05bfe8886ec3f&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "23-details-collection.png",
-   "note": ""
-  },
-  {
-   "id": "details-playlist",
-   "group": "Details",
-   "name": "Playlist",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/details?id=8ea4948a83d35d728d0bb798e818c3af&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [
-    "console: Failed to get playlist permissions AxiosError: Request failed with status code 404"
-   ],
-   "shot": "24-details-playlist.png",
-   "note": ""
-  },
-  {
-   "id": "details-book",
-   "group": "Details",
-   "name": "Book",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for item:Book",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "details-photoalbum",
-   "group": "Details",
-   "name": "Photo album",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for item:PhotoAlbum",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "details-musicvideo",
-   "group": "Details",
-   "name": "Music video",
-   "kind": "screen",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for item:MusicVideo",
-   "checks": [],
-   "shot": ""
   },
   {
    "id": "details-channel",
@@ -832,45 +94,16 @@
    "name": "Live TV channel",
    "kind": "screen",
    "target": "theme",
-   "state": "framed",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
-   "hash": "#/details?id=0fbeeb75ab362ce7bf9f1c42249843fa&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock",
+   "hash": "#/details?id=0fbeeb75ab362ce7bf9f1c42249843fa&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "",
    "dialogs": [],
    "osd": "panel",
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "25-details-channel.png",
-   "note": ""
-  },
-  {
-   "id": "settings-hub",
-   "group": "Settings",
-   "name": "Settings hub",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/mypreferencesmenu",
-   "title": "Settings",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
      "ok": true,
      "detail": ""
     },
@@ -881,94 +114,7 @@
     }
    ],
    "warnings": [],
-   "shot": "26-settings-hub.png",
-   "note": ""
-  },
-  {
-   "id": "settings-client",
-   "group": "Settings",
-   "name": "Client Settings",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/mypreferencesmenu?pane=client",
-   "title": "Settings",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "27-settings-client.png",
-   "note": ""
-  },
-  {
-   "id": "prefs-display",
-   "group": "Settings",
-   "name": "Display preferences",
-   "kind": "screen",
-   "target": "theme",
-   "state": "framed",
-   "gap": true,
-   "opened": "",
-   "hash": "#/mypreferencesdisplay?userId=9920fdc3e45143e499c2ac773a4ef3f7",
-   "title": "Display",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "28-prefs-display.png",
-   "note": ""
-  },
-  {
-   "id": "prefs-home",
-   "group": "Settings",
-   "name": "Home preferences",
-   "kind": "screen",
-   "target": "theme",
-   "state": "framed",
-   "gap": true,
-   "opened": "",
-   "hash": "#/mypreferenceshome?userId=9920fdc3e45143e499c2ac773a4ef3f7",
-   "title": "Home",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "29-prefs-home.png",
+   "shot": "03-details-channel.png",
    "note": ""
   },
   {
@@ -987,8 +133,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -997,65 +143,7 @@
     }
    ],
    "warnings": [],
-   "shot": "30-prefs-playback.png",
-   "note": ""
-  },
-  {
-   "id": "prefs-subtitles",
-   "group": "Settings",
-   "name": "Subtitle preferences",
-   "kind": "screen",
-   "target": "theme",
-   "state": "framed",
-   "gap": true,
-   "opened": "",
-   "hash": "#/mypreferencessubtitles?userId=9920fdc3e45143e499c2ac773a4ef3f7",
-   "title": "Subtitles",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "31-prefs-subtitles.png",
-   "note": ""
-  },
-  {
-   "id": "prefs-controls",
-   "group": "Settings",
-   "name": "Controls preferences",
-   "kind": "screen",
-   "target": "theme",
-   "state": "framed",
-   "gap": true,
-   "opened": "",
-   "hash": "#/mypreferencescontrols?userId=9920fdc3e45143e499c2ac773a4ef3f7",
-   "title": "Controls",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "32-prefs-controls.png",
+   "shot": "04-prefs-playback.png",
    "note": ""
   },
   {
@@ -1064,8 +152,8 @@
    "name": "Profile",
    "kind": "screen",
    "target": "theme",
-   "state": "framed",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/userprofile?userId=9920fdc3e45143e499c2ac773a4ef3f7",
    "title": "micah",
@@ -1074,8 +162,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1084,7 +172,7 @@
     }
    ],
    "warnings": [],
-   "shot": "33-profile.png",
+   "shot": "05-profile.png",
    "note": ""
   },
   {
@@ -1093,8 +181,8 @@
    "name": "Quick Connect",
    "kind": "screen",
    "target": "theme",
-   "state": "framed",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/quickconnect",
    "title": "Quick Connect",
@@ -1103,35 +191,6 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "34-quickconnect.png",
-   "note": ""
-  },
-  {
-   "id": "selectserver",
-   "group": "Sign-in",
-   "name": "Choose a server",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/selectserver",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
      "ok": true,
      "detail": ""
     },
@@ -1142,65 +201,7 @@
     }
    ],
    "warnings": [],
-   "shot": "35-selectserver.png",
-   "note": ""
-  },
-  {
-   "id": "addserver",
-   "group": "Sign-in",
-   "name": "Add a server",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/addserver",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "36-addserver.png",
-   "note": ""
-  },
-  {
-   "id": "login",
-   "group": "Sign-in",
-   "name": "Sign in",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/login?serverid=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "37-login.png",
+   "shot": "06-quickconnect.png",
    "note": ""
   },
   {
@@ -1209,8 +210,8 @@
    "name": "Forgot password",
    "kind": "screen",
    "target": "theme",
-   "state": "framed",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/forgotpassword",
    "title": "",
@@ -1219,8 +220,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1229,25 +230,7 @@
     }
    ],
    "warnings": [],
-   "shot": "38-forgotpassword.png",
-   "note": ""
-  },
-  {
-   "id": "dashboard",
-   "group": "Server dashboard",
-   "name": "Dashboard (stays jellyfin-web's)",
-   "kind": "screen",
-   "target": "dashboard",
-   "state": "dashboard",
-   "gap": false,
-   "opened": "",
-   "hash": "#/dashboard",
-   "title": "Dashboard",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [],
-   "warnings": [],
-   "shot": "39-dashboard.png",
+   "shot": "07-forgotpassword.png",
    "note": ""
   },
   {
@@ -1256,20 +239,18 @@
    "name": "Item menu (More options)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "theme:[data-action=\"more\"]",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
+   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "panel",
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1278,20 +259,22 @@
     }
    ],
    "warnings": [],
-   "shot": "40-item-menu.png",
+   "shot": "08-item-menu.png",
    "note": "",
    "entries": [
-    "addtocollection",
-    "addtoplaylist",
-    "download",
-    "copy-stream",
-    "delete",
-    "edit",
-    "editimages",
-    "editsubtitles",
-    "identify",
-    "moremediainfo",
-    "refresh"
+    "Add to a playlist\u2026",
+    "Add to a collection\u2026",
+    "Mark as watched",
+    "Favourite",
+    "Media info",
+    "Find subtitles\u2026",
+    "Refresh metadata\u2026",
+    "Edit details\u2026",
+    "Edit images\u2026",
+    "Identify\u2026",
+    "Copy stream URL",
+    "Download",
+    "Delete"
    ]
   },
   {
@@ -1300,14 +283,12 @@
    "name": "Add to playlist",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:addtoplaylist",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Add to a playlist\u2026",
+   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "panel",
    "checks": [
     {
@@ -1322,38 +303,7 @@
     }
    ],
    "warnings": [],
-   "shot": "41-menu-addtoplaylist.png",
-   "note": ""
-  },
-  {
-   "id": "menu-addtocollection",
-   "group": "Item menu",
-   "name": "Add to collection",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:addtocollection",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "42-menu-addtocollection.png",
+   "shot": "09-menu-addtoplaylist.png",
    "note": ""
   },
   {
@@ -1362,14 +312,12 @@
    "name": "Media info",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:moremediainfo",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Media info",
+   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "panel",
    "checks": [
     {
@@ -1384,38 +332,7 @@
     }
    ],
    "warnings": [],
-   "shot": "43-menu-mediainfo.png",
-   "note": ""
-  },
-  {
-   "id": "menu-refresh",
-   "group": "Item menu",
-   "name": "Refresh metadata",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:refresh",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "44-menu-refresh.png",
+   "shot": "10-menu-mediainfo.png",
    "note": ""
   },
   {
@@ -1424,159 +341,28 @@
    "name": "Edit metadata",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:edit",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "45-menu-edit.png",
-   "note": ""
-  },
-  {
-   "id": "menu-editimages",
-   "group": "Item menu",
-   "name": "Edit images",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:editimages",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "46-menu-editimages.png",
-   "note": ""
-  },
-  {
-   "id": "menu-editsubtitles",
-   "group": "Item menu",
-   "name": "Find subtitles",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:editsubtitles",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "47-menu-editsubtitles.png",
-   "note": ""
-  },
-  {
-   "id": "menu-identify",
-   "group": "Item menu",
-   "name": "Identify",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:identify",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0&icefin=stock&icefinmore=1",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "48-menu-identify.png",
-   "note": ""
-  },
-  {
-   "id": "picker-audio",
-   "group": "Details pickers",
-   "name": "Audio track picker",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "theme:.icefin-d-select[data-option=\"audio\"]",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Edit details\u2026",
    "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "",
    "dialogs": [],
    "osd": "panel",
-   "checks": [],
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
    "warnings": [],
-   "shot": "49-picker-audio.png",
-   "note": "nothing opened"
-  },
-  {
-   "id": "picker-subtitles",
-   "group": "Details pickers",
-   "name": "Subtitle picker",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "theme:.icefin-d-select[data-option=\"subtitles\"]",
-   "hash": "#/details?id=8df831b881822f04c11dda1a8b3d012b&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [],
-   "warnings": [],
-   "shot": "50-picker-subtitles.png",
-   "note": "nothing opened"
+   "shot": "11-menu-edit.png",
+   "note": ""
   },
   {
    "id": "sort-filter",
@@ -1584,32 +370,12 @@
    "name": "Sort and filter",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Sort and filter sort and filte",
    "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=1d97ed4f4f984065a7f8b1f91bdb9fd0",
    "title": "Movies",
    "dialogs": [],
-   "osd": "panel",
-   "checks": [],
-   "warnings": [],
-   "shot": "51-sort-filter.png",
-   "note": "nothing opened"
-  },
-  {
-   "id": "play-on",
-   "group": "Header",
-   "name": "Play on (cast to a device)",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.headerCastButton",
-   "hash": "#/home",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
    "osd": "panel",
    "checks": [
     {
@@ -1624,7 +390,7 @@
     }
    ],
    "warnings": [],
-   "shot": "52-play-on.png",
+   "shot": "12-sort-filter.png",
    "note": ""
   },
   {
@@ -1633,116 +399,11 @@
    "name": "Watch together (SyncPlay)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.headerSyncButton",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:watch together",
    "hash": "#/home",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "53-syncplay.png",
-   "note": ""
-  },
-  {
-   "id": "new-playlist",
-   "group": "Libraries",
-   "name": "New playlist",
-   "kind": "dialog",
-   "target": "theme",
-   "state": "skipped",
-   "gap": false,
-   "note": "nothing in your library for view:playlists",
-   "checks": [],
-   "shot": ""
-  },
-  {
-   "id": "music-capsule",
-   "group": "Music",
-   "name": "Now playing bar on the home",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/home",
-   "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "54-music-capsule.png",
-   "note": ""
-  },
-  {
-   "id": "music-queue",
-   "group": "Music",
-   "name": "Now playing and queue",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/queue",
-   "title": "",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [
-    "console: SyncPlay: unexpected error listing groups: Error: ActionSheet closed without resolving"
-   ],
-   "shot": "55-music-queue.png",
-   "note": ""
-  },
-  {
-   "id": "music-lyrics",
-   "group": "Music",
-   "name": "Lyrics",
-   "kind": "screen",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "",
-   "hash": "#/lyrics",
-   "title": "Lyrics",
    "dialogs": [],
    "osd": "panel",
    "checks": [
@@ -1758,123 +419,7 @@
     }
    ],
    "warnings": [],
-   "shot": "56-music-lyrics.png",
-   "note": ""
-  },
-  {
-   "id": "player-osd",
-   "group": "Player",
-   "name": "Player controls",
-   "kind": "player",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "pointer",
-   "hash": "#/video",
-   "title": "Cinema Reveal (2025)",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "57-player-osd.png",
-   "note": ""
-  },
-  {
-   "id": "player-audio",
-   "group": "Player",
-   "name": "Player: audio tracks",
-   "kind": "player",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Audio, subtitles and settings",
-   "hash": "#/video",
-   "title": "Cinema Reveal (2025)",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "58-player-audio.png",
-   "note": ""
-  },
-  {
-   "id": "player-subtitles",
-   "group": "Player",
-   "name": "Player: subtitles",
-   "kind": "player",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Audio, subtitles and settings",
-   "hash": "#/video",
-   "title": "42 (2013)",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "59-player-subtitles.png",
-   "note": ""
-  },
-  {
-   "id": "player-settings",
-   "group": "Player",
-   "name": "Player: settings (speed, quality, aspect)",
-   "kind": "player",
-   "target": "theme",
-   "state": "theme",
-   "gap": false,
-   "opened": "theme:Audio, subtitles and settings",
-   "hash": "#/video",
-   "title": "42 (2013)",
-   "dialogs": [],
-   "osd": "panel",
-   "checks": [
-    {
-     "name": "focus",
-     "ok": true,
-     "detail": ""
-    },
-    {
-     "name": "edges",
-     "ok": true,
-     "detail": ""
-    }
-   ],
-   "warnings": [],
-   "shot": "60-player-settings.png",
+   "shot": "13-syncplay.png",
    "note": ""
   }
  ]
