@@ -1112,8 +1112,20 @@
             } catch (e) { console.error('icefinTheme: stock chrome', e); }
         };
         send();
-        // jellyfin-web shows the page and sets its title a moment after the route changes
-        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) send(); }, ms));
+        // jellyfin-web shows the page and sets its title a moment after the route changes; once it has, the page's first
+        // control has the focus (9.60, checklist 2.1: a controller starts on the page, not nowhere)
+        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 1200) stockArrive(); } }, ms));
+    }
+    // Not a text field (that would open the on-screen keyboard unasked), and never over a dialog, the overlay or
+    // something the user (or the page) has focused already.
+    function stockArrive() {
+        if (!document.documentElement.hasAttribute('data-icefin-stock') || osk || (overlayEl && !overlayClosing) || stockDialog()) return;
+        const all = stockControls();
+        const act = document.activeElement;
+        if (act && act !== document.body && all.includes(act)) return;
+        const first = all.find((el) => !(stockEl && stockEl.contains(el)) && !isText(el) && !el.matches('select, [role="combobox"]'))
+            || all.find((el) => !(stockEl && stockEl.contains(el)));
+        if (first) first.focus({ preventScroll: true });
     }
     const stockChrome = {
         // spec: {mount(el, info, ctx), update?(info, ctx)}; info: {route, hash, title, back(), home()}
