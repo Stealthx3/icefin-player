@@ -1,8 +1,6 @@
 {
   "about": "The theme pipeline's queue (docs/themes/PIPELINE.md, D31): one theme in its pass at a time. 'active' are the themes in a pass now (theme-pass.sh start refuses another while one is listed; theme-pass.sh done <theme> takes it off). 'queue' is the order after them (the user: Media Center first, 2026-11-14; then Tide; then alphabetical). 'done' are complete: Plaza, the reference the checklist was made from (9.59). 'control' would hold themes never refined; none: Baseline is refined too (the stock look drawn by the theme engine; jellyfin-web is its own choice).",
-  "active": [
-    "media-center"
-  ],
+  "active": [],
   "queue": [
     "tide",
     "almanac",
@@ -17,7 +15,8 @@
     "spark"
   ],
   "done": [
-    "plaza"
+    "plaza",
+    "media-center"
   ],
   "control": []
 }
