@@ -759,3 +759,20 @@ html[data-icefin-motion="low"] .mc-hints { animation: none; }
 .mc-sc-caption.mc-cap-out { opacity: 0; }
 .mc-sc-caption[hidden] { display: none; }
 html[data-icefin-motion="low"] .mc-sc-caption { transition: none; }
+
+/* ---- Pointer seeking (9.60): a taller hit zone, a grabber that grows on hover and while dragging ---- */
+.mc-p-seek { padding: 1.6vh 0; margin: -0.6vh 0; touch-action: none; }
+.mc-p-knob { transition: transform 120ms ease-out, opacity 120ms; }
+.mc-p-seek:hover .mc-p-knob, .mc-p-seek.mc-p-dragging .mc-p-knob { opacity: 1; transform: scale(1.3); }
+.mc-p-seek.mc-p-dragging .mc-p-fill { transition: none; }
+
+/* ---- Fallbacks and effects (9.60, the Fallbacks board) ---- */
+/* scrolling pages fade under the frame and into the bottom edge instead of being cut by it */
+html[data-icefin-stock]:not([data-icefin-dashboard]) #icefin-stock-chrome::after,
+#icefin-theme-root:has(.icefin-details)::after { content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: 7vh; pointer-events: none; z-index: 5;
+  background: linear-gradient(0deg, var(--icefin-color-background) 0%, rgb(var(--icefin-color-background-channel) / 0) 100%); }
+/* an empty list: a dashed shelf with what to do next */
+.mc-lib-empty { display: inline-flex; align-items: center; gap: 2vh; max-width: 60vw; margin: 3vh 0; padding: 2.6vh 3.3vh; font-size: 2.8vh; line-height: 1.4; opacity: 1;
+  color: rgb(var(--icefin-color-text-channel) / 0.82); border: 0.14vh dashed rgb(var(--icefin-color-glass-channel) / 0.45); border-radius: 0.28vh; }
+.mc-lib-empty::before { content: ''; flex: none; width: 5vh; height: 4vh; border: 0.2vh solid rgb(var(--icefin-color-focus-channel) / 0.85); border-radius: 0.28vh;
+  background: linear-gradient(180deg, transparent 32%, rgb(var(--icefin-color-focus-channel) / 0.85) 32%, rgb(var(--icefin-color-focus-channel) / 0.85) 38%, transparent 38%); }
