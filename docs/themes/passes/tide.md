@@ -37,7 +37,7 @@ D-pad); **spatial orientation** fails off the home (no sense of going deeper, as
 **directing focus** fails wherever nothing has focus; **visual continuity** has nothing joining the home to details
 or a library; **clarity** is good on the home (one focus point) and lost everywhere else.
 
-The design for the pass (boards on the "Tide Screens" canvas, Gate 1): the target's grammar everywhere. Opening a
+The design for the pass (29 boards on the "Tide Screens" canvas, https://claude.ai/artifact/ShsF13JUFnUxto9dgATpZ6, Gate 1): the target's grammar everywhere. Opening a
 folder or an item slides a new column in at the fixed point while the one it came from collapses to its icon on the
 left; an item's options come in a dark panel from the right edge; information and the player are light overlays on
 the wave. Icons stay original line drawings; no names, symbols, sounds or artwork from the target.
