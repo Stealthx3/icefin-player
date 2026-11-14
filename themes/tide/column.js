@@ -420,7 +420,8 @@
         D.register(path, Object.assign({
             mount(root) {
                 const r = spec.root(D.params());
-                C = D.columns(root, { root: r, name: spec.name, key: spec.key ? spec.key(D.params()) : location.hash, fresh: spec.fresh, onFocus: spec.onFocus, onLevel: spec.onLevel, backdrops: spec.backdrops });
+                C = D.columns(root, { root: r, name: spec.name, key: spec.key ? spec.key(D.params()) : location.hash, fresh: spec.fresh, onFocus: spec.onFocus, onLevel: spec.onLevel, backdrops: spec.backdrops,
+                    selfInTrail: spec.selfInTrail, leave: spec.leave });
                 if (spec.mounted) spec.mounted(C, root);
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },

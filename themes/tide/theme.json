@@ -13,6 +13,7 @@
   "home.js",
   "itemmenu.js",
   "details.js",
+  "library.js",
   "interim.js"
  ],
  "backdrop": {

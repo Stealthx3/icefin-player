@@ -32,8 +32,10 @@
         mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
         unmount() { host = null; stack = []; ui.overlay.set(null); if (D.screenHints) D.screenHints(); },
         leave(h) { h.classList.add('td-panel-leave'); return ui.motion.duration(220); },
-        onAction(a, f) {
+        onAction(a, f0) {
             D.sawAction(a);
+            // the focused row of the top level (a level under it keeps its last row marked, for the way back)
+            const f = (host && host.querySelector('.td-panel-level:last-child .icefin-focused')) || f0;
             if ((a === 'left' || a === 'right') && f && typeof f.tdStep === 'function') { f.tdStep(a === 'right' ? 1 : -1); return true; }
             if (a === 'back' && stack.length > 1) { D.panel.pop(); return true; }
             if ((a === 'left') && stack.length > 1 && !(f && f.closest && f.closest('.td-tabs'))) { D.panel.pop(); return true; }
@@ -70,7 +72,10 @@
         level.append(head, body);
         if (how === 'replace' && stack.length) { const old = box.lastElementChild; if (old) old.remove(); stack.pop(); }
         const under = box.lastElementChild;
-        if (under && how === 'push') under.classList.add('td-level-under');
+        if (under && how === 'push') {
+            under.classList.add('td-level-under');
+            for (const x of under.querySelectorAll('.icefin-focused')) { x.classList.remove('icefin-focused'); x.classList.add('td-chosen'); }
+        }
         box.append(level);
         spec.el = level;
         stack.push(spec);

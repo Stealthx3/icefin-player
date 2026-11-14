@@ -7,6 +7,9 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
   --td-ease: cubic-bezier(0.25, 0.8, 0.3, 1); --td-light: var(--icefin-color-waveLine, #cfe6ff);
   --td-glow: color-mix(in srgb, var(--td-light) 70%, transparent); }
 
+/* an element hidden stays hidden whatever its display (the song line, the trail, the letter strip, empty states) */
+[data-td-screen] [hidden], .td-panel-host [hidden], .td-clock [hidden] { display: none !important; }
+
 /* ---- the ground ---- */
 [data-td-screen] { position: absolute; inset: 0; overflow: hidden !important; color: var(--icefin-color-text); font-weight: 300;
   background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveBottom) 100%); }
@@ -97,7 +100,8 @@ html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { disp
 .td-trail-art { width: 7vh; height: 10vh; background: center / cover no-repeat; border-radius: var(--icefin-shape-cardRadius, 0.3vh); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3); }
 .td-trail-art.round { width: 8vh; height: 8vh; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3vh; }
 .td-trail-step.near .td-trail-art:not(.round) { width: 9vh; height: 13vh; }
-.td-trail-name { position: absolute; top: calc(100% + 0.8vh); font-size: 0.85vw; white-space: nowrap; max-width: 12vw; overflow: hidden; text-overflow: ellipsis; }
+.td-trail-name { position: absolute; top: calc(100% + 0.8vh); left: 0; font-size: 0.85vw; white-space: nowrap; max-width: 14vw; overflow: hidden; text-overflow: ellipsis; }
+.td-trail-step:first-child .td-trail-name, .td-trail-step.near .td-trail-name { left: 0; }
 .td-trail-step:hover { opacity: 1; }
 
 /* ---- the letter strip ---- */
@@ -219,3 +223,9 @@ html[data-icefin-motion="low"] .td-panel-level.td-level-in, html[data-icefin-mot
 .td-image.icefin-focused, .td-image:hover { opacity: 1; box-shadow: 0 0 1.4vh var(--td-glow); }
 .td-image-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.4vh 0.4vw; font-size: 0.75vw; background: rgb(0 0 0 / 0.6); }
 .td-form .td-field { margin: 0.6vh 0; }
+
+/* ---- search (Search board): the query at the top, the results as the column ---- */
+.td-search-input { position: absolute; left: 25.8vw; top: 11.5vh; width: 40vw; z-index: 3; background: transparent; border: 0; border-bottom: 1px solid rgb(255 255 255 / 0.4);
+  color: var(--icefin-color-text); font: inherit; font-size: 2.2vw; font-weight: 300; padding: 0.4vh 0; outline: none; }
+.td-search-input.icefin-focused, .td-search-input:focus { border-bottom: 2px solid var(--td-light); }
+.td-search-input::-webkit-search-cancel-button { display: none; }
