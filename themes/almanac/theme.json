@@ -2,11 +2,25 @@
   "schema": 1,
   "id": "almanac",
   "name": "Almanac",
-  "version": "0.2.0",
-  "description": "A Live TV guide with channels down the side, a time axis across the top, programme cells sized by duration, a now line, and a small live preview of the focused channel in a corner; deep blue with a yellow-green focus.",
+  "version": "0.3.0",
+  "description": "A cable-guide look on every screen: an information pane over rows like channels, a live or still picture in the corner, a tab strip, programme cells sized by duration with a now line in the guide, options in a list box and the hints in a bottom bar; deep blue with a yellow-green focus.",
   "styles": "styles.css",
   "scripts": [
-    "almanac.js"
+    "kit.js",
+    "panel.js",
+    "grid.js",
+    "data.js",
+    "home.js",
+    "itemmenu.js",
+    "details.js",
+    "guide.js",
+    "tv.js",
+    "library.js",
+    "np.js",
+    "player.js",
+    "settings.js",
+    "account.js",
+    "interim.js"
   ],
   "sounds": {
     "focus": "sounds/focus.wav",

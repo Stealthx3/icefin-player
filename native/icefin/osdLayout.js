@@ -90,6 +90,9 @@ html[data-icefin-osd-up] [data-icefin-overlay] { bottom: calc(var(--icefin-osd-c
   transition: bottom 200ms ease; z-index: 1001 !important; }
 html[data-icefin-osd-up] .skip-button:focus, html[data-icefin-osd-up] #skipIntro button:focus, html[data-icefin-osd-up] .skipIntro button:focus,
 html[data-icefin-osd-up] [data-icefin-overlay]:focus { outline: 0.18em solid var(--icefin-color-focus); outline-offset: 0.15em; }
+/* while video plays, only the player's page shows: a page left open before playback (a standalone one such as Select
+   Server stays visible in jellyfin-web) no longer shows through above the video (host walk, 9.43) */
+html[data-icefin-osd-playing] .mainAnimatedPage:not(#videoOsdPage), html[data-icefin-osd-playing] .mainAnimatedPage:not(#videoOsdPage) * { visibility: hidden !important; }
 /* size: the controls over video, scaled as one (zoom keeps jellyfin-web's px and em parts in proportion) */
 html[data-icefin-osd-playing] #videoOsdPage .videoOsdBottom, html[data-icefin-osd-playing] .skinHeader.osdHeader,
 html[data-icefin-osd-playing] .upNextContainer { zoom: var(--icefin-osd-scale, 1); }
