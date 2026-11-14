@@ -328,7 +328,8 @@ html[data-icefin-theme]:not([data-icefin-dashboard]) .toast { left: auto !import
 .mc-lib-wide .mc-lib-art { width: 27vh; height: 15.2vh; }
 .mc-lib-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 1vh; font-size: 2vh; opacity: 0.8; }
 .mc-lib-progress { position: absolute; left: 0; bottom: 0; height: 0.7vh; background: var(--icefin-color-focus); }
-.mc-lib-tile.icefin-focused { transform: scale(1.18); opacity: 1; z-index: 2; }
+/* the lens grows into the row's gap (9.60, walk 1: it spilled over its neighbours) and stays above them */
+.mc-lib-tile.icefin-focused { transform: scale(1.1); opacity: 1; z-index: 3; }
 .mc-lib-tile.icefin-focused .mc-lib-art, .mc-lib-tile.icefin-focused .mc-lib-stack i:last-child {
   box-shadow: 0 0 0 0.14vh var(--icefin-color-glassEdge), inset 0 0 0 0.28vh rgb(var(--icefin-color-glass-channel) / 0.8), 0 0 3.6vh 0.6vh var(--icefin-color-focusGlow); }
 .mc-lib-tile.icefin-focused .mc-lib-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(var(--icefin-color-glass-channel) / 0.28), transparent 36%); }
@@ -712,3 +713,31 @@ html[data-icefin-motion="low"] .mc-notice { animation: none !important; }
 .mc-lib-about { margin-top: 1.9vh; font-size: 2.4vh; line-height: 1.5; color: var(--icefin-color-textSecondary); }
 .mc-lib-sort { margin-left: auto; }
 .mc-lib-sort.on { color: var(--icefin-color-focus); }
+
+/* ---- Motion between screens (PLAN 9.60, motion.js; the "Pass 9.60" boards) ---- */
+/* an item into its details and back: the flier, and the poster hidden under it until it lands */
+.mc-flier { position: fixed; z-index: 1002; pointer-events: none; background: center / cover no-repeat; border-radius: 0.28vh;
+  box-shadow: 0 1vh 4vh rgb(0 0 0 / 0.45); }
+#icefin-theme-root.mc-arriving .icefin-d-poster, .mc-landing { visibility: hidden; }
+/* a screen arrives: the frame (Back, Home, the clock) stays; the title cross-fades; the content rises into place */
+@keyframes mc-rise { from { opacity: 0; transform: translateY(1.6vh); } }
+@keyframes mc-fade { from { opacity: 0; } }
+#icefin-theme-root[data-mc] > .mc-title { animation: mc-fade 150ms ease-out both; }
+#icefin-theme-root:is([data-mc="library"], [data-mc="list"], [data-mc="wall"], [data-mc="search"], [data-mc="favorites"], [data-mc="settings"], [data-mc="queue"], [data-mc="livetv"]) > :is(.mc-lib-pivot, .mc-pivot, .mc-lib-side) { animation: mc-rise 240ms ease-out both; }
+#icefin-theme-root:is([data-mc="library"], [data-mc="list"], [data-mc="wall"], [data-mc="search"], [data-mc="favorites"], [data-mc="settings"], [data-mc="queue"], [data-mc="livetv"]) > :is(.mc-lib-body, .mc-wall-body, .mc-wall-head) { animation: mc-rise 240ms 40ms ease-out both; }
+#icefin-theme-root:is([data-mc="library"], [data-mc="list"]) > :is(.mc-lib-info, .mc-count) { animation: mc-fade 240ms 80ms ease-out both; }
+.icefin-details .icefin-d-info, .icefin-details .icefin-d-actions { animation: mc-rise 240ms 120ms ease-out both; }
+.icefin-details .icefin-d-sections { animation: mc-rise 240ms 160ms ease-out both; }
+/* a pivot: the row slides the picked word first; the content travels the same way, a column at a time */
+.mc-lib-pivot > .mc-pivot-item:not(.mc-lib-sort) { transform: translateX(var(--mc-shift, 0)); transition: transform 300ms ease-out, opacity 300ms ease-out; }
+.mc-lib-pivot > .mc-pivot-item.mc-pivot-past:not(.icefin-focused) { opacity: 0.3; }
+.mc-lib-pivot.mc-pivot-still > .mc-pivot-item { transition: none; }
+@keyframes mc-pivot-in { from { opacity: 0; translate: calc(var(--mc-dir, 1) * 4vh) 0; } }
+.mc-lib-grid.mc-pivot-in > .mc-lib-tile { animation: mc-pivot-in 300ms ease-out both; animation-delay: calc(var(--mc-col, 0) * 30ms); }
+/* the caption: a 120 ms cross-fade */
+.mc-lib-info { transition: opacity 60ms ease-out; }
+.mc-lib-info.mc-cap-out { opacity: 0; }
+html[data-icefin-motion="low"] #icefin-theme-root[data-mc] > *, html[data-icefin-motion="low"] .icefin-details .icefin-d-info,
+html[data-icefin-motion="low"] .icefin-details .icefin-d-actions, html[data-icefin-motion="low"] .icefin-details .icefin-d-sections,
+html[data-icefin-motion="low"] .mc-lib-grid.mc-pivot-in > .mc-lib-tile { animation: none !important; }
+html[data-icefin-motion="low"] .mc-lib-pivot > .mc-pivot-item, html[data-icefin-motion="low"] .mc-lib-info { transition: none !important; }

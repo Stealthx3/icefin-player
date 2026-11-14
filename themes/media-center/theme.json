@@ -8,6 +8,7 @@
   "scripts": [
     "kit.js",
     "panel.js",
+    "motion.js",
     "itemmenu.js",
     "account.js",
     "start.js",
