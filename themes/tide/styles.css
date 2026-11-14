@@ -369,12 +369,12 @@ html[data-icefin-stock] .page .raised, html[data-icefin-stock] .page .button-sub
 html[data-icefin-stock] .page .raised:focus, html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page .raised:hover, html[data-icefin-stock] .page .button-submit:hover {
   opacity: 1; text-shadow: 0 0 0.6em var(--td-glow); box-shadow: inset 0 -2px 0 var(--td-light) !important; outline: none; }
 /* jellyfin-web's leftover dialogs and action sheets as a quiet dark card (Notices board) */
-html[data-icefin-theme="tide"]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog { background: rgb(2 6 14 / 0.92) !important; color: var(--icefin-color-text);
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog { background: rgb(2 6 14 / 0.92) !important; color: var(--icefin-color-text);
   border-radius: 0 !important; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18), 0 1.4vh 4vh rgb(0 0 0 / 0.4) !important; }
-html[data-icefin-theme="tide"]:not([data-icefin-dashboard]) .dialogContainer .actionSheetMenuItem:focus, html[data-icefin-theme="tide"]:not([data-icefin-dashboard]) .dialogContainer .listItem-button:focus {
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .actionSheetMenuItem:focus, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .listItem-button:focus {
   background: linear-gradient(90deg, rgb(160 210 255 / 0), rgb(160 210 255 / 0.16) 30%, rgb(160 210 255 / 0)) !important; text-shadow: 0 0 0.6em var(--td-glow); outline: none; }
-html[data-icefin-theme="tide"]:not([data-icefin-dashboard]) .dialogContainer .button-flat[data-id="delete"], html[data-icefin-theme="tide"] .dialogContainer .btnDelete { color: #ffb4a8 !important; }
-html[data-icefin-theme="tide"] .toast { background: rgb(2 6 14 / 0.8) !important; border-left: 2px solid var(--td-light); border-radius: 0 !important; color: #fff !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .button-flat[data-id="delete"], html[data-icefin-theme] .dialogContainer .btnDelete { color: #ffb4a8 !important; }
+html[data-icefin-theme] .toast { background: rgb(2 6 14 / 0.8) !important; border-left: 2px solid var(--td-light); border-radius: 0 !important; color: #fff !important; }
 
 /* ---- Settings › Home (HomeOrder board) ---- */
 .td-hp { position: absolute; left: 29.2vw; top: 9vh; width: 36vw; z-index: 2; }
@@ -410,16 +410,16 @@ html[data-icefin-theme="tide"] .toast { background: rgb(2 6 14 / 0.8) !important
 button.td-e { display: block; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; width: 100%; outline: none; }
 
 /* ---- the on-screen keyboard (Search board): a dark band across the bottom, keys as light words ---- */
-html[data-icefin-theme="tide"] #icefin-osk { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; padding: 2.6vh 19.5vw 3vh; box-sizing: border-box;
+html[data-icefin-theme] #icefin-osk { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; padding: 2.6vh 19.5vw 3vh; box-sizing: border-box;
   color: var(--icefin-color-text); font-family: "Noto Sans", sans-serif; font-weight: 300;
   background: linear-gradient(180deg, rgb(2 6 14 / 0.4), rgb(2 6 14 / 0.9) 30%); box-shadow: 0 -1px 0 rgb(255 255 255 / 0.12); animation: td-osk-in 200ms ease-out both; }
 @keyframes td-osk-in { from { transform: translateY(30%); opacity: 0; } }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-preview { font-size: 1.5vw; min-height: 2.2em; padding: 0.4vh 0; margin-bottom: 1.2vh; border-bottom: 1px solid rgb(255 255 255 / 0.35); }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-preview:empty::before { content: attr(data-placeholder); color: rgb(255 255 255 / 0.5); }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-row { display: flex; gap: 0.5vw; margin: 0.5vh 0; }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-key { flex: 1; min-height: 5.4vh; display: flex; align-items: center; justify-content: center; font-size: 1.3vw; cursor: pointer; color: rgb(255 255 255 / 0.8); }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-wide { flex: 1.6; font-size: 1vw; }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-space { flex: 4; font-size: 1vw; }
-html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-key.icefin-focused, html[data-icefin-theme="tide"] #icefin-osk .icefin-osk-key:hover { color: #fff; font-weight: 400;
+html[data-icefin-theme] #icefin-osk .icefin-osk-preview { font-size: 1.5vw; min-height: 2.2em; padding: 0.4vh 0; margin-bottom: 1.2vh; border-bottom: 1px solid rgb(255 255 255 / 0.35); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-preview:empty::before { content: attr(data-placeholder); color: rgb(255 255 255 / 0.5); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-row { display: flex; gap: 0.5vw; margin: 0.5vh 0; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-key { flex: 1; min-height: 5.4vh; display: flex; align-items: center; justify-content: center; font-size: 1.3vw; cursor: pointer; color: rgb(255 255 255 / 0.8); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-wide { flex: 1.6; font-size: 1vw; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-space { flex: 4; font-size: 1vw; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-icefin-theme] #icefin-osk .icefin-osk-key:hover { color: #fff; font-weight: 400;
   text-shadow: 0 0 0.6em var(--td-glow); box-shadow: inset 0 -2px 0 var(--td-light); }
 html[data-icefin-motion="low"] #icefin-osk { animation: none; }
