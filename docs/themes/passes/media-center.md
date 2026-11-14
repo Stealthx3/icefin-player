@@ -4,6 +4,41 @@ Copied from docs/themes/CHECKLIST.md at the start of the pass (2026-11-14, main 
 when media-center does it in its own look and a test checks it, or write the user's reason beside it. Motion is judged by the six
 principles (PIPELINE.md, The measure).
 
+## Where the pass starts (walk 1, 2026-11-14)
+
+Walk: the workstation's Icefin 0.1.0~alpha.2 (e853211a5e28), your server, 2552x1070 at 1.25; 33 of 69 entries drawn by
+Media Center, 26 gaps, 10 skipped (no books, photos, home videos, music videos or playlists on the server).
+Contact sheet: `build-walk/media-center/20261114-004626/index.html`; gap list: `docs/themes/coverage/media-center.md`.
+
+Already designed and approved on the "Media Center Screens" canvas (9.46) but still jellyfin-web underneath:
+
+| Walk gap | Board | Now |
+|---|---|---|
+| list-genre, list-musicgenre, list-studio | ListPage | framed |
+| details-channel | ProgramInfo / Guide | framed, no focus |
+| item-menu | ItemMenu | jellyfin-web's sheet as a side panel; no title, the clock shows through, no slide |
+| menu-addtoplaylist, menu-addtocollection | AddToPlaylist | restyled |
+| menu-mediainfo | MediaInfo | restyled |
+| menu-edit, menu-editimages, menu-identify | EditMetadata | restyled |
+| menu-editsubtitles | SubtitleSearch | restyled |
+| menu-refresh | ConfirmDelete (a question) | restyled |
+| sort-filter | SortFilter | missing: the pivots stand in, no panel |
+| picker-audio, picker-subtitles | Picker | drawn, but the walk saw nothing open (to check) |
+| prefs-display, -home, -playback, -subtitles, -controls | SettingsPage, SubtitlePrefs | framed and restyled (the checklist allows it, 1.10); no focus on arrival |
+| profile, quickconnect, forgotpassword | Profile, QuickConnectApprove, QuickConnect | framed, no focus on arrival |
+
+Not designed yet (new boards on the canvas's "Pass 9.60" page):
+- **Play on and Watch together** (walk: restyled): one card, checklist 1.9.
+- **Motion** (checklist 3; the six principles): tile to details and back (visual continuity), the side panel from its
+  edge (spatial orientation), pivots toward the one picked, screen changes that keep the frame, a caption that
+  cross-fades, low motion for all of it. Today a screen change is a 240 ms fade, the item menu appears at once,
+  and about ten transitions have no low-motion path.
+- **Telling the user where they are** (2.3): the focused item's caption and controller hints, in Media Center's look.
+- **Pointer** (2.5): hover moves focus, pointer seeking on the time lines.
+- **Fallbacks and effects** (4): initials for people and artists with no picture, fade masks at scrolling edges.
+- **Sound** (5): no startup jingle or ambient loop (no `music` block); original, from a recipe.
+- **The ≡ key** (2.4) on items outside the player.
+
 ## 1. Themed elements: screens and surfaces
 
 ### 1.1 Home
