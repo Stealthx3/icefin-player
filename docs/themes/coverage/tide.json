@@ -2,7 +2,7 @@
  "run": {
   "theme": "tide",
   "where": "lab",
-  "started": "2026-11-14T12:20:22Z",
+  "started": "2026-11-14T12:53:19Z",
   "commit": "",
   "branch": "",
   "player": {
@@ -15,11 +15,11 @@
    720,
    1
   ],
-  "finished": "2026-11-14T12:24:17Z",
+  "finished": "2026-11-14T12:57:12Z",
   "summary": {
    "entries": 69,
-   "theme": 54,
-   "gaps": 8,
+   "theme": 58,
+   "gaps": 4,
    "checksFailing": 0,
    "skipped": 6
   }
@@ -1308,7 +1308,7 @@
    "entries": [
     "Add to a playlist\u2026",
     "Add to a collection\u2026",
-    "Mark as watched",
+    "Mark as not watched",
     "Favourite",
     "Media info",
     "Find subtitles\u2026",
@@ -1704,17 +1704,28 @@
    "name": "New playlist",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:New playlist\u2026 New playlist\u2026",
    "hash": "#/list?parentId=dfda981e73153b6cf843023c6ab89649&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Playlists",
    "dialogs": [],
    "osd": "minimal",
-   "checks": [],
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
    "warnings": [],
    "shot": "56-new-playlist.png",
-   "note": "nothing opened"
+   "note": ""
   },
   {
    "id": "music-capsule",
@@ -1838,14 +1849,12 @@
    "name": "Player: audio tracks",
    "kind": "player",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.btnAudio",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Audio audio",
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "minimal",
    "checks": [
     {
@@ -1861,7 +1870,7 @@
    ],
    "warnings": [],
    "shot": "61-player-audio.png",
-   "note": "the theme's player controls fell back to jellyfin-web's"
+   "note": ""
   },
   {
    "id": "player-subtitles",
@@ -1869,14 +1878,12 @@
    "name": "Player: subtitles",
    "kind": "player",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.btnSubtitles",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Subtitles subtitles",
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "minimal",
    "checks": [
     {
@@ -1890,9 +1897,7 @@
      "detail": ""
     }
    ],
-   "warnings": [
-    "rejection: ActionSheet closed without resolving"
-   ],
+   "warnings": [],
    "shot": "62-player-subtitles.png",
    "note": ""
   },
@@ -1902,14 +1907,12 @@
    "name": "Player: settings (speed, quality, aspect)",
    "kind": "player",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.btnVideoOsdSettings",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Options and settings: speed, a",
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "minimal",
    "checks": [
     {
