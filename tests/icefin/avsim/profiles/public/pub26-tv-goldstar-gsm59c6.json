@@ -1,0 +1,37 @@
+{
+  "description": "Goldstar 2D FHD LG TV (tv), from the linuxhw EDID collection: Digital/Goldstar/GSM59C6/3BE777603386 (CC BY 4.0); 6 EDIDs share this audio capability set",
+  "monitor_name": "2D FHD LG TV",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "ac3",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Goldstar/GSM59C6/3BE777603386"
+}

@@ -1,0 +1,51 @@
+{
+  "description": "TCL TCL (tv), from the linuxhw EDID collection: Digital/TCL/TCL0000/116FD24BDB2D (CC BY 4.0); 19 EDIDs share this audio capability set",
+  "monitor_name": "TCL",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "eac3",
+      "channels": 8,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "byte3": 0
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "bitstream",
+    "truehd": "pcm"
+  },
+  "source": "Digital/TCL/TCL0000/116FD24BDB2D"
+}

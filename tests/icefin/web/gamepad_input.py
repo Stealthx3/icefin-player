@@ -9,7 +9,10 @@ InputComponent -> inputPlugin.js -> the theme runtime's focus engine. Checks:
   - button prompts: <html data-icefin-glyphs="xbox">, icefinTheme.glyph('south') draws "A";
   - the page's Gamepad API shows no pads;
   - Client Settings -> Controllers lists the pad;
-  - a Nintendo-style pad (reported only: SDL needs its mapping for evdev pads).
+  - a Nintendo-style pad (reported only: SDL needs its mapping for evdev pads);
+  - Steam Input (7.4): run with the environment Steam gives a game (its virtual pad allowed, a DualSense in the
+    ignore list), a Steam Virtual Gamepad (28de:11ff) shows PlayStation glyphs; Steam's desktop layout: a keyboard
+    arrow and the same D-pad press a few ms apart move focus once, while the keyboard alone still moves it.
 Usage: python3 gamepad_input.py --app ~/build-sdl3/src/icefin-player --server jf12
 """
 import argparse, json, os, signal, subprocess, sys, tempfile, time
@@ -63,19 +66,17 @@ def main():
     xv = start_x()
     cfgdir = tempfile.mkdtemp(prefix="icefin-pad-")
     env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8", ICEFIN_THEME_PATH=THEMES)
+    # What Steam sets for a game it launches: its virtual pads allowed, the physical pads it took over hidden. Only for
+    # the second, short run: with it SDL takes only Steam's virtual pads.
+    steam_env = dict(env, SDL_GAMECONTROLLER_ALLOW_STEAM_VIRTUAL_GAMEPAD="1", SDL_GAMECONTROLLER_IGNORE_DEVICES="0x054c/0x0ce6")
     log = open(os.path.join(cfgdir, "app.log"), "w")
-    app = subprocess.Popen([os.path.expanduser(a.app), f"--config-dir={cfgdir}", "--windowed", "--tv", "--disable-gpu",
-                            f"--remote-debugging-port={a.port}", "--log-level=info"], env=env, stdout=log, stderr=subprocess.STDOUT,
-                           start_new_session=True)
-    fails = []
-    ui = None
 
-    def check(label, ok, detail="", soft=False):
-        print(f"gamepad_input: {'ok  ' if ok else ('note' if soft else 'FAIL')} {label} {detail}", flush=True)
-        if not ok and not soft:
-            fails.append(label)
+    def launch(environ, cfg):
+        return subprocess.Popen([os.path.expanduser(a.app), f"--config-dir={cfg}", "--windowed", "--tv", "--disable-gpu",
+                                 f"--remote-debugging-port={a.port}", "--log-level=info"], env=environ, stdout=log,
+                                stderr=subprocess.STDOUT, start_new_session=True)
 
-    try:
+    def sign_in():
         page = Page(a.port, timeout=90)
         page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
         page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
@@ -87,6 +88,26 @@ def main():
         time.sleep(8)
         page.reconnect()
         page.wait_for("!!window.api && !!window.api.gamepads && !!window.icefinTheme && !!document.querySelector('.skinHeader')", timeout=90)
+        return page
+
+    def stop(proc):
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+            proc.wait(15)
+        except Exception:  # noqa: BLE001
+            pass
+
+    app = launch(env, cfgdir)
+    fails = []
+    ui = None
+
+    def check(label, ok, detail="", soft=False):
+        print(f"gamepad_input: {'ok  ' if ok else ('note' if soft else 'FAIL')} {label} {detail}", flush=True)
+        if not ok and not soft:
+            fails.append(label)
+
+    try:
+        page = sign_in()
         js = page.eval
         check("built with the SDL3 layer", js("new Promise(r => window.api.gamepads.available(r))") is True)
         js("new Promise(r => window.api.theme.setActiveTheme('lab-screens', '', r))")
@@ -140,6 +161,27 @@ def main():
         press(ui, e.BTN_SOUTH)
         check("reset: south selects again", js("window.labScreens.clicks.length") == clicks0 + 1)
 
+        # 7.4: Steam's desktop layout sends a key for the same press. Start at the first tile with the keyboard.
+        key = lambda k: subprocess.run(["xdotool", "key", "--clearmodifiers", k], env=env, capture_output=True, timeout=10)
+        for _ in range(3):
+            key("Left")
+            time.sleep(0.4)
+        f0 = foc()
+        key("Right")
+        time.sleep(0.6)
+        f1 = foc()
+        check("keyboard alone moves focus (never filtered)", f1 != f0, f"{f0} -> {f1}")
+        key("Left")
+        time.sleep(0.6)
+        kb = subprocess.Popen(["xdotool", "key", "--clearmodifiers", "Right"], env=env)
+        hat(ui, e.ABS_HAT0X, 1)
+        kb.wait(10)
+        time.sleep(0.6)
+        log.flush()
+        guard = "duplicate guard on" in open(log.name, errors="replace").read()
+        check("key + D-pad together move focus once", foc() == f1, f"focused={foc()} (one step: {f1})")
+        check("the guard says so in the log", guard)
+
         ui.close()
         ui = None
         page.wait_for("new Promise(r => window.api.gamepads.list(l => r(l.length === 0)))", timeout=15)
@@ -151,16 +193,26 @@ def main():
         check("Nintendo-style pad family", fam == ["nintendo"], f"families={fam} (evdev pads need an SDL mapping)", soft=True)
         n.close()
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
+
+        # 7.4: started by Steam (a second, short run with Steam's environment): its virtual pad, a DualSense behind it.
+        stop(app)
+        app = launch(steam_env, tempfile.mkdtemp(prefix="icefin-pad-steam-"))
+        page = sign_in()
+        sv = pad("Steam Virtual Gamepad", 0x28DE, 0x11FF)
+        try:
+            # By name: another lab session's virtual pad may be plugged in at the same time.
+            steam = "new Promise(r => window.api.gamepads.list(l => r(l.find(p => p.name.includes('Steam Virtual')) || null)))"
+            page.wait_for(steam, timeout=15)
+            got = page.eval(steam)
+            check("Steam Virtual Gamepad: family of the pad Steam took over", got["family"] == "playstation", json.dumps(got))
+        finally:
+            sv.close()
     except Exception as ex:  # noqa: BLE001
         check("run", False, f"{type(ex).__name__}: {ex}")
     finally:
         if ui:
             ui.close()
-        try:
-            os.killpg(app.pid, signal.SIGTERM)
-            app.wait(15)
-        except Exception:  # noqa: BLE001
-            pass
+        stop(app)
         if xv:
             xv.terminate()
         log.close()
