@@ -741,3 +741,21 @@ html[data-icefin-motion="low"] #icefin-theme-root[data-mc] > *, html[data-icefin
 html[data-icefin-motion="low"] .icefin-details .icefin-d-actions, html[data-icefin-motion="low"] .icefin-details .icefin-d-sections,
 html[data-icefin-motion="low"] .mc-lib-grid.mc-pivot-in > .mc-lib-tile { animation: none !important; }
 html[data-icefin-motion="low"] .mc-lib-pivot > .mc-pivot-item, html[data-icefin-motion="low"] .mc-lib-info { transition: none !important; }
+
+/* ---- Controller hints (PLAN 9.60, hints.js): drawn keys in the glass, bottom right; a pad or remote only ---- */
+.mc-hints { position: fixed; right: 4.06vw; bottom: 3vh; z-index: 1003; display: flex; gap: 2.6vh; pointer-events: none; font-weight: 300; color: rgb(var(--icefin-color-text-channel) / 0.88);
+  animation: mc-fade 200ms ease-out both; }
+.mc-hints[hidden] { display: none; }
+.mc-hint { display: flex; align-items: center; gap: 0.8vh; font-size: 2.2vh; }
+.mc-hint-key { min-width: 3.3vh; height: 3.3vh; padding: 0 0.5vh; border-radius: 1.65vh; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.7vh; font-weight: 600; color: var(--icefin-color-text); border: 0.16vh solid rgb(var(--icefin-color-glass-channel) / 0.75);
+  background: radial-gradient(circle at 50% 30%, rgb(var(--icefin-color-glass-channel) / 0.45), rgb(var(--icefin-color-glass-channel) / 0.05) 65%); }
+/* the count stands above the hints while they show */
+html:is([data-mc-input="pad"], [data-icefin-couch]) .mc-count { bottom: 8.4vh; }
+html[data-icefin-motion="low"] .mc-hints { animation: none; }
+/* the caption on jellyfin-web's framed pages: the focused setting's name, bottom left above the page's edge */
+.mc-sc-caption { position: fixed; left: 21.67vh; bottom: 3vh; z-index: 999; max-width: 55vw; font-size: 2.6vh; font-weight: 300; color: var(--icefin-color-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; transition: opacity 60ms ease-out; }
+.mc-sc-caption.mc-cap-out { opacity: 0; }
+.mc-sc-caption[hidden] { display: none; }
+html[data-icefin-motion="low"] .mc-sc-caption { transition: none; }
