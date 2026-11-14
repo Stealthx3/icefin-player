@@ -201,10 +201,14 @@ Three rules run through every section:
       steps back while a sheet is up. Plaza: `P.caption`.
 - [ ] **A name pill under the focused item** where the target has one, kept 16 px inside the window and flipped above
       on the bottom row.
-- [ ] **Controller hints** (PLAN 9.28) in the theme's style, drawn A/B/X/Y keys, that change with the mode (move mode,
-      guide vs grid, a lifted queue entry, Client Settings) and per framed route. Shown for a pad or remote, gone for
-      the mouse or keyboard, always on in Couch Mode (`html[data-icefin-couch]`). Plaza tracks the input in
-      `html[data-pz-input]`. Every hint must match what the key does.
+- [ ] **Page-aware controller hints** (PLAN 9.28; a requirement for every theme, the user, 2026-11-14) in the theme's
+      style (drawn keys, or the remote's words where the target's own key marks aren't ours to use). Page-aware: each
+      screen, panel and framed route shows only the keys that do something there, for what is focused now (no ≡ where
+      there are no options, no ▶ on an entry that can't play), and the hints change with the mode (move mode, guide vs
+      grid, a lifted queue entry, an open panel, Client Settings). Shown for a pad or remote, gone for the mouse or
+      keyboard, always on in Couch Mode (`html[data-icefin-couch]`). Plaza tracks the input in `html[data-pz-input]`,
+      Media Center in `html[data-mc-input]`. Every hint must match what the key does, and a test checks that on each
+      kind of screen.
 
 ### 2.4 Keys and buttons
 - [ ] **Back, innermost first**: drag, then a card or panel, then the screen; in the player, a card, then the
