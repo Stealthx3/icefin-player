@@ -229,3 +229,24 @@ html[data-icefin-motion="low"] .td-panel-level.td-level-in, html[data-icefin-mot
   color: var(--icefin-color-text); font: inherit; font-size: 2.2vw; font-weight: 300; padding: 0.4vh 0; outline: none; }
 .td-search-input.icefin-focused, .td-search-input:focus { border-bottom: 2px solid var(--td-light); }
 .td-search-input::-webkit-search-cancel-button { display: none; }
+
+/* ---- Live TV's guide (Guide board): channels at the column, programmes along time, a glowing now line ---- */
+.td-guide-tabs { position: absolute; left: 19.5vw; top: 11.7vh; display: flex; gap: 1.6vw; font-size: 1vw; color: rgb(255 255 255 / 0.65); z-index: 2; }
+.td-guide-tab.on { color: var(--icefin-color-text); }
+.td-guide { position: absolute !important; left: 19.5vw; right: 8vw; top: 19.5vh; bottom: 12vh; z-index: 1; }
+.td-guide .icefin-guide-times { position: relative; height: 3.4vh; margin-left: 19.5vw; }
+.td-guide .icefin-guide-time { position: absolute; top: 0; font-size: 0.9vw; color: rgb(255 255 255 / 0.65); }
+.td-guide .icefin-guide-row { display: flex; height: 6.9vh; align-items: stretch; }
+.td-guide .icefin-guide-channel { flex: none; width: 19.5vw; display: flex; align-items: center; gap: 0.9vw; font-size: 1.15vw; opacity: 0.75; box-sizing: border-box; padding-right: 1vw; }
+.td-guide .icefin-guide-row:has(.icefin-focused) .icefin-guide-channel { opacity: 1; font-size: 1.5vw; text-shadow: 0 0 0.6em var(--td-glow); }
+.td-gch-no { width: 2.4vw; text-align: right; font-size: 0.9vw; color: rgb(255 255 255 / 0.6); font-variant-numeric: tabular-nums; }
+.td-gch-logo { width: 3.4vw; height: 3.6vh; background: center / contain no-repeat; flex: none; border-radius: 0.2vh; }
+.td-gch-text { background: rgb(255 255 255 / 0.1); font-size: 0.7vw; display: flex; align-items: center; justify-content: center; }
+.td-gch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-guide .icefin-guide-lane { flex: 1; position: relative; }
+.td-guide .icefin-guide-cell { box-sizing: border-box; padding: 0.9vh 0.8vw; border-left: 1px solid rgb(255 255 255 / 0.25); overflow: hidden; white-space: nowrap; font-size: 0.95vw; color: rgb(255 255 255 / 0.8); outline: none; cursor: pointer; }
+.td-guide .icefin-guide-gap { color: rgb(255 255 255 / 0.45); }
+.td-guide .icefin-guide-cell.icefin-focused { border: 1px solid var(--td-light); background: rgb(160 210 255 / 0.12); color: #fff; font-size: 1.1vw; text-shadow: 0 0 0.6em var(--td-glow); z-index: 2; }
+.td-gp-time { font-size: 0.75vw; color: rgb(255 255 255 / 0.7); margin-top: 0.3vh; }
+.td-guide .icefin-guide-now { position: absolute; top: 3.4vh; bottom: 0; width: 2px; margin-left: -1px; background: var(--td-light); box-shadow: 0 0 8px var(--td-light); z-index: 3; pointer-events: none; }
+.td-guide .icefin-guide-now::before { content: "now"; position: absolute; top: -2.6vh; left: 50%; transform: translateX(-50%); font-size: 0.8vw; color: var(--td-light); }
