@@ -1,39 +1,51 @@
 # Flatpak test repository
 
-The test repository is a signed Flatpak remote (OSTree, `archive-z2`) with alpha and test builds. GitHub Pages serves it from
-[Stealthx3/icefin-flatpak-test](https://github.com/Stealthx3/icefin-flatpak-test) at
-<https://stealthx3.github.io/icefin-flatpak-test/>. Users add it with `icefin-test.flatpakrepo` (`docs/INSTALL.md`).
-It is a stopgap before PLAN 12.1's stable and nightly repositories.
+Icefin's test builds are published to the **Icesuite test repository**,
+[Stealthx3/icesuite-test](https://github.com/Stealthx3/icesuite-test), served by GitHub Pages at
+<https://stealthx3.github.io/icesuite-test/>. It serves every Icesuite app in several formats (Flatpak, `.deb`, and
+later Android and Windows) from one place; users add each platform's remote once (`docs/INSTALL.md`). It started as
+`icefin-flatpak-test`, a Flatpak-only remote for Icefin; the move is described in its `docs/MIGRATION.md`. It is a
+stopgap before PLAN 12.1's stable and nightly repositories.
 
 ## What is in it
-- `repo/`: refs `app/io.github.stealthx3.IcefinPlayer/x86_64/master` and its `.Locale` runtime (no `.Debug`), plus
-  appstream. Each commit, and the summary, is signed.
-- `icefin-test.flatpakrepo`, `io.github.stealthx3.IcefinPlayer.flatpakref`: Flathub as the runtime repo, and the public key
-  embedded (`GPGKey`).
-- `index.html` (install page), `README.md`, `icon.svg` (the installed app icon), `icefin-test.gpg`, `.nojekyll`.
+- `main`: the publisher (`tools/icesuite.py`), the app catalog (`catalog/icefin-player.json`), `config.json`, icons and
+  the public key (`keys/icesuite-test.gpg`).
+- `gh-pages`: the generated site, replaced by **one parentless commit** on every publish, so build objects never pile up
+  in history. The Flatpak repository is `flatpak/repo/` (refs `app/io.github.stealthx3.IcefinPlayer/x86_64/master` and
+  its `.Locale`, each commit and the summary signed), with `flatpak/icesuite-test.flatpakrepo` and
+  `flatpak/io.github.stealthx3.IcefinPlayer.flatpakref`.
 
 ## Signing key
 "Icefin Player test repository", ed25519, fingerprint `532C A3B2 8FBA 72FC 9C9F 369C 1CD5 3BAD 4D48 EB54`, expires
-2028-11-11. The private key lives only in the lab guest at `~/icefin-test-gpg` (`GNUPGHOME`). Losing it means a new
-key, and every user re-adding the remote. It has no passphrase, because only the lab uses it; it never goes in a
-repository.
+2028-11-11 (kept from the Flatpak-only days, so existing installs keep trusting it). The private key lives only in the
+lab guest at `~/icefin-test-gpg` (`GNUPGHOME`). Losing it means a new key, and every user re-adding the remote. It has
+no passphrase, because only the lab uses it; it never goes in a repository.
 
 ## Publishing a new build
-Every build that lands on `main` is published here (the user's rule, 2026-11-12), not only alpha releases: after a merge, or a batch of merges, build the Flatpak in the lab from `main` and publish it. Use a subject that names the commit, for example `Icefin Player 0.1.0-alpha.2 (main 2aa81e9: …)`, and update the "Current build" line in `index.html`. Then check from a host with `flatpak remote-info --user icefin-test io.github.stealthx3.IcefinPlayer`. A worktree needs `git submodule update --init external/mpvqt` before `scripts/lab.sh push`, or the Flatpak build can't find mpvqt's sources. If the SSH agent refuses to sign on the host, push the Pages clone over HTTPS (`https://github.com/Stealthx3/icefin-flatpak-test.git`, with the `gh` credential helper the main repository uses).
+Every build that lands on `main` is published here (the user's rule, 2026-11-12), not only alpha releases: after a
+merge, or a batch of merges, build the Flatpak in the lab from `main` and publish it, with the version and the commit
+it was built from. A worktree needs `git submodule update --init external/mpvqt` before `scripts/lab.sh push`, or the
+Flatpak build can't find mpvqt's sources. The full guide is the repository's `docs/PUBLISHING.md`.
 
 In the lab guest, after `flatpak-builder --repo=$HOME/fp-repo …` (`docs/LAB.md`):
 ```bash
-export GNUPGHOME=$HOME/icefin-test-gpg KEY=532CA3B28FBA72FC9C9F369C1CD53BAD4D48EB54
-git clone git@github.com:Stealthx3/icefin-flatpak-test.git ~/pub-site   # or pull the copy you have
-for r in app/io.github.stealthx3.IcefinPlayer/x86_64/master runtime/io.github.stealthx3.IcefinPlayer.Locale/x86_64/master; do
-  flatpak build-commit-from --src-repo=$HOME/fp-repo --gpg-sign=$KEY --gpg-homedir=$GNUPGHOME --subject="<version>" ~/pub-site/repo $r
-done
-flatpak build-update-repo --gpg-sign=$KEY --gpg-homedir=$GNUPGHOME --title="Icefin Player (test)" \
-  --comment="Test builds of Icefin Player" --homepage=https://github.com/Stealthx3/icefin-player --default-branch=master \
-  --prune --prune-depth=3 ~/pub-site/repo
+export GNUPGHOME=$HOME/icefin-test-gpg ICESUITE_SITE=$HOME/icesuite-site
+git clone https://github.com/Stealthx3/icesuite-test.git ~/icesuite-test   # once; later: git -C ~/icesuite-test pull
+cd ~/icesuite-test
+tools/icesuite.py sync
+tools/icesuite.py publish-flatpak --app icefin-player --src-repo ~/fp-repo --version 0.1.0-alpha.3 --commit abc1234
+tools/icesuite.py check
 ```
-A fresh git clone of the site has no empty directories, and `build-update-repo` stops at "opendir(refs/remotes)" without them: `mkdir -p repo/refs/remotes repo/refs/mirrors` in the copy first.
+`publish-flatpak` copies the app and its `.Locale`, signs each commit, updates the summary and the shared appstream,
+and keeps the last three commits of each ref (`flatpak update --commit=` can roll back).
 
-Then commit and push `~/pub-site` (from the host if the guest has no GitHub credentials). Pages redeploys within a minute,
-and `flatpak update` picks the build up. Keep `--prune-depth` small: GitHub Pages sites are limited to 1 GB and files to
-100 MB (the largest object today is about 89 MB).
+The guest has no GitHub credentials: push from the host. Copy the guest's `~/icesuite-site` to the host
+(`scripts/lab.sh pull /home/lab/icesuite-site/ <folder>`), then, from a checkout of the repository's `main`:
+```bash
+tools/icesuite.py --site <folder> push
+```
+`push` commits the site as one parentless commit and force-pushes `gh-pages` with a lease: if someone published since
+the `sync`, it refuses instead of overwriting their build (`sync --force`, publish again, push). Pages redeploys in about
+a minute, but clients can see the new build up to 10 minutes late (Pages' cache). Check from a host with
+`flatpak remote-info --user icefin-test io.github.stealthx3.IcefinPlayer` (or `icesuite-test`, the name new installs
+use). The site must stay under 950 MB with no file of 100 MB or more; `check` warns first.
