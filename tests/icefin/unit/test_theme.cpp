@@ -188,6 +188,30 @@ private slots:
     Package p = loadPackage(d.path(), Source::User);
     QVERIFY(p.errors.join(" ").contains("unknown key 'scrpits'"));
   }
+  // ---- music (9.33) ----
+  void musicDeclared()
+  {
+    QTemporaryDir d;
+    QDir(d.path()).mkdir("music");
+    for (const char* n : {"music/startup.ogg", "music/ambient.ogg", "music/movies.ogg", "music/notes.txt"}) {
+      QFile f(d.path() + "/" + n); QVERIFY(f.open(QIODevice::WriteOnly)); f.write("OggS"); f.close();
+    }
+    QFile::copy(QString(ICEFIN_THEMES) + "/lab-contrast/tokens.json", d.path() + "/tokens.json");
+    auto load = [&](const QByteArray& music) {
+      QFile m(d.path() + "/theme.json"); m.open(QIODevice::WriteOnly | QIODevice::Truncate);
+      m.write("{\"schema\": 1, \"id\": \"x-theme\", \"name\": \"X\", \"version\": \"1\", \"music\": " + music + "}"); m.close();
+      return loadPackage(d.path(), Source::User);
+    };
+    Package p = load("{\"startup\": \"music/startup.ogg\", \"ambient\": \"music/ambient.ogg\", \"jingles\": {\"movies\": \"music/movies.ogg\"}}");
+    QVERIFY2(p.ok(), qPrintable(p.errors.join("; ")));
+    QCOMPARE(p.musicStartup, QString("music/startup.ogg"));
+    QCOMPARE(p.musicAmbient, QString("music/ambient.ogg"));
+    QCOMPARE(p.jingles.value("movies"), QString("music/movies.ogg"));
+    QVERIFY(load("{\"jingles\": {\"Movies!\": \"music/movies.ogg\"}}").errors.join(" ").contains("jingle key"));
+    QVERIFY(load("{\"ambient\": \"music/notes.txt\"}").errors.join(" ").contains("must be .ogg"));
+    QVERIFY(load("{\"ambient\": \"music/missing.ogg\"}").errors.join(" ").contains("not a file"));
+    QVERIFY(load("{\"intro\": \"music/startup.ogg\"}").errors.join(" ").contains("unknown music key"));
+  }
   // ---- colour schemes (9.20) ----
   void schemesLayerAfterPresets()
   {

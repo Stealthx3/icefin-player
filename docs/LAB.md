@@ -25,10 +25,14 @@ Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with th
 - `tests/icefin/servers/servers.sh up|down|status|reset`: rootless podman, config in `tests/icefin/servers/servers.json`.
   - `jf1011` = jellyfin/jellyfin:10.11.11 on :8096, `jf12` = jellyfin/jellyfin:12.4 on :8097.
   - Synthetic media from `make-media.sh` in `~/jf/media` (SDR H.264, HDR10 and HLG HEVC, AC-3, E-AC-3, TrueHD, DTS, AV1, a two-episode show, music with lyrics, subtitles).
+  - HDR10+ and Dolby Vision 5 and 8.1 from `make-hdr-media.sh` (PLAN 6.6): the same HDR10 base with generated dynamic metadata, injected by quietvoid's open-source `hdr10plus_tool` 1.7.2 and `dovi_tool` 2.3.1, built from their tags with `cargo install --locked --path .` into `~/.cargo/bin` (the newest releases need a newer Rust than Debian 13's 1.85); `mkvtoolnix` from Debian. No Dolby Vision 7 clip: the generator writes single-layer RPUs only.
+  - Every HDR film carries its transfer and primaries in the Matroska colour block, not only in the HEVC stream: Jellyfin 12's ffprobe 8 trusts the container and reads a film without them as SDR (10.11's ffprobe 7 falls back to the stream). Films made before 2026-11-12 lack them: delete those two and run `make-media.sh` again.
   - `setup.py` runs the wizard with a throwaway admin `icefin` (random password in the guest's `~/jf/creds.json`, never printed), creates libraries, installs the regression plugins and writes `~/jf/status.json`.
   - Plugins: Playback Reporting, Trakt, LDAP, Intro Skipper, File Transformation, Home Screen Sections, Plugin Pages, JavaScript Injector, SSO. jf1011 9/9 active; jf12 8/9 (SSO has no 12.x build yet).
 - Live TV (9.15): `python3 tests/icefin/servers/livetv.py tests/icefin/servers/servers.json` gives both servers 24 M3U channels (the lab clips over HTTP, a lab API key) and an XMLTV guide from 6 h ago to 2 days ahead. Run it again before guide tests: it moves the guide to now.
 - Client harness: `tests/icefin/web/session_play.py` drives a build over DevTools (Xvfb), plays by remote command and records what the server saw; `compare_runs.py` diffs two runs.
+- IR remotes (11.5 R): `python3 tests/icefin/web/lirc_remote.py --app ~/build/src/icefin-player` (a fake lircd in the app's own `/run/lirc` through bubblewrap; needs `sudo` once per boot for the empty mount point).
+- Routing rows (6.6): `LD_LIBRARY_PATH=~/mpv-icefin/lib/x86_64-linux-gnu python3 tests/icefin/web/routing_rows.py --app ~/build-vk/src/icefin-player --upstream ~/build-upstream/src/jellyfin-desktop` (a build against the patched libmpv, below, or the Vulkan pass has no video path) plays every film through the server on OpenGL and on Vulkan (lavapipe, SDR X11 display): the server's VideoRangeType, the router's line, the capability prompt exactly where the routing table puts it, a direct play, and upstream's play method per film. The HDR-display rows are `hdr_protocol.py`'s (below).
 
 ## HTPC tier (D16): retired by D28
 > **Retired (D28, 2026-11-11):** no automated tests run on the HTPC any more; real hardware is covered by beta testers
@@ -117,11 +121,36 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   `hotplug`, `transport/<codec>` (AC-3, E-AC-3, DTS, TrueHD bit-exact with the right non-audio/HBR/channel
   format), `pcm/ac3` (decoded control). Results in `~/avsim/results/`. DTS-HD MA has no free encoder: drop a
   sample at `~/avsim/samples/dtshd.mka` to add its row.
+- **Icefin in the client (PLAN 3.9, `icefin.py`):** `matrix.py --player icefin --app APP` runs the native lab
+  build inside the client (Xvfb, ALSA to the HDMI output, every passthrough format on), driven over DevTools
+  through an SSH tunnel, and plays each sample through Icefin's own player and per-track decision. Rows:
+  `icefin/<profile>/<codec>` for every `expect` entry (the capture bit-exact or PCM as expected, Icefin's
+  decision line agreeing, the track playing to the end), `icefin/hotplug-reread` (each decision used the new
+  receiver's ELD, without a restart), `icefin/standby` (invalid ELD: PCM until it wakes, D32),
+  `icefin/standby-wake` and `icefin/standby-flap` (the bitstream 4 s after the wake, the wait starting over when it
+  drops back to standby), `icefin/standby-pcm` and `icefin/standby-bitstream` (the two override settings) and
+  `icefin/unplug` (unplugged mid-track and for a whole track: nothing stalls), `icefin/fallback-default` and
+  `icefin/fallback-silent` (the HDMI device held by another program: PCM, then the default device, then silence with
+  the notice; the track always plays to the end). The client needs
+  Icefin's runtime packages: `avsim.sh icefin-image APP` makes a second base disk with them (once per
+  dependency change), and `AVSIM_BASE=avsim-icefin` starts the client from it.
+- **Public sinks (PLAN 11.5 option A):** 40 profiles in `tests/icefin/avsim/profiles/public/` made by
+  `edid_profiles.py` from the linuxhw EDID collection (CC BY 4.0; `SOURCES.md` there): the audio capabilities of
+  real TVs, AV receivers and soundbars. Of 30,974 sinks with an audio block (45,061 EDIDs from TV, receiver and
+  soundbar makers), 399 distinct capability sets; the 40 cover every decision case among them (11 expect maps, 14
+  combinations of the ELD's rate and channel limits), then receivers and soundbars, then the sets most TVs share.
+  `expect` follows the SPEC's rules (the codec listed, and a carrier the ELD can open). Not in the routine matrix:
+  `matrix.py --profiles public [--player icefin --app APP]` (ELD rows; Icefin's decision per sink and codec, about
+  40 minutes). To regenerate: a sparse checkout of the collection (`Digital/<vendor>/` for TV, receiver and soundbar
+  makers) and `edid_profiles.py write <checkout>`.
 - **Run:**
   ```
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh build'     # once, ~10 min
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh image'     # once: download, verify, provision
   scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh up && bash tests/icefin/avsim/avsim.sh matrix; bash tests/icefin/avsim/avsim.sh down'
+  # Icefin's own rows (3.9): the Icefin disk once, then the client from it with more memory for Qt WebEngine
+  scripts/lab.sh run 'bash tests/icefin/avsim/avsim.sh icefin-image ~/build/src/icefin-player'
+  scripts/lab.sh run 'export AVSIM_MEM_MB=4096 AVSIM_BASE=avsim-icefin; bash tests/icefin/avsim/avsim.sh up && bash tests/icefin/avsim/avsim.sh matrix --player icefin --app ~/build/src/icefin-player; bash tests/icefin/avsim/avsim.sh down'
   ```
 - **Watching:** the client has no display. `avsim.sh console` shows its serial log, and the commands run
   through `lab-run`, so they show on `lab-icefin-main`'s console in virt-manager.
@@ -137,8 +166,69 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   scripts/lab.sh run 'python3 tests/icefin/web/hdr_protocol.py'          # the installed Flatpak, server jf12
   ```
   It shows what Icefin sends; whether a TV switches to HDR stays on the HTPC (5.8).
+  CI runs the same test on every Flatpak build (`icefin-flatpak.yml`, job `hdr`): Weston 16 built once and cached on
+  Ubuntu 24.04, that commit's bundle, and generated HDR10 and HLG clips served from a folder
+  (`hdr_protocol.py --media`, `tests/icefin/hdr/make-ci-clips.sh`) in place of the lab servers. The Dolby Vision and
+  HDR10+ rows stay in the lab: their clips need tools built from source.
+- **Gamescope (PLAN 11.5 option D): Steam's game mode on an HDR TV, headless.** Gamescope 3.16.30.2 built from
+  Valve's source into `~/gamescope-lab` (`tests/icefin/hdr/build-gamescope.sh`: Debian 13 doesn't package it, and its
+  pinned wlroots needs newer Wayland, libdrm, xkbcommon, wayland-protocols and pixman, built into the same prefix).
+  Its headless backend with `--hdr-enabled --hdr-debug-force-support` runs on lavapipe, and its WSI layer offers X11
+  clients the HDR10 (ST 2084) colour space, as on a Deck or Bazzite in game mode. `tests/icefin/web/gamescope_hdr.py`
+  runs a native Icefin build inside it (Xwayland, the WSI layer, the Vulkan renderer) and checks per routing row what
+  Icefin hands Gamescope: the display read as HDR from the swapchain, the HDR10 swapchain, the router's choice, and
+  `VK_EXT_hdr_metadata` with each film's exact metadata (HDR10, HLG's BT.2020 container, Dolby Vision 8.1's HDR10
+  base); an SDR Gamescope and HDR Output off tone-map. Needs a build against the patched libmpv:
+  ```
+  scripts/lab.sh run 'sh tests/icefin/hdr/build-gamescope.sh'           # once: clones and builds, a few minutes
+  scripts/lab.sh run 'LD_LIBRARY_PATH=~/mpv-icefin/lib/x86_64-linux-gnu python3 tests/icefin/web/gamescope_hdr.py --app ~/build-vk/src/icefin-player'
+  ```
+  The Flatpak path (Flathub's `VulkanLayer.gamescope` extension) and a real TV stay with beta row H4.
+  Mutter can't stand in: 48.7's headless virtual monitor has only the default colour mode.
 - **Limits:** no real decoder behind the sink, so no lip sync, no receiver display, no CEC, no HDCP, and no
   check of how a real receiver treats a borderline stream. Those rows stay on the HTPC.
+
+## Performance budget (PLAN 11.5 option P)
+- **Where:** `lab-icefin-htpcsim` (4 vCPU, 6 GB, Debian's standard kernel for virtio_gpu, the headless 4K Weston TV
+  session from `tests/icefin/htpc/sim-provision.sh`, Mesa in software), with the app held to two CPUs (`taskset`).
+  Separate from `lab-icefin-main`, so other sessions' tests don't skew the numbers. The servers stay on
+  `lab-icefin-main` (`ICEFIN_SERVER_HOST=192.168.122.83`, `~/jf/creds.json` copied VM to VM).
+- **What:** `tests/icefin/perf/perf_budget.py` runs the Flatpak and, for stock jellyfin-web and every installed
+  theme, measures the home screen idle and with focus moving, then the 1080p H.264 film. The figures are Qt Quick's
+  own frames (`hardware.startFrameStats` / `frameStats`: each frame's cost from scene-graph sync to swap, frames per
+  second, the 95th-percentile interval, intervals over 50 ms) and mpv's dropped frames (`hardware.playbackStats`).
+  The page's requestAnimationFrame can't stand in: Chromium ticks it at 60 Hz whatever Qt draws.
+- **Budget:** `tests/icefin/perf/budget.json`, recorded with `--record`. A run fails when a scenario's frame cost,
+  frame rate, jank or video drops are past the budget plus a margin; scenarios recorded with fewer than 30 frames
+  (a static screen, or one the arrow keys don't move) are reported, not checked. A change meant to alter a screen
+  records the budget again. It catches regressions; what a real low-end GPU does stays with beta row V4.
+- **Run:** build the Flatpak in `lab-icefin-main`, `flatpak build-bundle`, install the bundle in the guest, then:
+  ```
+  LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=192.168.122.83 ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
+  ```
+
+## Full lab matrix (PLAN 11.1)
+- **What:** `scripts/icefin/lab-matrix.py` runs every lab test on one tree in `lab-icefin-main` and writes
+  `summary.md` / `summary.json` after each test, with each test's output in `<name>.log` (`--out`, default
+  `~/lab-matrix/<date-time>`). Groups: `unit` (ctest), `app` (the app's own tests), `theme` (engine, every theme,
+  and `clone_layout.py` for each reference spec), `av` (the Virtual AV lab rows and Icefin's rows), `hdr` (the virtual
+  HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) runs only when named.
+  `--list` prints the tests; `--only` / `--skip` take names. The budget test runs in `lab-icefin-htpcsim` (above).
+- **Tree and builds:** `~/src-matrix` (`git archive` of the commit plus the mpvqt submodule), built twice:
+  ```
+  cmake -S ~/src-matrix -B ~/build-matrix -G Ninja -DUSE_STATIC_MPVQT=ON -DENABLE_SDL2=OFF -DICEFIN_SDL3=ON   # with the patched libmpv's PKG_CONFIG_PATH
+  cmake -S ~/src-matrix -B ~/build-matrix-av -G Ninja -DUSE_STATIC_MPVQT=ON                                   # stock libraries, for the Virtual AV client
+  ```
+  and the Flatpak installed from the same tree for `hdr_protocol` and `dbus_drop`.
+- **Sharing the VM:** before each test it waits while another session's test runs (the shared pads, displays and
+  CPU), and the app runs under another process name so other sessions' `pkill -x icefin-player` leaves it alone.
+  A full run takes about 5 hours, most of it waiting.
+- **Fixtures:** before the first theme test it rewrites the Live TV guide from now (`livetv.py`; a guide written a day
+  earlier has run out) and resets the test user's watch state (`reset-watch.py`; the app group's playback leaves
+  Next Up and Continue Watching with one item, where the theme tests expect full rows). `fixtures.log` has both. Run it in the background:
+  ```
+  scripts/lab.sh exec 'cd ~/src-matrix && nohup python3 -u scripts/icefin/lab-matrix.py > ~/lab-matrix.txt 2>&1 &'
+  ```
 
 ## Provisioning
 - scripts/provision.sh: native build deps (Qt 6 + WebEngine dev, libmpv-dev, SDL2, CEC), flatpak + flatpak-builder + Flathub remote, podman.

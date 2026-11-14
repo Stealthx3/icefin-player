@@ -1,13 +1,17 @@
-// Almanac (benchmark theme, PLAN 9.15; its target is named in docs/PLAN.md). Built from the engine's generic capabilities
-// only: the Live TV guide is ui.guideGrid (channels down the side, a time axis, cells sized by duration, a now line,
-// paging by time and channel), and the focused channel plays live and muted in the corner through ui.mutedPreview
-// (the page's own <video>, never mpv). Home and Live TV both open the guide; every other route is jellyfin-web's own.
+// Almanac: the guide (PLAN 9.15, kept in the 9.49 pass; the canvas's Guide and Programme boards). The engine's
+// ui.guideGrid (channels down the side, a time axis, cells sized by duration, a now line, paging by time and channel)
+// under the info pane, the focused channel live and muted in the corner through ui.mutedPreview (the page's own
+// <video>, never mpv). The tab strip above it is the app's places (grid.js); ≡ on a programme opens its card (tv.js);
+// a recording carries a red dot. D.guideScreen() is #/livetv's screen (tv.js).
 (function () {
     'use strict';
     const T = window.icefinTheme;
     const ui = T.ui;
     const E = T.ctx;  // focus, focused, sound: the theme script API (8.7)
-    const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const D = window.icefinAlmanac;
+    if (!D) return;
+    const el = D.el;
+    const HINTS = [['OK', 'watch'], ['≡', 'programme'], ['◀ ▶', 'time'], ['▲ ▼', 'channels'], ['Back', 'tabs']];
     const ROWS = 8, SPAN = 120, PREVIEW_DWELL = 900;  // eight channel rows over two hours, as on the target (almanac.json)
     const iso = (ms) => new Date(ms).toISOString();
     const hm = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -48,6 +52,7 @@
 
     function focusMenu() {
         S.zone = 'menu';
+        D.hints([['OK', 'open'], ['◀ ▶', 'tab'], ['▼', 'the guide'], ['Back', '']]);
         S.menu.forEach((m) => m.classList.remove('icefin-was'));
         E.focus(S.menu[S.menuIndex || 0]);
     }
@@ -56,11 +61,14 @@
         return {
             onAction(action, ctx) {
                 if (!S || !S.ready) return false;
+                D.sawAction && D.sawAction(action);
                 const f = ctx.focused();
+                if (action === 'menu') { if (S.at && S.at.p && S.at.p.item && !S.at.p.gap && D.liveOptions) { D.liveOptions(S.at.p.item); return true; } return false; }
                 const mi = S.menu.indexOf(f);
                 if (mi >= 0) {
                     if (action === 'left' || action === 'right') { const n = mi + (action === 'right' ? 1 : -1); if (n >= 0 && n < S.menu.length) { S.menuIndex = n; E.focus(S.menu[n]); ctx.sound('focus'); } return true; }
                     if (action === 'down') { if (S.guide) { S.zone = 'guide'; S.guide.refocus(); ctx.sound('focus'); } return true; }
+                    if (action === 'back') { ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
                     return action === 'up';
                 }
                 // In the guide: ui.guideGrid has already used the moves it can make; what reaches here leaves the grid.
@@ -72,6 +80,8 @@
             },
             async mount(root) {
                 root.setAttribute('data-al', 'guide');
+                root.setAttribute('data-al-screen', 'guide');
+                D.pointerNav(root);
                 S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0 };
                 const top = el('div', 'al-top');
                 const inf = el('div', 'al-info');
@@ -93,18 +103,17 @@
                 tick();
                 S.clockTimer = setInterval(tick, 15000);
 
-                const views = await ui.userViews();
-                if (!S || S.root !== root) return;
                 S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
                 const c = S.client, uid = c.getCurrentUserId();
-                const entries = [{ label: 'Guide' }];
-                for (const v of views) if (v.CollectionType !== 'livetv') entries.push({ label: v.Name, hash: `#/list?parentId=${v.Id}&serverId=${c.serverId()}` });
-                entries.push({ label: 'Search', hash: '#/search' }, { label: 'Settings', hash: '#/mypreferencesmenu' }, { label: 'Classic home', hash: '#/home?icefin=stock' });
+                await D.loadViews();
+                if (!S || S.root !== root) return;
+                const entries = D.navTabs();
                 S.menu = entries.map((x, i) => {
-                    const b = el('div', 'al-menu-item' + (i === 0 ? ' current' : ''), x.label);
+                    const b = el('div', 'al-menu-item al-tab' + (x.current ? ' current' : ''), x.label);
                     b.setAttribute('data-icefin-focus', '');
                     b.tabIndex = -1;
-                    b.addEventListener('click', () => { if (x.hash) location.hash = x.hash; else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
+                    b.addEventListener('click', () => { if (!x.current) x.go(); else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
+                    if (x.current) S.menuIndex = i;
                     menu.append(b);
                     return b;
                 });
@@ -130,16 +139,19 @@
                         return ((r && r.Items) || []).map((p) => ({ id: p.Id, channelId: p.ChannelId, start: Date.parse(p.StartDate), end: Date.parse(p.EndDate), title: p.Name, overview: p.Overview || '', item: p }));
                     },
                     renderChannel(ch, cell) { cell.append(el('span', 'al-chno', ch.ch.ChannelNumber || ''), el('span', 'al-chname', ch.name)); },
-                    renderProgram(p, cell) { cell.textContent = p.title; },
+                    renderProgram(p, cell) { cell.textContent = p.title; if (p.item && p.item.TimerId) cell.append(el('span', 'al-rec', ' ●')); },
                     emptyLabel: 'No information',
-                    onFocus(p, ch) { info(p, ch.ch); },
+                    onFocus(p, ch) { info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
                     onSelect(p, ch) {
                         if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
+                        else if (D.liveOptions && p.item) D.liveOptions(p.item);
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
                 });
             },
             unmount() {
+                D.screenHints = null;
+                D.hintsOff();
                 clearTimeout(previewTimer);
                 stopPreview();
                 if (S) { clearInterval(S.clockTimer); if (S.guide) S.guide.stop(); }
@@ -147,29 +159,6 @@
             }
         };
     }
-    T.registerScreen('#/home', screen());
-    T.registerScreen('#/livetv', screen());
+    D.guideScreen = screen;
 })();
 
-// Details (PLAN 9.18): the engine's details screen (every feature of the stock page) in this theme's layout; the look
-// is in styles.css, "Details".
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'panel' }));
-})();
-
-// Player controls (PLAN 9.19): jellyfin-web's own controls (every function kept) in this theme's layout; the look is
-// the osd.* tokens in tokens.json.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.osd) T.ui.osd.set({ layout: 'bar' });
-})();
-
-// Settings (PLAN 9.24): the engine's settings area (Client settings, Classic View, Server Settings) in this theme's look.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.settings) T.registerScreen('#/mypreferencesmenu', T.ui.settings.screen({ layout: 'list' }));
-})();
