@@ -14,23 +14,117 @@
   },
   "tolerancePx": 14,
   "timingTolerance": 0.1,
-  "ready": "!!document.querySelector('.al-guide .icefin-guide-cell.icefin-focused')",
+  "ready": "!!document.querySelector('#icefin-theme-root[data-al-ready]') && !!document.querySelector('.al-c.lit')",
   "states": [
+    {
+      "name": "home rows",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "eval": "window.icefinTheme.ctx.navigate('#/home')"
+        }
+      ],
+      "stepMs": 4000,
+      "boxes": {
+        "channel column (the rows' labels)": {
+          "sel": ".al-gr .al-ch",
+          "index": 0,
+          "x": 0,
+          "w": 470,
+          "tol": 10
+        },
+        "first row": {
+          "sel": ".al-gr",
+          "index": 0,
+          "y": 464,
+          "h": 55,
+          "tol": 10
+        },
+        "corner picture": {
+          "sel": ".al-pv",
+          "right": 1872,
+          "y": 0,
+          "w": 510,
+          "h": 349,
+          "tol": 12
+        },
+        "tab strip over the rows (the guide's time line)": {
+          "sel": ".al-tabs",
+          "x": 470,
+          "cy": 376,
+          "tol": 14
+        }
+      },
+      "text": {
+        "title": {
+          "sel": ".al-pane .al-title",
+          "x": 302,
+          "tol": 16
+        }
+      }
+    },
     {
       "name": "guide",
       "settleMs": 1500,
       "boxes": {
-        "first time column": {"sel": ".icefin-guide-time", "index": 0, "x": 470, "cy": 435, "w": 324},
-        "second time column": {"sel": ".icefin-guide-time", "index": 1, "x": 794},
-        "first channel row": {"sel": ".icefin-guide-row", "index": 0, "y": 464, "h": 59, "tol": 10},
-        "second channel row": {"sel": ".icefin-guide-row", "index": 1, "y": 523, "tol": 10},
-        "channel column": {"sel": ".icefin-guide-channel", "index": 0, "x": 0, "w": 470, "tol": 10},
-        "live preview": {"sel": ".al-preview", "right": 1872, "y": 0, "w": 510, "h": 350}
+        "first time column": {
+          "sel": ".icefin-guide-time",
+          "index": 0,
+          "x": 470,
+          "cy": 435,
+          "w": 324
+        },
+        "second time column": {
+          "sel": ".icefin-guide-time",
+          "index": 1,
+          "x": 794
+        },
+        "first channel row": {
+          "sel": ".icefin-guide-row",
+          "index": 0,
+          "y": 464,
+          "h": 59,
+          "tol": 10
+        },
+        "second channel row": {
+          "sel": ".icefin-guide-row",
+          "index": 1,
+          "y": 523,
+          "tol": 10
+        },
+        "channel column": {
+          "sel": ".icefin-guide-channel",
+          "index": 0,
+          "x": 0,
+          "w": 470,
+          "tol": 10
+        },
+        "live preview": {
+          "sel": ".al-preview",
+          "right": 1872,
+          "y": 0,
+          "w": 510,
+          "h": 350
+        }
       },
       "text": {
-        "programme title": {"sel": ".al-title", "x": 302, "cy": 110, "tol": 16}
-      }
+        "programme title": {
+          "sel": ".al-title",
+          "x": 302,
+          "cy": 110,
+          "tol": 16
+        }
+      },
+      "actions": [
+        {
+          "eval": "window.icefinTheme.ctx.navigate('#/livetv')"
+        }
+      ],
+      "stepMs": 5000
     }
   ],
-  "timings": []
+  "timings": [],
+  "notes": [
+    "9.49: Almanac's home and every screen use the guide's geometry (the channel column, the rows, the corner); the guide moved from Home to the Guide tab (#/livetv)."
+  ]
 }

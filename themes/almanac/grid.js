@@ -339,7 +339,7 @@
             if (row && cellsOf(row).length > 1) h.push(['◀ ▶', 'along the row']);
             if (cur().letters && rows().length > 3) h.push(['L1 R1', 'letter']);
             else if (isBar()) h.push(['L1 R1', 'tab']);
-            h.push(['Back', S.stack.length > 1 ? `to ${(S.stack[S.stack.length - 2].bar ? S.stack[S.stack.length - 2].bar[S.barIndex].label : S.stack[S.stack.length - 2].title) || 'the last screen'}` : (top().backLabel || cur().backLabel || (cur().onBack || top().onBack ? '' : 'back'))]);
+            h.push(['Back', S.stack.length > 1 ? `to ${(S.stack[S.stack.length - 2].bar ? S.stack[S.stack.length - 2].bar[S.barIndex].label : S.stack[S.stack.length - 2].title) || 'the last screen'}` : (top().backLabel || cur().backLabel || '')]);
             D.screenHints = () => D.hints(h);
             if (!(D.panel && D.panel.isOpen())) D.hints(h);
         }
