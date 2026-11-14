@@ -22,7 +22,7 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-GROUPS = ["home", "folder", "panel", "details", "hints", "motion"]
+GROUPS = ["home", "folder", "panel", "details", "library", "search", "livetv", "music", "player", "settings", "account", "hints", "motion"]
 
 
 # Captures take the web layer alone: over the native backdrop (8.4) Tide's screens are transparent, and a capture drops
@@ -232,12 +232,151 @@ def main():
             settle(1.2)
             check("Back returns to the list with the same item focused", js("(document.querySelector('.td-e.focused .td-e-name') || {}).textContent") == name, str(js("(document.querySelector('.td-e.focused .td-e-name') || {}).textContent")))
 
+
+        nav = lambda h: (js(f"window.icefinTheme.ctx.navigate({json.dumps(h)}); true"), time.sleep(2.5))
+        entries = lambda: json.loads(js("JSON.stringify((window.icefinTide.currentColumn && window.icefinTide.currentColumn.S.alive) ? window.icefinTide.currentColumn.S.entries.map(e => e.name) : [])"))
+
+        if "library" in only:
+            mid = js("window.icefinTheme.ui.userViews().then(v => (v.find(x => x.CollectionType === 'movies') || {}).Id || '')")
+            if mid:
+                nav(f"#/movies?topParentId={mid}")
+                check("#/movies is Tide's: the library's folders, its icon in the trail", js(f"{R}.dataset.tdScreen") == "library" and "All movies" in entries() and js("!!document.querySelector('.td-trail-step.near')") is True, str(entries()))
+                for _ in range(6):
+                    if js("(document.querySelector('.td-e.focused .td-e-name') || {}).textContent") == "All movies":
+                        break
+                    act("down"); settle(0.25)
+                act("enter")
+                page.wait_for(f"!{R}.hasAttribute('data-td-loading') && !!document.querySelector('.td-e.focused .td-e-thumb')", timeout=20)
+                settle(0.6)
+                first = entries()[:2]
+                act("menu")
+                page.wait_for("!!document.querySelector('.td-panel .td-row')", timeout=10)
+                check("≡ in a list: Sort and filter… heads the item's options", js("document.querySelector('.td-panel .td-row').textContent").startswith("Sort and filter"))
+                act("enter")
+                settle(0.8)
+                act("right")
+                settle(1.5)
+                check("▶ steps Sort by in place; the list behind re-sorts", js("document.querySelector('.td-panel-level:last-child .td-row .td-row-value').textContent").find("Date added") >= 0 and entries()[:2] != first, f"{entries()[:2]} was {first}")
+                shot("sort.png")
+                act("back"); settle(0.4); act("back"); settle(0.5)
+            gid = js("window.ApiClient.getGenres(window.ApiClient.getCurrentUserId(), {Limit: 1, Recursive: true}).then(r => r.Items[0] ? r.Items[0].Id : '')")
+            if gid:
+                nav(f"#/list?genreId={gid}")
+                e = entries()
+                check("#/list (a genre): Tide's list, Play all and Shuffle first", js(f"{R}.dataset.tdScreen") == "list" and e[:2] == ["Play all", "Shuffle"], str(e[:4]))
+
+        if "search" in only:
+            nav("#/search")
+            js("(() => { const i = document.querySelector('.td-search-input'); i.value = 'sdr'; i.dispatchEvent(new Event('input')); return true; })()")
+            settle(2.5)
+            e = entries()
+            check("search: the query, the best matches, a folder per kind", js(f"{R}.dataset.tdScreen") == "search" and len(e) >= 3 and any(x in e for x in ("Films", "Shows", "Songs", "Episodes")), str(e))
+            shot("search.png")
+
+        if "livetv" in only:
+            nav("#/livetv")
+            e = entries()
+            check("Live TV's column: Channels, Guide, Recordings, Schedule, Series timers", e == ["Channels", "Guide", "Recordings", "Schedule", "Series timers"], str(e))
+            act("enter")
+            page.wait_for(f"!{R}.hasAttribute('data-td-loading') && !!document.querySelector('.td-e.focused')", timeout=20)
+            settle(0.6)
+            check("Channels: number, name, what's on", " · " in (entries() or [""])[0], str(entries()[:2]))
+            act("menu")
+            page.wait_for("!!document.querySelector('.td-panel .td-row')", timeout=10)
+            rows = js("[...document.querySelectorAll('.td-panel .td-row')].map(r => r.textContent).join('|')")
+            check("≡ on a channel: the programme's options (Record, the steppers)", "Record" in rows and "Start early" in rows, rows)
+            shot("programme.png")
+            act("back"); settle(0.5)
+            nav("#/livetv?td=guide")
+            n = js(f"+{R}.dataset.tdGuide || 0")
+            check("the guide: channels along the column, programmes along time, a focused cell", n > 0 and js("!!document.querySelector('.icefin-guide-cell.icefin-focused') && !!document.querySelector('.icefin-guide-now')") is True, str(n))
+            shot("guide.png")
+
+        if "music" in only:
+            js("(async () => { const c = window.ApiClient; const r = await c.getItems(c.getCurrentUserId(), {IncludeItemTypes: 'Audio', Recursive: true, Limit: 4}); window.icefinTheme.ctx.play({items: r.Items}); return true; })()")
+            settle(4)
+            nav("#/queue")
+            check("Now playing: the song, its time line, the transport, the queue", js("!!document.querySelector('.td-np-title').textContent && document.querySelectorAll('.td-np-qrow').length >= 1 && document.querySelectorAll('.td-np-btn').length === 6") is True)
+            act("play_pause"); settle(0.6)
+            check("▶ pauses and plays", js("document.querySelectorAll('.td-np-btn')[2].getAttribute('aria-label')") == "Play")
+            shot("nowplaying.png")
+            act("play_pause")
+            nav("#/home")
+            check("the song line under the clock on every screen", js("!document.querySelector('.td-song').hidden") is True)
+            js("window.icefinPlaybackManager && window.icefinPlaybackManager.stop(); true")
+            settle(1)
+
+        if "player" in only:
+            js("(async () => { const c = window.ApiClient; const r = await c.getItems(c.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, SearchTerm: 'SDR H264 AAC'}); if (r.Items[0]) window.icefinTheme.ctx.play({ids: [r.Items[0].Id], serverId: c.serverId()}); return true; })()")
+            try:
+                page.wait_for("!!document.querySelector('.td-pl')", timeout=20)
+                settle(1)
+                check("the player: Tide's two overlays, the title and what plays", js("!!document.querySelector('.td-pl-title').textContent && document.querySelector('.td-pl').classList.contains('td-pl-shown')") is True)
+                shot("player.png")
+                act("menu")
+                page.wait_for("!!document.querySelector('.td-panel .td-row')", timeout=10)
+                rows = js("[...document.querySelectorAll('.td-panel .td-row')].map(r => r.textContent).join('|')")
+                check("≡ in the player: audio, subtitles, speed, Play on, Watch together, Stop", all(x in rows for x in ("Audio", "Subtitles", "Play on", "Watch together", "Stop")), rows[:200])
+                shot("player-options.png")
+                act("back"); settle(4)
+                check("the overlays hide after 3 s while playing", js("!document.querySelector('.td-pl') || !document.querySelector('.td-pl').classList.contains('td-pl-shown')") is True)
+            except TimeoutError:
+                check("the player started", False, "no .td-pl in 20 s")
+            js("window.icefinPlaybackManager && window.icefinPlaybackManager.stop(); true")
+            settle(2)
+
+        if "settings" in only:
+            nav("#/mypreferencesplayback")
+            check("a preference page in Tide's frame: its name, the sibling pages, focus on arrival", js("document.documentElement.getAttribute('data-icefin-stock')") == "mypreferencesplayback"
+                  and js("document.querySelector('.td-sc-name').textContent") == "Playback" and js("document.querySelectorAll('.td-sc-tab').length") == 5, str(js("document.activeElement && document.activeElement.tagName")))
+            shot("prefs.png")
+            nav("#/mypreferenceshome")
+            rows = js("[...document.querySelectorAll('.td-hp-row')].map(r => r.textContent).join('|')")
+            check("Settings › Home: the cross bar's categories with switches", rows.startswith("Settings") and "Search" in rows, rows)
+            act("menu"); act("down")
+            check("≡ lifts a category and ▼ carries it", js("!!document.querySelector('.td-hp-row.td-lifted')") is True)
+            act("back")
+            settle(0.3)
+            check("Back puts it back", js("!document.querySelector('.td-hp-row.td-lifted')") is True)
+            shot("homeprefs.png")
+
+        if "account" in only:
+            nav("#/userprofile")
+            check("Profile: you in the trail, your account's entries", "Password" in entries() and "Sign out" in entries(), str(entries()))
+            nav("#/quickconnect")
+            act("up"); act("up"); act("right"); act("up")
+            check("Quick Connect: ▲ ▼ fill a slot, ◀ ▶ move", js("[...document.querySelectorAll('.td-qc-slot')].map(s => s.textContent).join('')") == "10")
+            shot("quickconnect.png")
+            act("back"); settle(1)
+
         if "hints" in only:
+            nav("#/home")
             act("down")
             settle(0.3)
             vis = js("getComputedStyle(document.querySelector('.td-hints')).opacity")
             words = js("document.querySelector('.td-hints').textContent")
             check("hints show for a pad, and say what the keys do here", vis == "1" and "OK" in words, f"{vis} {words}")
+            # page-aware (checklist 2.3): a folder offers no options or play; an item offers both
+            hint = lambda: js("document.querySelector('.td-hints').textContent")
+            if libs:
+                to_cat(libs[0])
+                for _ in range(8):
+                    if js("!!document.querySelector('.td-e.focused').tdEntry.open"):
+                        break
+                    act("down"); settle(0.25)
+                h1 = hint()
+                check("page-aware hints on a folder: OK open, no ≡, no ▶", "OK open" in h1 and "≡" not in h1 and "▶" not in h1, h1)
+                act("enter")
+                page.wait_for(f"!{R}.hasAttribute('data-td-loading') && !!document.querySelector('.td-e.focused')", timeout=20)
+                settle(0.6)
+                if js("!!document.querySelector('.td-e.focused').tdEntry.item"):
+                    h2 = hint()
+                    check("page-aware hints on an item: ▶ play and ≡ options", "▶" in h2 and "≡" in h2, h2)
+                act("menu")
+                page.wait_for("!!document.querySelector('.td-panel .td-row')", timeout=10)
+                h3 = hint()
+                check("page-aware hints in the panel: choose and close, nothing from the screen behind", "Back" in h3 and "▶" not in h3, h3)
+                act("back"); settle(0.5)
             page.send("Input.dispatchMouseEvent", type="mouseMoved", x=400, y=300)
             page.send("Input.dispatchMouseEvent", type="mouseMoved", x=420, y=310)
             settle(0.4)

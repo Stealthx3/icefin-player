@@ -178,6 +178,20 @@
             requestAnimationFrame(() => { for (const d of S.drawn.values()) d.classList.remove('td-fresh'); });
             const f = S.drawn.get(i);
             if (f) T.ctx.focus(f);
+            // back from an item's details: its poster flies home from the trail to its place here (MotionDetails)
+            const home = D.flightHome;
+            if (home && f && f.tdEntry && f.tdEntry.item && f.tdEntry.item.Id === home.id && Date.now() - home.at < 3000) {
+                D.flightHome = null;
+                const t = f.querySelector('.td-e-thumb');
+                if (t && !D.reduced()) {
+                    const ghost = el('div', 'td-e-thumb has-art');
+                    ghost.style.backgroundImage = home.art;
+                    Object.assign(ghost.style, { position: 'fixed', left: `${home.rect.left}px`, top: `${home.rect.top}px`, width: `${home.rect.width}px`, height: `${home.rect.height}px`, transform: 'none', zIndex: 900 });
+                    document.body.append(ghost);
+                    t.style.opacity = '0';
+                    requestAnimationFrame(() => D.fly(ghost, t.getBoundingClientRect(), 320, () => { ghost.remove(); t.style.opacity = ''; }));
+                }
+            }
             rootEl.setAttribute('data-td-index', String(i));
             rootEl.setAttribute('data-td-count', String(list.length));
             // the count under the clock (Folder board), and the letter strip for lists sorted by name
