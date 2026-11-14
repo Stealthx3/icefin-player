@@ -9,15 +9,22 @@ installs alongside Flathub's Jellyfin Desktop: separate app ID, separate setting
 > files come later (PLAN 12.1).
 
 ## Install from the test repository
-The test repository is a signed Flatpak remote with the current alpha and test builds, served by GitHub Pages
-(<https://stealthx3.github.io/icefin-flatpak-test/>). `flatpak update` then keeps Icefin current.
+The Icesuite test repository is a signed Flatpak remote with the current alpha and test builds of Icefin and the other
+Icesuite apps, served by GitHub Pages (<https://stealthx3.github.io/icesuite-test/>). `flatpak update` then keeps
+Icefin current.
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak remote-add --user --if-not-exists icefin-test https://stealthx3.github.io/icefin-flatpak-test/icefin-test.flatpakrepo
-flatpak install --user icefin-test io.github.stealthx3.IcefinPlayer
+flatpak remote-add --user --if-not-exists icesuite-test https://stealthx3.github.io/icesuite-test/flatpak/icesuite-test.flatpakrepo
+flatpak install --user icesuite-test io.github.stealthx3.IcefinPlayer
+```
+Added the old `icefin-test` remote (`icefin-flatpak-test`, before the repository moved)? Point it at the new address;
+the app, its settings and the trusted key stay:
+```bash
+flatpak remote-modify --user --url=https://stealthx3.github.io/icesuite-test/flatpak/repo/ icefin-test
+flatpak update --user
 ```
 A build installed from a bundle switches to the remote with
-`flatpak install --user --reinstall icefin-test io.github.stealthx3.IcefinPlayer`; settings and sign-in stay.
+`flatpak install --user --reinstall icesuite-test io.github.stealthx3.IcefinPlayer`; settings and sign-in stay.
 
 ## Install a bundle
 ```bash

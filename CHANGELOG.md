@@ -30,6 +30,8 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ### Fixed
 - Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
+- Escape on an open drop-down in Client Settings closes just the list again, instead of the whole Client Settings page.
+- A theme's startup jingle plays when Icefin starts with that theme already chosen; something briefly in its way at launch used to skip it for the whole run. The log says why it waits.
 - Client Settings -> Controllers: Remap is reachable with a controller (it sat out of line with the switches, so Down skipped it).
 - jellyfin-web's own pages inside a theme's frame (the preference pages, Quick Connect and others): the controller moves over the page and the frame's tabs, Back and Home as one screen.
 - Icefin no longer crashes on exit while a theme's sounds are loaded.

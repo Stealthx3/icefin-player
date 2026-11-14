@@ -238,6 +238,8 @@
         let ac = null, master = null, ambBus = null, urls = null;
         let st = { jingles: true, ambient: true, volume: 0.6, muted: false };
         let amb = null, jing = null, lastPlay = 0, timer = null, startupDone = false, played = [], held = false;
+        // the startup jingle: claimed only when it can play, tried until this time (the theme came up + 20 s), and why it waits
+        let startupUntil = 0, claiming = false, waitWhy = '', apiRef = null;
         // The ambient piece's level: off while the theme holds it, down under a jingle, else full.
         const busTarget = () => (held ? 0 : jing ? DUCK : 1);
         const bufs = new Map();
@@ -306,7 +308,30 @@
         }
         const ambientWanted = () => !!(pkg && urls && urls.ambient && st.ambient && !st.muted && !document.hidden && Date.now() - lastPlay > 3000);
         let starting = false;
+        // The startup jingle plays once per run of the app (ThemeComponent.claimStartup), when the theme first comes up.
+        // Anything in its way at that moment (Theme Jingles off, passthrough, something playing) used to spend the claim and
+        // skip it for good (the 2026-11-13 host check: no startup jingle on the user's HTPC setup); now it waits for up to
+        // 20 s and says why in the log.
+        function tryStartup() {
+            if (startupDone || claiming || !urls || !urls.startup || !apiRef || !apiRef.theme.claimStartup || Date.now() > startupUntil) return;
+            const why = !st.jingles ? 'Theme Jingles is off' : st.muted ? 'passthrough or exclusive playback' : playing() ? 'something is playing' : '';
+            if (why) {
+                if (why !== waitWhy) console.info('icefin: the startup jingle waits: ' + why);
+                waitWhy = why;
+                return;
+            }
+            claiming = true;
+            apiRef.theme.claimStartup((first) => {
+                claiming = false;
+                if (!first) { startupUntil = 0; console.info('icefin: the startup jingle has played in this run'); return; }
+                startupDone = true;
+                audio();
+                startJingle(urls.startup, 'startup');
+                console.info('icefin: the startup jingle plays' + (waitWhy ? ' (after: ' + waitWhy + ')' : ''));
+            });
+        }
         async function tick() {
+            tryStartup();
             if (playing()) {
                 lastPlay = Date.now();
                 if (jing) stopJingle(0.2);
@@ -332,6 +357,7 @@
             // The theme came up (or changed): its music, and the startup jingle the first time in this run.
             mounted(p, api) {
                 urls = (p && p.music) || null;
+                apiRef = api;
                 if (!timer) {
                     timer = setInterval(tick, 1000);
                     document.addEventListener('visibilitychange', tick);
@@ -339,21 +365,16 @@
                 }
                 if (!urls) return;
                 if (urls.ambient) buffer(urls.ambient);
+                startupUntil = Date.now() + 20000;
+                waitWhy = '';
                 api.theme.musicState((s) => {
-                    applyState(s);
-                    if (urls && urls.startup && api.theme.claimStartup) {
-                        api.theme.claimStartup((first) => {
-                            if (!first || !st.jingles || st.muted || playing()) return;
-                            startupDone = true;
-                            audio();
-                            startJingle(urls.startup, 'startup');
-                        });
-                    }
+                    applyState(s);  // its tick() tries the startup jingle with the real settings
                 });
             },
             // The theme went away: fade everything out and forget its files.
             reset() {
                 held = false;
+                startupUntil = 0;
                 if (ac) { stopJingle(0.3); release(amb, 0.6); ramp(ambBus.gain, 1, 0.05); }
                 amb = null;
                 urls = null;
@@ -591,7 +612,8 @@
         const action = KEYS[e.key];
         if (!action || e.altKey || e.ctrlKey || e.metaKey) return;
         // Escape on a jellyfin-web menu that left no history entry closes it here (closeLooseDialog), on any page
-        if (action === 'back' && e.key === 'Escape') {
+        // (not an open drop-down list inside it: the list's own Escape closes just the list)
+        if (action === 'back' && e.key === 'Escape' && !document.querySelector('.icefin-dd-list')) {
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }

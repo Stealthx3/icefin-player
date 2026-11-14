@@ -169,7 +169,11 @@ def main():
         time.sleep(1.5)
 
         # ---- the overlay lane in the player controls ----
-        clip = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, Limit: 1}).then(r => r.Items[0].Id)")
+        # jellyfin-web's controls: Plaza (and Media Center) draw their own player (9.44, 9.45), so these steps and the
+        # size steps run under Baseline, which keeps them.
+        js("new Promise(r => window.api.theme.setActiveTheme('baseline', '', r))")
+        time.sleep(2)
+        clip = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, searchTerm: 'SDR H264 AAC', Limit: 1}).then(r => r.Items[0].Id)")
         js(f"window.icefinPlaybackManager.play({{ids: ['{clip}'], serverId: window.ApiClient.serverId()}}); true")
         page.wait_for("location.hash.startsWith('#/video') && !!window.icefinPlaybackManager.getCurrentPlayer()", timeout=45)
         page.wait_for("window.icefinPlaybackManager.currentTime() > 1200", timeout=30)
@@ -211,14 +215,17 @@ def main():
         page.send("Emulation.setDeviceMetricsOverride", width=3840, height=2160, deviceScaleFactor=1, mobile=False)
         wake()
         uhd = osd()
-        check("4K: Auto doubles the controls, so they keep their share of the screen", abs(uhd["scale"] - 2) < 0.01 and abs(uhd["h"] - hd["h"]) < 0.02 and uhd["w"] <= 0.75,
+        # The panel layout keeps the controls within 70% of the width; the bar layout (Baseline's) spans it.
+        panel = js("document.documentElement.getAttribute('data-icefin-osd')") == "panel"
+        wide = lambda w: w <= 0.75 if panel else w > 0.95
+        check("4K: Auto doubles the controls, so they keep their share of the screen", abs(uhd["scale"] - 2) < 0.01 and abs(uhd["h"] - hd["h"]) < 0.02 and wide(uhd["w"]),
               f"1080p {hd['h']:.3f} of the height, 4K {uhd['h']:.3f}; {json.dumps(uhd)}")
         shot("controls-4k.png")
         setv("icefin_couch_mode", True)
         time.sleep(0.5)
         wake()
         couch = osd()
-        check("Couch Mode: larger again, and marked for themes; the skip button just above the controls", abs(couch["scale"] - 2.6) < 0.01 and couch["couch"] and couch["w"] <= 0.75
+        check("Couch Mode: larger again, and marked for themes; the skip button just above the controls", abs(couch["scale"] - 2.6) < 0.01 and couch["couch"] and wide(couch["w"])
               and couch["top"] - 200 <= couch["skipBottom"] <= couch["top"] + 1, json.dumps(couch))
         shot("controls-4k-couch.png")
         setv("icefin_couch_mode", False)
@@ -271,6 +278,8 @@ def main():
         check("Back closes the error notice", not js("!!document.getElementById('icefin-live')"))
 
         # ---- Plaza: Collections ----
+        js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
+        time.sleep(2)
         js("location.hash = '#/home'; true")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-pz=\"home\"][data-pz-ready]')", timeout=30)
         time.sleep(2)

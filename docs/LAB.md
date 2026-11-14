@@ -207,6 +207,29 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=192.168.122.83 ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
   ```
 
+## Full lab matrix (PLAN 11.1)
+- **What:** `scripts/icefin/lab-matrix.py` runs every lab test on one tree in `lab-icefin-main` and writes
+  `summary.md` / `summary.json` after each test, with each test's output in `<name>.log` (`--out`, default
+  `~/lab-matrix/<date-time>`). Groups: `unit` (ctest), `app` (the app's own tests), `theme` (engine, every theme,
+  and `clone_layout.py` for each reference spec), `av` (the Virtual AV lab rows and Icefin's rows), `hdr` (the virtual
+  HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) runs only when named.
+  `--list` prints the tests; `--only` / `--skip` take names. The budget test runs in `lab-icefin-htpcsim` (above).
+- **Tree and builds:** `~/src-matrix` (`git archive` of the commit plus the mpvqt submodule), built twice:
+  ```
+  cmake -S ~/src-matrix -B ~/build-matrix -G Ninja -DUSE_STATIC_MPVQT=ON -DENABLE_SDL2=OFF -DICEFIN_SDL3=ON   # with the patched libmpv's PKG_CONFIG_PATH
+  cmake -S ~/src-matrix -B ~/build-matrix-av -G Ninja -DUSE_STATIC_MPVQT=ON                                   # stock libraries, for the Virtual AV client
+  ```
+  and the Flatpak installed from the same tree for `hdr_protocol` and `dbus_drop`.
+- **Sharing the VM:** before each test it waits while another session's test runs (the shared pads, displays and
+  CPU), and the app runs under another process name so other sessions' `pkill -x icefin-player` leaves it alone.
+  A full run takes about 5 hours, most of it waiting.
+- **Fixtures:** before the first theme test it rewrites the Live TV guide from now (`livetv.py`; a guide written a day
+  earlier has run out) and resets the test user's watch state (`reset-watch.py`; the app group's playback leaves
+  Next Up and Continue Watching with one item, where the theme tests expect full rows). `fixtures.log` has both. Run it in the background:
+  ```
+  scripts/lab.sh exec 'cd ~/src-matrix && nohup python3 -u scripts/icefin/lab-matrix.py > ~/lab-matrix.txt 2>&1 &'
+  ```
+
 ## Provisioning
 - scripts/provision.sh: native build deps (Qt 6 + WebEngine dev, libmpv-dev, SDL2, CEC), flatpak + flatpak-builder + Flathub remote, podman.
 
