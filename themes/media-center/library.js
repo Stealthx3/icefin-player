@@ -109,10 +109,20 @@
         }
         const q = Object.assign({}, base, { SortBy: p.SortBy || 'SortName', SortOrder: p.SortOrder || 'Ascending' });
         if (p.Filters) q.Filters = p.Filters;
+        const o = L.opts;  // sort and filter (the SortFilter board)
+        if (o) {
+            if (o.sortBy) { q.SortBy = o.sortBy === 'SortName' ? 'SortName' : `${o.sortBy},SortName`; q.SortOrder = o.order; }
+            const f = [q.Filters, o.unwatched && 'IsUnplayed', o.favourites && 'IsFavorite'].filter(Boolean);
+            if (f.length) q.Filters = [...new Set(f.join(',').split(','))].join(',');
+            if (o.uhd) q.Is4K = true;
+            if (o.genre) q.GenreIds = o.genre;
+            if (o.year) q.Years = o.year;
+        }
         if (!(p.noParent || L.kind.noParent) || p.folders) q.ParentId = L.parentId;
         if (p.folders) q.Recursive = false;
         else { q.IncludeItemTypes = p.types || L.kind.types; q.Recursive = true; }
         if (L.filter) q[L.filter.key] = L.filter.id;
+        if (L.fixed) q[L.fixed.key] = L.fixed.id;
         const r = await c.getItems(uid, q);
         return { items: r.Items || [], total: r.TotalRecordCount || 0 };
     }
@@ -171,13 +181,96 @@
         if (L.tiles.length - L.tiles.indexOf(t) < L.layout.rows * 6) more();
     }
 
-    for (const route of Object.keys(KINDS)) {
-        T.registerScreen(route, {
+    // ---- sort and filter (the SortFilter board, 9.60): a side panel over the library; its choices hold until changed
+    // or cleared, across pivots ----
+    const SORTS = [['SortName', 'Title'], ['DateCreated', 'Date added'], ['PremiereDate', 'Release date'], ['CommunityRating', 'Rating']];
+    async function sortPanel() {
+        if (!L || !M.panel) return;
+        const c = M.client(), uid = c.getCurrentUserId();
+        const o = Object.assign({ sortBy: 'SortName', order: 'Ascending' }, L.opts || {});
+        const apply = () => { L.opts = o; L.sortBtn.classList.toggle('on', o.sortBy !== 'SortName' || o.order !== 'Ascending' || !!(o.unwatched || o.favourites || o.uhd || o.genre || o.year)); reload(); };
+        let genres = [], years = [];
+        try { genres = ((await c.getGenres(uid, { ParentId: L.parentId || undefined, IncludeItemTypes: L.kind.types, SortBy: 'SortName' })).Items || []); } catch (e) { genres = []; }
+        try { years = ((await c.getJSON(c.getUrl('Years', { UserId: uid, ParentId: L.parentId || undefined, IncludeItemTypes: L.kind.types, Recursive: true, SortBy: 'SortName', SortOrder: 'Descending' }))).Items || []); } catch (e) { years = []; }
+        M.panel.show({
+            title: 'sort and filter',
+            render(body, panel) {
+                const draw = () => {
+                    body.textContent = '';
+                    body.append(M.sec('sort by'));
+                    for (const [id, label] of SORTS) {
+                        if (id === o.sortBy) {
+                            const order = id === 'SortName' ? [['Ascending', 'A to Z'], ['Descending', 'Z to A']] : [['Descending', 'newest first'], ['Ascending', 'oldest first']];
+                            if (id === 'CommunityRating') order[0][1] = 'highest first', order[1][1] = 'lowest first';
+                            body.append(M.stepper(label, order, o.order, (v) => { o.order = v; }));
+                            body.lastChild.classList.add('mc-sp-on');
+                        } else body.append(M.row(label, { go: () => { o.sortBy = id; o.order = id === 'SortName' ? 'Ascending' : 'Descending'; draw(); T.ctx.focus([...body.querySelectorAll('.mc-sp-row')][SORTS.findIndex((x) => x[0] === id)]); } }));
+                    }
+                    body.append(M.sec('show only'));
+                    const tick = (key, label) => {
+                        const r = M.row(label, { on: !!o[key] });
+                        r.addEventListener('click', () => { o[key] = !o[key]; T.ctx.sound('select'); const at = [...body.querySelectorAll('.mc-sp-row')].indexOf(r); draw(); T.ctx.focus(body.querySelectorAll('.mc-sp-row')[at]); });
+                        return r;
+                    };
+                    body.append(tick('unwatched', 'Not watched'), tick('favourites', 'Favourites'), tick('uhd', '4K'));
+                    if (genres.length) body.append(M.stepper('Genre', [['', 'any'], ...genres.map((g) => [g.Id, g.Name])], o.genre || '', (v) => { o.genre = v; }));
+                    if (years.length) body.append(M.stepper('Year', [['', 'any'], ...years.map((y) => [String(y.Name), String(y.Name)])], o.year || '', (v) => { o.year = v; }));
+                    body.append(M.foot(M.button('Done', () => { panel.close(); apply(); }, true), M.button('Clear', () => { for (const k of Object.keys(o)) delete o[k]; o.sortBy = 'SortName'; o.order = 'Ascending'; panel.close(); apply(); })));
+                };
+                draw();
+            }
+        });
+    }
+
+    // ---- a drill-down list (the ListPage board, 9.60): a genre, music genre, studio, network or person, from any of
+    // jellyfin-web's #/list keys. Its pivots split it by kind or order it; Play all and Shuffle stand apart at the left
+    // with what the list is and how much is in it.
+    const LIST_KEYS = [['genreId', 'GenreIds', 'genre'], ['musicGenreId', 'GenreIds', 'music genre'], ['studioId', 'StudioIds', 'studio'], ['personId', 'PersonIds', 'person'], ['tag', 'Tags', 'tag']];
+    M.listKind = (params) => {
+        const k = LIST_KEYS.find(([q]) => params.get(q));
+        if (!k) return null;
+        const music = k[0] === 'musicGenreId';
+        const pivots = music
+            ? [['albums', { types: 'MusicAlbum', ...sort('SortName') }], ['songs', { types: 'Audio', ...sort('SortName') }], ['artists', { types: 'MusicArtist', ...sort('SortName') }]]
+            : [['all', { types: 'Movie,Series', ...sort('SortName') }], ['movies', { types: 'Movie', ...sort('SortName') }], ['shows', { types: 'Series', ...sort('SortName') }],
+                ['episodes', { types: 'Episode', ...sort('SeriesSortName,ParentIndexNumber,IndexNumber') }], ['year', { types: 'Movie,Series', ...sort('ProductionYear,SortName', 'Descending') }]];
+        return { kind: { title: '', what: k[2], types: music ? 'MusicAlbum' : 'Movie,Series', layout: music ? SQUARE : POSTER, noParent: true, list: true, pivots },
+            fixed: { key: k[1], id: k[0] === 'tag' ? params.get('tag') : params.get(k[0]) } };
+    };
+    async function listHead(root, fixed, what) {
+        const c = M.client(), uid = c.getCurrentUserId();
+        const side = el('div', 'mc-lib-side');
+        const play = async (shuffle) => {
+            try {
+                const r = await c.getItems(uid, { Recursive: true, Limit: 300, SortBy: shuffle ? 'Random' : 'SortName', MediaTypes: 'Video,Audio', [fixed.key]: fixed.id });
+                const ids = (r.Items || []).filter((x) => !x.IsFolder).map((x) => x.Id);
+                if (ids.length) { T.ctx.sound('select'); T.ctx.play({ ids, serverId: M.sid() }); } else T.ctx.sound('error');
+            } catch (e) { T.ctx.sound('error'); }
+        };
+        const about = el('div', 'mc-lib-about', what);
+        side.append(M.button ? M.button('Play all', () => play(false)) : el('div'), M.button ? M.button('Shuffle', () => play(true)) : el('div'), about);
+        root.append(side);
+        // the name (the title) and what is in it
+        if (fixed.key !== 'Tags') {
+            try { const it = await c.getItem(uid, fixed.id); if (L && L.root === root) L.chrome.head.textContent = (it.Name || '').toLowerCase(); } catch (e) { /* the title stays empty */ }
+        } else if (L && L.root === root) L.chrome.head.textContent = String(fixed.id).toLowerCase();
+        try {
+            const n = async (types) => (await c.getItems(uid, { Recursive: true, Limit: 0, IncludeItemTypes: types, [fixed.key]: fixed.id })).TotalRecordCount || 0;
+            const parts = what === 'music genre' ? [[await n('MusicAlbum'), 'album']] : [[await n('Movie'), 'movie'], [await n('Series'), 'show']];
+            const line = parts.filter(([x]) => x).map(([x, w]) => `${x} ${w}${x === 1 ? '' : 's'}`).join(' · ');
+            about.textContent = '';
+            about.append(el('div', '', what.charAt(0).toUpperCase() + what.slice(1)), el('div', '', line));
+        } catch (e) { /* the counts are extra */ }
+    }
+
+    function screenFor(kindOf) {
+        return {
             async mount(root) {
-                const kind = KINDS[route];
                 const params = new URLSearchParams(location.hash.split('?')[1] || '');
-                const parentId = params.get('topParentId') || params.get('parentId') || '';
-                root.setAttribute('data-mc', 'library');
+                const found = kindOf(params);
+                const kind = found.kind;
+                const parentId = kind.list ? '' : params.get('topParentId') || params.get('parentId') || '';
+                root.setAttribute('data-mc', kind.list ? 'list' : 'library');
                 const field = el('div', 'mc-field');
                 field.append(el('div', 'mc-ribbon one'), el('div', 'mc-ribbon two'));
                 root.append(field);
@@ -192,7 +285,8 @@
                 const info = el('div', 'mc-lib-info');
                 const countEl = el('div', 'mc-count');
                 root.append(pivot, body, info, countEl);
-                L = { root, kind, layout: kind.layout, parentId, pivot: null, filter: null, tiles: [], grid, body, info, count: countEl, crumb, chrome, gen: 0 };
+                L = { root, kind, layout: kind.layout, parentId, pivot: null, filter: null, fixed: found.fixed || null, tiles: [], grid, body, info, count: countEl, crumb, chrome, gen: 0 };
+                if (kind.list) listHead(root, found.fixed, kind.what);
                 L.io = new IntersectionObserver((entries) => {
                     for (const e of entries) {
                         const a = e.target.querySelector('.mc-lib-art[data-src]');
@@ -218,6 +312,11 @@
                 });
                 if (!L.pivot) { L.pivot = kind.pivots[0][1]; pivot.firstChild.classList.add('on'); }
                 pivot.prepend(crumb);
+                L.sortBtn = focusable(el('button', 'mc-pivot-item mc-lib-sort', 'sort and filter'));
+                L.sortBtn.type = 'button';
+                L.sortBtn.setAttribute('aria-label', 'Sort and filter');
+                L.sortBtn.addEventListener('click', () => { T.ctx.sound('select'); sortPanel(); });
+                pivot.append(L.sortBtn);
                 root.addEventListener('icefin-focus', (e) => { if (L && L.tiles.includes(e.target)) follow(e.target); });
                 await more();
                 if (!L || L.root !== root) return;
@@ -232,6 +331,9 @@
                 if (L) { if (L.io) L.io.disconnect(); L.chrome.stop(); }
                 L = null;
             }
-        });
+        };
     }
+    for (const route of Object.keys(KINDS)) T.registerScreen(route, screenFor(() => ({ kind: KINDS[route] })));
+    // #/list is the wall's (wall.js); a drill-down list goes here
+    M.listScreen = screenFor((params) => M.listKind(params));
 })();
