@@ -163,6 +163,19 @@ def main():
         n = js("document.querySelectorAll('#icefin-theme-root [data-section=chapters] .icefin-d-card').length")
         t = js("document.querySelectorAll('#icefin-theme-root [data-section=chapters] .icefin-d-chtime').length")
         check("9 · every chapter shows its time on the picture", (n or 0) == 0 or t == n, f"{t}/{n} (no chapters in the lab is a pass)")
+        # the host walk's details finding (mock-up approved 2026-11-13): focus back on the actions or a picker (a picker
+        # closed, Up from a list) takes the page back to its top, so the title isn't left under the band
+        sc = js("""(() => { const s = document.querySelector('#icefin-theme-root .icefin-d-scroll'), c = document.querySelector('#icefin-theme-root .icefin-d-sections .icefin-d-card');
+          if (!s || !c || s.scrollHeight <= s.clientHeight + 40) return null; window.icefinTheme.ctx.focus(c); return true; })()""")
+        if sc:
+            time.sleep(1.2)
+            down = js("document.querySelector('#icefin-theme-root .icefin-d-scroll').scrollTop")
+            js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-d-options [data-icefin-focus]') || document.querySelector('#icefin-theme-root .icefin-d-actions [data-icefin-focus]'); window.icefinTheme.ctx.focus(f); return true; })()")
+            time.sleep(1.2)
+            top = js("document.querySelector('#icefin-theme-root .icefin-d-scroll').scrollTop")
+            check("details: back on the pickers, the page is at its top again", (down or 0) > 0 and top == 0, f"scrolled {down}, then {top}")
+        else:
+            check("details: back on the pickers, the page is at its top again (a page too short to scroll: skipped)", True)
         artist = js("window.ApiClient.getArtists(window.ApiClient.getCurrentUserId(), {Limit: 50}).then(r => (r.Items.find(a => !(a.ImageTags || {}).Primary) || {}).Id || null)")
         if artist:
             go(f"#/details?id={artist}&serverId={sid}", 4)

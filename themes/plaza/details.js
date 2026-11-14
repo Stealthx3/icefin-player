@@ -130,6 +130,18 @@
             P.caption(focusLine, (label || '').replace(/\s+/g, ' ').trim().slice(0, 90));
         }, true);
         const scroll = d.querySelector('.icefin-d-scroll');
+        // focus back on the actions or the pickers (a picker closed, Up from a list): the page goes back to its top, so the
+        // title isn't left under the band; only when the focused control still shows there (a short window keeps the scroll)
+        root.addEventListener('icefin-focus', (e) => {
+            const t = e.target;
+            if (!scroll || !t.closest || !t.closest('.icefin-d-actions, .icefin-d-options')) return;
+            requestAnimationFrame(() => {
+                if (!scroll.scrollTop || !t.isConnected) return;
+                const bottom = t.getBoundingClientRect().bottom - scroll.getBoundingClientRect().top + scroll.scrollTop;
+                if (bottom > scroll.clientHeight) return;
+                scroll.scrollTo({ top: 0, behavior: T.ui.motion.reduced() ? 'auto' : 'smooth' });
+            });
+        }, true);
         const drawTabs = () => {
             tabs.textContent = '';
             const tab = (label, target) => {

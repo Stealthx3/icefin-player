@@ -21,6 +21,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ### Changed
 - Plaza 0.9.0, from a walk of every element: tabs slide toward the tab you pick; menus and pickers rise in and fall out; the sort and filter panel slides from its edge; a poster grows into its details and Back shrinks it home; settings tiles grow into their pages; the bar's caption cross-fades; details fade under the frame; the focused name stays inside the window; sheets end above the bar; Display's tick boxes are switch rows and the bar names the focused setting.
+- Plaza's details page goes back to its top when focus returns to the actions or pickers (after a picker closes, or Up from a list), so the title isn't left under the band.
 - Plaza's background music is 15% quieter and waits while a channel's preview is open.
 - Plaza has its own details page: the name pill and clock, tabs for each section, the framed art, one row of action pills, and Back and Home in the bar; albums and playlists show their tracks beside the art.
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
