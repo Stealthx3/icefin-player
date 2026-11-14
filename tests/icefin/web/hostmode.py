@@ -9,6 +9,7 @@ create, delete, favourite, mark, reorder or sign out (those stay in the lab). In
 pad -> SDL -> engine path. Builds never happen on the host.
 """
 import os
+import signal
 import sys
 
 TOOL = os.environ.get("ICEFIN_HOST_TOOL", os.path.expanduser("~/.local/share/icefin-walk/visual/tool"))
@@ -22,6 +23,8 @@ def add_args(ap):
 def start(a, out, theme="plaza"):
     """The user's Icefin with `theme` from this worktree: (page, stop). stop() puts their theme back and lets go of the lock."""
     sys.path.insert(0, TOOL)
+    # a run stopped from outside (timeout's SIGTERM) still unwinds through the test's finally: stop() puts the theme back
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     import host  # noqa: E402 (the harness lives with the host walk's tools)
     lock = host.Lock()
     lock.__enter__()
