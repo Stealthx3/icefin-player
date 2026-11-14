@@ -19,6 +19,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
+- The test repository moved to the shared Icesuite one, <https://stealthx3.github.io/icesuite-test/> (remote `icesuite-test`). If you added `icefin-test` before, run `flatpak remote-modify --user --url=https://stealthx3.github.io/icesuite-test/flatpak/repo/ icefin-test` once (docs/INSTALL.md).
 - Plaza has its own details page: the name pill and clock, tabs for each section, the framed art, one row of action pills, and Back and Home in the bar; albums and playlists show their tracks beside the art.
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
