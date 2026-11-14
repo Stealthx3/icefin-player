@@ -10,6 +10,7 @@
     "panel.js",
     "motion.js",
     "itemmenu.js",
+    "hints.js",
     "account.js",
     "start.js",
     "wall.js",
