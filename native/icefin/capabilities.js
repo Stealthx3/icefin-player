@@ -74,7 +74,10 @@
     // Only a pointer that moved takes focus: when content changes under a still cursor (a page turns, a row scrolls) the
     // browser sends mouse events at the same coordinates, and those must not pull focus off what the remote just chose.
     function onMove(e) {
-        const still = e.clientX === px && e.clientY === py;
+        // still: the same place as the last event, or no movement at all (the browser's events for content moving under
+        // a resting cursor carry none, and the first of them came with nothing to compare: 9.60, a focus that jumped to
+        // Media Center's pivot row under a resting cursor)
+        const still = (e.clientX === px && e.clientY === py) || px === null || (e.movementX === 0 && e.movementY === 0);
         px = e.clientX; py = e.clientY;
         if (!pointer || still) return;
         const t = e.target.closest && e.target.closest(FOCUS);
