@@ -119,8 +119,10 @@
         // the trail: the levels below the top, as icons on the left, the nearest with its name
         function drawTrail() {
             trail.textContent = '';
-            const below = S.stack.slice(0, -1);
+            // a details screen shows its own item in the trail too (its poster, where it came from)
+            const below = opts.selfInTrail ? S.stack.slice() : S.stack.slice(0, -1);
             trail.hidden = !below.length;
+            rootEl.classList.toggle('td-has-trail', !!below.length);
             const shown = below.slice(-3);
             shown.forEach((lv, k) => {
                 const near = k === shown.length - 1;
@@ -133,7 +135,12 @@
                 if (near && name) t.append(el('div', 'td-trail-name', name));
                 t.setAttribute('role', 'button');
                 t.setAttribute('aria-label', `Back to ${name}`);
-                t.addEventListener('click', () => { const n = S.stack.length - 1 - (shown.length - 1 - k); while (S.stack.length > n) C.back(false, true); C.redraw('back'); });
+                t.addEventListener('click', () => {
+                    const n = S.stack.length - (shown.length - k) + (opts.selfInTrail ? 1 : 0);
+                    if (n >= S.stack.length) return;
+                    while (S.stack.length > n) C.back(false, true);
+                    C.redraw('back');
+                });
                 trail.append(t);
             });
         }
@@ -362,12 +369,15 @@
                     if (isBar()) return C.category(S.barIndex + 1);
                     const e = C.entry();
                     if (e && e.open) { C.push(e.open(), S.drawn.get(curIndex())); return true; }
+                    if (e && e.details) { T.ctx.sound('select'); e.details(); return true; }
                     return true;
                 }
                 if (a === 'back') {
                     if (S.stack.length > 1) return C.back();
                     if (cur().onBack) return cur().onBack(C) !== false;
                     if (top().onBack) return top().onBack(C) !== false;
+                    // the root of a screen: Back leaves it, to where you came from
+                    if (opts.leave !== false) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
                     return false;
                 }
                 if (a === 'menu') {
