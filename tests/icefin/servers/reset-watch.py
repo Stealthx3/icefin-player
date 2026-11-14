@@ -8,7 +8,7 @@ the tests ran in. This clears it: every item the test user has played or started
 and its last-played date goes back to 2000-01-01 (the API can't clear one), outside Next Up's cutoff (the user's "Max
 days in Next Up", which themes apply through ui.nextUpQuery as jellyfin-web does). Continue Watching and Next Up then
 start empty and themes fall back to their newest items. It also puts the test user's library order back
-(setup.library_order: Movies, Music, Shows first), so a theme's first row is films, as the theme tests expect.
+(setup.library_order: Live TV, Movies, Music, Shows first, as when the theme tests were written).
 
 Usage: python3 reset-watch.py [servers.json] [--server jf12]
 Only the test user's watch state and library order change: no item, library or server setting is touched.
