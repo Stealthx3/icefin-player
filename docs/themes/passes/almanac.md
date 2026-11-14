@@ -4,6 +4,43 @@ Copied from docs/themes/CHECKLIST.md at the start of the pass (2026-11-14, main 
 when almanac does it in its own look and a test checks it, or write the user's reason beside it. Motion is judged by the six
 principles (PIPELINE.md, The measure).
 
+## Where the pass starts (walk 1, 2026-11-14)
+
+Walk: in the VM lab (the user's choice for this pass), the lab's build and server; **17 of 69** entries drawn by
+Almanac, **45 gaps**, 22 failing checks, 6 skipped (nothing in the lab library for them). Contact sheet:
+`build-walk/almanac/20261114-131559/index.html`; gap list: `docs/themes/coverage/almanac.md`.
+
+Almanac today is the guide and nothing else of its own: the home and Live TV open a cable-guide grid (an info pane
+with the live channel muted in the corner, a tab strip, channel rows over two hours, lime focus on navy), the engine's
+details and settings screens in Almanac's colours, and jellyfin-web for the rest. The tab strip's library tabs open
+jellyfin-web's pages.
+
+| Area | Walk | What is wrong |
+|---|---|---|
+| Home (1.1) | drawn | the guide only: no Continue Watching, Next Up, favourites or libraries on the home; no server status, no exit question, no music entry |
+| Frame (1.2, 1.12) | — | none: the tabs lead to jellyfin-web's header, drawer and grids |
+| Libraries, lists, search (1.3) | 10 stock, sort-filter and new-playlist missing | every library, the genre list and search are jellyfin-web's |
+| Details (1.4) | drawn (engine), book, photo album, channel stock | the engine's layout in Almanac's colours, not the target's info pane over a grid |
+| Item menu (1.5) | 9 restyled, pickers missing | jellyfin-web's sheets and dialogs in Almanac's colours |
+| Music (1.7) | queue, lyrics stock | |
+| Player (1.8) | 4 restyled | jellyfin-web's controls; no info banner of the target's kind |
+| Play on, Watch together (1.9) | 2 restyled | jellyfin-web's dialogs |
+| Settings, account, sign-in (1.10, 1.11) | hub drawn; 11 stock | preference pages, profile, Quick Connect and sign-in unframed |
+| Input (2) | 22 failing focus checks | no focus on arrival on jellyfin-web's pages; no ≡ on items; no hints, though the target has a hint bar |
+| Motion (3) | | the guide pages and moves its focus; nothing else moves: no panel, no transitions between screens |
+| Sound (5) | | five UI sounds; no startup sound |
+
+Judged by the six principles: **timing** and **easing** are fine where anything moves (the guide's page turns);
+**spatial orientation** holds inside the guide (time runs right, channels down) and is lost everywhere else;
+**directing focus** fails on 22 screens with nothing focused; **visual continuity** has nothing between the guide and
+the screens it opens; **clarity** is good in the guide (one lime cell, the info pane says what it is) and absent outside.
+
+The design for the pass (boards on the "Almanac Screens" canvas, Gate 1): the guide's grammar everywhere. Every
+screen is the info pane over a grid: a library's sections are rows like channels, its items run right like programmes;
+details, settings and search keep the same info pane and rows; options come as a list box; the player gets the
+target's kind of info banner; hints sit in the bottom bar the target has. No logos, icons, fonts, sounds or names from
+the target.
+
 ## 1. Themed elements: screens and surfaces
 
 ### 1.1 Home
