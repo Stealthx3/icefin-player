@@ -218,7 +218,7 @@
             try { it = await fetchItem(id); } catch (e) { it = null; }
             if (S !== me) return;
             if (!it) { T.ctx.navigate('#/home'); return; }
-            if (it.Type === 'TvChannel' || it.Type === 'Program') { if (D.programmeScreen) { D.programmeScreen(root, it); return; } }
+            if (it.Type === 'TvChannel' || it.Type === 'Program') { if (D.programmeScreen) { D.programmeScreen(root, it); me.C = D.detailsColumn; return; } }
             me.item = it;
             me.source = (it.MediaSources || [])[0] || null;
             resetTracks(me);
