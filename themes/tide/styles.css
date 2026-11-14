@@ -1,51 +1,199 @@
-/* Tide: gradient and wave backdrop, category row crossing an item column at a fixed point. Proportions follow the
-   benchmark target at 16:9; colours from tokens (palettes by month and time of day). */
+/* Tide (PLAN 9.48, the "Tide Screens" canvas). Geometry follows the reference (docs/themes/references/tide.json) at
+   16:9: categories through y 26.4vh on an 11vw pitch with the current one at the fixed point x 29.22vw; the focused
+   entry centred on (29.22vw, 46.76vh), about 11.6vh tall, its name from x 39.53vw; the next entry 16.3vh lower, then a
+   7.22vh pitch. Colours come from tokens (the month's palette, dimmed by the hour). Motion: MotionTimings board. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
-/* Geometry follows the target's measurements (docs/themes/references/tide.json): category icons on y 285 from the fixed
-   point x 561 on a 211 pitch; the focused item's icon centred on (561, 505), the next one on y 681, names from x 759. */
-[data-td] { color: var(--icefin-color-text); overflow: hidden !important; --td-x: 29.22vw; --td-y: 29.79vh; --td-step: 11vw; --td-item: 7.2vh;
-  --td-below: 13.35vh; --td-after: 9.07vh;
+:root { --td-x: 29.22vw; --td-cy: 46.76vh; --td-pitch: 7.22vh; --td-bar-y: 26.39vh; --td-step: 10.99vw; --td-name: 39.53vw;
+  --td-ease: cubic-bezier(0.25, 0.8, 0.3, 1); --td-glow: rgb(var(--icefin-color-focus-channel, 160 210 255) / 0.75);
+  --td-light: var(--icefin-color-waveLine, #cfe6ff); }
+
+/* ---- the ground ---- */
+[data-td-screen] { position: absolute; inset: 0; overflow: hidden !important; color: var(--icefin-color-text); font-weight: 300;
   background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveBottom) 100%); }
 .td-wave { position: absolute; inset: 0; width: 100%; height: 100%; }
 .td-shade { position: absolute; inset: 0; background: var(--icefin-color-shade); pointer-events: none; }
-.td-clock { position: absolute; right: 5.42vw; top: 8.38vh; font-size: 1.4vw; line-height: 1; text-shadow: 0 0.1em 0.3em var(--icefin-color-shade); }
-
-/* Category row: slides so the focused category sits at the fixed point */
-.td-cats { position: absolute; left: 0; top: calc(var(--td-y) - 6vh); height: 12vh; transition: transform 260ms ease-out; }
-.td-cat { position: absolute; top: 0; width: var(--td-step); margin-left: calc(var(--td-step) / -2); display: flex; flex-direction: column; align-items: center; outline: none;
-  opacity: 0.55; transition: opacity 200ms, transform 200ms; }
-.td-cat svg { width: 5.2vh; height: 5.2vh; color: var(--icefin-color-text); }
-.td-cat-label { margin-top: 1vh; font-size: 0.95em; opacity: 0; transition: opacity 200ms; white-space: nowrap; }
-.td-cat.current { opacity: 1; transform: scale(1.25); }
-.td-cat.current .td-cat-label { opacity: 1; }
-
-/* Item column: slides vertically so the focused item sits just under the category row */
-.td-items { position: absolute; left: calc(var(--td-x) - 2.87vh); top: 0; right: 0; height: 100%; }
-.td-item { position: absolute; left: 0; height: var(--td-item); display: flex; align-items: center; gap: 8.7vw; outline: none; opacity: 0.6;
-  transition: top 220ms ease-out, opacity 200ms; white-space: nowrap; }
-.td-thumb { width: calc(var(--td-item) * 0.8); height: calc(var(--td-item) * 0.8); flex: none; border-radius: var(--icefin-shape-cardRadius);
-  background: var(--icefin-color-surface) center / cover no-repeat; display: flex; align-items: center; justify-content: center; }
-.td-thumb svg { width: 60%; height: 60%; color: var(--icefin-color-text); }
-.td-name { font-size: 1.56vw; line-height: 1; }
-.td-sub { font-size: 0.8em; color: var(--icefin-color-textSecondary); }
-.td-item.icefin-focused { opacity: 1; align-items: flex-start; }
-.td-item.icefin-focused .td-thumb { box-shadow: 0 0 1.2em var(--icefin-color-waveLine); transform: scale(2); align-self: center; }
-.td-item.icefin-focused .td-name { font-weight: 700; text-shadow: 0 0 0.6em var(--icefin-color-waveLine); }
-.td-item.above { opacity: 0.45; }
-
-/* With the native backdrop (8.4) the gradient, wave and shade are drawn under the page: the web layer steps aside. */
-html[data-icefin-backdrop] [data-td] { background: transparent; }
+html[data-icefin-backdrop] [data-td-screen] { background: transparent; }
 html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { display: none; }
+.td-backdrop { position: absolute; inset: 0; background: center / cover no-repeat; opacity: 0; transition: opacity 600ms ease;
+  -webkit-mask-image: linear-gradient(90deg, transparent 20%, #000 65%); mask-image: linear-gradient(90deg, transparent 20%, #000 65%); pointer-events: none; }
+.td-backdrop.on { opacity: 0.3; }
 
-/* Details (9.18): light text over the wave; buttons are words that glow when focused, no boxes. */
-.icefin-details .icefin-d-shade, .icefin-details .icefin-d-art { opacity: 0.35; }
-.icefin-details .icefin-d-title { font-weight: 300; }
-.icefin-details .icefin-d-actions { flex-direction: column; gap: 0.2em; }
-.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { background: transparent; padding: 0.35em 0; border-radius: 0; opacity: 0.75; }
-.icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: transparent; color: var(--icefin-color-text); opacity: 1;
-  font-weight: 600; text-shadow: 0 0 0.8em rgb(var(--icefin-color-focus-channel) / 0.7); }
-.icefin-details .icefin-d-card.icefin-focused .icefin-d-img { box-shadow: 0 0 1.2em 0.2em rgb(255 255 255 / 0.5); }
+/* ---- the clock, the server, the count, the song line ---- */
+.td-clock { position: absolute; right: 5.42vw; top: 7.2vh; text-align: right; z-index: 3; text-shadow: 0 0.1em 0.3em var(--icefin-color-shade); }
+.td-clock-time { font-size: 1.4vw; line-height: 1; font-variant-numeric: tabular-nums; }
+.td-clock-extra { font-size: 0.85vw; margin-top: 0.6vh; color: var(--icefin-color-textSecondary); font-variant-numeric: tabular-nums; }
+.td-server { display: block; margin: 0.6vh 0 0 auto; padding: 0; border: 0; background: none; color: var(--icefin-color-textSecondary); font: inherit; font-size: 0.85vw; cursor: pointer; }
+.td-server.down { color: var(--icefin-color-error, #ff9f8f); }
+.td-song { margin-top: 0.8vh; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5vh; }
+.td-song-label { border: 0; background: none; color: var(--icefin-color-text); font: inherit; font-size: 0.85vw; padding: 0; cursor: pointer; opacity: 0.85; }
+.td-song-bar { width: 11vw; height: 0.25vh; min-height: 2px; background: rgb(255 255 255 / 0.2); cursor: pointer; padding: 0.6vh 0; background-clip: content-box; }
+.td-song-fill { height: 100%; background: var(--td-light); box-shadow: 0 0 6px var(--td-light); transition: width 1s linear; }
 
-/* Settings (9.24): the entries' larger titles take a softer glow and a thin line, so they stay legible. */
+/* ---- the cross bar ---- */
+.td-bar { position: absolute; left: 0; right: 0; top: var(--td-bar-y); height: 0; z-index: 2; }
+.td-cat { position: absolute; top: 0; left: calc(var(--td-x) + var(--td-i) * var(--td-step)); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;
+  opacity: 0.5; transition: left 240ms var(--td-ease), opacity 200ms; cursor: pointer; }
+.td-cat svg { width: 5vh; height: 5vh; color: var(--icefin-color-text); transition: width 240ms var(--td-ease), height 240ms var(--td-ease); }
+.td-cat-label { position: absolute; top: calc(100% + 1vh); font-size: 0.95vw; white-space: nowrap; opacity: 0; transition: opacity 200ms; }
+.td-cat.current { opacity: 1; }
+.td-cat.current svg { width: 7.2vh; height: 7.2vh; filter: drop-shadow(0 0 0.5vh var(--td-glow)); }
+.td-cat.current .td-cat-label { opacity: 1; }
+.td-cat:hover { opacity: 0.8; }
+
+/* ---- the column ---- */
+.td-col { position: absolute; inset: 0; z-index: 1;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 8vh, #000 92vh, transparent 100vh); mask-image: linear-gradient(180deg, transparent 0, #000 8vh, #000 92vh, transparent 100vh); }
+.td-e { position: absolute; left: 0; right: 0; height: 0; top: var(--td-cy); opacity: 0.7; transition: top 180ms var(--td-ease), opacity 180ms; cursor: pointer;
+  --w: 6vh; --h: 6vh; }
+.td-e.td-fresh, .td-e.td-fresh .td-e-thumb, .td-e.td-fresh .td-e-text { transition: none !important; }
+.td-e:not(.focused):not(.above) { top: calc(var(--td-cy) + var(--td-off) * var(--td-pitch) + 9.08vh); }
+.td-nested .td-e.above { top: calc(var(--td-cy) + var(--td-off) * var(--td-pitch) - 9.08vh); opacity: 0.5; }
+.td-in-bar .td-e.above { top: calc(var(--td-cy) + var(--td-off) * var(--td-pitch) - 28.44vh); opacity: 0.45; }
+.td-e.far { opacity: 0.3; }
+.td-e.focused { opacity: 1; --w: 11.6vh; --h: 11.6vh; }
+.td-e:hover:not(.focused) { opacity: 0.9; }
+.td-e.shape-poster { --w: 4vh; }
+.td-e.shape-poster.focused { --w: 7.7vh; }
+.td-e.shape-wide { --w: 10.7vh; }
+.td-e.shape-wide.focused { --w: 20.6vh; }
+.td-e-thumb { position: absolute; left: var(--td-x); top: 0; width: var(--w); height: var(--h); transform: translate(-50%, -50%); border-radius: var(--icefin-shape-cardRadius, 0.3vh);
+  display: flex; align-items: center; justify-content: center; background: center / cover no-repeat; transition: width 180ms var(--td-ease), height 180ms var(--td-ease), box-shadow 180ms; }
+.td-e-thumb.has-art { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18); background-color: var(--icefin-color-surface); }
+.td-e.shape-round .td-e-thumb { border-radius: 50%; }
+.td-e-thumb svg { width: 70%; height: 70%; color: var(--icefin-color-text); }
+.td-e.focused .td-e-thumb svg { width: 78%; height: 78%; filter: drop-shadow(0 0 0.8vh var(--td-glow)); }
+.td-e.focused .td-e-thumb.has-art, .td-e.focused .td-e-thumb:has(.td-e-initials) { box-shadow: 0 0 1.8vh 0.2vh var(--td-glow), inset 0 0 0 1px rgb(255 255 255 / 0.4); animation: td-breathe 3s ease-in-out infinite; }
+@keyframes td-breathe { 50% { box-shadow: 0 0 2.6vh 0.4vh var(--td-glow), inset 0 0 0 1px rgb(255 255 255 / 0.5); } }
+.td-e-initials { width: 100%; height: 100%; border-radius: inherit; display: flex; align-items: center; justify-content: center; font-size: calc(var(--h) * 0.36);
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.06)); }
+.td-e-prog { position: absolute; left: 8%; right: 8%; bottom: 6%; height: 0.35vh; min-height: 2px; background: rgb(255 255 255 / 0.25); }
+.td-e-prog b { display: block; height: 100%; background: var(--td-light); }
+.td-e-played { position: absolute; right: 5%; top: 5%; font-style: normal; font-size: calc(var(--h) * 0.16); color: var(--td-light); text-shadow: 0 0 0.4em #000; }
+.td-e-text { position: absolute; left: 33.4vw; top: 0; transform: translateY(-50%); max-width: 46vw; white-space: nowrap; transition: left 180ms var(--td-ease); }
+.td-e-name { font-size: 1.33vw; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; }
+.td-e-sub { font-size: 0.9vw; color: var(--icefin-color-textSecondary); margin-top: 0.2vh; overflow: hidden; text-overflow: ellipsis; }
+.td-e-line { display: none; }
+.td-e.focused .td-e-text { left: var(--td-name); top: -4.4vh; transform: none; white-space: normal; max-width: 40vw; }
+.td-e.focused .td-e-name { font-size: 1.72vw; font-weight: 400; text-shadow: 0 0 0.6em var(--td-glow); white-space: nowrap; }
+.td-e.focused .td-e-line { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95vw; line-height: 1.5;
+  color: rgb(255 255 255 / 0.78); margin-top: 1vh; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); }
+
+/* opening and closing a level (MotionColumns): the new column slides in 40 px from the right, fading up, its facts last */
+.td-col-in .td-e { animation: td-col-in 280ms var(--td-ease) both; }
+.td-col-in .td-e.focused .td-e-text { animation: td-fade 200ms ease-out 80ms both; }
+.td-col-back .td-e { animation: td-col-back 240ms var(--td-ease) both; }
+.td-col-cat .td-e, .td-col-first .td-e { animation: td-fade 200ms ease-out both; }
+@keyframes td-col-in { from { transform: translateX(2.1vw); opacity: 0; } }
+@keyframes td-col-back { from { transform: translateX(-2.1vw); opacity: 0; } }
+@keyframes td-fade { from { opacity: 0; } }
+
+/* ---- the trail: where you came from ---- */
+.td-trail { position: absolute; left: 2.5vw; top: var(--td-cy); transform: translateY(-50%); display: flex; align-items: center; gap: 2.2vw; z-index: 2; }
+.td-trail::after { content: ""; position: absolute; left: calc(100% + 1.6vw); top: -24vh; width: 1px; height: 48vh; background: linear-gradient(180deg, transparent, rgb(255 255 255 / 0.2), transparent); }
+.td-trail-step { position: relative; display: flex; flex-direction: column; align-items: center; opacity: 0.5; cursor: pointer; }
+.td-trail-step svg { width: 4.2vh; height: 4.2vh; color: var(--icefin-color-text); }
+.td-trail-step.near { opacity: 0.85; }
+.td-trail-step.near svg { width: 5.6vh; height: 5.6vh; }
+.td-trail-art { width: 7vh; height: 10vh; background: center / cover no-repeat; border-radius: var(--icefin-shape-cardRadius, 0.3vh); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3); }
+.td-trail-art.round { width: 8vh; height: 8vh; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3vh; }
+.td-trail-step.near .td-trail-art:not(.round) { width: 9vh; height: 13vh; }
+.td-trail-name { position: absolute; top: calc(100% + 0.8vh); font-size: 0.85vw; white-space: nowrap; max-width: 12vw; overflow: hidden; text-overflow: ellipsis; }
+.td-trail-step:hover { opacity: 1; }
+
+/* ---- the letter strip ---- */
+.td-letters { position: absolute; right: 2.2vw; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.td-letter { font-size: 1.45vh; line-height: 2.35vh; color: rgb(255 255 255 / 0.45); cursor: pointer; font-variant-numeric: tabular-nums; }
+.td-letter.on { color: var(--icefin-color-text); font-size: 2vh; text-shadow: 0 0 0.6em var(--td-glow); }
+
+/* ---- empty states (LibrarySections) ---- */
+.td-empty { position: absolute; left: 33vw; top: 33vh; width: 36vw; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.2vh; z-index: 2; }
+.td-empty-icon { width: 11vh; height: 11vh; color: var(--td-light); opacity: 0.4; }
+.td-empty-icon * { stroke-dasharray: 1.4 1.4; stroke-width: 0.8; }
+.td-empty-title { font-size: 1.4vw; }
+.td-empty-text { font-size: 0.95vw; color: var(--icefin-color-textSecondary); line-height: 1.5; }
+.td-empty-way { margin-top: 1vh; border: 0; background: none; color: var(--icefin-color-text); font: inherit; font-size: 1.2vw; cursor: pointer; opacity: 0.85; }
+.td-empty-way.icefin-focused { opacity: 1; text-shadow: 0 0 0.6em var(--td-glow); }
+
+/* ---- hints (Hints board, A: the remote's words, bottom right; a pad or remote only) ---- */
+.td-hints { position: fixed; right: 2.3vw; bottom: 4vh; display: flex; gap: 1.3vw; font-size: 0.9vw; color: rgb(255 255 255 / 0.78); z-index: 1100; pointer-events: none;
+  opacity: 0; transition: opacity 200ms; text-shadow: 0 0.1em 0.3em rgb(0 0 0 / 0.6); }
+.td-hint b { font-weight: 600; color: var(--icefin-color-text); }
+html[data-td-input="pad"] .td-hints, html[data-icefin-couch] .td-hints { opacity: 1; }
+body:has(#icefin-theme-overlay) .td-hints { z-index: 1102; }
+
+/* ---- the pointer's Back and Home (Decisions board) ---- */
+.td-pnav { position: absolute; left: 2.2vw; top: 3vh; display: flex; gap: 1.6vw; z-index: 4; opacity: 0; pointer-events: none; transition: opacity 200ms; }
+html[data-td-input="pointer"] .td-pnav { opacity: 0.8; pointer-events: auto; }
+.td-pnav-btn { display: flex; align-items: center; gap: 0.4vw; border: 0; background: none; color: var(--icefin-color-text); font: inherit; font-size: 0.9vw; cursor: pointer; opacity: 0.8; }
+.td-pnav-btn:hover { opacity: 1; text-shadow: 0 0 0.6em var(--td-glow); }
+.td-pnav-btn svg { width: 1.8vh; height: 1.8vh; }
+
+/* ---- the options panel (ItemOptions, MenuDialog, MediaInfo, MotionPanel) ---- */
+.td-panel-host { position: fixed; inset: 0; z-index: 1001; }
+.td-panel-dim { position: absolute; inset: 0; background: rgb(0 0 0 / 0.25); animation: td-fade 260ms ease-out both; }
+.td-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 36vw; color: var(--icefin-color-text); font-weight: 300;
+  background: linear-gradient(90deg, rgb(2 6 14 / 0.55) 0%, rgb(2 6 14 / 0.92) 20%); box-shadow: -1px 0 0 rgb(255 255 255 / 0.12);
+  animation: td-panel-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both; transition: width 220ms var(--td-ease); overflow: hidden; }
+.td-panel.td-panel-wide { width: 61vw; background: linear-gradient(90deg, rgb(2 6 14 / 0.6) 0%, rgb(2 6 14 / 0.94) 12%); }
+@keyframes td-panel-in { from { transform: translateX(100%); } }
+.td-panel-leave .td-panel { transform: translateX(100%); transition: transform 220ms cubic-bezier(0.4, 0, 1, 1); }
+.td-panel-leave .td-panel-dim { opacity: 0; transition: opacity 220ms; }
+.td-panel-level { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 6vh 3.5vw 9vh 5vw; background: inherit; }
+.td-panel-level.td-level-in { animation: td-level-in 220ms var(--td-ease) both; }
+.td-panel-level.td-level-under { opacity: 0.12; transform: translateX(-6%); transition: opacity 220ms, transform 220ms var(--td-ease); pointer-events: none; }
+.td-panel-level.td-level-out { animation: td-level-out 180ms cubic-bezier(0.4, 0, 1, 1) both; pointer-events: none; }
+@keyframes td-level-in { from { transform: translateX(40%); opacity: 0; } }
+@keyframes td-level-out { to { transform: translateX(40%); opacity: 0; } }
+.td-panel-path { font-size: 0.9vw; color: var(--icefin-color-textSecondary); }
+.td-panel-title { font-size: 1.9vw; margin: 0.3vh 0 1.6vh; }
+.td-panel-body { flex: 1; overflow-y: auto; scroll-padding: 4vh; padding: 0.6vh 0.4vw 2vh 1.6vw; margin-left: -1.6vw;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 1.2vh, #000 calc(100% - 3vh), transparent); mask-image: linear-gradient(180deg, transparent 0, #000 1.2vh, #000 calc(100% - 3vh), transparent); }
+.td-row { display: flex; align-items: center; gap: 0.9vw; padding: 0.95vh 1.6vw; margin: 0 -1.6vw; font-size: 1.3vw; opacity: 0.78; cursor: pointer; outline: none; }
+.td-row-label { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.td-row-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-row-sub { font-size: 0.85vw; color: var(--icefin-color-textSecondary); margin-top: 0.2vh; }
+.td-row-value { font-size: 1vw; color: var(--icefin-color-textSecondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.td-row-icon, .td-row-check { width: 2.4vh; height: 2.4vh; flex: none; }
+.td-row-check { color: var(--td-light); }
+.td-row:hover { opacity: 0.92; }
+.td-row.icefin-focused { opacity: 1; font-weight: 400; text-shadow: 0 0 0.6em var(--td-glow);
+  background: linear-gradient(90deg, rgb(160 210 255 / 0), rgb(160 210 255 / 0.14) 30%, rgb(160 210 255 / 0)); }
+.td-row-danger { color: var(--icefin-color-error, #ffb4a8); }
+.td-switch { display: inline-block; width: 2.6vw; height: 1.25vw; border-radius: 1vw; border: 1.5px solid rgb(255 255 255 / 0.7); position: relative; vertical-align: middle; box-sizing: border-box; }
+.td-switch i { position: absolute; top: 0.15vw; left: 0.15vw; width: 0.8vw; height: 0.8vw; border-radius: 50%; background: rgb(255 255 255 / 0.7); transition: left 160ms var(--td-ease); }
+.td-switch.on { background: rgb(160 210 255 / 0.35); border-color: var(--td-light); }
+.td-switch.on i { left: 1.5vw; background: #fff; }
+.td-sec { font-size: 0.8vw; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(255 255 255 / 0.5); margin: 1.8vh 0 0.6vh; }
+.td-sec:first-child { margin-top: 0; }
+.td-note { font-size: 0.95vw; line-height: 1.5; color: rgb(255 255 255 / 0.78); margin: 0.6vh 0 1vh; }
+.td-field { display: block; margin: 1vh 0; }
+.td-field-label { display: block; font-size: 0.85vw; color: var(--icefin-color-textSecondary); margin-bottom: 0.3vh; }
+.td-input { width: 100%; box-sizing: border-box; background: transparent; border: 0; border-bottom: 1px solid rgb(255 255 255 / 0.3); color: var(--icefin-color-text);
+  font: inherit; font-size: 1.2vw; padding: 0.6vh 0; outline: none; }
+textarea.td-input { min-height: 9vh; resize: none; line-height: 1.5; font-size: 1vw; }
+.td-input.icefin-focused, .td-input:focus { border-bottom: 2px solid var(--td-light); text-shadow: 0 0 0.5em var(--td-glow); }
+.td-foot { display: flex; gap: 2vw; margin-top: 2vh; }
+.td-btn { border: 0; background: none; color: var(--icefin-color-text); font: inherit; font-size: 1.3vw; padding: 0.6vh 0; opacity: 0.75; cursor: pointer; outline: none; }
+.td-btn-main { opacity: 0.9; }
+.td-btn.icefin-focused, .td-btn:hover { opacity: 1; text-shadow: 0 0 0.6em var(--td-glow); box-shadow: inset 0 -2px 0 var(--td-light); }
+.td-tabs { display: flex; gap: 2vw; margin: 0 0 2vh; }
+.td-tab { border: 0; background: none; color: rgb(255 255 255 / 0.6); font: inherit; font-size: 1.05vw; padding: 0 0 0.5vh; cursor: pointer; outline: none; }
+.td-tab.on { color: var(--icefin-color-text); font-weight: 400; box-shadow: inset 0 -2px 0 var(--td-light); }
+.td-tab.icefin-focused { color: var(--icefin-color-text); text-shadow: 0 0 0.6em var(--td-glow); }
+.td-panel-video .td-panel-dim { background: rgb(0 0 0 / 0.1); }
+
+/* ---- notices (Notices board): under the clock ---- */
+.td-notice { position: fixed; right: 5.42vw; top: 16vh; max-width: 26vw; padding: 1.2vh 1vw; z-index: 1200; font-size: 1vw; color: #fff;
+  background: rgb(2 6 14 / 0.72); border-left: 2px solid var(--td-light); animation: td-notice-in 200ms ease-out both; }
+.td-notice-bad { border-left-color: var(--icefin-color-error, #ff9f8f); }
+.td-notice-out { opacity: 0; transition: opacity 200ms; }
+@keyframes td-notice-in { from { opacity: 0; transform: translateX(1vw); } }
+
+/* ---- low motion turns all of it off (checklist 3): no slides, flights or breathing; fades stay short ---- */
+html[data-icefin-motion="low"] [data-td-screen] *, html[data-icefin-motion="low"] .td-panel-host *, html[data-icefin-motion="low"] .td-panel-host,
+html[data-icefin-motion="low"] #icefin-stock-chrome * { transition-duration: 0s !important; animation: none !important; }
+html[data-icefin-motion="low"] .td-panel-level.td-level-in, html[data-icefin-motion="low"] .td-panel { animation: td-fade 100ms linear both !important; }
+
+/* Settings (9.24): the engine's settings hub in Tide's look: entries are words that glow when focused. */
 .icefin-settings .icefin-s-entry.icefin-d-btn.icefin-focused { text-shadow: 0 0 0.5em rgb(var(--icefin-color-focus-channel) / 0.45); font-weight: 400;
   box-shadow: inset 0 0 0 0.08em rgb(var(--icefin-color-focus-channel) / 0.7); padding-left: 0.8em; }
