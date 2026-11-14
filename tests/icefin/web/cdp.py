@@ -139,10 +139,13 @@ class Page:
         if self.eval("!!(window.icefinTheme && window.icefinTheme.active() && window.icefinTheme.active().id === %s)" % json.dumps(theme)):
             self.wait_for(ready, timeout=timeout)
             return True
-        self.eval("window.__icefinBeforeReload = 1; true")
+        self.eval("window.__icefinBeforeReload = Date.now(); true")
         self.eval("new Promise(r => window.api.theme.setActiveTheme(%s, '', r))" % json.dumps(theme))
         end = time.time() + timeout
-        expr = f"typeof window.__icefinBeforeReload === 'undefined' && !!window.api && !!window.icefinTheme && !!({ready})"
+        # a theme without a backdrop switches in place: no reload comes, so its being active 4 s on counts too
+        same = (f"(window.icefinTheme && window.icefinTheme.active() && window.icefinTheme.active().id === {json.dumps(theme)}"
+                " && Date.now() - window.__icefinBeforeReload > 4000)")
+        expr = f"(typeof window.__icefinBeforeReload === 'undefined' || {same}) && !!window.api && !!window.icefinTheme && !!({ready})"
         while time.time() < end:
             try:
                 if self.eval(expr):
