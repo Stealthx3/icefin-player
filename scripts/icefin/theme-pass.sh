@@ -30,7 +30,7 @@ cmd="${1:-}"; shift || true
 case "$cmd" in
 start)
   t="${1:-}"; check_theme "$t"; wt="$(wt_of "$t")"
-  others="$(for x in $(cfg active); do [ "$x" != "$t" ] && echo "$x"; done | tr '\n' ' ')"
+  others="$(for x in $(cfg active); do if [ "$x" != "$t" ]; then echo "$x"; fi; done | tr '\n' ' ')"
   if [ -n "$others" ] && [ "${2:-}" != "--force" ]; then die "one theme at a time: ${others}is in its pass (theme-pass.sh done <theme> when merged; --force only on the user's word)"; fi
   python3 - "$CFG" "$t" <<'PY'
 import json, sys
