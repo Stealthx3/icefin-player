@@ -3,8 +3,8 @@
   "theme": "tide",
   "where": "lab",
   "started": "2026-11-14T12:53:19Z",
-  "commit": "",
-  "branch": "",
+  "commit": "564c49d6",
+  "branch": "theme/tide",
   "player": {
    "version": "lab build",
    "path": "~/build/src/icefin-player"
