@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""theme_walk.py — the theme pipeline's walk (PLAN 9.45, docs/themes/PIPELINE.md). Host only (host.py).
+"""theme_walk.py — the theme pipeline's walk (PLAN 9.45, docs/themes/PIPELINE.md). On the host (host.py), or with --lab
+in a lab guest (labhost.py: the lab's build and server; the user's choice per theme, 9.48).
 
 On the user's workstation (their installed Icefin Player, updated from the test repository first, their profile and
 server; their theme choice put back at the end), with one theme on, visits every screen, dialog and player state in screens.json and records what draws each one:
@@ -20,6 +21,7 @@ import argparse, datetime, html, json, os, re, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from host import Host, Lock, update  # noqa: E402
+from labhost import LabHost  # noqa: E402
 
 ERRS = r"""(() => { if (!window.__walkErr) { window.__walkErr = [];
   addEventListener('error', (e) => window.__walkErr.push('error: ' + (e.message || e.type)));
@@ -135,21 +137,29 @@ def main():
     ap.add_argument("--only", default="", help="comma-separated entry ids or groups (default: all)")
     ap.add_argument("--screen", action="store_true", help="also capture what the screen shows (Icefin's window only)")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--lab", action="store_true", help="walk in a lab guest: its build and its Jellyfin server (labhost.py)")
+    ap.add_argument("--app", default="~/build/src/icefin-player", help="with --lab: the build to run")
+    ap.add_argument("--server", default="jf12", help="with --lab: the lab server (servers.json)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     inv = json.load(open(os.path.join(HERE, "screens.json")))
     only = {x.strip() for x in a.only.split(",") if x.strip()}
     want = lambda e: not only or e["id"] in only or e["group"] in only
     entries, n = [], [0]
-    run = {"theme": a.theme, "where": "host", "started": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    run = {"theme": a.theme, "where": "lab" if a.lab else "host", "started": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
            "commit": subprocess.run(["git", "-C", os.path.dirname(os.path.abspath(a.themes)), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip(),
            "branch": subprocess.run(["git", "-C", os.path.dirname(os.path.abspath(a.themes)), "branch", "--show-current"], capture_output=True, text=True).stdout.strip()}
-    lock = Lock()
-    lock.__enter__()
+    lock = Lock() if not a.lab else None
+    if lock:
+        lock.__enter__()
     host = None
     try:
-        run["player"] = update()  # the user: check for updates to the player before each walk
-        host = Host(a.themes, a.port, os.path.join(a.out, "app.log"))
+        if a.lab:
+            run["player"] = "lab build " + a.app
+            host = LabHost(a.themes, a.port, os.path.join(a.out, "app.log"), app=a.app, server=a.server)
+        else:
+            run["player"] = update()  # the user: check for updates to the player before each walk
+            host = Host(a.themes, a.port, os.path.join(a.out, "app.log"))
         page, js = host.page, host.page.eval
         t = host.use_theme(a.theme)
         run["version"] = t["version"]
@@ -335,7 +345,8 @@ def main():
     finally:
         if host:
             host.close()
-        lock.__exit__()
+        if lock:
+            lock.__exit__()
 
     run["finished"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     gaps = [e for e in entries if e["gap"]]

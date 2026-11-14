@@ -3,6 +3,7 @@
 # Usage: scripts/icefin/theme-pass.sh <command> <theme> [args]
 #   start  <theme>               worktree ../icefin-wt-<theme> on theme/<theme>, with main merged in (stage 1)
 #   walk   <theme> [walk args]   update the player, walk every screen on the workstation, keep the coverage (stages 2, 6)
+#                                --lab: walk in the VM lab instead (its build and server; watchable in virt-manager)
 #                                (walk args go to tests/icefin/web/theme_walk.py: --only ids,groups  --screen)
 #   report [<theme>]             regenerate docs/themes/coverage/ in the theme's worktree (or here)
 #   merge  <theme> <task>        push theme/<theme> and open its pull request from merge/<theme>-<task> (stage 7)
@@ -74,9 +75,18 @@ walk)
   wt="$(wt_of "$t")"; [ -d "$wt" ] || wt="$ROOT"
   stamp="$(date +%Y%m%d-%H%M%S)"; out="$wt/build-walk/$t/$stamp"
   mkdir -p "$out"
-  echo "theme-pass: walking $t from $wt/themes (results: $out)"
   rc=0
-  python3 "$ROOT/tests/icefin/web/theme_walk.py" --theme "$t" --themes "$wt/themes" --port "$(port_of "$t")" --out "$out" "$@" || rc=$?
+  if [ "${1:-}" = "--lab" ]; then
+    shift
+    # the worktree's own lab.sh pushes the worktree's tree (its themes and tests) to the guest; results come back here
+    echo "theme-pass: walking $t in the lab from $wt/themes (results: $out)"
+    q=""; for x in "$@"; do q+=" $(printf '%q' "$x")"; done
+    SSH_AUTH_SOCK= "$wt/scripts/lab.sh" run "python3 tests/icefin/web/theme_walk.py --lab --theme $t --themes \$HOME/src/themes --out \$HOME/build-walk/$t/$stamp$q" || rc=$?
+    SSH_AUTH_SOCK= "$wt/scripts/lab.sh" pull "/home/lab/build-walk/$t/$stamp" "$wt/build-walk/$t/" >/dev/null || rc=1
+  else
+    echo "theme-pass: walking $t from $wt/themes (results: $out)"
+    python3 "$ROOT/tests/icefin/web/theme_walk.py" --theme "$t" --themes "$wt/themes" --port "$(port_of "$t")" --out "$out" "$@" || rc=$?
+  fi
   if python3 -c "import json,sys; sys.exit(0 if json.load(open('$out/coverage.json'))['entries'] else 1)" 2>/dev/null; then
     python3 "$ROOT/scripts/icefin/theme-coverage.py" --root "$wt" --import "$out/coverage.json"
     ln -sfn "$stamp" "$wt/build-walk/$t/latest"
