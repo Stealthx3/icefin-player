@@ -2,8 +2,8 @@
  "run": {
   "theme": "orbit",
   "where": "lab",
-  "started": "2026-11-15T09:01:13Z",
-  "commit": "0fe00593",
+  "started": "2026-11-15T11:27:44Z",
+  "commit": "1706200b",
   "branch": "theme/orbit",
   "player": {
    "version": "lab build",
@@ -15,11 +15,11 @@
    720,
    1
   ],
-  "finished": "2026-11-15T09:05:14Z",
+  "finished": "2026-11-15T11:31:44Z",
   "summary": {
    "entries": 69,
-   "theme": 56,
-   "gaps": 6,
+   "theme": 57,
+   "gaps": 5,
    "checksFailing": 0,
    "skipped": 6
   }
@@ -1588,17 +1588,28 @@
    "name": "Subtitle picker",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "jellyfin-web:.selectSubtitles",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Subtitles, Off Subtitles: Off ",
    "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
    "dialogs": [],
    "osd": "bar",
-   "checks": [],
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
    "warnings": [],
    "shot": "52-picker-subtitles.png",
-   "note": "nothing opened"
+   "note": ""
   },
   {
    "id": "sort-filter",
