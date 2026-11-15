@@ -12,7 +12,8 @@
     "itemmenu.js",
     "home.js",
     "library.js",
-    "details.js"
+    "details.js",
+    "browse.js"
   ],
   "schemes": {
     "dark": {
