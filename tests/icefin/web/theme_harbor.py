@@ -137,30 +137,13 @@ def main():
         act("right")  # back into the row it left, like the target's group list
         if foc().startswith("shelf/0/"):
             act("down")  # a poster, not a category tile
-        opened_from = foc()
-        act("enter")
-        page.wait_for("document.getElementById('icefin-theme-root').getAttribute('data-hb-dialog') === 'info'", timeout=10)
-        buttons = json.loads(js("JSON.stringify([...document.querySelectorAll('.hb-info .hb-button')].map(e => e.textContent))"))
-        check("Enter opens the info dialog: play and More info", buttons[-1] == "More info" and any(b.startswith(("Play", "Resume")) for b in buttons), json.dumps(buttons))
-        check("the dialog holds the item's title and overview", bool(js("document.querySelector('.hb-info-title').textContent")))
-        act("right")
-        check("left/right move between the dialog's buttons", foc() == f"button/{buttons[1]}", foc())
-        act("down")
-        check("the dialog is modal", foc() == f"button/{buttons[1]}", foc())
-        time.sleep(0.4)
-        shot("info.png")
-        act("back")
-        check("Back closes the dialog and returns to the poster", js("document.getElementById('icefin-theme-root').hasAttribute('data-hb-dialog')") is False and foc() == opened_from, f"{foc()} (opened from {opened_from})")
-        act("enter")
-        page.wait_for("!!document.querySelector('.hb-info')", timeout=10)
-        for _ in range(len(buttons)):
-            act("right")
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
-        time.sleep(3)
-        check("More info opens Harbor's themed details screen (9.18)",
-              js("(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-icefin-details') !== null") is True
-              and js("document.querySelector('.icefin-details').dataset.layout") == "poster")
+        page.wait_for("(document.querySelector('#icefin-theme-root') || {getAttribute: () => null}).getAttribute('data-hr-mode') === 'deck'", timeout=20)
+        time.sleep(1.5)
+        acts = json.loads(js("JSON.stringify([...document.querySelectorAll('.hr-dp.cur .hr-action .hr-act-name')].map(e => e.textContent))"))
+        check("Enter opens the info page (9.52): the title, Play or Resume first among its buttons", bool(js("document.querySelector('.hr-dk-name').textContent")) and bool(acts) and acts[0].startswith(("Play", "Resume")), json.dumps(acts)[:160])
+        check("the info page shows the poster and the plot", js("!!document.querySelector('.hr-dp.front .hr-dp-art') && !!document.querySelector('.hr-dp.front .hr-dp-tx')") is True)
         shot("details.png")
 
         # Each library's category tiles open the matching jellyfin-web view (Harbor's TABS against jellyfin-web 10.11, whose
