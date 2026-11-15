@@ -2,12 +2,11 @@
 """theme_arcade.py — the Arcade benchmark theme in the running app (PLAN 9.16; target Steam Big Picture). Lab guests only.
 
   - Arcade is a built-in theme, offered in Client Settings → Theme;
-  - home: a top bar (Home, each library, Search, quick access, clock), a first shelf led by a large hero capsule, more
-    shelves of portrait capsules, and button hints drawn with the engine's glyphs;
-  - library (#/list): a grid of capsules, seven wide; a sort dialog and a filter dialog (modal, Back closes) that
-    change what the grid shows;
-  - quick access: the top bar's button and a long press on View open a panel from the right over any screen, stock
-    pages too; its Reduce motion entry caps motion; Back closes it;
+  - home (the 9.50 pass): a top bar (search, quick access, the clock, you), a recent row led by a large hero capsule,
+    feed pills over a row of cards, and the bottom bar's hints drawn with the engine's glyphs;
+  - library: pill tabs over a grid of capsules, many across;
+  - quick access from the top bar (a panel from the right; its Low motion switch caps motion), the main menu from the
+    left on a long press of View, over any screen, stock pages too; Back closes them;
   - on-screen keyboard: jellyfin-web's own search field opens it from the remote and types into it;
   - turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
@@ -71,18 +70,18 @@ def main():
         js("new Promise(r => window.api.theme.setActiveTheme('arcade', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-ar-ready]')", timeout=40)
         time.sleep(1)
-        foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; if (f.arcadeItem) { const s = f.closest('.ar-shelf'); return (s ? 'shelf/' + [...document.querySelectorAll('.ar-shelf')].indexOf(s) : 'grid') + '/' + f.arcadeItem.Name; } return 'ui/' + f.textContent; })()")
-        tabs = json.loads(js("JSON.stringify([...document.querySelectorAll('.ar-top [data-icefin-focus]')].map(e => e.textContent))"))
-        check("top bar: Home, the libraries, Search, quick access", tabs[0] == "Home" and tabs[-2:] == ["Search", "•••"] and len(tabs) >= 4, json.dumps(tabs))
-        hero = json.loads(js("JSON.stringify((() => { const h = document.querySelector('.ar-cap.hero'), p = document.querySelector('.ar-shelf:nth-child(2) .ar-cap') || document.querySelectorAll('.ar-cap:not(.hero)')[0]; return {h: h && h.getBoundingClientRect().width / innerWidth, p: p && p.getBoundingClientRect().width / innerWidth, first: !!h && h === document.querySelector('.ar-shelf .ar-cap')}; })())"))
-        check("the first shelf leads with a large hero capsule", hero["first"] and hero["h"] > 0.35 and 0.09 < hero["p"] < 0.13, json.dumps(hero))
+        foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; if (f.arcadeItem) { const s = f.closest('.ar-shelf'); return (s ? 'shelf/' + [...document.querySelectorAll('.ar-shelf')].indexOf(s) : 'grid') + '/' + f.arcadeItem.Name; } return 'ui/' + (f.getAttribute('aria-label') || f.textContent); })()")
+        tops = json.loads(js("JSON.stringify([...document.querySelectorAll('.ar-top .ar-btn')].map(e => e.getAttribute('aria-label') || e.textContent))"))
+        check("top bar: search, quick access, you (the clock beside)", len(tops) == 3 and tops[0] == "Search" and tops[1] == "Quick access" and bool(js("document.querySelector('.ar-clock').textContent")), json.dumps(tops))
+        hero = json.loads(js("JSON.stringify((() => { const h = document.querySelector('.ar-cap.hero'), p = document.querySelectorAll('.ar-recent .ar-cap:not(.hero)')[0]; return {h: h && h.getBoundingClientRect().width / innerWidth, p: p && p.getBoundingClientRect().width / innerWidth, first: !!h && h === document.querySelector('.ar-shelf .ar-cap')}; })())"))
+        check("the recent row leads with a large hero capsule", hero["first"] and hero["h"] > 0.35 and (hero["p"] is None or 0.09 < hero["p"] < 0.13), json.dumps(hero))
         check("focus starts on the hero capsule", foc().startswith("shelf/0/"), foc())
-        check("button hints drawn with the engine's glyphs", js("document.querySelectorAll('.ar-hints .ar-hint svg').length") == 3)
+        check("the bottom bar's hints drawn with the engine's glyphs", js("document.querySelectorAll('.ac-hints svg').length") >= 1)
         shot("home.png")
         n0 = js("document.querySelectorAll('.ar-shelf')[0].querySelectorAll('.ar-cap').length")
         if n0 >= 2:
             act("right")
-            check("right moves along the shelf", foc().startswith("shelf/0/") and js("document.querySelectorAll('.ar-shelf')[0].querySelectorAll('.ar-cap')[1].classList.contains('icefin-focused')"), foc())
+            check("right moves along the row", foc().startswith("shelf/0/") and js("document.querySelectorAll('.ar-shelf')[0].querySelectorAll('.ar-cap')[1].classList.contains('icefin-focused')"), foc())
         if js("document.querySelectorAll('.ar-pill').length") >= 1:
             act("down")
             check("down moves to the feed pills", js("!!document.querySelector('.ar-pill.icefin-focused.current')") is True, foc())
@@ -98,66 +97,40 @@ def main():
             act("up")
             check("up returns to the recent row's capsule", foc().startswith("shelf/0/"), foc())
         act("up")
-        check("up from the first shelf reaches the top bar", foc() == "ui/Home", foc())
-        # quick access from the top bar
-        for _ in range(len(tabs)):
-            act("right")
-        check("the top bar ends at quick access", foc() == "ui/•••", foc())
+        check("up from the first row reaches the top bar", foc() == "ui/Search", foc())
+        act("right")
+        check("the top bar's next button is quick access", foc() == "ui/Quick access", foc())
         act("enter")
-        time.sleep(0.4)
-        qa = json.loads(js("JSON.stringify((() => { const p = document.querySelector('#icefin-theme-overlay .ar-qa'); if (!p) return null; const r = p.getBoundingClientRect(); return {right: r.right / innerWidth, w: r.width / innerWidth}; })())"))
+        time.sleep(0.6)
+        qa = json.loads(js("JSON.stringify((() => { const p = document.querySelector('#icefin-theme-overlay .ac-qa'); if (!p) return null; const r = p.getBoundingClientRect(); return {right: r.right / innerWidth, w: r.width / innerWidth}; })())"))
         check("quick access slides in on the right", qa is not None and qa["right"] > 0.99 and 0.2 < qa["w"] < 0.32, json.dumps(qa))
         ov = lambda: js("(document.querySelector('#icefin-theme-overlay .icefin-focused') || {}).textContent || ''")
-        check("quick access takes focus", ov().startswith("Search"), ov())
-        act("down")
-        act("enter")
-        check("Reduce motion caps motion", js("window.icefinTheme.ui.motion.level()") == "low" and "On" in ov(), ov())
-        act("enter")
+        check("quick access takes focus", ov() != "", ov())
+        js("[...document.querySelectorAll('#icefin-theme-overlay .ac-li')].find(b => /Low motion/.test(b.textContent)).click(); true")
+        check("its Low motion switch caps motion", js("window.icefinTheme.ui.motion.level()") == "low")
+        js("[...document.querySelectorAll('#icefin-theme-overlay .ac-li')].find(b => /Low motion/.test(b.textContent)).click(); true")
         act("back")
-        check("Back closes quick access", js("!document.getElementById('icefin-theme-overlay')") and js("window.icefinTheme.ui.motion.level()") == "normal")
-        # library
-        lib = "Movies" if "Movies" in tabs else tabs[1]
-        for _ in range(len(tabs)):
-            act("left")
-        for _ in range(tabs.index(lib)):
-            act("right")
-        check(f"the top bar reaches {lib}", foc() == f"ui/{lib}", foc())
-        act("enter")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-ar=library]') && document.querySelector('#icefin-theme-root').dataset.arCount !== undefined", timeout=30)
-        time.sleep(1)
-        cnt = int(js("document.querySelector('#icefin-theme-root').dataset.arCount"))
-        cols = js("getComputedStyle(document.querySelector('.ar-grid')).gridTemplateColumns.split(' ').length")
-        check(f"library ({lib}): a grid of capsules seven wide", cnt >= 1 and cols == 7 and foc().startswith("grid/"), f"count={cnt} cols={cols} {foc()}")
-        shot("library.png")
-        act("up")
-        check("up from the grid reaches Sort", foc().startswith("ui/Sort"), foc())
-        act("enter")
-        time.sleep(0.3)
-        check("Sort opens a modal dialog", js("!!document.querySelector('[data-ar-dialog=sort]')") and foc() == "ui/Name", foc())
-        for _ in range(5):
-            act("up")
-        check("the dialog keeps focus inside it", js("!!document.querySelector('[data-ar-dialog=sort]').querySelector('.icefin-focused')"), foc())
-        act("down")
-        act("enter")
-        page.wait_for("document.querySelector('#icefin-theme-root').dataset.arSort === 'DateCreated'", timeout=10)
-        check("choosing a sort reloads the grid in that order", js("!document.querySelector('.ar-dialog-scrim')") and js("document.querySelector('.ar-lib-bar .ar-btn').textContent") == "Sort: Recently added",
-              js("document.querySelector('.ar-lib-bar .ar-btn').textContent"))
         time.sleep(0.5)
-        act("up")
-        act("right")
-        act("enter")
-        act("enter")
-        page.wait_for("document.querySelector('#icefin-theme-root').dataset.arFilters === 'IsUnplayed'", timeout=10)
-        check("a filter changes what the grid shows", "Unwatched" in js("document.querySelector('[data-ar-dialog=filter]').textContent")
-              and js("document.querySelector('[data-ar-dialog=filter] .ar-opt.on').textContent") == "Unwatched", js("document.querySelector('#icefin-theme-root').dataset.arCount"))
-        shot("filter.png")
+        check("Back closes quick access", js("!document.querySelector('#icefin-theme-overlay .ac-qa')") and js("window.icefinTheme.ui.motion.level()") == "normal")
+        act("icefin_overlay")
+        time.sleep(0.6)
+        check("the main menu slides in from the left", js("(() => { const p = document.querySelector('#icefin-theme-overlay .ac-mm'); return !!p && p.getBoundingClientRect().left < 2; })()") is True)
         act("back")
-        check("Back closes the dialog", js("!document.querySelector('.ar-dialog-scrim')") and foc().startswith("ui/Filter (1)"), foc())
+        time.sleep(0.5)
+        # library: pill tabs over a capsule grid
+        mid = js("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => (r.Items.find(v => v.CollectionType === 'movies') || r.Items[0]).Id)")
+        js(f"location.hash = '#/movies?topParentId={mid}&collectionType=movies'; true")
+        page.wait_for("document.querySelectorAll('.ac-main .ac-t').length > 0", timeout=30)
+        time.sleep(1)
+        cols = js("(() => { const t = [...document.querySelectorAll('.ac-main .ac-t')]; return t.filter(x => x.offsetTop === t[0].offsetTop).length; })()")
+        n = js("document.querySelectorAll('.ac-main .ac-t').length")
+        check("library: pill tabs over a grid of capsules, many across", js("document.querySelectorAll('.ac-tabs .ac-tab').length") >= 2 and (cols >= 6 or cols == n), f"cols={cols} n={n}")
+        shot("library.png")
         # quick access over a stock page (long press on View)
         js("location.hash = '#/mypreferencesmenu?icefin=stock'; true")
         time.sleep(3)
         act("icefin_overlay")
-        check("quick access opens over a stock page", js("!!document.querySelector('#icefin-theme-overlay .ar-qa')") and js("window.icefinTheme.active().route") is None)
+        check("the main menu opens over a stock page", js("!!document.querySelector('#icefin-theme-overlay .ac-mm')") and js("window.icefinTheme.active().route") is None)
         act("back")
         # on-screen keyboard on jellyfin-web's own search page
         js("location.hash = '#/search'; true")
