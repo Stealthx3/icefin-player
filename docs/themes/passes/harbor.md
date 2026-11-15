@@ -357,3 +357,30 @@ clarity). Plaza's timings, for reference:
       covered Wayland window stops drawing, and the tests' screenshots wait).
 - [ ] **A host walk** of the finished theme on the user's server (screenshots, transition films and the cut-off audit
       of every element) and the user's review against the mock-ups (the pipeline's Gate 2).
+
+## The target's other screens (measured 2026-11-16 in the lab, nothing kept)
+
+Source: Kodi 21.2 Estuary (Debian 13 package) with the lab's ten-title reference library, in Xvfb at 1920x1080,
+driven by key presses, stills grabbed with ffmpeg, measured and deleted; skin.estuary 21's XML (GPL-2.0) for the
+dialogs the run didn't reach (DialogVideoInfo.xml, VideoOSD.xml, DialogSelect.xml). Layout, timing and colours only;
+Harbor keeps its own icons, sounds and names.
+
+- **Frame**: the dark teal-black field (#0e1315 into #040505 at the edges); the page's path top left ("Movies /
+  Titles", ~32 px, with "Sort by: Title · 0 / 10" under it), the clock top right (as the home), "Options" bottom left
+  over the side blade's handle.
+- **A library as a list**: a dark panel of rows from x ~608 to ~1330, rows ~75 tall, the name left and the year right,
+  the focused row a #0f85a5 band; a large picture of the focused item (or its kind's icon) at the right of the list;
+  the other view types are poster walls and wide lists of the same rows.
+- **The side blade** (Left from the content, or the Options handle): a panel down the left ~480 wide over the
+  dimmed page: "View options" heading, rows with their value right (Viewtype · List, Sort by · Title, Order ·
+  Ascending), Search, Filter, "Actions" heading, Update library; the focused row the blue band.
+- **The library's nodes**: Genres, Titles, Years, Actors, Directors, Studios, Countries, Tags as rows with a small
+  icon, a big icon of the focused node at the left.
+- **Context menu**: a small dark panel (~460 wide) near the focused item, rows (Mark as watched, Add to favourites…),
+  the focused one blue.
+- **Dialogs**: a dark panel with a blue title bar ("Power Options" with the mark at its right), rows under it (Exit…).
+- **Media flags**: small outlined boxes bottom right on the home (duration, codec, resolution, aspect).
+- **From the skin's XML** (not reached in the run): the info dialog (poster at the left, title, facts and plot at the
+  right, a row of buttons along the foot: Play, Trailer, Cast, Refresh, Favourite…); the player's controls (a bar at
+  the foot with the time line, the title and times above it, a row of buttons below; the info panel slides up);
+  select dialogs (a titled panel of rows, the focused one blue).
