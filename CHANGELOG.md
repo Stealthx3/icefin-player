@@ -20,6 +20,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
+- New app icon: the Progress ring mark from the IceSuite art kit (the fin and wave inside a playback ring), installed as a full hicolor set (16–512 px, scalable and symbolic). The README has the kit's banner and feature icons.
 - Plaza 0.9.0, from a walk of every element: tabs slide toward the tab you pick; menus and pickers rise in and fall out; the sort and filter panel slides from its edge; a poster grows into its details and Back shrinks it home; settings tiles grow into their pages; the bar's caption cross-fades; details fade under the frame; the focused name stays inside the window; sheets end above the bar; Display's tick boxes are switch rows and the bar names the focused setting.
 - Plaza's details page goes back to its top when focus returns to the actions or pickers (after a picker closes, or Up from a list), so the title isn't left under the band.
 - Plaza's background music is 15% quieter and waits while a channel's preview is open.
