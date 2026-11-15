@@ -40,7 +40,7 @@
     B.time = (d) => (d || new Date()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     B.reduced = () => ui.motion.reduced();
     B.dur = (ms) => ui.motion.duration(ms);
-    B.ticks = (t) => { const m = Math.round((t || 0) / 600000000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
+    B.ticks = (t) => { const m = Math.max(t > 0 ? 1 : 0, Math.round((t || 0) / 600000000)); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
     B.clockTicks = (t) => { const s = Math.round((t || 0) / 1e7); const h = Math.floor(s / 3600); const mm = Math.floor((s % 3600) / 60); const ss = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(mm).padStart(2, '0')}:${ss}` : `${mm}:${ss}`; };
     B.FIELDS = 'PrimaryImageAspectRatio,ProductionYear,PremiereDate,ChildCount,RecursiveItemCount,AlbumArtist,Artists,UserData,RunTimeTicks,Overview,OfficialRating,CommunityRating,CriticRating,SeriesName,ParentIndexNumber,IndexNumber,BackdropImageTags,ParentBackdropItemId,ParentBackdropImageTags,SeriesId,SeriesPrimaryImageTag,ImageTags,MediaType,CollectionType,DateCreated,ParentThumbItemId,ParentThumbImageTag,SeriesThumbImageTag,ChannelId,ChannelName,CurrentProgram,ChannelNumber,StartDate,EndDate,EpisodeTitle';
     B.items = async (q) => { const r = await Promise.resolve(B.client().getItems(B.uid(), Object.assign({ Fields: B.FIELDS, EnableImageTypes: 'Primary,Backdrop,Thumb,Banner' }, q))); return r || { Items: [], TotalRecordCount: 0 }; };
