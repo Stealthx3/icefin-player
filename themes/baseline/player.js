@@ -77,7 +77,7 @@
 
     function draw(s) {
         if (!S || !s) return;
-        S.topTitle.textContent = [s.title, s.subtitle].filter(Boolean).join(' - ');
+        S.topTitle.textContent = /^\d{4}$/.test(s.subtitle || '') ? `${s.title} (${s.subtitle})` : [s.title, s.subtitle].filter(Boolean).join(' - ');  // stock's: a film's year in brackets
         S.ends.textContent = s.live ? 'Live' : (s.endsAt ? `Ends at ${D.time(new Date(s.endsAt))}` : '');
         const vol = s.muted ? 0 : (s.volume == null ? 100 : s.volume);
         S.volFill.style.width = `${vol}%`;

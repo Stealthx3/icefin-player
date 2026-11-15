@@ -107,31 +107,41 @@
     };
 
     // Add to a playlist or a collection (MenuDialog board): New at the top, then yours with their counts
+    // stock's Add to Playlist / Add to Collection form: the target (New… or one of yours), a name for a new one, Add
     function addTo(item, type) {
-        const word = type === 'Playlist' ? 'playlist' : 'collection';
+        const word = type === 'Playlist' ? 'Playlist' : 'Collection';
         D.panel.push({
-            title: `Add to a ${word}`, path: `${item.Name} › Options`,
+            title: `Add to ${word}`, path: `${item.Name} › Options`, form: true,
             async render(body) {
-                const fresh = D.row(`New ${word}…`, { sub: 'name it', go: () => {
-                    D.panel.push({
-                        title: `New ${word}`, path: `${item.Name} › Add to a ${word}`,
-                        render(b2) {
-                            const name = D.field('Name', '', { placeholder: type === 'Playlist' ? '[Road trip]' : '[Favourites of the year]' });
-                            b2.append(name, D.foot(D.button('Create and add', async () => {
-                                try { const r = await I.createWith(item, type, name.input.value); if (r.ok) D.panel.close(); D.notice(r.message, !r.ok); } catch (e) { fail(e); }
-                            }, true), D.button('Cancel', () => D.panel.pop())));
-                        }
-                    });
-                } });
-                fresh.classList.add('bl-row-focus-first');
-                body.append(fresh);
-                const wait = D.note('One moment…');
-                body.append(wait);
-                const list = await I.collections(type);
-                wait.remove();
-                for (const x of list) body.append(D.row(x.Name, { value: x.ChildCount != null ? `${x.ChildCount} items` : '', go: async () => {
-                    try { after(await I.addTo(item, type, x)); D.panel.close(); } catch (e) { fail(e); }
-                } }));
+                let list = [];
+                try { list = await I.collections(type); } catch (e) { list = []; }
+                let target = null;  // null: a new one
+                const lab = el('label', 'bl-field');
+                const sel = D.focusable(el('button', 'bl-selectbox', 'New…'));
+                sel.type = 'button';
+                sel.append(D.icon('keyboard_arrow_down', 'bl-select-arrow'));
+                lab.append(el('span', 'bl-field-label', word), sel);
+                const name = D.field('Name', '');
+                const show = () => { sel.firstChild.textContent = target ? target.Name : 'New…'; name.hidden = !!target; };
+                sel.addEventListener('click', () => D.panel.push({
+                    title: word, path: `Add to ${word}`,
+                    render(b2) {
+                        const pick = (t, label) => { const r = D.row(label, { on: t === target, go: () => { target = t; show(); D.panel.pop(); } }); if (t === target) r.classList.add('bl-row-focus-first'); b2.append(r); };
+                        pick(null, 'New…');
+                        for (const x of list) pick(x, x.Name);
+                    }
+                }));
+                const add = D.button('Add', async () => {
+                    try {
+                        if (target) { after(await I.addTo(item, type, target)); D.panel.close(); return; }
+                        if (!name.input.value.trim()) { T.ctx.sound('error'); return; }
+                        const r = await I.createWith(item, type, name.input.value.trim());
+                        if (r.ok) D.panel.close();
+                        D.notice(r.message, !r.ok);
+                    } catch (e) { fail(e); }
+                }, true);
+                body.append(lab, name, D.foot(add));
+                show();
             }
         });
     }

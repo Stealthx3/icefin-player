@@ -15,7 +15,7 @@ html[data-icefin-theme] { --icefin-baseline-styles: on; }
 .bl-page::-webkit-scrollbar { display: none; }
 .bl-ic { font-family: "Material Icons"; font-weight: 400; font-style: normal; font-size: 1.36em; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap;
   display: inline-block; direction: ltr; font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; }
-.bl-screen button { font: inherit; }
+:where(.bl-screen) button { font: inherit; }  /* no specificity: each button class keeps its own size and weight */
 
 /* ---- the header (stock's skinHeader in the TV layout: #202020, 77px of buttons, then the tabs) ---- */
 .bl-header { background: var(--bl-paper); color: var(--bl-text); display: flex; flex-direction: column; position: relative; }

@@ -18,6 +18,7 @@
         const b = B.btn('bl-dbtn' + (o && o.cls ? ` ${o.cls}` : ''), null);
         b.append(B.icon(icon, 'bl-dbtn-ic'));
         b.title = title; b.setAttribute('aria-label', title);
+        if (title === 'More') b.dataset.action = 'more';  // the item's menu, as the engine's details mark theirs
         b.blHints = [['OK', title.toLowerCase()], ['≡', 'more'], ['Back', '']];
         b.addEventListener('click', () => { T.ctx.sound('select'); go(b); });
         return b;
@@ -41,6 +42,7 @@
         row.append(el('div', 'bl-tracklabel', label));
         const cur = values.find((v) => v[0] === at) || values[0];
         const b = disabled ? el('div', 'bl-trackvalue disabled', cur ? cur[1] : '') : B.btn('bl-trackvalue', cur ? cur[1] : '');
+        b.setAttribute('aria-label', `${label}: ${cur ? cur[1] : ''}`);
         if (!disabled) {
             b.append(B.icon('keyboard_arrow_down', 'bl-trackarrow'));
             b.blHints = [['OK', 'choose'], ['Back', '']];

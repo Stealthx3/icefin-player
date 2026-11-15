@@ -45,7 +45,7 @@
             if (o.playAll !== false) parts.push(ibtn('play_arrow', 'Play All', () => playAll(false)), ibtn('shuffle', 'Shuffle', () => playAll(true)));
             parts.push(ibtn('view_comfy', 'Select view', () => B.notice('Poster view')), ibtn('sort_by_alpha', 'Sort', () => sortMenu()), ibtn('filter_alt', 'Filter', () => filterMenu()));
         } else {
-            if (o.newPlaylist) parts.push(tbtn('New', () => B.newPlaylist && B.newPlaylist(() => load())));
+            if (o.newPlaylist) { const nb = tbtn('New', () => B.newPlaylist && B.newPlaylist(() => load())); nb.setAttribute('aria-label', 'New playlist'); parts.push(nb); }
             if (o.playAll) parts.push(tbtn('Play All', () => playAll(false)), tbtn('Shuffle', () => playAll(true)));
             const sb = tbtn('', () => sortMenu());
             sb.blSort = true;
@@ -195,6 +195,11 @@
 
     // ---- #/list: a folder (a library without tabs, a collection, playlists), a genre's, a studio's, a person's items ----
     let LS = null;
+    // jellyfin-web's own route for a home videos and photos library: Baseline draws it as #/list, as stock's TV layout does
+    B.register('#/homevideos', {
+        mount() { const p = B.params(); location.replace(`#/list?parentId=${p.get('topParentId') || p.get('parentId') || ''}&serverId=${B.sid()}`); },
+        unmount() {}
+    });
     B.register('#/list', {
         async mount(root) {
             const p = B.params();
