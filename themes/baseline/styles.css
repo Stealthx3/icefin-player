@@ -1,2 +1,178 @@
-/* Baseline: intentionally empty of visual changes. Loading it proves the styles layer runs (icefin-theme:). */
+/* Baseline (PLAN 8.1, the 9.51 pass): stock jellyfin-web's TV layout, re-implemented with the engine in Baseline's own
+   copy of stock's styles (the user's Gate 1 call: bl-* classes, not jellyfin-web's). Values are stock's, read from
+   jellyfin-web 10.12's stylesheets and its dark theme in the TV layout (root 20px, the layout-tv 125%); the comparison
+   with stock's captures (baseline_pass.py) keeps them honest. Loading the theme still proves the styles layer runs. */
 html[data-icefin-theme] { --icefin-baseline-styles: on; }
+:root { --bl-accent: #00a4dc; --bl-bg: #101010; --bl-paper: #202020; --bl-text: rgba(255, 255, 255, 0.7); --bl-text-strong: #fff;
+  --bl-button: #424242; --bl-on-accent: rgba(0, 0, 0, 0.87); --bl-divider: rgba(255, 255, 255, 0.12); --bl-pad-x: 3.3vw; }
+.bl-screen [hidden], .bl-hints[hidden] { display: none !important; }
+@keyframes bl-fade { from { opacity: 0; } }
+
+/* ---- the screen and its page ---- */
+.bl-screen { position: absolute; inset: 0; overflow: hidden !important; background: var(--bl-bg); color: var(--bl-text); font-size: 20px; line-height: 1.35;
+  font-family: "Noto Sans", "Noto Sans HK", "Noto Sans JP", "Noto Sans KR", "Noto Sans SC", "Noto Sans TC", sans-serif; -webkit-font-smoothing: antialiased; }
+.bl-page { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; padding-bottom: 3em; box-sizing: border-box; animation: bl-fade 0.2s ease-out; }
+.bl-page::-webkit-scrollbar { display: none; }
+.bl-ic { font-family: "Material Icons"; font-weight: 400; font-style: normal; font-size: 1.36em; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap;
+  display: inline-block; direction: ltr; font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; }
+.bl-screen button { font: inherit; }
+
+/* ---- the header (stock's skinHeader in the TV layout: #202020, 77px of buttons, then the tabs) ---- */
+.bl-header { background: var(--bl-paper); color: var(--bl-text); display: flex; flex-direction: column; position: relative; }
+.bl-header-top { display: flex; align-items: center; padding: 0.54em 0 0.55em; min-height: 2.78em; }
+.bl-header-left { display: flex; align-items: center; flex-grow: 1; min-width: 0; }
+.bl-header-right { display: flex; align-items: center; justify-content: flex-end; }
+.bl-hbtn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 2.78em; height: 2.78em; padding: 0.556em; margin: 0 0.29em; border: 0;
+  border-radius: 50%; background: transparent; color: inherit; cursor: pointer; box-sizing: border-box; outline: none; transition: all 0.2s ease; }
+.bl-hbtn .bl-ic { font-size: 1.67em; }
+.bl-hbtn.icefin-focused { color: var(--bl-accent); transform: scale(1.3); z-index: 1; }
+@media (hover: hover) and (pointer: fine) { .bl-hbtn:hover { background-color: rgba(0, 164, 220, 0.2); } }
+.bl-page-title { margin: 0 0 0 0.5em; font-size: 1.17em; font-weight: 400; color: var(--bl-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-logo { width: 15.4em; height: 1.99em; margin-left: 0.585em; background: left center / contain no-repeat; }
+.bl-clock { padding: 0 0.8em; font-size: 1em; white-space: nowrap; }
+.bl-tabs { text-align: center; width: 100%; font-size: 0.835em; white-space: nowrap; }
+.bl-tab { display: inline-block; position: relative; padding: 1.5em; margin: 0; border: 0; background: transparent; color: var(--bl-text); font-size: 1em; font-weight: 600;
+  line-height: 1.25; cursor: pointer; outline: none; transition: all 0.2s ease; }
+.bl-tab.active { color: var(--bl-text-strong); }
+.bl-tab.icefin-focused, .bl-tab:hover { color: var(--bl-accent); }
+
+/* ---- sections and rows (stock's verticalSection, sectionTitle, emby-scroller with centred focus) ---- */
+.bl-section { margin: 0; }
+.bl-section-title { margin: 0; padding: 0.75em 0 0.3em var(--bl-pad-x); font-size: 1.5em; font-weight: 400; color: var(--bl-text); display: flex; align-items: center; gap: 0.2em; }
+.bl-title-chevron { font-size: 1em !important; }
+.bl-scroller { padding: 1.5em var(--bl-pad-x); margin: -1.5em 0; overflow: hidden; }
+.bl-items-row { display: flex; white-space: nowrap; transition: transform 0.27s ease-out; will-change: transform; }
+.bl-items-grid { display: flex; flex-wrap: wrap; padding: 0 var(--bl-pad-x); }
+.bl-section-buttons { padding: 0.3em calc(var(--bl-pad-x) - 0.3em); display: flex; flex-wrap: wrap; }
+
+/* ---- cards (stock's card: a box that grows 1.07 on focus in 0.2 s, the picture, the text under it) ---- */
+.bl-card { display: block; position: relative; flex: none; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; outline: none; }
+.bl-card-overflow-backdrop { width: 23.5vw; }
+.bl-card-overflow-portrait, .bl-card-overflow-square { width: 15.6vw; }
+.bl-card-backdrop { width: 25%; }
+.bl-card-portrait, .bl-card-square { width: 16.6667%; }
+.bl-card-box { margin: 0.6em 0.6em 1.8em; transition: transform 0.2s ease-out; will-change: transform; }
+.bl-card.icefin-focused { z-index: 10; }
+.bl-card.icefin-focused .bl-card-box { transform: scale(1.07); }
+.bl-card-scalable { position: relative; }
+.bl-card-padder { background-color: var(--bl-paper); border-radius: 0.2em; box-shadow: 0 0.0725em 0.29em 0 rgba(0, 0, 0, 0.37); }
+.bl-padder-backdrop { padding-bottom: 56.25%; }
+.bl-padder-portrait { padding-bottom: 150%; }
+.bl-padder-square { padding-bottom: 100%; }
+.bl-card-img { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.2em; overflow: hidden;
+  background: 50% / cover no-repeat; color: inherit; }
+.bl-card-icon { font-size: 5em !important; color: rgba(255, 255, 255, 0.7); }
+.bl-card-default { font-size: 2em; font-weight: 700; text-align: center; white-space: normal; color: #fff; padding: 0 0.3em; }
+.bl-card-footer { padding: 0.24em 0.1em 0.06em; }
+.bl-card-text { overflow: hidden; padding: 0.06em 2px; text-overflow: ellipsis; white-space: nowrap; }
+.bl-card-text.first { padding-top: 0.24em; }
+.bl-card-text.centered { text-align: center; }
+.bl-card-text.secondary { font-size: 86%; color: rgba(255, 255, 255, 0.7); }
+.bl-card-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.28em; background: rgba(0, 0, 0, 0.6); }
+.bl-card-progress-fill { height: 100%; background: var(--bl-accent); }
+.bl-ind { position: absolute; top: 0.225em; right: 0.225em; display: flex; align-items: center; justify-content: center; width: 1.76em; height: 1.76em; border-radius: 100em;
+  background: var(--bl-accent); color: var(--bl-on-accent); font-size: 0.88em; font-weight: 500; box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2); }
+.bl-ind .bl-ic { font-size: 1.2em; }
+
+/* ---- stock's raised buttons (the Live TV section's, the toolbar's) ---- */
+.bl-raised { display: inline-flex; align-items: center; position: relative; margin: 0.3em; padding: 0.9em 1em; border: 0; border-radius: 0.2em; background: var(--bl-button);
+  color: var(--bl-text); font: inherit; font-weight: 600; cursor: pointer; outline: none; transition: all 0.2s ease; }
+.bl-raised.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); transform: scale(1.2); z-index: 1; }
+@media (hover: hover) and (pointer: fine) { .bl-raised:hover { background: #616161; } }
+
+/* ---- the hint line (Hints board): bottom right on stock's toast colour, for a pad or remote ---- */
+.bl-hints { position: fixed; right: 1.4vw; bottom: 1.6vh; display: flex; gap: 1.1em; padding: 0.35em 0.8em; border-radius: 0.2em; background: rgba(48, 48, 48, 0.92);
+  color: rgba(255, 255, 255, 0.75); font: 400 14px/1.35 "Noto Sans", sans-serif; z-index: 1100; pointer-events: none; transition: opacity 0.2s; }
+.bl-hint b { color: #fff; font-weight: 600; }
+html[data-bl-input="pointer"] .bl-hints { opacity: 0; }
+
+/* ---- the toast (stock's: #303030, bottom left) ---- */
+.bl-toast { position: fixed; left: 1em; bottom: 1em; min-width: 20em; max-width: 40vw; padding: 0.8em 1em; border-radius: 0.15em; background: #303030; color: rgba(255, 255, 255, 0.87);
+  box-shadow: 0 0.0725em 0.29em 0 rgba(0, 0, 0, 0.37); font: 400 22px/1.35 "Noto Sans", sans-serif; z-index: 1200; transform: translateY(16em); transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+.bl-toast.on { transform: none; }
+.bl-toast.out { opacity: 0; }
+
+html[data-icefin-motion="low"] .bl-screen *, html[data-icefin-motion="low"] .bl-toast { transition-duration: 0s !important; animation: none !important; }
+
+/* ---- stock's dialogs (panel.js): the action sheet (a centred list, the focused row filled) and the form dialog
+   (a header bar with Back and the title over labelled fields), both full screen in the TV layout ---- */
+.bl-panel-host { position: fixed; inset: 0; z-index: 1001; font: 400 20px/1.35 "Noto Sans", sans-serif; color: var(--bl-text); }
+.bl-panel-dim { position: absolute; inset: 0; background: #000; opacity: 0.5; animation: bl-dim 0.2s ease-out; }
+@keyframes bl-dim { from { opacity: 0; } }
+.bl-panel { position: absolute; inset: 0; display: grid; }
+.bl-panel-level { grid-area: 1 / 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #202020; overflow: hidden; animation: bl-fade 0.15s ease-out; }
+.bl-panel-level.bl-level-under { visibility: hidden; }
+.bl-panel-level.bl-level-out { animation: bl-fade 0.12s ease-in reverse both; }
+.bl-panel-head { text-align: center; margin-bottom: 0.4em; }
+.bl-panel-back { display: none; }
+.bl-panel-path { display: none; }
+.bl-panel-title { font-size: 1.5em; font-weight: 400; color: var(--bl-text); }
+.bl-panel-level.no-title .bl-panel-head { display: none; }
+.bl-panel-body { max-height: 86vh; overflow-y: auto; scrollbar-width: none; min-width: 7em; }
+.bl-panel-level:not(.form) .bl-panel-body { padding: 0.3em 0; }
+.bl-row { display: flex; align-items: center; gap: 0.75em; padding: 0.55em 0.9em; margin: 0; border-radius: 0; font-size: 1.1em; color: var(--bl-text); cursor: pointer; outline: none; white-space: nowrap; }
+.bl-row-icon { font-size: 1.36em; width: 1em; flex: none; }
+.bl-row-label { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.bl-row-label > span { overflow: hidden; text-overflow: ellipsis; }
+.bl-row-sub { font-size: 0.8em; opacity: 0.75; }
+.bl-row-value { margin-left: 1.5em; opacity: 0.8; font-size: 0.9em; }
+.bl-row-check { order: -1; font-size: 1.36em; }
+.bl-row.icefin-focused, .bl-level-under .bl-row.bl-chosen { background: var(--bl-accent); color: #fff; }
+@media (hover: hover) and (pointer: fine) { .bl-row:hover { background: rgba(255, 255, 255, 0.08); } }
+.bl-row-danger { color: #d15353; }
+.bl-row.icefin-focused.bl-row-danger { color: #fff; }
+.bl-rule { height: 1px; margin: 0.2em 0; background: var(--bl-divider); }
+.bl-sec { padding: 0.8em 0.9em 0.2em; font-size: 0.9em; color: rgba(255, 255, 255, 0.5); }
+.bl-note { padding: 0.4em 0.9em 0.8em; max-width: 36em; white-space: normal; line-height: 1.45; }
+/* the form dialog */
+.bl-panel-level.form { justify-content: flex-start; align-items: stretch; background: var(--bl-bg); }
+.bl-panel-level.form .bl-panel-head { display: flex; align-items: center; gap: 0.4em; margin: 0; padding: 0.35em 0.9em; min-height: 2.4em; background: var(--bl-paper); text-align: left; }
+.bl-panel-level.form .bl-panel-back { display: inline-flex; align-items: center; justify-content: center; width: 2.2em; height: 2.2em; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.bl-panel-level.form .bl-panel-title { font-size: 1.1em; }
+.bl-panel-level.form .bl-panel-body { max-height: none; flex: 1; padding: 1em 2.7em 4em; overflow-y: auto; }
+.bl-panel-level.form .bl-row { font-size: 1em; padding: 0.5em 0.75em; white-space: normal; }
+.bl-field { display: block; margin: 0 0 1.1em; max-width: 46em; }
+.bl-field-label { display: block; font-size: 0.8em; margin-bottom: 0.2em; color: var(--bl-text); }
+.bl-field:focus-within .bl-field-label { color: var(--bl-accent); }
+.bl-input { display: block; width: 100%; box-sizing: border-box; padding: 0.4em 0.25em; border: 0.15em solid rgba(255, 255, 255, 0.09); border-radius: 0.2em;
+  background: rgba(255, 255, 255, 0.09); color: #fff; font: inherit; font-size: 1.1em; outline: none; }
+.bl-input:focus, .bl-input.icefin-focused { border-color: var(--bl-accent); }
+textarea.bl-input { min-height: 6em; resize: none; }
+.bl-foot { display: flex; justify-content: center; gap: 1em; margin: 1em 0; padding: 0.8em; background: var(--bl-paper); max-width: 46em; box-sizing: border-box; }
+.bl-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 6em; padding: 0.9em 1em; border: 0; border-radius: 0.2em; background: var(--bl-button); color: var(--bl-text);
+  font: inherit; font-weight: 600; cursor: pointer; outline: none; transition: all 0.2s ease; }
+.bl-btn.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); transform: scale(1.2); }
+.bl-btn-main { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-ptabs { display: flex; gap: 0.2em; margin: 0 0 1em; }
+.bl-ptab { padding: 0.8em 1.1em; border: 0; background: transparent; color: var(--bl-text); font: inherit; font-weight: 600; font-size: 0.85em; cursor: pointer; outline: none; }
+.bl-ptab.on { color: #fff; }
+.bl-ptab.icefin-focused { color: var(--bl-accent); }
+.bl-switch { display: inline-block; width: 1.2em; height: 1.2em; border: 0.12em solid currentColor; border-radius: 0.15em; position: relative; vertical-align: middle; }
+.bl-switch.on { background: var(--bl-accent); border-color: var(--bl-accent); }
+.bl-switch.on::after { content: "check"; font-family: "Material Icons"; position: absolute; inset: 0; font-size: 1em; line-height: 1.2em; text-align: center; color: #fff; font-feature-settings: "liga"; }
+.bl-images { display: flex; flex-wrap: wrap; gap: 0.6em; }
+.bl-image { position: relative; width: 9em; height: 13em; background: center / cover no-repeat var(--bl-paper); cursor: pointer; outline: none; border-radius: 0.2em; }
+.bl-image.icefin-focused { box-shadow: 0 0 0 0.2em var(--bl-accent); }
+.bl-image-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.2em 0.4em; font-size: 0.75em; background: rgba(0, 0, 0, 0.6); }
+.bl-form .bl-field { margin: 0 0 1em; }
+
+/* ---- library pages (stock's toolbar, the A–Z strip, the grid) ---- */
+.bl-toolbar { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; padding: 1em var(--bl-pad-x); gap: 0.1em; }
+.bl-toolbar-bottom { padding-top: 0; }
+.bl-paging { margin-right: 0.5em; white-space: nowrap; }
+.bl-ibtn { display: inline-flex; align-items: center; justify-content: center; width: 2.4em; height: 2.4em; padding: 0; margin: 0 0.15em; border: 0; border-radius: 50%; background: transparent;
+  color: inherit; cursor: pointer; outline: none; transition: all 0.2s ease; }
+.bl-ibtn .bl-ic { font-size: 1.67em; }
+.bl-ibtn.icefin-focused { color: var(--bl-accent); transform: scale(1.3); z-index: 1; }
+.bl-tbtn { display: inline-flex; align-items: center; gap: 0.2em; padding: 0.5em 0.6em; margin: 0 0.2em; border: 0; border-radius: 0.2em; background: transparent; color: inherit; font: inherit; font-weight: 600;
+  cursor: pointer; outline: none; transition: all 0.2s ease; }
+.bl-tbtn-ic { font-size: 1em !important; }
+.bl-tbtn.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); transform: scale(1.2); z-index: 1; }
+.bl-items-grid.with-alpha { padding-right: 7.5%; }
+.bl-alpha { position: absolute; right: 0.3em; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; z-index: 3; }
+.bl-alpha-btn { width: 1.6em; padding: 0; border: 0; border-radius: 0.1em; background: transparent; color: var(--bl-text); font: inherit; font-size: 0.66em; line-height: 1.26; cursor: pointer; outline: none; }
+.bl-alpha-btn.selected { color: #fff; }
+.bl-alpha-btn.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-no-items { padding: 1em var(--bl-pad-x); }
+.bl-no-items h1 { font-size: 1.5em; font-weight: 400; margin: 0.5em 0 0.3em; }
+.bl-section-title.linked { cursor: pointer; }
