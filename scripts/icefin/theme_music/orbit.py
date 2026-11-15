@@ -9,12 +9,28 @@ Rendered by scripts/icefin/theme-music.py.
   ambient  a 16-bar loop at 100 BPM (Emaj9, C#m11, Amaj9#11, B6sus): a glassy plucked 8th-note arpeggio, a soft kick
            and shaker pulse, wide pads, a sub bass, a riser into every fourth bar, a bell answering now and then
   guide    the guide opening: a quick whoosh and a two-note glassy blip upward
-  goodbye  a crystalline arpeggio falling over the chord, the sub fading, a reversed breath"""
+  goodbye  a crystalline arpeggio falling over the chord, the sub fading, a reversed breath
+Second pass (the user, 2026-11-15: "deeper octaves and a slight reverb"): the arpeggios, bells and the upper pad
+notes an octave lower (lo(), dn()), and every piece in a slightly larger room."""
 from .synth import Mix, bass, bell, chord, filt, hz, kick, noise, pad, pluck, shaker
 
 import numpy as np
 
 SR = 48000
+
+
+def lo(n):
+    """A note an octave lower than written (the user, 2026-11-15: "deeper octaves"); bass and kick stay where they are."""
+    return hz(n) / 2
+
+
+def dn(names):
+    """A chord's notes an octave lower, keeping everything at or above octave 3 (so the pads don't turn to mud)."""
+    out = []
+    for n in names:
+        o = int(n[-1])
+        out.append(n[:-1] + str(o - 1) if o >= 4 else n)
+    return out
 
 
 def riser(sec, lo=300.0, hi=7000.0, vel=0.5, fall=False):
@@ -53,15 +69,15 @@ def startup():
     m.add(rumble(2.2, 0.5), 0.0, 0, 0.55, 0.3)
     m.add(riser(1.6, 250, 9000, 0.6), 0.3, 0.0, 0.5, 0.45)
     # the bloom at 1.9 s: E add9 #11, wide, with a sub under it
-    chord(m, 1.9, ["E2", "B2", "E3", "B3", "F#4", "G#4", "A#4", "D#5"], pad, 3.8, 0, 0.13, 0.5, 0.55, swell=0.15)
+    chord(m, 1.9, dn(["E2", "B2", "E3", "B3", "F#4", "G#4", "A#4", "D#5"]), pad, 3.8, 0, 0.13, 0.5, 0.55, swell=0.15)
     m.add(bass(hz("E1"), 3.0, 0.6), 1.9, 0, 0.5, 0.05)
     m.add(kick(0.7), 1.9, 0, 0.5, 0.2)
     # the cascade: a crystalline arpeggio rising over the bloom, 16ths at 120 BPM
     notes = ["B4", "E5", "F#5", "G#5", "A#5", "B5", "D#6", "E6", "F#6", "B6"]
     for k, n in enumerate(notes):
-        m.add(glass(hz(n), 1.4, 0.5 - k * 0.02), 1.95 + k * 0.125, -0.6 + k * 0.13, 0.32, 0.6)
-    m.add(bell(hz("E7"), 2.6, 0.3), 3.25, 0.4, 0.2, 0.7)
-    return m.render(2.4)
+        m.add(glass(lo(n), 1.4, 0.5 - k * 0.02), 1.95 + k * 0.125, -0.6 + k * 0.13, 0.32, 0.6)
+    m.add(bell(lo("E7"), 2.6, 0.3), 3.25, 0.4, 0.2, 0.7)
+    return m.render(3.0)
 
 
 def ambient():
@@ -75,11 +91,11 @@ def ambient():
             ("B1", ["A3", "C#4", "E4", "G#4"], ["B3", "E4", "F#4", "G#4", "C#5", "B4", "F#4", "E4"])] * 4
     for bar, (root, ch, arp) in enumerate(prog):
         b0 = bar * 4
-        chord(m, b0 * bt, ch, pad, 4.3 * bt, 0, 0.075, 0.6, 0.6, swell=0.6)
+        chord(m, b0 * bt, dn(ch), pad, 4.3 * bt, 0, 0.075, 0.6, 0.6, swell=0.6)
         m.add(bass(hz(root), 3.7 * bt, 0.5), b0 * bt, 0, 0.3, 0.05, wrap=True)
         # the glassy 8th-note arpeggio, panned back and forth, softer on the off-beats
         for k, n in enumerate(arp):
-            m.add(glass(hz(n), 0.9, 0.42 if k % 2 == 0 else 0.3), (b0 + k * 0.5) * bt, -0.45 if k % 2 == 0 else 0.45, 0.16, 0.6, wrap=True)
+            m.add(glass(lo(n), 0.9, 0.42 if k % 2 == 0 else 0.3), (b0 + k * 0.5) * bt, -0.45 if k % 2 == 0 else 0.45, 0.16, 0.6, wrap=True)
         # the pulse: a soft kick on 1 and 3, a shaker on the off-beats, out for the first and last bars of each 8
         if bar % 8 not in (0, 7):
             for beat in (0, 2):
@@ -91,28 +107,28 @@ def ambient():
         if bar % 4 == 3:
             m.add(riser(4 * bt, 300, 6000, 0.22), b0 * bt, 0.2, 0.35, 0.6, wrap=True)
     for b, n in ((7, "B6"), (23, "F#6"), (39, "D#7"), (55, "G#6")):
-        m.add(bell(hz(n), 2.8, 0.24), b * bt, 0.5 if b % 32 < 16 else -0.5, 0.12, 0.75, wrap=True)
-    return m.render(2.6, peak_db=-8.0, loop=True)
+        m.add(bell(lo(n), 2.8, 0.24), b * bt, 0.5 if b % 32 < 16 else -0.5, 0.12, 0.75, wrap=True)
+    return m.render(3.2, peak_db=-8.0, loop=True)
 
 
 def guide():
     m = Mix(1.8)
     m.add(riser(0.35, 800, 9000, 0.45), 0.0, 0, 0.45, 0.4)
-    m.add(glass(hz("B5"), 0.9, 0.55), 0.3, -0.25, 0.36, 0.5)
-    m.add(glass(hz("E6"), 1.1, 0.55), 0.42, 0.25, 0.36, 0.55)
+    m.add(glass(lo("B5"), 0.9, 0.55), 0.3, -0.25, 0.36, 0.5)
+    m.add(glass(lo("E6"), 1.1, 0.55), 0.42, 0.25, 0.36, 0.55)
     m.add(bass(hz("E2"), 0.5, 0.4), 0.3, 0, 0.25, 0.05)
-    return m.render(1.4, peak_db=-4.0)
+    return m.render(2.0, peak_db=-4.0)
 
 
 def goodbye():
     m = Mix(3.6)
-    chord(m, 0.0, ["E2", "B2", "E3", "G#3", "D#4"], pad, 2.6, 0, 0.11, 0.4, 0.5, swell=0.3)
+    chord(m, 0.0, dn(["E2", "B2", "E3", "G#3", "D#4"]), pad, 2.6, 0, 0.11, 0.4, 0.5, swell=0.3)
     m.add(bass(hz("E1"), 2.4, 0.45), 0.0, 0, 0.35, 0.05)
     notes = ["E6", "D#6", "B5", "G#5", "F#5", "E5", "B4"]
     for k, n in enumerate(notes):
-        m.add(glass(hz(n), 1.3, 0.48 - k * 0.03), k * 0.16, 0.5 - k * 0.15, 0.3, 0.6)
+        m.add(glass(lo(n), 1.3, 0.48 - k * 0.03), k * 0.16, 0.5 - k * 0.15, 0.3, 0.6)
     m.add(riser(1.4, 6000, 300, 0.25, fall=True), 1.1, 0, 0.3, 0.5)
-    return m.render(1.6)
+    return m.render(2.2)
 
 
 STARTUP = "startup"
