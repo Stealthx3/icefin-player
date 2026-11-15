@@ -253,12 +253,13 @@ def plaza():
 
 
 def orbit():
-    # Airy whooshes over a soft synth; a deep, warm confirm; back is the whoosh reversed.
-    whoosh = mul(mix(sweep_lowpass(noise(200, 51), 600, 7000), gain(tone(200, 660, 990, "sine"), 0.15)), env(n_of(200), 70, 50))
-    chord = reverb(mul(mix(tone(380, 196), gain(tone(380, 294), 0.7), gain(tone(380, 392), 0.5), gain(lowpass(noise(380, 52), 500), 0.2)), env(n_of(380), 8, 150)), 0.3)
-    back = list(reversed(whoosh))
-    nav = reverb(mul(mix(sweep_lowpass(noise(320, 53), 300, 5000), gain(tone(320, 440, 880, "sine", 0.6), 0.2)), env(n_of(320), 120, 90)), 0.3)
-    err = mul(tone(260, 147, 139, "soft"), env(n_of(260), 4, 100))
+    # Airy whooshes over a soft synth; a deep, warm confirm; back is the whoosh reversed. An octave deeper and in a
+    # slightly larger room since the 9.56 pass (the user, 2026-11-15: "deeper octaves and a slight reverb").
+    whoosh = reverb(mul(mix(sweep_lowpass(noise(220, 51), 300, 3500), gain(tone(220, 330, 495, "sine"), 0.18)), env(n_of(220), 70, 60)), 0.18, 1.1, 260)
+    chord = reverb(mul(mix(tone(420, 98), gain(tone(420, 147), 0.75), gain(tone(420, 196), 0.55), gain(tone(420, 294), 0.25), gain(lowpass(noise(420, 52), 400), 0.2)), env(n_of(420), 8, 170)), 0.36, 1.15, 320)
+    back = reverb(list(reversed(mul(mix(sweep_lowpass(noise(220, 51), 300, 3500), gain(tone(220, 330, 495, "sine"), 0.18)), env(n_of(220), 70, 60)))), 0.18, 1.1, 260)
+    nav = reverb(mul(mix(sweep_lowpass(noise(340, 53), 150, 2500), gain(tone(340, 220, 440, "sine", 0.6), 0.22)), env(n_of(340), 120, 100)), 0.36, 1.15, 320)
+    err = reverb(mul(mix(tone(280, 73.5, 69.5, "soft"), gain(tone(280, 147, 139, "soft"), 0.35)), env(n_of(280), 4, 110)), 0.15, 1.0, 220)
     return {"focus": (whoosh, -15), "select": (chord, -9), "back": (back, -14), "navigate": (nav, -13), "error": (err, -10)}
 
 
