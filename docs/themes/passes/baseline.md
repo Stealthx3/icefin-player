@@ -207,6 +207,53 @@ The target is stock jellyfin-web (the user's direction). Every item below is one
 | 8 | Polish tests | tests | in the lab (this pass) |
 | 8 | A lab walk and Gate 2 | tests | Verify and Gate 2 |
 
+## Build notes (2026-11-14 and 15, after Gate 1)
+
+Built in Baseline's own scripts (themes/baseline, bl-* classes, the user's call 1), against jellyfin-web 10.11's TV
+layout as captured in the lab (stock's TV captures; the layout set to tv, call 2): kit.js (stock's TV header with
+SyncPlay, Search, Settings and the clock, tabs, cards with stock's shapes, default colours and icons, rows that slide
+to keep focus in view, raised buttons, the page's own scroll, hints, the toast, Icefin's fin mark on the home and the
+server's branding where it has one, call 3), panel.js (stock's action sheet and form dialog), itemmenu.js (the
+engine's actions in stock's wording, order and icons; Add to Playlist and Add to Collection as stock's form), home.js
+(the user's own home sections, homesection0–9, in their order; Favorites; L1 R1 between the tabs; the exit question;
+Home Screen Sections when the plugin is on, call 6), library.js (Movies, Shows and Music with stock's tabs, toolbar,
+grid and A–Z strip; #/list for plain libraries, genres, studios and people), details.js (every kind), browse.js
+(search with stock's letters and Suggestions; Live TV's Programs, Guide, Channels, Recordings, Schedule and Series),
+settings.js (stock's settings menu, Profile, Quick Connect, Client Settings as jellyfin-web's dialog under Baseline's
+header, and the signed-out pages with the server's splash and disclaimer), np.js (Now Playing and Lyrics, stock's
+remote-control page), player.js (stock's OSD and its Settings, Audio and Subtitles sheets).
+
+Augmentations only (the user's direction): the whole sound set (five interface sounds; a startup piece, an ambient
+loop and a goodbye jingle on Exit and Sign Out; soundboard https://claude.ai/artifact/WFWG4k6R3YrU27u9F4nfsv, call 7),
+page-aware hints, and the controller additions (≡ the item's menu, ▶ plays the focused item, L1 R1 change tabs, the
+exit question on Back at the home, call 5). Focus is stock's TV focus (call 4).
+
+Tests: baseline_pass.py (48 checks, PASS in the lab); the walk in the TV layout, 51 of 69 drawn by Baseline, 0 with
+failing checks. Its 11 gaps: the five preference pages (jellyfin-web's own, stock already, as decided); the details
+Audio and Subtitles pickers on a film with one audio track and none (stock shows them as plain text, so nothing opens);
+Play on (stock's TV header has no cast button); and the player's Audio, Subtitles and Settings (with one track and no
+subtitles stock hides Audio and Subtitles, as Baseline does; the walk then clicks jellyfin-web's hidden button, which
+hands that session to jellyfin-web's controls, so Settings after it is jellyfin-web's too); baseline_probe.py for looking; theme-lint (one narrow exception:
+the display-preferences client key jellyfin-web keeps home sections under is an API identifier, not branding).
+
+Found on the way:
+- `.bl-screen button { font: inherit }` outranked every button class's own size and weight (lyrics, raised buttons):
+  now `:where(.bl-screen) button`, with no specificity.
+- jellyfin-web's TV layout scrolls the nearest scrollable parent of whatever takes focus (its scroll manager, on every
+  focusin), so it nudged Baseline's pages past their headers. A page that scrolls itself says so with
+  data-scroll-mode-x/y="custom", which jellyfin-web leaves alone; Baseline's page does. Other themes with their own
+  scrolling pages may have the same nudge in the TV layout (an engine follow-up: set it on the theme root).
+- Home Screen Sections, turned on in the lab's 12.4 server, does not answer `/HomeScreen/Sections` (no reply in 400 s;
+  its settings were put back). Baseline uses the plugin's sections when it answers within 8 s and stock's otherwise,
+  so it could not be compared live; a working plugin server is needed for that.
+- A sourceless "Script error." appears once in a full pass run, never with any group on its own: another origin's
+  script, masked by the browser (Baseline's own errors carry icefin-theme://baseline/… and a line). The pass ignores
+  only that form.
+
+Not as stock: the OSD's Quality entry (the engine's player has no quality list) and its fullscreen button (the app is
+full screen); Allow public access on Add to Playlist (the engine creates playlists without it); Client Settings keeps
+the engine's controller-friendly host (stock's is a plain dialog) with the section rail hidden.
+
 ## 1. Themed elements: screens and surfaces
 
 ### 1.1 Home

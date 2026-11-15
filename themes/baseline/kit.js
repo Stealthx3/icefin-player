@@ -192,18 +192,26 @@
         if (r === 'list') return `#/list?parentId=${v.Id}&serverId=${B.sid()}`;
         return `#/${r}?topParentId=${v.Id}&collectionType=${v.CollectionType}`;
     };
-    B.kindIcon = (t) => ({ movies: 'video_library', tvshows: 'tv', music: 'library_music', livetv: 'live_tv', boxsets: 'video_library', playlists: 'library_add', homevideos: 'photo_library', photos: 'photo_library', books: 'library_books', musicvideos: 'video_library', mixed: 'folder', folders: 'folder',
-        Movie: 'movie', Series: 'tv', Episode: 'tv', Season: 'tv', MusicAlbum: 'album', MusicArtist: 'person', Audio: 'audiotrack', Playlist: 'queue_music', BoxSet: 'collections', Person: 'person', Book: 'book', Photo: 'photo', PhotoAlbum: 'photo_album', Video: 'videocam', MusicVideo: 'music_video', TvChannel: 'live_tv', Program: 'live_tv', Folder: 'folder', CollectionFolder: 'folder', Genre: 'local_offer', MusicGenre: 'local_offer', Studio: 'business' }[t] || 'folder');
+    B.kindIcon = (t) => ({ movies: 'video_library', tvshows: 'tv', music: 'music_note', livetv: 'live_tv', boxsets: 'video_library', playlists: 'library_add', homevideos: 'photo_library', photos: 'photo_library', books: 'library_books', musicvideos: 'video_library', mixed: 'folder', folders: 'folder',
+        Movie: 'movie', Series: 'tv', Episode: 'tv', Season: 'tv', MusicAlbum: 'album', MusicArtist: 'person', Audio: 'audiotrack', Playlist: 'queue_music', BoxSet: 'video_library', Person: 'person', Book: 'book', Photo: 'photo', PhotoAlbum: 'photo_album', Video: 'videocam', MusicVideo: 'music_video', TvChannel: 'live_tv', Program: 'live_tv', Folder: 'folder', CollectionFolder: 'folder', Genre: 'local_offer', MusicGenre: 'local_offer', Studio: 'business' }[t] || 'folder');
 
     // ---- cards (stock's card: a box that grows on focus, the picture at its shape, the text under it) ----
     // shape: overflowBackdrop | overflowPortrait | overflowSquare (rows); backdrop | portrait | square (grids)
     B.shapeOf = (it, wide) => {
         if (wide || it.Type === 'Episode' || it.Type === 'Video' || it.Type === 'TvChannel' || it.Type === 'Program' || it.Type === 'CollectionFolder' || it.Type === 'UserView' || it.Type === 'Photo') return 'backdrop';
-        if (it.Type === 'MusicAlbum' || it.Type === 'Audio' || it.Type === 'MusicArtist' || it.Type === 'Playlist' || it.Type === 'PhotoAlbum' || it.Type === 'MusicGenre') return 'square';
+        if (it.Type === 'MusicAlbum' || it.Type === 'Audio' || it.Type === 'MusicArtist' || it.Type === 'Playlist' || it.Type === 'PhotoAlbum' || it.Type === 'MusicGenre' || it.Type === 'Folder') return 'square';
         return 'portrait';
     };
     const COLORS = ['#00455c', '#44bae1', '#00a4db', '#1c4c5c', '#007ea8'];  // stock's default card colours
-    const colourOf = (s) => { let h = 0; for (const ch of String(s || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+    // stock's pick (its default colour index): the middle character's code, its digits summed, the last digit, mod 5
+    const colourOf = (s) => {
+        s = String(s || '');
+        if (!s) return COLORS[0];
+        const code = String(s.charCodeAt(Math.floor(s.length / 2)));
+        let sum = 0;
+        for (const d of code) sum += Number(d);
+        return COLORS[Number(String(sum).slice(-1)) % COLORS.length];
+    };
     B.artOf = (it, shape, w) => {
         const tags = it.ImageTags || {};
         if (shape === 'backdrop') {
@@ -305,6 +313,10 @@
     B.page = (root, cls) => {
         root.classList.add('bl-screen');
         const p = B.el('div', 'bl-page' + (cls ? ` ${cls}` : ''));
+        // jellyfin-web's TV layout scrolls the nearest scrollable parent of whatever takes focus, unless that parent
+        // says its scrolling is its own: Baseline's page does its own (below)
+        p.setAttribute('data-scroll-mode-y', 'custom');
+        p.setAttribute('data-scroll-mode-x', 'custom');
         root.append(p);
         root.addEventListener('focusin', (e) => {
             const f = e.target;
@@ -323,7 +335,18 @@
     // focus on arrival: the first card, else the first control (stock leaves some pages with nothing focused)
     B.arrive = (root, el) => {
         const f = el || root.querySelector('.bl-page [data-icefin-focus]') || root.querySelector('[data-icefin-focus]');
-        if (f) { T.ctx.focus(f); B.hintsFor(f); }
+        if (!f) return f;
+        // the browser's own scroll on focus nudges the page past the header; a page arrives at its top, as stock's does,
+        // unless the control is out of sight there
+        const p = f.closest('.bl-page'), top = p ? p.scrollTop : 0;
+        T.ctx.focus(f);
+        if (p && p.scrollTop !== top) {
+            const was = p.scrollTop;
+            p.scrollTop = top;
+            const r = f.getBoundingClientRect(), pr = p.getBoundingClientRect();
+            if (r.top < pr.top || r.bottom > pr.bottom) p.scrollTop = was;
+        }
+        B.hintsFor(f);
         return f;
     };
 
