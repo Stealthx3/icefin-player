@@ -357,3 +357,173 @@ clarity). Plaza's timings, for reference:
       covered Wayland window stops drawing, and the tests' screenshots wait).
 - [ ] **A host walk** of the finished theme on the user's server (screenshots, transition films and the cut-off audit
       of every element) and the user's review against the mock-ups (the pipeline's Gate 2).
+
+## Gate 1 map: every checklist item (2026-11-15)
+
+The design for the pass: 23 boards on the "Orbit Screens" canvas, https://claude.ai/artifact/KvP423v3eD2bPwEFbQsqAF (Gate 1), drawn from the walk, `docs/themes/references/orbit.json` and two direct-capture walkthroughs of the target (measurements only). Every item below is one of: **board**, **tests** (what the build's tests check), **not in the target** (a reason, for your call) or **not in this pass**. None is missing. Totals: 125 board, 3 not in the target, 14 tests, 1 not in this pass.
+
+| § | Item | Covered by | Where |
+|---|---|---|---|
+| 1.1 | The target's home | board | Home (channels, flat front tile, the rest receding) |
+| 1.1 | Home chrome (clock, Settings, Search) | board | Home (account and clock top right; Search and Settings in the System channel and the guide) |
+| 1.1 | The server's status | board | Home (the account tag: server and online, opens Choose a server) |
+| 1.1 | Each library shows what it is | board | Home, Effects (live tiles: illustration and newest art) |
+| 1.1 | A preview or focus state | board | Home (the front tile: art, label, progress, floor reflection); Decisions 6 |
+| 1.1 | Sub-views of the home | board | Home (channels are the sub-views; Continue watching and Next up are channels) |
+| 1.1 | The order is the user's | board | Prefs (Settings › Home: switches and Move); Decisions 8 |
+| 1.1 | The music capsule | board | Home, Music |
+| 1.1 | Exit at the root | board | Dialogs (Exit Icefin?, Cancel focused) |
+| 1.2 | A shared frame | board | every board (title top left, account top right, hints bottom left, mark bottom right) |
+| 1.2 | A colour per content kind | not in the target | the target is one green; kinds shown by the live-tile illustrations instead (Effects) |
+| 1.2 | Now playing on every framed screen | board | Guide (Now playing in the Media blade), Home (capsule) |
+| 1.3 | Every library type themed | board | LibMovies, LibLists, LibLiveTV, LibMore |
+| 1.3 | Section tabs per library | board | LibMovies, LibLists, LibLiveTV |
+| 1.3 | Drill-downs with Play all and Shuffle | board | LibLists (genre) |
+| 1.3 | Sort and filter panel, A–Z rail | board | LibMore (panel), LibMovies (rail) |
+| 1.3 | Grids page like the target | board | LibMovies (page turns, more columns when wider) |
+| 1.3 | Playlists, photos and home videos, books | board | LibLists, LibMore |
+| 1.3 | Series: seasons as tabs, Next up first | board | DetailsSeries |
+| 1.3 | Continue Watching and Next Up screens | board | Home (as channels), Guide (Media blade) |
+| 1.3 | Search with filters and keyboard | board | Search |
+| 1.3 | Empty states | board | LibMovies (filters), Search (nothing found), LibLiveTV (recordings) |
+| 1.4 | Every item type with every function | board | DetailsMovie, DetailsSeries, DetailsMore |
+| 1.4 | In the theme's frame, tabs following the scroll | board | DetailsMovie (panels receding right replace tabs); Decisions 2 |
+| 1.4 | Clear labels | board | DetailsMovie (Resume time left), DetailsSeries (Play S2 E4), DetailsMore (counts) |
+| 1.4 | Placeholders (initials, chapter times) | board | DetailsMore, DetailsMovie, Effects |
+| 1.4 | Pickers as the theme's cards | board | Menus (Audio), Player (Subtitles) |
+| 1.4 | Back to the top on return | tests | the pass test: the front panel's actions in view after a picker closes |
+| 1.5 | The theme's own item menu | board | Menus |
+| 1.5 | Each dialog themed and complete | board | Menus |
+| 1.5 | jellyfin-web's dialogs as the theme's cards | board | Menus (editors in an inset panel), Dialogs |
+| 1.5 | A notice of the theme's own | board | Dialogs (toast) |
+| 1.6 | Channels, guide, recordings, schedule | board | LibLiveTV |
+| 1.6 | A programme's sheet with steppers | board | LibLiveTV |
+| 1.6 | Previews that fall back | board | LibLiveTV, DetailsMore (channel) |
+| 1.6 | Connecting dialog and its error | board | LibLiveTV, Dialogs |
+| 1.7 | Now playing, Queue, Lyrics | board | Music |
+| 1.7 | Instant mix | board | Music, DetailsMore, Menus |
+| 1.8 | The theme's controls | board | Player |
+| 1.8 | Pickers over the video | board | Player |
+| 1.8 | Skip prompts and Up next | board | PlayerMore |
+| 1.8 | Live TV in the player | board | PlayerMore |
+| 1.8 | The web fallback and osd tokens | board | PlayerMore (More › jellyfin-web's controls), Effects (osd.* kept) |
+| 1.8 | A readability shade | board | Player |
+| 1.8 | Photos and books framed | board | LibMore |
+| 1.9 | Play on and Watch together | board | PlayerMore, Guide |
+| 1.10 | The settings hub | board | Settings |
+| 1.10 | Client Settings in the frame | board | Settings |
+| 1.10 | Settings › Home | board | Prefs |
+| 1.10 | The preference pages framed | board | Prefs |
+| 1.10 | The user's menu (You) | board | Prefs, Guide (You blade) |
+| 1.10 | Profile and Quick Connect approve | board | Prefs |
+| 1.11 | Sign in | board | SignIn |
+| 1.11 | Choose and add a server | board | SignIn |
+| 1.11 | Nothing before sign-in; stock without a theme | board | SignIn (note) |
+| 1.12 | A frame around every page | board | Dialogs (framed page) |
+| 1.12 | jellyfin-web's chrome hidden | board | Dialogs |
+| 1.12 | The ground on its own layer | tests | the pass test: nothing stale over video at playback start |
+| 1.12 | Content clears the frame | board | Dialogs; tests (focus never under the frame) |
+| 1.12 | Fields, buttons, switches in the look | board | Dialogs, Prefs |
+| 1.12 | The on-screen keyboard | board | Search, SignIn, LibMore |
+| 1.12 | Dashboard stays stock | board | Dialogs |
+| 1.12 | A way out to stock | board | Settings (Classic View, Classic home), Dialogs |
+| 2.1 | Everything the mouse can use, the pad reaches | board | Input; tests (reach walk) |
+| 2.1 | Reached by presses alone | tests | the reach walk |
+| 2.1 | Only the visible page's items | board | Input; tests |
+| 2.1 | Grids page at their edges | board | LibMovies, Input |
+| 2.1 | Modal cards hold focus | board | Input; tests |
+| 2.1 | Framed pages move as one | board | Input |
+| 2.2 | Focus always shown | board | Input |
+| 2.2 | Room for the glow | board | Input; tests (no clipped glow) |
+| 2.2 | Glow over an engine shadow | tests | the polish test |
+| 2.2 | Hover apart from focus | board | Input |
+| 2.3 | The focused item's caption | board | Player (button names), lists (the bar is the caption); Input |
+| 2.3 | A name pill under the focused item | board | Player (button names under the capsule) |
+| 2.3 | Page-aware controller hints | board | Input (per mode, per pad family); every board's hints; Decisions 7 |
+| 2.4 | Back, innermost first | board | Input |
+| 2.4 | Menu acts on the focused item | board | Input, Menus |
+| 2.4 | Play/Pause on the focused item | board | Input, LibMovies |
+| 2.4 | Search and Home from anywhere | board | Input, Guide |
+| 2.4 | Steppers | board | LibLiveTV, PlayerMore |
+| 2.4 | Destructive actions confirm | board | Menus (Keep it), Dialogs (Cancel), Prefs (Stay signed in) |
+| 2.4 | Focus comes back where it was | board | Input |
+| 2.5 | Hover moves focus | board | Input |
+| 2.5 | Clicking outside closes | board | Guide, LibMore |
+| 2.5 | Pointer seeking | board | Input, Player |
+| 2.5 | The physical keyboard | board | Search, Prefs (Quick Connect digits) |
+| 2.5 | Text fields and the keyboard | board | Search |
+| 2.6 | One move model | board | Input, Music (queue), Prefs (Settings › Home) |
+| 2.6 | By pointer | board | Input |
+| 2.7 | Any input brings the controls back | board | Player |
+| 2.7 | ◀▶ on the time line | board | Player |
+| 2.7 | A new skip prompt takes focus | board | PlayerMore |
+| 3 | A focus animation on every kind | board | Motion, Input |
+| 3 | Page turns | board | Motion |
+| 3 | The preview opens from the item | board | Motion (tile → page) |
+| 3 | Tabs | board | Motion |
+| 3 | The caption cross-fades | board | Motion (button names) |
+| 3 | Shared-element flights | board | Motion (tile → page, page → tile, safety) |
+| 3 | Sheets rise and fall | board | Motion |
+| 3 | Side panels slide | board | Motion, LibMore |
+| 3 | Bar caption and hints step back | tests | the polish test |
+| 3 | Now playing slides | board | Motion (notices, capsule), Home |
+| 3 | Player chrome | board | Motion, Player |
+| 3 | Progress lines, lyrics | board | Motion, Music |
+| 3 | Ambient loops on decoration only | board | Motion, Music (rings) |
+| 3 | Low motion | board | Motion |
+| 4 | A signature ground | board | Effects |
+| 4 | Item framing | board | Effects |
+| 4 | Reflections | board | Home, Effects |
+| 4 | Fade masks | board | Effects |
+| 4 | Original illustrations per kind | board | Effects |
+| 4 | Live tiles | board | Effects |
+| 4 | Object metaphors | not in the target | the target used flat tiles and panels; none added |
+| 4 | A muted preview | not in the target | Decisions 6 |
+| 4 | Fallbacks for missing pictures | board | Effects, LibLiveTV, DetailsMore |
+| 4 | Custom chrome geometry | board | Guide (blades), Player (capsule) |
+| 4 | Glows on progress and now | board | Effects, LibLiveTV, Player |
+| 4 | A readability shade | board | Player |
+| 5 | Five UI sounds | board | Effects (already made, recipe kept) |
+| 5 | Each sound on its action | tests | the pass test |
+| 5 | Startup jingle and ambient loop | board | Effects; Decisions 5 |
+| 5 | Jingles where the target has them | board | Effects (guide, goodbye); Decisions 5 |
+| 5 | The ambient loop waits | board | Effects |
+| 5 | Client Settings apply | board | Settings, Effects |
+| 6 | theme.json complete | board | Effects |
+| 6 | Every colour token, dark scheme, contrast | board | Effects; tests (theme-contrast) |
+| 6 | Shape tokens | board | Effects |
+| 6 | The fallback player's tokens | board | Effects |
+| 6 | Type | board | Effects; Decisions 4 |
+| 6 | Geometry from the reference | tests | clone_layout.py --theme orbit |
+| 6 | Original illustrations and icons; server branding | board | Effects, SignIn |
+| 7 | Nothing runs past the sides | tests | the walk's audit |
+| 7 | 16:9, wider, 4K | board | LibMovies, Effects; tests |
+| 7 | Custom CSS and plugins don't break it | tests | the lab's plugin servers |
+| 7 | The overlay is the theme's own | board | Guide; tests |
+| 7 | The engine stays theme-agnostic | tests | theme lint |
+| 8 | theme_orbit.py and clone_layout | tests | kept and extended |
+| 8 | A reach walk | tests | orbit_pass.py with a virtual pad |
+| 8 | A polish test | tests | orbit_pass.py, low motion included |
+| 8 | Player, menu, music, sign-in, framed pages | tests | orbit_pass.py |
+| 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Orbit's walks and tests |
+| 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
+
+## The target's other screens (measured 2026-11-15, watched in the browser, nothing downloaded)
+
+Sources: SlasherExtras, "NXE Dashboard [XBOX 360]" (https://www.youtube.com/watch?v=LeLocNfgexM, an OBS capture) and
+"Xbox 360 NXE Dashboard (2.0.8498.0)" (https://www.youtube.com/watch?v=ucJoSC29UL8). Layout, timing and colours only.
+
+- **Pages**: the home's sky stays behind; the page's name top left (~30 px at 1080 lines), the account top right, the
+  hint row bottom left, the mark bottom right. Content sits in slate panels (a light top edge, a soft shadow).
+- **Lists**: ~42 px rows at 1080 lines, a thin divider; the focused row a lime gradient bar with a glow; a picture
+  at the left, a value at the right (size, count), "7 of 24" with scroll marks at the panel's foot; two-line rows for
+  a second line.
+- **Settings**: the list on the left half of one panel, what the focused entry does on the right half.
+- **Dialogs**: a title with a small icon above the panel, the message, choices at the panel's foot, the safe one
+  focused (Cancel).
+- **The guide**: centred over a dimmed screen (about 42 % of the width, 28–73 % of the height): the open blade's
+  spine on the left, the other blades stacked on the right.
+- **Keyboard**: a 10-wide key grid, a side column (Cursor, Backspace, Space, Done), the field above.
+- **Item panels** (the game library): one panel flat in front, the others receding to the right in depth, "10 of 17".
+- **Player**: a capsule of round buttons at the bottom, the focused one lime with its name under it; the state
+  ("Pause") top left; a segmented time line at the top with elapsed and remaining.
