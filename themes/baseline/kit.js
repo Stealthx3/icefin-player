@@ -264,7 +264,7 @@
         return c;
     };
 
-    // ---- a row of cards (stock's emby-scroller with centred focus: the row slides so the focused card sits near
+    // ---- a row of cards (stock's scroller with centred focus: the row slides so the focused card sits near
     // the middle, 270 ms ease-out) ----
     B.cardRow = (title, cards, o) => {
         o = o || {};
