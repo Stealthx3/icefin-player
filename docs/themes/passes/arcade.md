@@ -357,3 +357,34 @@ clarity). Plaza's timings, for reference:
       covered Wayland window stops drawing, and the tests' screenshots wait).
 - [ ] **A host walk** of the finished theme on the user's server (screenshots, transition films and the cut-off audit
       of every element) and the user's review against the mock-ups (the pipeline's Gate 2).
+
+## The target's other screens (measured 2026-11-15, watched in the browser, nothing downloaded)
+
+Sources: Piqarian, "How to Use the Steam Big Picture Mode (Full Guide to the Updated Interface)"
+(https://www.youtube.com/watch?v=Oi182wsuz8I, 854x480) and Linux For Everyone, "Steam Deck UI Tour | No Narration"
+(https://www.youtube.com/watch?v=zXK1CXUyzXQ, the same interface on the handheld, 640x360). The home is measured in
+`docs/themes/references/arcade.json`. Layout, timing and colours only; no logos, icons, sounds, fonts or names.
+
+- **Frame**: a dark blue-grey field (#1b2838 into #0e141b), the top bar (search, notifications, the clock, the avatar
+  top right), the bottom bar (the menu button at the left; Select, Back and the page's own buttons at the right, as
+  round face glyphs with words).
+- **Main menu**: a dark panel down the left (a fifth of the width) over the dimmed screen: Home, Library, Store,
+  Friends, Media, Downloads, Settings, Power; an icon and a word per row, the focused row a lighter band.
+- **Quick access**: a panel down the right (a quarter of the width) with a column of icons on its left edge
+  (notifications, friends, quick settings, performance, help); its sections under small uppercase headings, rows with
+  sliders and switches (blue on), over the dimmed screen.
+- **Library**: a row of pill tabs centred at the top (Great on Deck, All games, Installed, Favourites, Collections,
+  each with a count), the shoulders' glyphs at either end; a grid of portrait capsules (2:3) seven or eight across with
+  small gaps, the focused one lifted with a light ring; Showing / Sort by / Options in the bottom bar.
+- **A game's page**: the hero art across the top third with the logo over it; under it a bar: the big Play (green)
+  or Install (blue) button at the left, then stats (space, last played, play time, achievements with a bar), gear and
+  controller buttons at the right; under that, pill tabs (Activity, Your stuff, Community, Game info) and the page's
+  content in dark panels.
+- **Menus**: a dark rounded panel centred over the dimmed screen with the item's name as title and rows (Install,
+  Add to favourites, Add to, Manage ›, Properties…, Cancel); the focused row a lighter band.
+- **Settings and properties**: a dark panel of sections down the left (an icon and a word each, the current one a
+  lighter band), the section's content on the right: small uppercase group headings, rows with the setting at the
+  left and its value, a switch, a slider or a button at the right.
+- **Downloads**: the current download as a banner with its progress bar, then rows (capsule, name, size, an icon
+  button at the right).
+- **Not found**: the on-screen keyboard and a video player (the target has no media player of its own).
