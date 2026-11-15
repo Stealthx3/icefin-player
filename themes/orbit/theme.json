@@ -2,11 +2,26 @@
   "schema": 1,
   "id": "orbit",
   "name": "Orbit",
-  "version": "0.2.0",
-  "description": "Channels stacked vertically, each a ring of tiles receding to the right behind a flat front tile, the channels above stacking their titles upward; a parallax backdrop and a guide panel over any screen. Green sky over a grey floor, lime tiles.",
+  "version": "0.3.0",
+  "description": "Channels stacked vertically, each a ring of tiles receding to the right behind a flat front tile; every other screen in slate panels over the green sky, the focused row a lime bar; details as panels receding right; a guide of blades over any screen; the player's controls a capsule of round buttons.",
   "styles": "styles.css",
   "scripts": [
-    "orbit.js"
+    "kit.js",
+    "panel.js",
+    "views.js",
+    "data.js",
+    "home.js",
+    "channels.js",
+    "itemmenu.js",
+    "details.js",
+    "guide.js",
+    "tv.js",
+    "library.js",
+    "np.js",
+    "player.js",
+    "settings.js",
+    "account.js",
+    "interim.js"
   ],
   "sounds": {
     "focus": "sounds/focus.wav",
@@ -15,20 +30,29 @@
     "navigate": "sounds/navigate.wav",
     "error": "sounds/error.wav"
   },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "guide": "music/guide.ogg",
+      "goodbye": "music/goodbye.ogg"
+    }
+  },
   "schemes": {
     "dark": {
       "name": "Dark",
       "tokens": {
         "color": {
           "background": "#0f1a04",
-          "surface": "#1a2c07",
-          "surfaceRaised": "#24400b",
+          "surface": "#1d2227",
+          "surfaceRaised": "#2a3138",
           "onAccent": "#10200a",
           "backdropTop": "#142208",
           "backdropMid": "#2c3a14",
           "backdropBottom": "#262a31",
           "floor": "#1b1c1f",
-          "guide": "#10161c"
+          "guide": "#10161c",
+          "panelLo": "#15191d"
         }
       }
     }
