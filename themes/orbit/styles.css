@@ -629,3 +629,4 @@ html[data-icefin-motion="low"] .or-panel-host, html[data-icefin-motion="low"] #i
 html[data-icefin-motion="low"] .or-notice, html[data-icefin-motion="low"] .or-hints { transition-duration: 0s !important; animation: none !important; }
 /* Client Settings (the engine's page) on Orbit's sky */
 .or-client-settings, .or-client-settings .icefin-settings { background: linear-gradient(180deg, var(--icefin-color-backdropTop) 0%, var(--icefin-color-backdropMid) 62%, var(--icefin-color-backdropBottom) 66%, var(--icefin-color-floor) 100%) !important; }
+.or-view.or-scroll { overflow-y: auto; scrollbar-width: none; scroll-padding: 1vh; -webkit-mask-image: linear-gradient(180deg, #000 92%, transparent); mask-image: linear-gradient(180deg, #000 92%, transparent); }

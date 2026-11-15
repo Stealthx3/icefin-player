@@ -129,6 +129,8 @@
             // section labels take about two thirds of a row each: fewer rows a page when the list has them
             if (sections) rows = Math.max(3, rows - Math.ceil(Math.min(new Set(entries.map((e) => e.row)).size, rows / 2) * 0.7));
             inner.style.setProperty('--or-rh', `${rh}px`);
+            // a scrolling list (an item's own actions): every row is in the page, the focused one kept in view
+            if (o.scroll) { inner.classList.add('or-scroll'); return { cols: 1, rows, per: Math.max(1, entries.length) }; }
             return { cols: 1, rows, per: rows };
         }
         V.g = geom();
@@ -169,6 +171,7 @@
             const b = V.el();
             const busy = (D.panel && D.panel.isOpen()) || (ui.keyboard && ui.keyboard.isOpen && ui.keyboard.isOpen());
             if (b && !busy) T.ctx.focus(b);
+            if (b && o.scroll) b.scrollIntoView({ block: 'nearest', behavior: D.reduced() ? 'auto' : 'smooth' });
             if (!quiet) T.ctx.sound('focus');
             if (rail) { const L = entries[V.at] ? letterOf(entries[V.at]) : ''; [...rail.children].forEach((x) => x.classList.toggle('on', x.textContent === L)); }
             count.textContent = entries.length ? `${V.at + 1} of ${entries.length.toLocaleString()}` : '';
@@ -488,7 +491,7 @@
             p.body.textContent = '';
             if (!entries.length) { p.body.append(el('div', 'or-empty-text', (p.level && p.level.empty && p.level.empty.title) || 'Nothing here')); p.view = null; return; }
             const mode = p.front ? 'list' : modeOf(entries, Object.assign({}, p.level || {}, { mode: entries.length > 6 && modeOf(entries, {}) === 'grid' ? 'grid' : 'list' }));
-            p.view = makeView(p.body, entries, { mode, tileH: 14, letters: false, sections: !!p.front, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
+            p.view = makeView(p.body, entries, { mode, tileH: 14, letters: false, sections: !!p.front, scroll: !!p.front, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
                 onFocus: (e) => { hintsFor(e); if (opts.onFocus) opts.onFocus(e, C); } });
             const ff = p.front ? Math.max(0, entries.findIndex((e) => e.focusFirst)) : (p.focusAt || 0);
             p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : ff));

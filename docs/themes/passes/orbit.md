@@ -527,3 +527,33 @@ Sources: SlasherExtras, "NXE Dashboard [XBOX 360]" (https://www.youtube.com/watc
 - **Item panels** (the game library): one panel flat in front, the others receding to the right in depth, "10 of 17".
 - **Player**: a capsule of round buttons at the bottom, the focused one lime with its name under it; the state
   ("Pause") top left; a segmented time line at the top with elapsed and remaining.
+
+## Build notes (2026-11-15, after Gate 1 "Approved, build it" with every pick as drawn)
+
+**How it is built (decision 9a).** Orbit forks the shared screen modules Tide and Almanac use (kit, panel, data,
+home rows, item menu, details entries, guide, Live TV, library, music, player, settings, account) and replaces
+Almanac's rows engine with `views.js`: *browse* (a library's sections as tabs, a poster grid or a list in the main
+panel, the focused entry described in the side panel, an A–Z rail on long lists sorted by name) and *deck* (an
+item's details: its own panel in front, its other panels receding right on the home's 370 ms step). `channels.js`
+keeps the home's channels (now on the shared home rows, so Settings › Home orders and hides them), adds the account,
+the music capsule and the blade guide. The old single-file `orbit.js` is gone.
+
+**Look.** New tokens (slate panels: `surface`, `surfaceRaised`, `panelLo`; the focus lime with dark ink on it,
+since white on lime fails contrast) and a new stylesheet; the dark scheme is a night sky over graphite with darker
+slate. Type: Noto Sans with a fallback stack (decision 4a; the old stack began with the target's own face). Hints
+draw the pad's own face buttons through the engine's glyphs (decision 7a). The Icefin mark sits bottom right.
+
+**Sounds and music (decision 5a, then the soundboard).** The UI sounds keep Orbit's recipe, an octave deeper with a
+slight room (the user's note). The music took three takes on the soundboard: a calm airy set, then "more xboxy"
+(a rumble–riser–bloom startup, a 100 BPM glassy ambient with a soft pulse, the guide's blip, the goodbye), then an
+octave deeper with a larger room; the user kept the third (soundboard https://claude.ai/artifact/MR6g9RtZKNk2U3GQ6zNvVA).
+Rendered on the workstation at the user's word; `theme-music.py --check` keeps them honest.
+
+**Tests.** `tests/icefin/web/orbit_pass.py` (51 checks, lab): home, guide, libraries, play, details, the item menu,
+search, Live TV, music, the player, settings, hints, sounds, motion and script errors. `clone_layout.py --theme orbit`
+keeps the home's measured geometry; the reference now checks the account tag where the clock was.
+
+**Not as drawn.** Search shows its results as Best matches and a folder per kind rather than kind tabs; the settings
+hub pages its list (two section labels on its first page) rather than showing all of it at once; jellyfin-web's four
+preference pages stay framed (as in every theme so far); the walk's `player-settings` entry clicks jellyfin-web's
+hidden button and so reaches the web fallback, as for Baseline.
