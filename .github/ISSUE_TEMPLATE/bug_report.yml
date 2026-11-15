@@ -63,6 +63,12 @@ body:
     attributes:
       label: Jellyfin server version
   - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: Client Settings → Hardware → Copy report, then paste. It shows the renderer, decoding, display, audio and recent log lines, with tokens, passwords, server addresses and your home folder left out. Copy it right after the problem happens, before restarting Icefin.
+      render: markdown
+  - type: textarea
     id: logs
     attributes:
       label: Logs

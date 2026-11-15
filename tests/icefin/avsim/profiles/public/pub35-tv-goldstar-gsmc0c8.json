@@ -1,0 +1,33 @@
+{
+  "description": "Goldstar LG TV SSCR2 (tv), from the linuxhw EDID collection: Digital/Goldstar/GSMC0C8/388AA0A4DAB1 (CC BY 4.0); 1 EDIDs share this audio capability set",
+  "monitor_name": "LG TV SSCR2",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        96000,
+        192000
+      ]
+    },
+    {
+      "codec": "truehd",
+      "channels": 8,
+      "rates": [
+        48000
+      ],
+      "byte3": 0
+    }
+  ],
+  "expect": {
+    "ac3": "pcm",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "bitstream"
+  },
+  "source": "Digital/Goldstar/GSMC0C8/388AA0A4DAB1"
+}

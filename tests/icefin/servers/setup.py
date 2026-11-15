@@ -75,11 +75,28 @@ def wizard(s, c):
 
 def libraries(s):
     have = {f["Name"] for f in s.call("GET", "/Library/VirtualFolders")}
-    for name, ctype, path in (("Movies", "movies", "/media/movies"), ("Shows", "tvshows", "/media/shows"), ("Music", "music", "/media/music")):
+    for name, ctype, path in (("Movies", "movies", "/media/movies"), ("Shows", "tvshows", "/media/shows"), ("Music", "music", "/media/music"),
+                              ("Photos", "homevideos", "/media/photos"), ("Books", "books", "/media/books")):
         if name in have:
             continue
         q = urllib.parse.urlencode({"name": name, "collectionType": ctype, "paths": path, "refreshLibrary": "false"})
         s.call("POST", f"/Library/VirtualFolders?{q}", {"LibraryOptions": {"EnableTrickplayImageExtraction": True, "EnableLyricsDownload": False}})
+
+
+def extras(s):
+    """A music playlist and a movie collection (PLAN 9.42), once the libraries have been scanned."""
+    uid = s.call("GET", "/Users/Me")["Id"]
+    items = lambda q: s.call("GET", f"/Items?{urllib.parse.urlencode(dict(q, userId=uid, Recursive='true'))}")["Items"]
+    if not items({"IncludeItemTypes": "Playlist"}):
+        songs = [i["Id"] for i in items({"IncludeItemTypes": "Audio"})]
+        if not songs:
+            raise urllib.error.HTTPError("", 503, "no songs scanned yet", None, None)
+        if songs:
+            s.call("POST", "/Playlists", {"Name": "Icefin Mix", "Ids": songs, "UserId": uid, "MediaType": "Audio"})
+    if not items({"IncludeItemTypes": "BoxSet"}):
+        movies = [i["Id"] for i in items({"IncludeItemTypes": "Movie"})][:3]
+        if movies:
+            s.call("POST", f"/Collections?{urllib.parse.urlencode({'Name': 'Icefin Collection', 'Ids': ','.join(movies)})}")
 
 
 def repositories(s, repos):
@@ -178,6 +195,13 @@ def main():
             p = have.get(w["name"]) or have.get(w.get("installed_as", ""))
             final[w["name"]] = f"{p['Version']} {p.get('Status', '?')}" if p else res.get(w["name"], "missing")
         s.call("POST", "/Library/Refresh")
+        for _ in range(12):  # the scan finds the media first
+            time.sleep(5)
+            try:
+                extras(s)
+                break
+            except urllib.error.HTTPError:
+                continue
         status[sc["name"]] = {"version": version, "url": s.base, "plugins": final}
         bad = [k for k, v in final.items() if "Active" not in v]
         print(f"setup: {sc['name']} Jellyfin {version}: {len(final) - len(bad)}/{len(final)} plugins active"
