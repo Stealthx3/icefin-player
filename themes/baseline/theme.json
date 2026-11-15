@@ -13,7 +13,10 @@
     "home.js",
     "library.js",
     "details.js",
-    "browse.js"
+    "browse.js",
+    "np.js",
+    "player.js",
+    "settings.js"
   ],
   "schemes": {
     "dark": {

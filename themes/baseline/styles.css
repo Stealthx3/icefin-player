@@ -269,3 +269,129 @@ textarea.bl-input { min-height: 6em; resize: none; }
 .bl-gp-title { overflow: hidden; text-overflow: ellipsis; }
 .bl-gp-rec, .bl-rec { color: #d15353; font-size: 0.9em !important; }
 .bl-schedule { padding: 0 3.3%; }
+
+/* ---- settings (stock's TV preferences menu: centred list under the user's name, the focused row filled) ---- */
+.bl-hub-box { max-width: 54em; margin: 0 auto; padding: 3.2em 3.3% 3em; }
+.bl-hub-title { margin: 1em 0 0.3em; font-size: 1.5em; font-weight: 400; color: var(--bl-text); }
+.bl-hub-item { display: flex; align-items: center; width: 100%; gap: 0; padding: 0.7em 0.6em; margin: 0; border: 0; border-bottom: 1px solid var(--bl-divider); border-radius: 0; background: transparent; color: var(--bl-text); font: inherit; text-align: left; cursor: pointer; outline: none; }
+.bl-hub-ic { width: 1em; margin-right: 0.8em; text-align: center; font-size: 1.4em !important; }
+.bl-hub-text { flex: 1; font-size: 1em; }
+.bl-hub-item.icefin-focused { background: var(--bl-accent); color: #fff; }
+
+/* ---- forms (profile, Quick Connect, signing in): stock's padded-left form, fields 46em wide, block buttons ---- */
+.bl-form-page .bl-form { max-width: 54em; margin: 0 auto; padding: 1.5em 3.3% 4em; }
+.bl-screen[data-bl-screen="quickconnect"] .bl-form { margin: 0; padding-top: 3.5em; }
+.bl-screen .bl-raised { font-weight: 600; }
+.bl-form-page .bl-field-label { font-size: 0.95em; }
+.bl-form-title { margin: 0 0 0.5em; font-size: 1.5em; font-weight: 400; color: var(--bl-text-strong); }
+.bl-form-title.big { font-size: 1.8em; }
+.bl-form-text { margin: 0 0 1.1em; font-size: 1em; color: var(--bl-text); }
+.bl-field-desc { margin: -0.4em 0 1.1em; font-size: 0.8em; color: rgba(255, 255, 255, 0.5); }
+.bl-raised.block { display: flex; justify-content: center; width: 100%; margin: 0.6em 0; box-sizing: border-box; }
+.bl-raised.block.inline { display: inline-flex; width: auto; }
+.bl-raised.block.submit { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-raised.block.icefin-focused { transform: scale(1.04); }
+.bl-selectbox { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0.4em 0.5em; border: 0.15em solid rgba(255, 255, 255, 0.09); border-radius: 0.2em; background: rgba(255, 255, 255, 0.09); color: #fff; font: inherit; font-size: 1.1em; text-align: left; outline: none; }
+.bl-selectbox.icefin-focused { border-color: var(--bl-accent); }
+.bl-profile-head { display: flex; align-items: center; gap: 1.5em; max-width: 54em; margin: 2em auto 0; padding: 0 3.3%; }
+.bl-profile-pic { width: 8em; height: 8em; background: 50% / cover no-repeat; display: flex; align-items: center; justify-content: center; color: #fff; }
+.bl-profile-pic .bl-ic { font-size: 8em; }
+.bl-profile-name { margin: 0 0 0.5em; font-size: 1.5em; font-weight: 400; color: var(--bl-text); }
+.bl-signin .bl-header { background: transparent; }
+.bl-logo.small { width: 9em; height: 2.2em; margin-left: 0.6em; }
+.bl-centered { text-align: center; padding: 2em 3.3%; }
+.bl-centered-title { margin: 0.6em 0 0.8em; font-size: 1.8em; font-weight: 400; color: var(--bl-text-strong); text-align: center; }
+.bl-inner-row.centered { justify-content: center; flex-wrap: wrap; display: flex; }
+.bl-qc-code { margin: 0.6em 0; font-size: 3em; letter-spacing: 0.15em; text-align: center; color: var(--bl-text-strong); }
+
+/* ---- Now playing (stock's remote-control page) and Lyrics ---- */
+.bl-np-top { display: flex; gap: 1.6em; padding: 4.2em 3.3% 0.6em; align-items: flex-start; }
+.bl-np-art { flex: none; width: 9.5em; height: 9.5em; background: var(--bl-accent) 50% / cover no-repeat; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.8); }
+.bl-np-art .bl-card-icon { font-size: 4em; }
+.bl-np-info { flex: 1; min-width: 0; }
+.bl-np-title { font-weight: 600; color: var(--bl-text-strong); font-size: 1em; }
+.bl-np-sub { font-size: 1em; }
+.bl-np-time { display: flex; align-items: center; gap: 1.6em; margin-top: 0.6em; font-size: 0.9em; }
+.bl-np-bar { position: relative; flex: 1; height: 0.2em; padding: 0.6em 0; background: rgba(255, 255, 255, 0.3) content-box; outline: none; cursor: pointer; }
+.bl-np-fill { position: absolute; left: 0; top: 0.6em; height: 0.2em; background: var(--bl-accent); }
+.bl-np-knob { position: absolute; top: 0.7em; width: 0.9em; height: 0.9em; margin: -0.45em 0 0 -0.45em; border-radius: 50%; background: var(--bl-accent); transition: transform 0.2s ease-out; }
+.bl-np-bar.icefin-focused .bl-np-knob { transform: scale(1.4); }
+.bl-np-vol { flex: none; width: 8em; margin-left: 0.6em; }
+.bl-np-transport { display: flex; align-items: center; justify-content: space-between; margin-top: 0.2em; }
+.bl-np-group { display: flex; align-items: center; gap: 0.6em; }
+.bl-np-row2 { display: flex; justify-content: flex-end; gap: 0.6em; margin-top: 0.4em; }
+.bl-np-btn { display: inline-flex; align-items: center; justify-content: center; width: 2.4em; height: 2.4em; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--bl-text); font: inherit; cursor: pointer; outline: none; transition: transform 0.2s ease-out; }
+.bl-np-btn .bl-ic { font-size: 1.4em; }
+.bl-np-btn.main { width: 2.8em; height: 2.8em; background: rgba(255, 255, 255, 0.7); color: #101010; }
+.bl-np-btn.on { color: var(--bl-accent); }
+.bl-np-btn.icefin-focused { color: var(--bl-accent); transform: scale(1.3); }
+.bl-np-btn.main.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-np-queue { padding: 0.6em 3.3% 3em; }
+.bl-np-qimg { width: 4em !important; height: 4em !important; margin-right: 0.4em; }
+.bl-np-qrow .bl-li-title { font-size: 0.9em; }
+.bl-np-qrow .bl-li-aside { font-size: 0.9em; }
+.bl-lifted { outline: 0.15em solid var(--bl-accent) !important; transform: scale(1.02); }
+.bl-np-nothing { padding: 2em 3.3%; }
+.bl-np-idle .bl-np-top { display: none; }
+.bl-lyrics-box { display: flex; flex-direction: column; align-items: flex-start; width: max-content; max-width: 90vw; margin: 0 auto; padding: 0.6em 3.3% 40vh; }
+.bl-lyric { display: block; margin: 0.15em 0; padding: 0.2em 0.6em; border: 0; border-radius: 0.2em; background: transparent; color: var(--bl-text); font: inherit; font-size: 1.4em; text-align: left; outline: none; cursor: pointer; transition: color 0.2s ease-out; }
+.bl-lyrics-timed .bl-lyric { color: rgba(255, 255, 255, 0.35); }
+.bl-lyrics-timed .bl-lyric.now { color: #fff; }
+.bl-lyric.icefin-focused { background: rgba(255, 255, 255, 0.12); }
+.bl-lyrics-none { padding: 2em; font-size: 1.2em; }
+
+/* ---- the video OSD (stock's videoOsd: Back and title at the top, slider, times and buttons at the bottom) ---- */
+.bl-pl { position: absolute; inset: 0; color: #fff; font: 400 20px/1.35 "Noto Sans", sans-serif; pointer-events: none; }
+.bl-pl > * { pointer-events: auto; }
+.bl-pl-shade-top, .bl-pl-shade-bottom { position: absolute; left: 0; right: 0; pointer-events: none !important; opacity: 0; transition: opacity 0.3s ease-out; }
+.bl-pl-shade-top { top: 0; height: 9em; background: linear-gradient(rgba(0, 0, 0, 0.75), transparent); }
+.bl-pl-shade-bottom { bottom: 0; height: 16em; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); }
+.bl-pl-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 0.5em; padding: 0.6em 1em; background: rgba(32, 32, 32, 0.6); min-height: 3em; opacity: 0; transform: translateY(-1em); transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+.bl-pl-toptitle { margin: 0; font-size: 1.17em; font-weight: 400; }
+.bl-pl-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 2% 0.6em; opacity: 0; transform: translateY(1em); transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+.bl-pl-shown .bl-pl-shade-top, .bl-pl-shown .bl-pl-shade-bottom, .bl-pl-shown .bl-pl-top, .bl-pl-shown .bl-pl-bottom { opacity: 1; transform: none; }
+.bl-pl:not(.bl-pl-shown) .bl-pl-top, .bl-pl:not(.bl-pl-shown) .bl-pl-bottom { pointer-events: none; }
+.bl-pl-title { font-size: 1.4em; }
+.bl-pl-sub { font-size: 0.85em; color: rgba(255, 255, 255, 0.7); margin: 0.2em 0 0.6em; }
+.bl-pl-bar { position: relative; height: 0.25em; padding: 0.5em 0; background: rgba(255, 255, 255, 0.25) content-box; outline: none; cursor: pointer; }
+.bl-pl-fill { position: absolute; left: 0; top: 0.5em; height: 0.25em; background: var(--bl-accent); }
+.bl-pl-knob { position: absolute; top: 0.62em; width: 0.9em; height: 0.9em; margin: -0.45em 0 0 -0.45em; border-radius: 50%; background: var(--bl-accent); transform: scale(0); transition: transform 0.2s ease-out; }
+.bl-pl-bar.icefin-focused .bl-pl-knob, .bl-pl-bar:hover .bl-pl-knob { transform: scale(1); }
+.bl-pl-ticks i { position: absolute; top: 0.5em; width: 2px; height: 0.25em; background: rgba(255, 255, 255, 0.7); }
+.bl-pl-times { display: flex; align-items: center; gap: 0.8em; font-size: 0.85em; }
+.bl-pl-times .bl-pl-bar { flex: 1; }
+.bl-pl-ends { margin-left: 1em; font-size: 0.9em; }
+.bl-pl .bl-np-vol { width: 6em; }
+.bl-pl-transport { display: flex; justify-content: space-between; align-items: center; margin-top: 0.3em; }
+.bl-pl-left, .bl-pl-right { display: flex; align-items: center; gap: 0.2em; }
+.bl-pl .bl-np-btn { color: #fff; }
+.bl-pl .bl-np-btn.icefin-focused { color: var(--bl-accent); }
+.bl-pl-live .bl-pl-bar { visibility: hidden; }
+.bl-pl-archive { position: absolute; right: 3.3%; bottom: 9em; display: flex; flex-direction: column; align-items: flex-end; gap: 0.6em; }
+.bl-pl-skip { flex-direction: column; align-items: stretch; }
+.bl-pl-skipline { display: block; height: 2px; margin-top: 0.3em; background: rgba(255, 255, 255, 0.2); }
+.bl-pl-skipline b { display: block; height: 100%; background: currentColor; }
+.bl-pl-upnext { width: 22em; padding: 1em; background: rgba(32, 32, 32, 0.95); border-radius: 0.2em; }
+.bl-pl-upnext-head { margin: 0 0 0.4em; font-size: 1.2em; font-weight: 400; }
+.bl-pl-upnext-img { height: 12em; background: 50% / cover no-repeat; margin-bottom: 0.5em; }
+.bl-pl-upnext-title { font-size: 1em; margin-bottom: 0.2em; }
+.bl-pl-count { font-size: 0.8em; color: rgba(255, 255, 255, 0.7); }
+.bl-pl-upnext-row { display: flex; gap: 0.3em; margin-top: 0.6em; }
+@media (prefers-reduced-motion: reduce) { .bl-pl-top, .bl-pl-bottom, .bl-pl-shade-top, .bl-pl-shade-bottom { transition: none; transform: none; } }
+.bl-splash { background-size: cover; background-position: center; }
+.bl-splash .bl-page { background: transparent; }
+.bl-disclaimer { margin: 1.5em 0 0; font-size: 0.8em; text-align: center; white-space: pre-wrap; }
+
+/* Client Settings: jellyfin-web's dialog in the engine's page, under Baseline's header, one column like stock's */
+.bl-client-settings .icefin-d-nav, .bl-client-settings .icefin-s-title, .bl-client-settings .icefin-cs-rail { display: none !important; }
+.bl-client-settings .icefin-settings { top: 3.85em; font-size: 1em; color: var(--bl-text); }
+.bl-client-settings .icefin-settings .icefin-s-body { inset: 0.5em 3.3% 0; }
+.bl-client-settings .icefin-settings .icefin-cs-page { grid-template-columns: minmax(0, 54em); justify-content: center; }
+.bl-client-settings .icefin-settings .icefin-cs-host .icefin-focused { outline-color: var(--bl-accent); }
+
+/* the hidden attribute wins over the display rules above */
+.bl-screen [hidden], .bl-pl [hidden], .bl-panel-host [hidden] { display: none !important; }
+.bl-form-page .bl-field { max-width: none; }
+.bl-screen[data-bl-screen="profile"] .bl-profile-head { margin-top: 2.6em; }
+.bl-screen[data-bl-screen="profile"] .bl-form { padding-top: 2.2em; }
+html.bl-pl-up .bl-hints { top: 1.2em; bottom: auto; }
