@@ -535,3 +535,27 @@ The design for the pass: 26 boards on the "Harbor Screens" canvas, https://claud
 | 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Harbor's walks and tests |
 | 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
 
+
+## Build notes (2026-11-16, after Gate 1 "Approved, build it" with every pick as drawn)
+
+- **How it's built (decision 9a).** Harbor is the shared modules (as in Orbit, Mosaic and Arcade) under its own
+  names (`window.icefinHarbor`, `hr-` classes), with `harbor.js` keeping the measured home: the engine's side-rail
+  menu, each entry's categories and shelves over the fanart. Its posters now open the shared info page, ≡ opens the
+  item's context menu, ▶ plays, Back on the menu asks to exit. `menus.js` brings the menu over any screen (a long
+  press of View, the guide button, F1) and quick access from the right.
+- **The look.** A stylesheet over the shared structure: the teal glow field, the path top left and the clock top
+  right, the media window (posters zoomed 110 % around their upper third with the cyan border; the list view at the
+  measured x 608–1330 with the focused poster beside it), the info page (the poster left, facts and plot right, the
+  buttons under them, the sections as plain tabs), dialogs with the cyan title bar, square buttons. Tokens map the
+  shared colours onto Harbor's cyan and teal-black.
+- **Sounds and music (decision 5a).** Harbor's five sounds kept; new music (`theme_music/harbor.py`: Arcade's figures
+  moved to B-flat minor on the vibraphone), rendered in the lab; soundboard
+  https://claude.ai/artifact/PsYM4bsy4jjdF81CkYwArM for your ear before the merge.
+- **Tests.** `harbor_pass.py` passes; `theme_harbor.py` follows the info page; `clone_layout.py --theme harbor`
+  passes (the reference's info-popup state and timing left it, decision 2a).
+- **Found on the way.** The shared base kept Orbit's drifting rings behind inner pages in Arcade; removed here and in
+  Arcade (#185).
+- **Not as drawn.** Search keeps the shared field-and-results screen rather than the target's keyboard dialog (the
+  engine's keyboard opens under it in a titled panel); the library's category tiles open the shared library with its
+  nodes as plain tabs; Client settings is the engine's page; the framed preference pages and `player-settings` stay
+  walk gaps as in the other passes.
