@@ -1,0 +1,56 @@
+{
+  "description": "Yamaha ATS-1080 (receiver), from the linuxhw EDID collection: Digital/Yamaha/YMH3322/53304BE624AF (CC BY 4.0); 11 EDIDs share this audio capability set",
+  "monitor_name": "ATS-1080",
+  "speakers": "0x0f",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000
+      ]
+    },
+    {
+      "codec": "lpcm",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200,
+        96000
+      ]
+    },
+    {
+      "codec": "ac3",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    },
+    {
+      "codec": "dts",
+      "channels": 6,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 1536
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "bitstream",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Yamaha/YMH3322/53304BE624AF"
+}
