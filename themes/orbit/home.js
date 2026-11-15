@@ -1,7 +1,7 @@
 // Orbit: the home's channels and Settings' entries (PLAN 9.56; the "Orbit Screens" canvas: Home, Settings, Prefs,
 // Dialogs). The channels, top to bottom by default: Continue watching, Next up, one per library (its front tile the
 // library itself, then its newest), Live TV, Favourites, Playlists, System; their order and which show is the user's
-// (Settings › Home, settings.js). channels.js draws them. Settings is #/home?or=settings: you, the preference pages,
+// (Settings › Home, settings.js). channels.js draws them. Settings is #/mypreferencesmenu (interim.js): you, the preference pages,
 // Play on and Watch together, this player, the server, and Exit. The server's status is pinged every 60 s.
 (function () {
     'use strict';
@@ -86,7 +86,7 @@
     });
     const systemChannel = () => lv('System', async () => [
         { name: 'Search', sub: 'films, shows, music and people', icon: 'search', go: () => T.ctx.navigate('#/search') },
-        { name: 'Settings', sub: 'you, the preferences, this player', icon: 'settings', go: () => T.ctx.navigate('#/home?or=settings') },
+        { name: 'Settings', sub: 'you, the preferences, this player', icon: 'settings', go: () => T.ctx.navigate('#/mypreferencesmenu') },
         { name: 'Classic home', sub: 'jellyfin-web’s home, with plugin sections', icon: 'home', go: () => T.ctx.navigate('#/home?icefin=stock') }
     ]);
 
@@ -123,8 +123,8 @@
 
     // ---- Settings (Settings board) ----
     const go = (hash) => () => T.ctx.navigate(hash);
-    D.exitAsk = () => D.panel.ask({ title: 'Exit Icefin?', path: 'Icefin', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => T.ctx.exit() }] });
-    D.signOutAsk = (user) => D.panel.ask({ title: 'Sign out?', path: user ? `${user.Name} on ${D.serverName || 'this server'}` : '', choices: [{ label: 'Stay signed in', safe: true }, { label: 'Sign out', run: () => T.ctx.signOut() }] });
+    D.exitAsk = () => D.panel.ask({ title: 'Exit Icefin?', path: 'Icefin', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => D.farewell(() => T.ctx.exit()) }] });
+    D.signOutAsk = (user) => D.panel.ask({ title: 'Sign out?', path: user ? `${user.Name} on ${D.serverName || 'this server'}` : '', choices: [{ label: 'Stay signed in', safe: true }, { label: 'Sign out', run: () => D.farewell(() => T.ctx.signOut()) }] });
     D.settingsEntries = async () => {
         let user = null;
         try { user = await c().getCurrentUser(); } catch (e) { user = null; }
@@ -142,7 +142,7 @@
             a('Preferences', 'Controls', 'remote and pad', go('#/mypreferencescontrols')),
             a('Play', 'Play on…', 'send what plays to another device', () => D.playOn && D.playOn('play', null), { okLabel: 'choose' }),
             a('Play', 'Watch together…', 'join or start a group', () => D.playOn && D.playOn('together', null), { okLabel: 'choose' }),
-            a('This player', 'Client settings', 'theme, audio passthrough, display and HDR, about', go('#/mypreferencesmenu')),
+            a('This player', 'Client settings', 'theme, audio passthrough, display and HDR, about', go('#/mypreferencesmenu?pane=client')),
             a('This player', 'Classic view', 'jellyfin-web’s own pages, until you come back', () => { if (ui.settings && ui.settings.classic) ui.settings.classic(); else T.ctx.navigate('#/home?icefin=stock'); }),
             a('This player', 'Classic home', 'jellyfin-web’s home, once', go('#/home?icefin=stock')),
             a('Server', `${D.serverName || 'This server'}`, `${D.serverUp === false ? '○ not answering' : '● reachable'} · change server`, () => T.ctx.selectServer(), { okLabel: 'choose' })

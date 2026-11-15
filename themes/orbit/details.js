@@ -188,7 +188,7 @@
         return {
             title: it.Name, art: D.artOf(it, 300), round: it.Type === 'Person' || it.Type === 'MusicArtist', initials: (it.Type === 'Person' || it.Type === 'MusicArtist') && !(it.ImageTags || {}).Primary ? it.Name : null,
             icon: D.kindIcon(it.Type), count: false, details: true, pane: it,
-            itemsLabel: { BoxSet: 'In this collection', Playlist: 'In this playlist', Season: 'Episodes', Folder: 'In this folder', PhotoAlbum: 'In this album', CollectionFolder: 'In this folder' }[it.Type] || 'More', poster: D.artOf(it, 300), headTitle: it.Name,
+            itemsLabel: { MusicAlbum: 'Songs', BoxSet: 'In this collection', Playlist: 'In this playlist', Season: 'Episodes', Folder: 'In this folder', PhotoAlbum: 'In this album', CollectionFolder: 'In this folder' }[it.Type] || 'More', poster: D.artOf(it, 300), headTitle: it.Name,
             paneSub: factsLine(it), paneLine: factsMore(it),
             load: (C) => itemEntries(S, C || D.currentColumn)
         };

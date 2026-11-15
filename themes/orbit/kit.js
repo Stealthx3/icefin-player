@@ -140,6 +140,13 @@
         Folder: 'folder', CollectionFolder: 'folder', Genre: 'genre', MusicGenre: 'genre', Studio: 'studio'
     }[type] || 'item');
     // Initials for a person, an artist or a user with no picture (the Effects board).
+    // the goodbye jingle, then leave (Effects board: Exit and Sign out)
+    D.farewell = async (then) => {
+        let played = false;
+        try { played = !!(T.ctx.music && await T.ctx.music.jingle('goodbye')); } catch (e) { played = false; }
+        if (played) await new Promise((r) => setTimeout(r, 1500));
+        then();
+    };
     D.initials = (name) => (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 
     // ---- the ground: Orbit's navy gradient is the screen's own background (styles.css); nothing moves on it ----
