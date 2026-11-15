@@ -1,0 +1,24 @@
+{
+  "description": "Philips 39PFL3041 (tv), from the linuxhw EDID collection: Digital/Philips/PFL3041/C9CDF94D1303 (CC BY 4.0); 11 EDIDs share this audio capability set",
+  "monitor_name": "39PFL3041",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000,
+        88200
+      ]
+    }
+  ],
+  "expect": {
+    "ac3": "pcm",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Philips/PFL3041/C9CDF94D1303"
+}

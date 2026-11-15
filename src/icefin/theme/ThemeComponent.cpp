@@ -92,6 +92,7 @@ bool ThemeComponent::componentInitialize()
     qWarning().noquote() << "Icefin theme: saved theme" << id << "can't be used; engine off:" << m_errors.join("; ");
   if (auto* sec = SettingsComponent::Get().getSection(kSection)) {
     connect(sec, &SettingsSection::valuesUpdated, this, [this](const QVariantMap& v) {
+      if (v.contains("jingles") || v.contains("ambientMusic") || v.contains("musicVolume")) emit musicStateChanged();
       if (m_mirroring || !v.contains("active")) return;
       const QString picked = v.value("active").toString();
       if (picked != m_active && !setActiveTheme(picked, QString())) mirrorSetting();  // refused: show the real state again
@@ -99,6 +100,7 @@ bool ThemeComponent::componentInitialize()
   }
   connect(&Audio::state(), &Audio::AudioState::bitstreamChanged, this, [this](bool on) {
     if (on && m_uiSounds) m_uiSounds->stopAll();
+    emit musicStateChanged();
   });
   updateChoices();
   mirrorSetting();
@@ -223,6 +225,16 @@ void ThemeComponent::soundNote(bool played, const QString& event, const QString&
   m_soundState[k] = m_soundState.value(k).toInt() + 1;
   m_soundState["last"] = event;
   m_soundState["reason"] = reason;
+}
+
+QVariantMap ThemeComponent::musicState() const
+{
+  auto* sec = SettingsComponent::Get().getSection(kSection);
+  const auto val = [sec](const char* k, const QVariant& d) { return sec ? sec->value(k) : d; };
+  bool ok = false;
+  const int vol = val("musicVolume", "60").toString().toInt(&ok);
+  return {{"jingles", val("jingles", true).toBool()}, {"ambient", val("ambientMusic", true).toBool()},
+          {"volume", qBound(0, ok ? vol : 60, 100) / 100.0}, {"muted", Audio::state().uiSoundsMuted()}};
 }
 
 void ThemeComponent::playSound(const QString& event)
@@ -452,6 +464,13 @@ QVariantMap ThemeComponent::activePackage() const
   for (const QString& s : p.scripts) if (mayServe(p, s, t)) scripts << base + s;
   out["scripts"] = scripts;
   out["backdrop"] = !m_backdropUrl.isEmpty();  // the native backdrop draws under the page: themes make it transparent
+  // Music (9.33): what the web runtime may fetch and play.
+  QVariantMap music, jingles;
+  if (!p.musicStartup.isEmpty() && mayServe(p, p.musicStartup, t)) music["startup"] = base + p.musicStartup;
+  if (!p.musicAmbient.isEmpty() && mayServe(p, p.musicAmbient, t)) music["ambient"] = base + p.musicAmbient;
+  for (auto it = p.jingles.begin(); it != p.jingles.end(); ++it) if (mayServe(p, it.value(), t)) jingles[it.key()] = base + it.value();
+  music["jingles"] = jingles;
+  out["music"] = music;
   return out;
 }
 

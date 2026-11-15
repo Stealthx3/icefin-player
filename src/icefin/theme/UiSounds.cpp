@@ -2,6 +2,7 @@
 #include <QAudioDevice>
 #include <QAudioFormat>
 #include <QAudioSink>
+#include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
 #include <QIODevice>
@@ -10,11 +11,14 @@
 #include <QTimer>
 #include <QtEndian>
 #include <algorithm>
+#include <atomic>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 
 namespace Icefin::Theme
 {
+static std::atomic_bool s_exiting{false};  // set once the process is exiting (atexit, below)
 static constexpr int kRate = 48000;
 static constexpr int kChannels = 2;
 static constexpr int kIdleCloseMs = 4000;  // close the stream after this long without a sound
@@ -81,9 +85,18 @@ UiSounds::UiSounds(QObject* parent) : QObject(parent)
   connect(m_idle, &QTimer::timeout, this, [this]() {
     if (m_mixer->idle()) closeSink(); else m_idle->start();
   });
+  // The owning component is a static that outlives the application: the stream has to be closed while Qt Multimedia
+  // is still up. A normal quit closes it here; on exit() (Qt's X11 layer calls it when the display goes away) static
+  // teardown may already have taken Qt Multimedia, and stopping the stream then crashed, so it is left to the process.
+  if (auto* app = QCoreApplication::instance()) connect(app, &QCoreApplication::aboutToQuit, this, [this]() { closeSink(); });
+  static const bool atExit = (std::atexit([]() { s_exiting = true; }), true);
+  Q_UNUSED(atExit);
 }
 
-UiSounds::~UiSounds() { closeSink(); }
+UiSounds::~UiSounds()
+{
+  if (!s_exiting) closeSink();
+}
 
 void UiSounds::openSink()
 {

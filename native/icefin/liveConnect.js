@@ -179,12 +179,14 @@ html[data-icefin-motion="low"] #${ID}, html[data-icefin-motion="low"] #${ID} * {
         const c = T.ctx.apiClient();
         try { const it = await c.getItem(c.getCurrentUserId(), ids[0]); return it && it.Type === 'TvChannel' ? it : null; } catch (e) { return null; }
     }
-    function wrap() {
-        const p = pm();
-        if (!p || typeof p.play !== 'function' || p.play.icefinLive) return !!(p && p.play && p.play.icefinLive);
-        const orig = p.play.bind(p);
+    // The capability prompt (capabilityPrompt.js) wraps play() too and calls its saved original once answered: hook in
+    // under it, around that original, so a channel's dialog comes after any prompt and the prompt's wrapper stays
+    // outermost. Without the prompt (after WAIT_PROMPT_MS) play() itself is wrapped.
+    const WAIT_PROMPT_MS = 10000;
+    const started = Date.now();
+    function liveWrap(p, orig) {
         const wrapped = function (options) {
-            const result = orig(options);
+            const result = orig.apply(this, arguments);
             if (T.active()) {
                 channelOf(options).then((ch) => {
                     if (!ch) return;
@@ -197,7 +199,19 @@ html[data-icefin-motion="low"] #${ID}, html[data-icefin-motion="low"] #${ID} * {
             return result;
         };
         wrapped.icefinLive = true;
-        p.play = wrapped;
+        return wrapped;
+    }
+    function wrap() {
+        const p = pm();
+        if (!p || typeof p.play !== 'function') return false;
+        if (p.play.icefinWrapped) {
+            if (p.play.icefinOriginal && p.play.icefinOriginal.icefinLive) return true;
+            p.play.icefinOriginal = liveWrap(p, p.play.icefinOriginal);
+            return true;
+        }
+        if (p.play.icefinLive) return true;
+        if (Date.now() - started < WAIT_PROMPT_MS) return false;
+        p.play = liveWrap(p, p.play.bind(p));
         return true;
     }
     const tryWrap = setInterval(() => { if (wrap()) clearInterval(tryWrap); }, 500);

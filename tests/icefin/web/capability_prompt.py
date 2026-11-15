@@ -114,7 +114,9 @@ def main():
         js("window.NativeShell.openClientSettings(); true")
         page.wait_for("!!document.querySelector('#icefin-hardware-section .icefin-hw-forget')", timeout=30)
         check("Hardware section lists the remembered choice", "1" in js("document.querySelector('#icefin-hardware-section .icefin-hw-choices').textContent"))
-        js("document.querySelector('#icefin-hardware-section .icefin-hw-forget').click(); document.querySelector('.dialogContainer').remove(); true")
+        # Client Settings is a dialog, or the themed page when a theme with a settings area is up (alpha feedback).
+        js("document.querySelector('#icefin-hardware-section .icefin-hw-forget').click(); const c = document.querySelector('.dialogContainer'); "
+           "if (c) c.remove(); else if (location.hash.includes('pane=client')) history.back(); true")
         time.sleep(1)
         check("forgotten", js("new Promise(r => window.api.router.rememberedChoices(m => r(Object.keys(m).length)))") == 0)
         reset_events()

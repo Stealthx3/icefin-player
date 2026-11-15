@@ -2,10 +2,36 @@
   "schema": 1,
   "id": "baseline",
   "name": "Baseline",
-  "version": "1.0.0",
-  "description": "The stock web client look with every theme-engine layer switched on. It is the control for plugin compatibility runs (DECISIONS D10): a plugin that breaks under Baseline but not with the engine off points to an engine bug.",
+  "version": "2.0.0",
+  "description": "Stock jellyfin-web's TV layout, re-implemented with the theme engine, with the theme sounds, page-aware hints and controller support added. It is the control for plugin compatibility runs (DECISIONS D10) and where a plugin's themed UI is built first (D31).",
   "styles": "styles.css",
-  "scripts": ["baseline.js"],
+  "scripts": [
+    "baseline.js",
+    "kit.js",
+    "panel.js",
+    "itemmenu.js",
+    "home.js",
+    "library.js",
+    "details.js",
+    "browse.js",
+    "np.js",
+    "player.js",
+    "settings.js"
+  ],
+  "sounds": {
+    "focus": "sounds/focus.wav",
+    "select": "sounds/select.wav",
+    "back": "sounds/back.wav",
+    "navigate": "sounds/navigate.wav",
+    "error": "sounds/error.wav"
+  },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "goodbye": "music/goodbye.ogg"
+    }
+  },
   "schemes": {
     "dark": {
       "name": "Dark",
