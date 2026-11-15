@@ -137,6 +137,7 @@ import json, sys
 p, t = sys.argv[1], sys.argv[2]
 c = json.load(open(p))
 c["active"] = [x for x in c["active"] if x != t]
+c["queue"] = [x for x in c["queue"] if x != t]
 c["done"] = [x for x in c["done"] if x != t] + [t]
 open(p, "w").write(json.dumps(c, indent=2) + "\n")
 print(f"theme-pass: {t} done; active: {', '.join(c['active']) or 'none'}; next in the queue: {c['queue'][0] if c['queue'] else 'none'}")

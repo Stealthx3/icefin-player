@@ -7,7 +7,7 @@ decision D31).
 
 ## Rules
 - **One theme at a time** (the user, 2026-11-12). `scripts/icefin/theme-pipeline.json` holds the queue: `active`
-  (in a pass now), `queue` (next, alphabetical by the user's choice), `done`, `control` (themes never refined; none today). `theme-pass.sh start`
+  (in a pass now), `queue` (next, in the order the user picks; alphabetical by default), `done`, `control` (themes never refined; none today). `theme-pass.sh start`
   refuses a theme while another is active; `--force` only on the user's word. The user says when the next pass starts.
 - **Jellyfin-Web is the control; Baseline is the reference** (the user, 2026-11-12). The stock web client (the
   Jellyfin-Web choice, the engine off) is the pure control and is never changed. Baseline re-implements that stock
