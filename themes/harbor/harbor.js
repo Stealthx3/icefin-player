@@ -45,7 +45,12 @@
         music: [['Albums', 0], ['Album artists', 2], ['Artists', 3], ['Playlists', 4], ['Songs', 5], ['Genres', 6]]
     };
     function categoriesFor(client, section, views) {
-        if (!section.view) return views.map((v) => ({ label: v.Name, hash: libraryHash(client, v) }));
+        if (!section.view) {  // Home: each library, then Play on and Watch together (9.52; Kodi keeps such actions in the home's rows)
+            const D = window.icefinHarbor;
+            const out = views.map((v) => ({ label: v.Name, hash: libraryHash(client, v) }));
+            if (D && D.playOn) out.push({ label: 'Play on…', run: () => D.playOn('play', null) }, { label: 'Watch together…', run: () => D.playOn('together', null) });
+            return out;
+        }
         const v = section.view, tabs = TABS[v.CollectionType];
         if (!tabs) return [{ label: 'All items', hash: libraryHash(client, v) }];
         return tabs.map(([label, tab]) => ({ label, hash: `${libraryHash(client, v)}&tab=${tab}` }));
@@ -144,7 +149,7 @@
         t.setAttribute('aria-label', cat.label);
         t.tabIndex = -1;
         t.append(el('div', 'hb-tile-mark', cat.label.charAt(0)), el('div', 'hb-tile-label', cat.label));
-        t.addEventListener('click', () => { location.hash = cat.hash; });
+        t.addEventListener('click', () => { if (cat.run) cat.run(); else location.hash = cat.hash; });
         return t;
     }
 
