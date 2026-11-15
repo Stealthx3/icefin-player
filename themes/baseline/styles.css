@@ -229,3 +229,43 @@ textarea.bl-input { min-height: 6em; resize: none; }
 .bl-li-sub { font-size: 0.6em; margin-top: 0.3em; }
 .bl-li-overview { font-size: 0.6em; margin-top: 0.4em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .bl-li-aside { font-size: 0.65em; margin-left: 1em; }
+
+/* ---- search (stock's TV search: the field, the on-page letters, Suggestions) ---- */
+.bl-searchfields { display: flex; align-items: center; gap: 0.5em; padding: 2.2em 3.3% 0.2em; }
+.bl-search-ic { color: #aaa; font-size: 2em !important; }
+.bl-search-input { flex: 1; box-sizing: border-box; padding: 0.4em 0.25em; border: 0.15em solid rgba(255, 255, 255, 0.09); border-radius: 0.2em; background: rgba(255, 255, 255, 0.09);
+  color: var(--bl-text); font: inherit; font-size: 1.1em; outline: none; }
+.bl-search-input:focus, .bl-search-input.icefin-focused { border-color: var(--bl-accent); }
+.bl-alpha-h { display: flex; flex-direction: column; align-items: center; padding-left: calc(3.3% + 2em); }
+.bl-alpha-h-row { display: flex; justify-content: center; }
+.bl-alpha-h-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.15em; padding: 0.05em 0.15em; margin: 0; border: 0; border-radius: 0.1em; background: transparent;
+  color: var(--bl-text); font: inherit; font-size: 0.65em; cursor: pointer; outline: none; }
+.bl-alpha-h-btn .bl-ic { font-size: 1.1em; }
+.bl-alpha-h-btn.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-suggestions { text-align: center; padding: 1em 3.3%; }
+.bl-suggestions-title { font-size: 1.5em; font-weight: 400; margin: 0 0 0.5em; }
+.bl-suggestion { display: block; margin: 0 auto 0.55em; padding: 0.1em 0.4em; border: 0; border-radius: 0.2em; background: transparent; color: var(--bl-accent); font: inherit; font-weight: 700; font-size: 0.85em; line-height: 1.35; cursor: pointer; outline: none; }
+.bl-suggestion.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-no-items.centered { text-align: center; }
+
+/* ---- Live TV's guide (stock's: the day strip, half-hour slots 216px wide at 720p, 58px rows, the focused cell filled) ---- */
+.bl-guide-page { display: flex; flex-direction: column; overflow: hidden; }
+.bl-guide-days { display: flex; justify-content: center; gap: 0.15em; padding: 0.3em 0 0.4em; }
+.bl-guide-day { display: flex; flex-direction: column; align-items: center; padding: 0.15em 0.75em; border: 0; border-radius: 0.2em; background: transparent; color: var(--bl-text); font: inherit; font-size: 0.6em; font-weight: 600; cursor: pointer; outline: none; line-height: 1.3; }
+.bl-guide-day.active { color: var(--bl-accent); }
+.bl-guide-day.icefin-focused { background: var(--bl-accent); color: var(--bl-on-accent); }
+.bl-guide { flex: 1; min-height: 0; position: relative; font-size: 1em; }
+.bl-guide .icefin-guide-times { position: relative; height: 2.9em; margin-left: 16.1vw; box-sizing: border-box; }
+.bl-guide .icefin-guide-time { top: 0; bottom: 0; padding-left: 0.6em; line-height: 2.9em; font-size: 1.1em; color: var(--bl-text); }
+.bl-guide .icefin-guide-row { display: flex; height: 2.9em; box-sizing: border-box; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.bl-guide .icefin-guide-channel { width: 16.1vw; flex: none; display: flex; align-items: center; gap: 0.8em; padding: 0 0.8em 0 2em; box-sizing: border-box; white-space: nowrap; overflow: hidden; border-right: 1px solid rgba(255, 255, 255, 0.05); }
+.bl-gch-no { min-width: 1.5em; text-align: center; }
+.bl-gch-name { overflow: hidden; text-overflow: ellipsis; }
+.bl-guide .icefin-guide-lane { flex: 1; }
+.bl-guide .icefin-guide-cell { box-sizing: border-box; padding: 0 0.6em; display: flex; align-items: center; gap: 0.3em; white-space: nowrap; overflow: hidden; border-left: 1px solid rgba(255, 255, 255, 0.05); outline: none; color: var(--bl-text); }
+.bl-guide .icefin-guide-live { background: #1e1e1e; }
+.bl-guide .icefin-guide-cell.icefin-focused, .bl-guide .icefin-guide-channel.icefin-focused { background: var(--bl-accent) !important; color: var(--bl-on-accent); }
+.bl-guide .icefin-guide-now { position: absolute; top: 2.9em; bottom: 0; width: 2px; background: var(--bl-accent); z-index: 2; pointer-events: none; }
+.bl-gp-title { overflow: hidden; text-overflow: ellipsis; }
+.bl-gp-rec, .bl-rec { color: #d15353; font-size: 0.9em !important; }
+.bl-schedule { padding: 0 3.3%; }
