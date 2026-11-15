@@ -27,6 +27,10 @@ jobs:
         run: python3 scripts/icefin/theme-contrast.py
       - name: Theme sounds match their recipes
         run: python3 scripts/icefin/theme-sounds.py --check
+      - name: Theme coverage pages match the walks
+        run: python3 scripts/icefin/theme-coverage.py --check
+      - name: Theme music matches its recipes
+        run: python3 scripts/icefin/theme-music.py --check
       - name: Theme packages match the shared schemas
         run: |
           python3 -m venv /tmp/schema-venv
