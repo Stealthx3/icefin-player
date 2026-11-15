@@ -17,6 +17,10 @@ struct Eld
   QString monitorName;
   int lpcmChannels = 0;     // max LPCM channels (0 = no LPCM descriptor)
   QMap<Codec, int> codecs;  // bitstream formats listed, with their max channel count
+  // What the HDMI PCM can open (PLAN 3.9): the kernel limits it to the union of the SADs' rates (plus the basic 32,
+  // 44.1 and 48 kHz) and their largest channel count (snd_hdmi_eld_update_pcm_info). 0 = not listed.
+  int maxRate = 0;
+  int maxChannels = 0;
   bool stale = false;       // set by EldMonitor when this is a remembered result
 
   bool supports(Codec c) const { return codecs.contains(c); }
