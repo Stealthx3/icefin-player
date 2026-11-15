@@ -2,8 +2,8 @@
  "run": {
   "theme": "harbor",
   "where": "lab",
-  "started": "2026-11-15T22:34:52Z",
-  "commit": "8fc567ae",
+  "started": "2026-11-15T22:45:19Z",
+  "commit": "2708aad4",
   "branch": "theme/harbor",
   "player": {
    "version": "lab build",
@@ -15,11 +15,11 @@
    720,
    1
   ],
-  "finished": "2026-11-15T22:38:58Z",
+  "finished": "2026-11-15T22:49:19Z",
   "summary": {
    "entries": 69,
-   "theme": 55,
-   "gaps": 7,
+   "theme": 57,
+   "gaps": 5,
    "checksFailing": 0,
    "skipped": 6
   }
@@ -1646,14 +1646,12 @@
    "name": "Play on (cast to a device)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.headerCastButton",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Play on\u2026 PPlay on\u2026",
    "hash": "#/home",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1677,14 +1675,12 @@
    "name": "Watch together (SyncPlay)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.headerSyncButton",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Watch together\u2026 WWatch togethe",
    "hash": "#/home",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1727,9 +1723,7 @@
      "detail": ""
     }
    ],
-   "warnings": [
-    "console: SyncPlay: unexpected error listing groups: Error: ActionSheet closed without resolving"
-   ],
+   "warnings": [],
    "shot": "56-new-playlist.png",
    "note": ""
   },
