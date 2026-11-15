@@ -285,9 +285,11 @@ void SystemComponent::resolveUrl(const QString& url, std::function<void(const QS
 {
   // Abort any pending resolve
   if (m_resolveUrlReply) {
-    m_resolveUrlReply->abort();
-    m_resolveUrlReply->deleteLater();
-    m_resolveUrlReply = nullptr;
+    // ICEFIN-HOOK: abort() runs the finished handler at once, which nulls the member; take the reply first
+    QNetworkReply* reply = m_resolveUrlReply;
+    m_resolveUrlReply = nullptr;  // ICEFIN-HOOK: null before abort
+    reply->abort();  // ICEFIN-HOOK: abort via the local
+    reply->deleteLater();  // ICEFIN-HOOK: delete via the local
   }
 
   QNetworkRequest request(url);
@@ -334,9 +336,11 @@ void SystemComponent::checkServerConnectivity(QString url)
   }
 
   if (m_connectivityCheckReply) {
-    m_connectivityCheckReply->abort();
-    m_connectivityCheckReply->deleteLater();
-    m_connectivityCheckReply = nullptr;
+    // ICEFIN-HOOK: abort() runs the finished handler at once, which nulls the member; take the reply first
+    QNetworkReply* reply = m_connectivityCheckReply;
+    m_connectivityCheckReply = nullptr;  // ICEFIN-HOOK: null before abort
+    reply->abort();  // ICEFIN-HOOK: abort via the local
+    reply->deleteLater();  // ICEFIN-HOOK: delete via the local
   }
 
   // Store for retry
