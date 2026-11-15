@@ -389,3 +389,154 @@ capture). Layout, timing and colours only; no tiles, icons, sounds, fonts or nam
 - **Keyboard**: a dark grid of square keys, 10 wide, a side column (Backspace, Symbols, Accents, Caps, Enter) and a
   wide Space; the suggestion box above, left.
 - **Not found**: the system guide of this version (not shown in either source); a full-screen video player bar.
+
+## Gate 1 map: every checklist item (2026-11-15)
+
+The design for the pass: 26 boards on the "Mosaic Screens" canvas, https://claude.ai/artifact/UMJmh78uAnyWMbbYEZaCaJ (Gate 1), drawn from walk 1, `docs/themes/references/mosaic.json` and two walkthroughs of the target (measurements only, above). Every item below is one of: **board**, **tests** (what the build's tests check), **not in the target** (a reason, for your call) or **not in this pass**. None is missing. Totals: 122 board, 6 not in the target, 14 tests, 1 not in this pass.
+
+| § | Item | Covered by | Where |
+|---|---|---|---|
+| 1.1 | The target's home | board | Home (pivots of flat tiles in three sizes, the current pivot dark) |
+| 1.1 | Home chrome (clock, Settings, Search) | board | Home (you, server and clock top right; search and settings are home pivots and in the guide) |
+| 1.1 | The server's status | board | Home (the account: server and online, opens Choose a server) |
+| 1.1 | Each library shows what it is | board | HomeMore (each library's pivot: its newest as a live tile, green tiles into its sections) |
+| 1.1 | A preview or focus state | board | Home, Main (the focused tile lifts 107 % with a white frame; live tiles cycle); Decisions 6 |
+| 1.1 | Sub-views of the home | board | Home, HomeMore (pivots are the sub-views; Continue watching and Next up are live tiles) |
+| 1.1 | The order is the user's | board | Prefs (Settings › Home: switches and Move); Decisions 8 |
+| 1.1 | The music capsule | board | Home (the now-playing strip), Music |
+| 1.1 | Exit at the root | board | Dialogs (exit icefin?, cancel focused) |
+| 1.2 | A shared frame | board | every board (pivot or hub name, account top right, hints bottom left) |
+| 1.2 | A colour per content kind | not in the target | the target is one green; kinds shown by tile glyphs and art |
+| 1.2 | Now playing on every framed screen | board | Home (the strip), Guide (now playing on its home tab) |
+| 1.3 | Every library type themed | board | LibMovies, LibLists, LibLiveTV, LibMore |
+| 1.3 | Section tabs per library | board | LibMovies, LibLists, LibLiveTV (the hub's section pivot) |
+| 1.3 | Drill-downs with Play all and Shuffle | board | LibLists (a genre, an album), DetailsMore (collection) |
+| 1.3 | Sort and filter panel, A–Z rail | board | LibMore (the side panel), LibMovies (LT / RT by letter, the letter by the count) |
+| 1.3 | Grids page like the target | board | LibMovies (posters run sideways, the grid slides with focus) |
+| 1.3 | Playlists, photos and home videos, books | board | LibLists, LibMore |
+| 1.3 | Series: seasons as tabs, Next up first | board | DetailsSeries (a pivot section per season; play next up on the overview) |
+| 1.3 | Continue Watching and Next Up screens | board | Home (live tiles open their lists), Guide (home tab) |
+| 1.3 | Search with filters and keyboard | board | Search |
+| 1.3 | Empty states | board | Framed (nothing here yet, with a tile that helps), Search |
+| 1.4 | Every item type with every function | board | DetailsMovie, DetailsSeries, DetailsMore |
+| 1.4 | In the theme's frame, tabs following the scroll | board | DetailsMovie (the item's section pivot); Decisions 2 |
+| 1.4 | Clear labels | board | DetailsMovie (38 min left), DetailsSeries (2 of 10), DetailsMore (counts) |
+| 1.4 | Placeholders (initials, chapter times) | board | SignIn (initials), PlayerMore (chapter times), Effects |
+| 1.4 | Pickers as the theme's cards | board | Menus, PlayerMore (white panels) |
+| 1.4 | Back to the top on return | tests | the pass test: the front panel's actions in view after a picker closes |
+| 1.5 | The theme's own item menu | board | Menus |
+| 1.5 | Each dialog themed and complete | board | Menus, Dialogs |
+| 1.5 | jellyfin-web's dialogs as the theme's cards | board | Framed (editors in the white panel), Dialogs |
+| 1.5 | A notice of the theme's own | board | Dialogs (toast) |
+| 1.6 | Channels, guide, recordings, schedule | board | LibLiveTV |
+| 1.6 | A programme's sheet with steppers | board | Framed (record early / late steppers), LibLiveTV |
+| 1.6 | Previews that fall back | board | LibLiveTV, DetailsMore (channel), Effects |
+| 1.6 | Connecting dialog and its error | board | PlayerExtras, Dialogs |
+| 1.7 | Now playing, Queue, Lyrics | board | Music |
+| 1.7 | Instant mix | board | Framed (a song's, album's or artist's options), Music |
+| 1.8 | The theme's controls | board | Player |
+| 1.8 | Pickers over the video | board | PlayerMore |
+| 1.8 | Skip prompts and Up next | board | PlayerExtras |
+| 1.8 | Live TV in the player | board | PlayerExtras |
+| 1.8 | The web fallback and osd tokens | board | Player (osd tokens kept for jellyfin-web's controls under More) |
+| 1.8 | A readability shade | board | Player |
+| 1.8 | Photos and books framed | board | LibMore |
+| 1.9 | Play on and Watch together | board | PlayerMore (settings), Guide (home tab) |
+| 1.10 | The settings hub | board | Settings (the settings pivot of green tiles) |
+| 1.10 | Client Settings in the frame | board | Settings |
+| 1.10 | Settings › Home | board | Prefs |
+| 1.10 | The preference pages framed | board | Prefs |
+| 1.10 | The user's menu (You) | board | Prefs, Guide (you tab) |
+| 1.10 | Profile and Quick Connect approve | board | Prefs |
+| 1.11 | Sign in | board | SignIn |
+| 1.11 | Choose and add a server | board | SignIn |
+| 1.11 | Nothing before sign-in; stock without a theme | board | SignIn (note) |
+| 1.12 | A frame around every page | board | Framed |
+| 1.12 | jellyfin-web's chrome hidden | board | Framed |
+| 1.12 | The ground on its own layer | tests | the pass test: nothing stale over video at playback start |
+| 1.12 | Content clears the frame | board | Framed; tests (focus never under the frame) |
+| 1.12 | Fields, buttons, switches in the look | board | Framed, Prefs |
+| 1.12 | The on-screen keyboard | board | Input, Search, SignIn |
+| 1.12 | Dashboard stays stock | board | Framed (reached from a settings tile) |
+| 1.12 | A way out to stock | board | HomeMore (settings pivot), Settings |
+| 2.1 | Everything the mouse can use, the pad reaches | board | Input; tests (reach walk) |
+| 2.1 | Reached by presses alone | tests | the reach walk |
+| 2.1 | Only the visible page's items | board | Input; tests |
+| 2.1 | Grids page at their edges | board | LibMovies, Input |
+| 2.1 | Modal cards hold focus | board | Input; tests |
+| 2.1 | Framed pages move as one | board | Input |
+| 2.2 | Focus always shown | board | Input |
+| 2.2 | Room for the glow | board | Input (room for the 107 % lift); tests (no clipped lift) |
+| 2.2 | Glow over an engine shadow | tests | the polish test (the lift and frame over the engine's focus) |
+| 2.2 | Hover apart from focus | board | Input |
+| 2.3 | The focused item's caption | board | Player (words under the buttons), LibMovies (facts under the grid); Input |
+| 2.3 | A name pill under the focused item | board | Player (the word under each square button) |
+| 2.3 | Page-aware controller hints | board | Input (per pad family); every board's hints; Decisions 7 |
+| 2.4 | Back, innermost first | board | Input |
+| 2.4 | Menu acts on the focused item | board | Input, Menus |
+| 2.4 | Play/Pause on the focused item | board | Input, LibMovies |
+| 2.4 | Search and Home from anywhere | board | Input, Guide |
+| 2.4 | Steppers | board | Framed, PlayerMore |
+| 2.4 | Destructive actions confirm | board | Menus (cancel focused, delete red), Dialogs |
+| 2.4 | Focus comes back where it was | board | Input |
+| 2.5 | Hover moves focus | board | Input |
+| 2.5 | Clicking outside closes | board | Guide, LibMore |
+| 2.5 | Pointer seeking | board | Input, Player |
+| 2.5 | The physical keyboard | board | Search, Prefs (Quick Connect digits) |
+| 2.5 | Text fields and the keyboard | board | Search |
+| 2.6 | One move model | board | Input, Music (queue), Prefs (Settings › Home) |
+| 2.6 | By pointer | board | Input |
+| 2.7 | Any input brings the controls back | board | Player |
+| 2.7 | ◀▶ on the time line | board | Player |
+| 2.7 | A new skip prompt takes focus | board | PlayerExtras |
+| 3 | A focus animation on every kind | board | Motion, Input |
+| 3 | Page turns | board | Motion |
+| 3 | The preview opens from the item | board | Motion (a tile's art grows into the details backdrop) |
+| 3 | Tabs | board | Motion |
+| 3 | The caption cross-fades | board | Motion, Player (button words) |
+| 3 | Shared-element flights | board | Motion (tile → details, back to the tile) |
+| 3 | Sheets rise and fall | board | Motion |
+| 3 | Side panels slide | board | Motion, LibMore |
+| 3 | Bar caption and hints step back | tests | the polish test |
+| 3 | Now playing slides | board | Motion (the strip rises, notices slide up), Home |
+| 3 | Player chrome | board | Motion, Player |
+| 3 | Progress lines, lyrics | board | Motion, Music |
+| 3 | Ambient loops on decoration only | board | Motion, Effects (live tiles only, off in low motion) |
+| 3 | Low motion | board | Motion |
+| 4 | A signature ground | board | Effects, Main (the still grey field) |
+| 4 | Item framing | board | Main, Effects (flat square tiles, the white frame on focus) |
+| 4 | Reflections | not in the target | the target is flat; none added (Effects) |
+| 4 | Fade masks | not in the target | grids run off the screen's edge as the target's do; none added (Effects) |
+| 4 | Original illustrations per kind | board | Main, HomeMore (white glyphs on green tiles per kind) |
+| 4 | Live tiles | board | Effects, Home |
+| 4 | Object metaphors | not in the target | the target is flat tiles; none added |
+| 4 | A muted preview | not in the target | Decisions 6 |
+| 4 | Fallbacks for missing pictures | board | Effects, LibLiveTV, DetailsMore (a green tile with the kind's glyph) |
+| 4 | Custom chrome geometry | board | Guide (a panel with its own pivot), Player (square buttons) |
+| 4 | Glows on progress and now | not in the target | no glows: progress and the now line are flat green (LibLiveTV, Player) |
+| 4 | A readability shade | board | Player |
+| 5 | Five UI sounds | board | Effects (new recipe in the target's character) |
+| 5 | Each sound on its action | tests | the pass test |
+| 5 | Startup jingle and ambient loop | board | Effects; Decisions 5 |
+| 5 | Jingles where the target has them | board | Effects (guide, goodbye); Decisions 5 |
+| 5 | The ambient loop waits | board | Effects |
+| 5 | Client Settings apply | board | Settings, Effects |
+| 6 | theme.json complete | board | Effects |
+| 6 | Every colour token, dark scheme, contrast | board | Effects; tests (theme-contrast) |
+| 6 | Shape tokens | board | Effects |
+| 6 | The fallback player's tokens | board | Effects |
+| 6 | Type | board | Effects; Decisions 4 |
+| 6 | Geometry from the reference | tests | clone_layout.py --theme mosaic |
+| 6 | Original illustrations and icons; server branding | board | Main, SignIn (icefin, the server's name) |
+| 7 | Nothing runs past the sides | tests | the walk's audit |
+| 7 | 16:9, wider, 4K | board | LibMovies, Effects; tests |
+| 7 | Custom CSS and plugins don't break it | tests | the lab's plugin servers |
+| 7 | The overlay is the theme's own | board | Guide; tests |
+| 7 | The engine stays theme-agnostic | tests | theme lint |
+| 8 | theme_orbit.py and clone_layout | tests | theme_mosaic.py and clone_layout, kept and extended |
+| 8 | A reach walk | tests | mosaic_pass.py with a virtual pad |
+| 8 | A polish test | tests | mosaic_pass.py, low motion included |
+| 8 | Player, menu, music, sign-in, framed pages | tests | mosaic_pass.py |
+| 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Mosaic's walks and tests |
+| 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
+
