@@ -36,7 +36,7 @@ html[data-icefin-theme] { --icefin-baseline-styles: on; }
 .bl-tab.active { color: var(--bl-text-strong); }
 .bl-tab.icefin-focused, .bl-tab:hover { color: var(--bl-accent); }
 
-/* ---- sections and rows (stock's verticalSection, sectionTitle, emby-scroller with centred focus) ---- */
+/* ---- sections and rows (stock's verticalSection, sectionTitle, its scroller with centred focus) ---- */
 .bl-section { margin: 0; }
 .bl-section-title { margin: 0; padding: 0.75em 0 0.3em var(--bl-pad-x); font-size: 1.5em; font-weight: 400; color: var(--bl-text); display: flex; align-items: center; gap: 0.2em; }
 .bl-title-chevron { font-size: 1em !important; }
