@@ -30,6 +30,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
 
 ### Fixed
+- A crash when a new item started while the last one's cover art was still downloading (for the desktop's media controls). The same mistake could crash Icefin when the server address check or a URL lookup was replaced by a newer one.
 - Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
 - Escape on an open drop-down in Client Settings closes just the list again, instead of the whole Client Settings page.
 - A theme's startup jingle plays when Icefin starts with that theme already chosen; something briefly in its way at launch used to skip it for the whole run. The log says why it waits.
