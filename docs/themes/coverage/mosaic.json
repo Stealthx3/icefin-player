@@ -2,8 +2,8 @@
  "run": {
   "theme": "mosaic",
   "where": "lab",
-  "started": "2026-11-15T19:50:45Z",
-  "commit": "e5f28289",
+  "started": "2026-11-15T20:31:25Z",
+  "commit": "aac28452",
   "branch": "theme/mosaic",
   "player": {
    "version": "lab build",
@@ -15,12 +15,12 @@
    720,
    1
   ],
-  "finished": "2026-11-15T19:55:10Z",
+  "finished": "2026-11-15T20:35:21Z",
   "summary": {
    "entries": 69,
-   "theme": 14,
-   "gaps": 48,
-   "checksFailing": 25,
+   "theme": 57,
+   "gaps": 5,
+   "checksFailing": 0,
    "skipped": 6
   }
  },
@@ -89,8 +89,8 @@
    "name": "Search",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/search",
    "title": "Search",
@@ -118,8 +118,8 @@
    "name": "Movies",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Movies",
@@ -128,8 +128,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -147,8 +147,8 @@
    "name": "Movies: Suggestions tab",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=acd8e106d5d34eb8b2db83889cd6ccac&tab=1",
    "title": "Movies",
@@ -157,8 +157,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -176,8 +176,8 @@
    "name": "Shows",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/tv?topParentId=a656b907eb3a73532e40e44b968d0225&collectionType=tvshows&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Shows",
@@ -186,8 +186,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -205,8 +205,8 @@
    "name": "Music",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/music?topParentId=7e64e319657a9516ec78490da03edccb&collectionType=music&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Music",
@@ -215,8 +215,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -234,8 +234,8 @@
    "name": "Live TV",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/livetv?serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Music",
@@ -244,8 +244,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -263,8 +263,8 @@
    "name": "Live TV: Guide",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/livetv?tab=1&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Music",
@@ -273,8 +273,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -292,8 +292,8 @@
    "name": "Live TV: Recordings",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/livetv?tab=3&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Music",
@@ -302,8 +302,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -321,8 +321,8 @@
    "name": "Home videos and photos",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/homevideos?topParentId=52f1cc5cfe5ba8c9452cebe7bca9e026&collectionType=homevideos&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Photos",
@@ -331,8 +331,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -362,8 +362,8 @@
    "name": "Books",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/list?parentId=4e985111ed7f570b595204d82adb02f3&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Books",
@@ -403,8 +403,8 @@
    "name": "Collections",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/list?parentId=9d7ad6afe9afa2dab1a2f6e00ad28fa6&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Collections",
@@ -432,8 +432,8 @@
    "name": "Playlists",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/list?parentId=dfda981e73153b6cf843023c6ab89649&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Playlists",
@@ -473,8 +473,8 @@
    "name": "A genre's list",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/list?genreId=08d31605d366d63a7a924f944b4417f1&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Comedy",
@@ -483,8 +483,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -787,18 +787,18 @@
    "name": "Book",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
-   "hash": "#/details?id=bc5f8061f84bbbb3be845840fd5a8c88&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock",
+   "hash": "#/details?id=bc5f8061f84bbbb3be845840fd5a8c88&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
    "dialogs": [],
    "osd": "bar",
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -816,18 +816,18 @@
    "name": "Photo album",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
-   "hash": "#/details?id=691302498fee3a171bf46556dc2c8c72&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock",
+   "hash": "#/details?id=691302498fee3a171bf46556dc2c8c72&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
    "dialogs": [],
    "osd": "bar",
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -857,18 +857,18 @@
    "name": "Live TV channel",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
-   "hash": "#/details?id=01fe10144736105e6838b2f06b802fbe&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock",
+   "hash": "#/details?id=01fe10144736105e6838b2f06b802fbe&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
    "dialogs": [],
    "osd": "bar",
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -944,7 +944,7 @@
    "name": "Display preferences",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
+   "state": "framed",
    "gap": true,
    "opened": "",
    "hash": "#/mypreferencesdisplay?userId=b0bbac74d4ba41dba1ca8cc2bfe5733b",
@@ -954,8 +954,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -973,8 +973,8 @@
    "name": "Home preferences",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/mypreferenceshome?userId=b0bbac74d4ba41dba1ca8cc2bfe5733b",
    "title": "Home",
@@ -983,8 +983,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1002,7 +1002,7 @@
    "name": "Playback preferences",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
+   "state": "framed",
    "gap": true,
    "opened": "",
    "hash": "#/mypreferencesplayback?userId=b0bbac74d4ba41dba1ca8cc2bfe5733b",
@@ -1012,8 +1012,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1031,7 +1031,7 @@
    "name": "Subtitle preferences",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
+   "state": "framed",
    "gap": true,
    "opened": "",
    "hash": "#/mypreferencessubtitles?userId=b0bbac74d4ba41dba1ca8cc2bfe5733b",
@@ -1041,8 +1041,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1060,7 +1060,7 @@
    "name": "Controls preferences",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
+   "state": "framed",
    "gap": true,
    "opened": "",
    "hash": "#/mypreferencescontrols?userId=b0bbac74d4ba41dba1ca8cc2bfe5733b",
@@ -1070,8 +1070,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1089,8 +1089,8 @@
    "name": "Profile",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/userprofile?userId=b0bbac74d4ba41dba1ca8cc2bfe5733b",
    "title": "icefin",
@@ -1099,8 +1099,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1120,8 +1120,8 @@
    "name": "Quick Connect",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/quickconnect",
    "title": "Quick Connect",
@@ -1130,8 +1130,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1149,8 +1149,8 @@
    "name": "Choose a server",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/selectserver",
    "title": "",
@@ -1159,8 +1159,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1178,8 +1178,8 @@
    "name": "Add a server",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/addserver",
    "title": "",
@@ -1188,8 +1188,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1207,8 +1207,8 @@
    "name": "Sign in",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/login?serverid=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
@@ -1236,8 +1236,8 @@
    "name": "Forgot password",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/forgotpassword",
    "title": "",
@@ -1246,8 +1246,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1283,20 +1283,18 @@
    "name": "Item menu (More options)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "theme:[data-action=\"more\"]",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:More options\u2026, add to a playli",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1308,17 +1306,19 @@
    "shot": "42-item-menu.png",
    "note": "",
    "entries": [
-    "addtocollection",
-    "addtoplaylist",
-    "download",
-    "copy-stream",
-    "delete",
-    "edit",
-    "editimages",
-    "editsubtitles",
-    "identify",
-    "moremediainfo",
-    "refresh"
+    "Add to a playlist\u2026",
+    "Add to a collection\u2026",
+    "Mark as not watched",
+    "Favourite",
+    "Media info",
+    "Find subtitles\u2026",
+    "Refresh metadata\u2026",
+    "Edit details\u2026",
+    "Edit images\u2026",
+    "Identify\u2026",
+    "Copy stream URL",
+    "Download",
+    "Delete"
    ]
   },
   {
@@ -1327,14 +1327,12 @@
    "name": "Add to playlist",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:addtoplaylist",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Add to a playlist\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1358,14 +1356,12 @@
    "name": "Add to collection",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:addtocollection",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Add to a collection\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1389,14 +1385,12 @@
    "name": "Media info",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:moremediainfo",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Media info",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1420,14 +1414,12 @@
    "name": "Refresh metadata",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:refresh",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Refresh metadata\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1451,14 +1443,12 @@
    "name": "Edit metadata",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:edit",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Edit details\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1482,14 +1472,12 @@
    "name": "Edit images",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:editimages",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Edit images\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1513,14 +1501,12 @@
    "name": "Find subtitles",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:editsubtitles",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Find subtitles\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1544,14 +1530,12 @@
    "name": "Identify",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:identify",
-   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac&icefin=stock&icefinmore=1",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Identify\u2026",
+   "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1575,17 +1559,28 @@
    "name": "Audio track picker",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "jellyfin-web:.selectAudio",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Audio, OPUS - Mono Audio: OPUS",
    "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
    "dialogs": [],
    "osd": "bar",
-   "checks": [],
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
    "warnings": [],
    "shot": "51-picker-audio.png",
-   "note": "nothing opened"
+   "note": ""
   },
   {
    "id": "picker-subtitles",
@@ -1593,17 +1588,28 @@
    "name": "Subtitle picker",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "jellyfin-web:.selectSubtitles",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Subtitles, Off Subtitles: Off ",
    "hash": "#/details?id=94c319c2bbd07a19dc6163b64b5b0bf7&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "",
    "dialogs": [],
    "osd": "bar",
-   "checks": [],
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
    "warnings": [],
    "shot": "52-picker-subtitles.png",
-   "note": "nothing opened"
+   "note": ""
   },
   {
    "id": "sort-filter",
@@ -1611,17 +1617,28 @@
    "name": "Sort and filter",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Sort and filter Sort and filte",
    "hash": "#/movies?topParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&collectionType=movies&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Movies",
    "dialogs": [],
    "osd": "bar",
-   "checks": [],
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
+   ],
    "warnings": [],
    "shot": "53-sort-filter.png",
-   "note": "nothing opened"
+   "note": ""
   },
   {
    "id": "play-on",
@@ -1629,14 +1646,12 @@
    "name": "Play on (cast to a device)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.headerCastButton",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Play on Play on",
    "hash": "#/home",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1660,14 +1675,12 @@
    "name": "Watch together (SyncPlay)",
    "kind": "dialog",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.headerSyncButton",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Watch together Watch together",
    "hash": "#/home",
    "title": "",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1691,19 +1704,28 @@
    "name": "New playlist",
    "kind": "dialog",
    "target": "theme",
-   "state": "missing",
-   "gap": true,
-   "opened": "",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:New playlist\u2026 New playlist\u2026",
    "hash": "#/list?parentId=dfda981e73153b6cf843023c6ab89649&serverId=acd8e106d5d34eb8b2db83889cd6ccac",
    "title": "Playlists",
    "dialogs": [],
    "osd": "bar",
-   "checks": [],
-   "warnings": [
-    "console: SyncPlay: unexpected error listing groups: Error: ActionSheet closed without resolving"
+   "checks": [
+    {
+     "name": "focus",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "edges",
+     "ok": true,
+     "detail": ""
+    }
    ],
+   "warnings": [],
    "shot": "56-new-playlist.png",
-   "note": "nothing opened"
+   "note": ""
   },
   {
    "id": "music-capsule",
@@ -1740,8 +1762,8 @@
    "name": "Now playing and queue",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/queue",
    "title": "",
@@ -1750,8 +1772,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1769,8 +1791,8 @@
    "name": "Lyrics",
    "kind": "screen",
    "target": "theme",
-   "state": "stock",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "",
    "hash": "#/lyrics",
    "title": "Lyrics",
@@ -1779,8 +1801,8 @@
    "checks": [
     {
      "name": "focus",
-     "ok": false,
-     "detail": "nothing has focus: a controller can't start"
+     "ok": true,
+     "detail": ""
     },
     {
      "name": "edges",
@@ -1798,8 +1820,8 @@
    "name": "Player controls",
    "kind": "player",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
+   "state": "theme",
+   "gap": false,
    "opened": "pointer",
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
@@ -1827,14 +1849,12 @@
    "name": "Player: audio tracks",
    "kind": "player",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.btnAudio",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Audio",
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
-   "dialogs": [
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1858,15 +1878,12 @@
    "name": "Player: subtitles",
    "kind": "player",
    "target": "theme",
-   "state": "restyled",
-   "gap": true,
-   "opened": "jellyfin-web:.btnSubtitles",
+   "state": "theme",
+   "gap": false,
+   "opened": "theme:Subtitles",
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
-   "dialogs": [
-    "focuscontainer.dialog",
-    "focuscontainer.dialog"
-   ],
+   "dialogs": [],
    "osd": "bar",
    "checks": [
     {
@@ -1896,8 +1913,6 @@
    "hash": "#/video",
    "title": "SDR AV1 Opus (2026) (2026)",
    "dialogs": [
-    "focuscontainer.dialog",
-    "focuscontainer.dialog",
     "focuscontainer.dialog"
    ],
    "osd": "bar",
@@ -1915,7 +1930,7 @@
    ],
    "warnings": [],
    "shot": "63-player-settings.png",
-   "note": ""
+   "note": "the theme's player controls fell back to jellyfin-web's"
   }
  ]
 }

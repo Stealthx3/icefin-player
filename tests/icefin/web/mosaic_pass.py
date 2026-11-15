@@ -194,7 +194,11 @@ def main():
                 act("right"); settle(0.6)
                 if js(f"{R}.getAttribute('data-ms-panel')") == "1":
                     break
-            check("▶ past the actions: the next section", js(f"{R}.getAttribute('data-ms-panel')") == "1" and "on" in (js("document.querySelectorAll('.ms-dk-head')[1].className") or ""), js(f"{R}.getAttribute('data-ms-panel')"))
+            shown = js("[...document.querySelectorAll('.ms-dk-head')].filter(h => !h.hidden).length")
+            if shown > 1:
+                check("▶ past the actions: the next section", js(f"{R}.getAttribute('data-ms-panel')") != "0" and js("document.querySelector('.ms-dk-head.on').textContent") != "overview", js(f"{R}.getAttribute('data-ms-panel')"))
+            else:  # its other sections are empty and left the pivot: ▶ stays on the overview
+                check("▶ past the actions: empty sections are not in the pivot", js(f"{R}.getAttribute('data-ms-panel')") == "0", str(shown))
             if series:
                 nav(f"#/details?id={series}&serverId={sid}")
                 heads = texts(".ms-dk-head")

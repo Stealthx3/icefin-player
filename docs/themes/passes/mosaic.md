@@ -540,3 +540,27 @@ The design for the pass: 26 boards on the "Mosaic Screens" canvas, https://claud
 | 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Mosaic's walks and tests |
 | 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
 
+
+## Build notes (2026-11-15, after Gate 1 "Approved, build it" with every pick as drawn)
+
+- **How it's built (decision 9a).** Mosaic is Orbit's shared modules under its own names (`window.icefinMosaic`,
+  `ms-` classes): the browse and deck views, data, item menu, panels, details, Live TV, Now playing, the player,
+  settings and the account screens. Its own: `pivots.js` (the home as `ui.pivot` sections of tiles packed column by
+  column, three rows deep, the grid sliding with focus; live tiles via `ui.liveTile`; the account and clock; the
+  now-playing strip; the guide panel with its own pivot), and in `views.js` the overview's actions as white tiles,
+  every other section as a strip of white cards, a pivot of the item's sections over its darkened backdrop (one
+  section shown at a time; a section per season; empty sections leave the pivot).
+- **The look.** A new stylesheet over the shared structure: the still grey field, light lowercase headers, square
+  corners, no glows or bevels, white panels and lists with a green focus, the focused tile lifted 107 % in a white
+  frame, the player's square buttons with the time line over them. Tokens gain the field's stops and a green focus
+  (light and dark schemes).
+- **Sounds and music (decision 5a).** New recipes in the target's character (`theme-sounds.py mosaic()`,
+  `theme_music/mosaic.py`: startup, ambient, the guide and goodbye jingles), rendered in the lab; soundboard
+  https://claude.ai/artifact/86WbJ342qFn4rH4UkPTdoX for your ear before the merge.
+- **Tests.** `mosaic_pass.py` (53 checks across home, guide, library, play, details, menu, search, Live TV, music,
+  player, settings, hints, sounds, motion and errors) passes; `theme_mosaic.py` follows the new home (search first);
+  `mosaic_probe.py` for quick looks. Walk 2: 57 of 69 drawn by Mosaic, 0 failing.
+- **Not as drawn.** The search pivot is a large Search tile and Favourites rather than the bar on the pivot itself
+  (the bar is on #/search, Search board); libraries' green tiles are All and Search (genres, collections and
+  favourites are the hub's sections); Client settings is the engine's page; the 4 framed preference pages and
+  `player-settings` (jellyfin-web's own controls, kept under More) stay walk gaps as in Orbit's pass.
