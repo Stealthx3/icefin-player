@@ -279,7 +279,8 @@ void WindowManager::onVisibilityChanged(QWindow::Visibility visibility)
            << "m_previousVisibility=" << m_previousVisibility;
 
   bool isFS = (visibility == QWindow::FullScreen);
-  bool wasFS = (m_previousVisibility == QWindow::FullScreen);
+  // ICEFIN-HOOK: m_previousVisibility never holds FullScreen, so compare with the last full-screen state instead
+  bool wasFS = m_wasFullScreen;  // ICEFIN-HOOK: main.fullscreen and fullScreenSwitched on leaving full screen
 
   // Kiosk mode: force back to fullscreen if user tried to exit
   if (!isFS)
@@ -307,6 +308,7 @@ void WindowManager::onVisibilityChanged(QWindow::Visibility visibility)
   // Update fullscreen setting (in-memory only) when state changes
   if (isFS != wasFS)
   {
+    m_wasFullScreen = isFS;  // ICEFIN-HOOK: remember the full-screen state for the next change
     SettingsSection* section = SettingsComponent::Get().getSection(SETTINGS_SECTION_MAIN);
     if (section)
       section->setValueNoSave("fullscreen", isFS);

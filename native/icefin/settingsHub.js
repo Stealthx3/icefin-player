@@ -43,6 +43,10 @@
 .icefin-settings .icefin-cs-rail .icefin-d-btn { text-align: left; white-space: normal; text-transform: capitalize; }
 .icefin-settings .icefin-cs-rail .icefin-d-btn.icefin-cs-here { box-shadow: inset 0.25em 0 0 var(--icefin-color-accent); }
 .icefin-settings .icefin-cs-host { min-height: 0; position: relative; }
+/* a controller's row: Remap at the row's right edge, in the column of the switches above and below it, so Down from a
+   switch reaches it (the user, 2026-11-13: every control reachable with the pad) */
+.icefin-settings .icefin-pad-row { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
+.icefin-settings .icefin-pad-row .icefin-pad-remap { flex: none; margin: 0; }
 .icefin-settings .icefin-cs-host > .dialog { position: absolute !important; inset: 0 !important; margin: 0 !important; width: auto !important; height: auto !important;
   max-width: none !important; max-height: none !important; transform: none !important; animation: none !important; box-shadow: none !important;
   border-radius: var(--icefin-shape-cardRadius, 0.6em); background: var(--icefin-color-surface); color: var(--icefin-color-text); display: flex; flex-direction: column; }
@@ -216,7 +220,7 @@
                 entry('client', 'Client settings', 'This player: theme and colours, video, audio, subtitles and controllers.',
                     () => T.ctx.navigate('#/mypreferencesmenu?pane=client'));
                 entry('classic', 'Classic View', 'The standard Jellyfin look, now, for this session. Your theme comes back next time, or from Client settings.',
-                    () => api().then((a) => a.theme.setClassic(true, () => { location.hash = '#/home'; })));
+                    () => classic());
                 body.append(entries);
                 const more = el('div', 'icefin-s-more');
                 const link = (id, label, hash) => {
@@ -248,5 +252,9 @@
         };
     }
 
-    T.ui.settings = { screen };
+    // Classic View on its own, for a theme that draws its own settings area around the same entries (9.46): the stock
+    // look now, for this session; the saved theme comes back at the next start or from Client Settings -> Theme.
+    const classic = () => api().then((a) => new Promise((resolve) => a.theme.setClassic(true, () => { location.hash = '#/home'; resolve(true); })));
+
+    T.ui.settings = { screen, classic };
 })();

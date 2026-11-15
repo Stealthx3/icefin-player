@@ -253,22 +253,28 @@ def plaza():
 
 
 def orbit():
-    # Airy whooshes over a soft synth; a deep, warm confirm; back is the whoosh reversed.
-    whoosh = mul(mix(sweep_lowpass(noise(200, 51), 600, 7000), gain(tone(200, 660, 990, "sine"), 0.15)), env(n_of(200), 70, 50))
-    chord = reverb(mul(mix(tone(380, 196), gain(tone(380, 294), 0.7), gain(tone(380, 392), 0.5), gain(lowpass(noise(380, 52), 500), 0.2)), env(n_of(380), 8, 150)), 0.3)
-    back = list(reversed(whoosh))
-    nav = reverb(mul(mix(sweep_lowpass(noise(320, 53), 300, 5000), gain(tone(320, 440, 880, "sine", 0.6), 0.2)), env(n_of(320), 120, 90)), 0.3)
-    err = mul(tone(260, 147, 139, "soft"), env(n_of(260), 4, 100))
+    # Airy whooshes over a soft synth; a deep, warm confirm; back is the whoosh reversed. An octave deeper and in a
+    # slightly larger room since the 9.56 pass (the user, 2026-11-15: "deeper octaves and a slight reverb").
+    whoosh = reverb(mul(mix(sweep_lowpass(noise(220, 51), 300, 3500), gain(tone(220, 330, 495, "sine"), 0.18)), env(n_of(220), 70, 60)), 0.18, 1.1, 260)
+    chord = reverb(mul(mix(tone(420, 98), gain(tone(420, 147), 0.75), gain(tone(420, 196), 0.55), gain(tone(420, 294), 0.25), gain(lowpass(noise(420, 52), 400), 0.2)), env(n_of(420), 8, 170)), 0.36, 1.15, 320)
+    back = reverb(list(reversed(mul(mix(sweep_lowpass(noise(220, 51), 300, 3500), gain(tone(220, 330, 495, "sine"), 0.18)), env(n_of(220), 70, 60)))), 0.18, 1.1, 260)
+    nav = reverb(mul(mix(sweep_lowpass(noise(340, 53), 150, 2500), gain(tone(340, 220, 440, "sine", 0.6), 0.22)), env(n_of(340), 120, 100)), 0.36, 1.15, 320)
+    err = reverb(mul(mix(tone(280, 73.5, 69.5, "soft"), gain(tone(280, 147, 139, "soft"), 0.35)), env(n_of(280), 4, 110)), 0.15, 1.0, 220)
     return {"focus": (whoosh, -15), "select": (chord, -9), "back": (back, -14), "navigate": (nav, -13), "error": (err, -10)}
 
 
 def mosaic():
-    # Crisp, light, metallic clicks (a short FM ping); a higher click for select.
-    ping = lambda f, ms, seed: mul(mix(bell(ms, f, 2.76, 3.0, 8), gain(highpass(noise(ms, seed), 4000), 0.3)), env(n_of(ms), 0.3, ms / 5))
-    back = ping(1500, 45, 63)
-    nav = mul(sweep_lowpass(noise(150, 64), 1500, 9000), env(n_of(150), 30, 35))
-    err = mix(ping(500, 80, 65), (ping(420, 90, 66), 70))
-    return {"focus": (ping(2600, 30, 61), -17), "select": (ping(3400, 50, 62), -12), "back": (back, -13), "navigate": (nav, -17), "error": (err, -11)}
+    # The 9.55 pass (the canvas's Effects board), originals in the target's character: clean, short, digital. A soft
+    # high tick for focus; a bright two-note up for select and the same falling for back; a quick airy swish when the
+    # pivot moves; a low muted knock for an error.
+    ping = lambda f, ms, seed: mul(mix(bell(ms, f, 2.76, 3.0, 8), gain(highpass(noise(ms, seed), 4000), 0.25)), env(n_of(ms), 0.3, ms / 5))
+    tick = ping(2600, 28, 61)
+    sel = mix(ping(1760, 55, 62), (ping(2640, 70, 67), 45))
+    back = mix(ping(2200, 55, 63), (ping(1470, 70, 68), 45))
+    nav = mul(sweep_lowpass(highpass(noise(170, 64), 600), 1200, 9000), env(n_of(170), 25, 50))
+    knock = mul(lowpass(mix(tone(120, 180, 140, "sine", 0.6), gain(noise(60, 65), 0.5)), 900), env(n_of(120), 1, 30))
+    err = mix(knock, (gain(knock, 0.7), 110))
+    return {"focus": (tick, -18), "select": (sel, -12), "back": (back, -13), "navigate": (nav, -18), "error": (err, -10)}
 
 
 def lumen():
@@ -320,8 +326,21 @@ def tide():
     return {"focus": (tock, -14), "select": (crystal, -10), "back": (back, -13), "navigate": (nav, -15), "error": (err, -11)}
 
 
+def baseline():
+    # Stock's look has no sounds; Baseline's are as plain as its screens: clean, glassy sine and triangle blips in a
+    # small bright room. A soft tick for focus, a rising pair (B5, E6) to choose, the same pair falling to go back, a
+    # light air sweep for a page or tab, two low soft steps down for an error.
+    tick = reverb(mul(tone(32, 1250, 1180, "sine", 0.6), env(n_of(32), 0.6, 8)), 0.12, 0.6, 120)
+    blip = lambda f, ms: mul(tone(ms, f, f, "tri"), env(n_of(ms), 1, ms / 3.2))
+    pair = lambda a, b: reverb(mix(blip(a, 70), (gain(blip(b, 90), 0.85), 48)), 0.16, 0.7, 180)
+    nav = reverb(mix(mul(bandpass(sweep_lowpass(noise(180, 131), 900, 5200), 500, 7000), env(n_of(180), 55, 45)),
+                     gain(mul(tone(120, 1568, 1660, "sine"), env(n_of(120), 20, 35)), 0.25)), 0.16, 0.7, 160)
+    err = reverb(mix(mul(tone(120, 330, 320, "soft"), env(n_of(120), 2, 45)), (mul(tone(170, 277, 270, "soft"), env(n_of(170), 2, 60)), 95)), 0.14)
+    return {"focus": (tick, -18), "select": (pair(988, 1319), -12), "back": (gain(pair(1319, 988), 0.9), -14), "navigate": (nav, -17), "error": (err, -12)}
+
+
 SETS = {"media-center": media_center, "harbor": harbor, "spark": spark, "plum": plum, "plaza": plaza, "orbit": orbit, "mosaic": mosaic,
-        "lumen": lumen, "marquee": marquee, "almanac": almanac, "arcade": arcade, "tide": tide}
+        "lumen": lumen, "marquee": marquee, "almanac": almanac, "arcade": arcade, "tide": tide, "baseline": baseline}
 MAX_MS = 2600  # Plaza's hall tails run to about two seconds
 
 

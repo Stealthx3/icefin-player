@@ -25,9 +25,10 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 - **Cost:** a day or two; no host changes.
 
 ### M. Synthetic HDR10+ and Dolby Vision media (PLAN 6.6, 5.8's media rows)
-- **How:** in the lab, x265 writes HDR10+ dynamic metadata from a JSON file; `dovi_tool` (open source) generates
-  and injects RPUs for Dolby Vision profiles 5, 8.1 and a profile 7 dual layer. `make-media.sh` gains these
-  clips next to its SDR, HDR10 and HLG films.
+- **Built (6.6):** `make-hdr-media.sh` injects HDR10+ dynamic metadata with `hdr10plus_tool` (Debian's x265 drops
+  it at encode time) and generated Dolby Vision 5 and 8.1 RPUs with `dovi_tool`, next to `make-media.sh`'s SDR,
+  HDR10 and HLG films. No profile 7: `dovi_tool` generates single-layer RPUs only, so that row stays with H6.
+  `routing_rows.py` runs the SDR-display rows, `hdr_protocol.py` the HDR-display ones.
 - **Proves:** detection, routing (the capability prompt for DV 5 on OpenGL), the metadata Icefin passes on, and
   playback reports against upstream, row by row.
 - **Can't show:** what a TV makes of it; the look of a real DV grade.
@@ -40,6 +41,8 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 - **Proves:** the passthrough decision against dozens of real sink capability sets, not five fixtures.
 - **Can't show:** firmware bugs that make a sink lie about its capabilities.
 - **Cost:** a day.
+- **Built 2026-11-12:** `tests/icefin/avsim/edid_profiles.py`, 40 public sinks in `profiles/public/` from 30,974
+  real sinks (399 distinct audio capability sets); Icefin's decisions 161/161 and the ELD rows 40/40 (docs/LAB.md).
 
 ### D. More HDR compositors, headless (PLAN 5.8's compositor rows)
 - **How:** Gamescope's headless backend with HDR forced on (`--backend headless --hdr-enabled
@@ -50,6 +53,13 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 - **Can't show:** the TV's response. Needs checking first: Mutter's headless HDR support, and that Gamescope's
   headless backend runs under the lab's software Vulkan.
 - **Cost:** two or three days, most of it finding out what each compositor supports headless.
+- **Built 2026-11-12 (Gamescope):** 3.16.30.2 from Valve's source (the user's OK), `tests/icefin/hdr/build-gamescope.sh`;
+  its headless backend with HDR forced runs on lavapipe and the WSI layer offers HDR10 to X11 clients.
+  `gamescope_hdr.py`: HDR idle, HDR10, HLG, Dolby Vision 8.1, an SDR Gamescope and HDR Output off (docs/LAB.md).
+  It found that with HDR Output off the Hardware page blamed the display; fixed.
+- **Mutter, checked 2026-11-12:** 48.7 (Debian 13) headless with `--virtual-monitor` offers that monitor only the
+  default colour mode (`supported-color-modes` [0], no BT.2100), so a Mutter HDR display can't be simulated with
+  it; Mutter's protocol support was probed in spike 2.3.
 
 ### V. A VA-API device for the DMA-BUF import path (PLAN 5.3)
 The lab's virtual GPU has no video decoder, so Icefin's VA-API zero-copy path (AMD and Intel) can't run there.
@@ -72,11 +82,21 @@ Three ways to reach it, best fidelity last:
 - **Proves:** regressions in UI and backdrop cost, early.
 - **Can't show:** real GPU performance; that stays with beta testers (`docs/BETA-CHECKLIST.md` V4).
 - **Cost:** a day.
+- **Built 2026-11-13:** in `lab-icefin-htpcsim` (its Weston TV session, the Flatpak on two CPUs), measuring Qt
+  Quick's own frames and mpv's drops; `tests/icefin/perf/perf_budget.py` and `budget.json` (docs/LAB.md). On the
+  way: the guest's cloud kernel had no GPU driver and its Weston locked after five idle minutes, so Qt never drew;
+  mpv's drop counter is `frame-drop-count` (the name upstream's debug text uses reads null).
 
 ### R. Five-way remotes
 - **How:** a `uinput` keyboard sending the keys an IR or Bluetooth remote sends (arrows, Enter, Back, media keys).
 - **Proves:** every theme works with five keys and Back.
 - **Cost:** an hour on top of C.
+- **Built 2026-11-12 (IR through LIRC):** a `uinput` keyboard never reaches an app on Xvfb, and Bluetooth remotes are
+  keyboards to the app, which the keyboard rows cover. IR remotes reach Icefin through lircd's socket instead:
+  `tests/icefin/web/lirc_remote.py` runs a fake lircd in a private `/run/lirc` (bubblewrap) and checks the five-way
+  keys, OK, Back, IR repeat bursts and a lircd that sends releases. It found that every IR press kept repeating
+  until the next button (lircd sends no release; upstream sent key-downs, and the auto-repeat waits for a key-up);
+  fixed with one-shot presses (`src/icefin/input/Lirc`), and offered for 10.2.
 
 ## Order
 
