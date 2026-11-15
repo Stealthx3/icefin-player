@@ -92,7 +92,7 @@ html[data-bl-input="pointer"] .bl-hints { opacity: 0; }
 .bl-toast.on { transform: none; }
 .bl-toast.out { opacity: 0; }
 
-html[data-icefin-motion="low"] .bl-screen *, html[data-icefin-motion="low"] .bl-toast { transition-duration: 0s !important; animation: none !important; }
+html[data-icefin-motion="low"] .bl-screen *, html[data-icefin-motion="low"] .bl-pl *, html[data-icefin-motion="low"] .bl-panel-host *, html[data-icefin-motion="low"] .bl-toast { transition-duration: 0s !important; animation: none !important; }
 
 /* ---- stock's dialogs (panel.js): the action sheet (a centred list, the focused row filled) and the form dialog
    (a header bar with Back and the title over labelled fields), both full screen in the TV layout ---- */
