@@ -207,12 +207,18 @@ The target is stock jellyfin-web (the user's direction). Every item below is one
 | 8 | Polish tests | tests | in the lab (this pass) |
 | 8 | A lab walk and Gate 2 | tests | Verify and Gate 2 |
 
+## Where the pass ended (2026-11-15, Gate 2 approved)
+The user approved Gate 2 ("Approved, merge it") on the report https://claude.ai/artifact/BdJchX3PA1t83UF3QWr8s4. Main's
+new app icon (#177) came in with the last merge from main, and Baseline's home shows it. Left open: the signed-out
+pages have no test yet; Home Screen Sections waits for a server where the plugin answers; the TV scroll opt-out for
+other themes is an engine follow-up.
+
 ## Build notes (2026-11-14 and 15, after Gate 1)
 
 Built in Baseline's own scripts (themes/baseline, bl-* classes, the user's call 1), against jellyfin-web 10.11's TV
 layout as captured in the lab (stock's TV captures; the layout set to tv, call 2): kit.js (stock's TV header with
 SyncPlay, Search, Settings and the clock, tabs, cards with stock's shapes, default colours and icons, rows that slide
-to keep focus in view, raised buttons, the page's own scroll, hints, the toast, Icefin's fin mark on the home and the
+to keep focus in view, raised buttons, the page's own scroll, hints, the toast, Icefin's app mark (the Progress ring, #177) on the home and the
 server's branding where it has one, call 3), panel.js (stock's action sheet and form dialog), itemmenu.js (the
 engine's actions in stock's wording, order and icons; Add to Playlist and Add to Collection as stock's form), home.js
 (the user's own home sections, homesection0–9, in their order; Favorites; L1 R1 between the tabs; the exit question;
