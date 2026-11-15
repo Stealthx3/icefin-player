@@ -264,12 +264,17 @@ def orbit():
 
 
 def mosaic():
-    # Crisp, light, metallic clicks (a short FM ping); a higher click for select.
-    ping = lambda f, ms, seed: mul(mix(bell(ms, f, 2.76, 3.0, 8), gain(highpass(noise(ms, seed), 4000), 0.3)), env(n_of(ms), 0.3, ms / 5))
-    back = ping(1500, 45, 63)
-    nav = mul(sweep_lowpass(noise(150, 64), 1500, 9000), env(n_of(150), 30, 35))
-    err = mix(ping(500, 80, 65), (ping(420, 90, 66), 70))
-    return {"focus": (ping(2600, 30, 61), -17), "select": (ping(3400, 50, 62), -12), "back": (back, -13), "navigate": (nav, -17), "error": (err, -11)}
+    # The 9.55 pass (the canvas's Effects board), originals in the target's character: clean, short, digital. A soft
+    # high tick for focus; a bright two-note up for select and the same falling for back; a quick airy swish when the
+    # pivot moves; a low muted knock for an error.
+    ping = lambda f, ms, seed: mul(mix(bell(ms, f, 2.76, 3.0, 8), gain(highpass(noise(ms, seed), 4000), 0.25)), env(n_of(ms), 0.3, ms / 5))
+    tick = ping(2600, 28, 61)
+    sel = mix(ping(1760, 55, 62), (ping(2640, 70, 67), 45))
+    back = mix(ping(2200, 55, 63), (ping(1470, 70, 68), 45))
+    nav = mul(sweep_lowpass(highpass(noise(170, 64), 600), 1200, 9000), env(n_of(170), 25, 50))
+    knock = mul(lowpass(mix(tone(120, 180, 140, "sine", 0.6), gain(noise(60, 65), 0.5)), 900), env(n_of(120), 1, 30))
+    err = mix(knock, (gain(knock, 0.7), 110))
+    return {"focus": (tick, -18), "select": (sel, -12), "back": (back, -13), "navigate": (nav, -18), "error": (err, -10)}
 
 
 def lumen():
