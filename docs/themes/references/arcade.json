@@ -31,7 +31,7 @@
         "first card": {"sel": ".ar-cap.card", "index": 0, "x": 53, "y": 693, "w": 404},
         "card art": {"sel": ".ar-card-art", "index": 0, "h": 227},
         "second card": {"sel": ".ar-cap.card", "index": 1, "x": 474},
-        "bottom bar": {"sel": ".ar-hints", "y": 1024, "h": 56, "tol": 6}
+        "bottom bar": {"sel": ".ac-hints", "y": 1024, "h": 56, "tol": 6}
       },
       "text": {
         "focused name": {"sel": ".ar-focus-name", "x": 49, "cy": 510},

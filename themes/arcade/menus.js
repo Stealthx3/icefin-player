@@ -375,7 +375,8 @@
             // the recent row: what's in progress and up next together, the most recently watched first
             const when = (it) => Date.parse((it.UserData && it.UserData.LastPlayedDate) || it.DateCreated || 0) || 0;
             let recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id))).sort((a, b) => when(b) - when(a));
-            if (!recent.length && f.length) recent = f[0][1];
+            // like the target's, the row fills up from what's new when little is in progress
+            if (recent.length < 6 && f.length) recent = recent.concat(f[0][1].filter((x) => !recent.some((y) => y.Id === x.Id))).slice(0, 12);
             const sec0 = el('section', 'ar-shelf ar-recent');
             const track0 = el('div', 'ar-track');
             const caps0 = recent.slice(0, 20).map((it, i) => capsule(c, it, i === 0));

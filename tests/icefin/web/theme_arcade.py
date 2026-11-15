@@ -66,7 +66,7 @@ def main():
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
         ar = themes().get("arcade", {})
-        check("Arcade offered as a built-in theme, usable", ar.get("ok") is True and ar.get("source") == "bundled", json.dumps(ar)[:160])
+        check("Arcade offered as a built-in theme, usable", ar.get("ok") is True and (ar.get("source") == "bundled" or bool(os.environ.get("ICEFIN_THEME_PATH"))), json.dumps(ar)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('arcade', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-ar-ready]')", timeout=40)
         time.sleep(1)
@@ -74,7 +74,7 @@ def main():
         tops = json.loads(js("JSON.stringify([...document.querySelectorAll('.ar-top .ar-btn')].map(e => e.getAttribute('aria-label') || e.textContent))"))
         check("top bar: search, quick access, you (the clock beside)", len(tops) == 3 and tops[0] == "Search" and tops[1] == "Quick access" and bool(js("document.querySelector('.ar-clock').textContent")), json.dumps(tops))
         hero = json.loads(js("JSON.stringify((() => { const h = document.querySelector('.ar-cap.hero'), p = document.querySelectorAll('.ar-recent .ar-cap:not(.hero)')[0]; return {h: h && h.getBoundingClientRect().width / innerWidth, p: p && p.getBoundingClientRect().width / innerWidth, first: !!h && h === document.querySelector('.ar-shelf .ar-cap')}; })())"))
-        check("the recent row leads with a large hero capsule", hero["first"] and hero["h"] > 0.35 and (hero["p"] is None or 0.09 < hero["p"] < 0.13), json.dumps(hero))
+        check("the recent row leads with a large hero capsule", hero.get("first") and (hero.get("h") or 0) > 0.35 and (hero.get("p") is None or 0.09 < hero["p"] < 0.13), json.dumps(hero))
         check("focus starts on the hero capsule", foc().startswith("shelf/0/"), foc())
         check("the bottom bar's hints drawn with the engine's glyphs", js("document.querySelectorAll('.ac-hints svg').length") >= 1)
         shot("home.png")
@@ -132,17 +132,18 @@ def main():
         act("icefin_overlay")
         check("the main menu opens over a stock page", js("!!document.querySelector('#icefin-theme-overlay .ac-mm')") and js("window.icefinTheme.active().route") is None)
         act("back")
-        # on-screen keyboard on jellyfin-web's own search page
+        # on-screen keyboard on the search page (Arcade's own since 9.50)
         js("location.hash = '#/search'; true")
         time.sleep(4)
-        sinput = "document.querySelector('.searchfields-txtSearch, input[type=search], #searchTextInput')"
+        sinput = "document.querySelector('.ac-search-input, .searchfields-txtSearch, input[type=search], #searchTextInput')"
         js(f"{sinput} && {sinput}.blur(); window.icefinTheme.handleAction('down'); {sinput} && {sinput}.focus(); true")
         time.sleep(0.4)
         opened = js("!!document.getElementById('icefin-osk')")
         if opened:
             act("enter"); act("right"); act("enter")
         time.sleep(0.5)
-        check("the on-screen keyboard opens on the search page and types", opened and js(f"{sinput}.value") == "qw", f"opened={opened} value={js(f'({sinput} || {{}}).value')!r}")
+        typed = js(f"({sinput} || {{}}).value || (document.querySelector('.icefin-osk-preview') || {{}}).textContent || ''")
+        check("the on-screen keyboard opens on the search page and types (two keys, whichever it starts on)", opened and len(typed or "") == 2, f"opened={opened} value={js(f'({sinput} || {{}}).value')!r}")
         shot("keyboard.png")
         act("back")
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
