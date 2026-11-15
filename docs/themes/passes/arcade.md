@@ -514,7 +514,7 @@ The design for the pass: 26 boards on the "Arcade Screens" canvas, https://claud
 | 4 | Custom chrome geometry | board | Guide (side panels from both edges), Main (the top and bottom bars), Player (round buttons) |
 | 4 | Glows on progress and now | not in the target | no glows: progress and the now line are flat blue (LibLiveTV, Player) |
 | 4 | A readability shade | board | Player |
-| 5 | Five UI sounds | board | Effects (new recipe in the target's character) |
+| 5 | Five UI sounds | board | Effects (Arcade's recipe kept: it already fits the target's soft, synthetic character) |
 | 5 | Each sound on its action | tests | the pass test |
 | 5 | Startup jingle and ambient loop | board | Effects; Decisions 5 |
 | 5 | Jingles where the target has them | board | Effects (the menus, goodbye); Decisions 5 |
@@ -539,3 +539,27 @@ The design for the pass: 26 boards on the "Arcade Screens" canvas, https://claud
 | 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Arcade's walks and tests |
 | 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
 
+
+## Build notes (2026-11-16, after Gate 1 "Approved, build it" with every pick as drawn)
+
+- **How it's built (decision 9a).** Arcade is the shared modules (as in Orbit and Mosaic) under its own names
+  (`window.icefinArcade`, `ac-` classes). Its own: `menus.js` (the reference's home, kept and moved onto the shared
+  helpers: the top bar of search, quick access, the clock and you; the recent row of Continue watching and Next up
+  together, filled from what's new when little is in progress; the feed pills over their cards; the main menu from the
+  left; quick access from the right), and in `views.js` the overview's actions as one play bar and a season's
+  episodes as wide rows. The old `#/list` library and its sort and filter dialogs give way to the shared library (pill
+  tabs over a capsule grid, Sort and filter as a panel).
+- **The look.** Orbit's shared structure under a new stylesheet: the blue-grey field, the bottom bar of hints on
+  every screen (it hides for the mouse and over a playing video), capsules lifted 105 % in the light ring, pill tabs,
+  dark rounded panels with a lighter focus band, blue for what's on, round player buttons. Tokens gain the field's
+  stops; the focus token stays the target's blue (contrast), the lighter band is a style.
+- **Sounds and music (decision 5a).** The five sounds kept (they already fit); new music (`theme_music/arcade.py`:
+  startup, ambient, the menu and goodbye jingles), rendered in the lab; soundboard
+  https://claude.ai/artifact/HVe7v4UUo9UuQL4CA8dfbx for your ear before the merge.
+- **Tests.** `arcade_pass.py` (53 checks) passes; `theme_arcade.py` follows the new screens and passes;
+  `clone_layout.py --theme arcade` passes against the reference (the bottom bar now `.ac-hints`). Walk 2: 57 of 69
+  drawn by Arcade, 0 failing.
+- **Not as drawn.** There is no F2 key in the engine's actions, so quick access opens from the main menu's row and the
+  top bar's ••• button rather than a long press of its own (the long press of View, the guide button and F1 open the
+  main menu); the search keeps the shared field-and-results screen with Arcade's rounded field; Client settings is
+  the engine's page; the 4 framed preference pages and `player-settings` stay walk gaps as in the other passes.
