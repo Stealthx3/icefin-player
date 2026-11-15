@@ -1036,9 +1036,11 @@ void MprisComponent::cleanupAlbumArt()
 {
   if (m_pendingArtReply)
   {
-    m_pendingArtReply->abort();
-    m_pendingArtReply->deleteLater();
-    m_pendingArtReply = nullptr;
+    // ICEFIN-HOOK: abort() runs the finished handler at once, which nulls the member; take the reply first
+    QNetworkReply* reply = m_pendingArtReply;
+    m_pendingArtReply = nullptr;  // ICEFIN-HOOK: null before abort
+    reply->abort();  // ICEFIN-HOOK: abort via the local
+    reply->deleteLater();  // ICEFIN-HOOK: delete via the local
     m_pendingArtUrl.clear();
   }
 

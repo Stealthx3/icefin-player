@@ -107,6 +107,7 @@ private:
 
   // Window state
   QWindow::Visibility m_previousVisibility;  // State before fullscreen
+  bool m_wasFullScreen = false;  // ICEFIN-HOOK: last full-screen state (m_previousVisibility never holds FullScreen)
   QRect m_windowedGeometry;                  // Geometry when in Windowed state
   QTimer* m_geometrySaveTimer;               // Debounced disk sync
 

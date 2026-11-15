@@ -2,6 +2,7 @@
 #include <QGuiApplication>
 #include <QDebug>
 #include "InputLIRC.h"
+#include "icefin/input/Lirc.h"  // ICEFIN-HOOK: one-shot presses without lircd releases (PLAN 11.5)
 
 #define DEFAULT_LIRC_ADDRESS "/run/lirc/lircd"
 
@@ -107,8 +108,8 @@ void InputLIRC::read(int handle)
       // it makes GUI unusable
       if ((repeatCount % 3) == 0)
       {
-        bool up = command.endsWith("_LIRCUP");
-        emit receivedInput("LIRC", command, up ? InputBase::KeyUp : InputBase::KeyDown);
+        static Icefin::Input::LircKeys keys;  // ICEFIN-HOOK: a KeyDown never released repeated forever (PLAN 11.5)
+        emit receivedInput("LIRC", command, keys.stateFor(command));  // ICEFIN-HOOK: see above
       }
     }
     else

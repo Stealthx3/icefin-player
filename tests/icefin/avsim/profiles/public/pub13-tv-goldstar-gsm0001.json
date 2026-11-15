@@ -1,0 +1,24 @@
+{
+  "description": "Goldstar 32LD400 (tv), from the linuxhw EDID collection: Digital/Goldstar/GSM0001/3C8D8B9A1831 (CC BY 4.0); 71 EDIDs share this audio capability set",
+  "monitor_name": "32LD400",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "ac3",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ],
+      "max_kbps": 640
+    }
+  ],
+  "expect": {
+    "ac3": "bitstream",
+    "dts": "pcm",
+    "eac3": "pcm",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Goldstar/GSM0001/3C8D8B9A1831"
+}
