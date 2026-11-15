@@ -1,10 +1,6 @@
-// Tide: an item's options and their dialogs (PLAN 9.48; the canvas's ItemOptions, MenuDialog, MediaInfo and PlayOn
-// boards). ≡ on any entry, and More options on details, bring in the item's options from the right edge (panel.js):
-// every action the user may take for the item (the engine's ui.items: policy, item and context), in five groups with
-// thin rules between, the first focused. A dialog is the panel's next level, sliding over the options; the four large
-// ones (Edit details, Images, Identify, Media info, Refresh) share one wide panel with sections along its top that the
-// shoulder buttons step. Delete asks first, Keep it focused. Everything here is how Tide shows it; the server calls
-// are the engine's.
+// Baseline: an item's options as stock's action sheet (centred list, the focused row filled), in stock's wording.
+// ≡ on any card or list item, and More on details, open it. The actions are the engine's (ui.items: policy, item and
+// context); the dialogs open as stock's form dialogs (panel.js, a header bar with Back). Delete asks first.
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -14,6 +10,22 @@
     const el = D.el;
     const fail = (e) => { console.error('baseline: item options', e); D.notice('That didn’t work', true); };
     const after = (r) => { if (!r) return; if (r.close) D.panel.close(); if (r.message) D.notice(r.message, !r.ok); if (r.navigate) T.ctx.navigate(r.navigate); if (D.currentColumn && r.ok) D.currentColumn.reload(); };
+    // stock's names for the engine's actions (jellyfin-web's itemContextMenu strings)
+    const STOCK = { playFromStart: 'Play from beginning', queue: 'Add to play queue', instantMix: 'Instant Mix', goAlbum: 'View album', goArtist: 'View artist',
+        goSeason: 'View season', goSeries: 'View series', addToPlaylist: 'Add to playlist', addToCollection: 'Add to collection', removeFromPlaylist: 'Remove from playlist',
+        removeFromCollection: 'Remove from collection', mediaInfo: 'Media Info', subtitles: 'Edit subtitles', refresh: 'Refresh metadata', edit: 'Edit metadata',
+        images: 'Edit images', identify: 'Identify', copyUrl: 'Copy Stream URL', download: 'Download', delete: 'Delete media',
+        played: 'Mark played', unplayed: 'Mark unplayed', favourite: 'Add to favorites', unfavourite: 'Remove from favorites' };
+    const ICON = { playFromStart: 'replay', queue: 'playlist_add', instantMix: 'explore', goAlbum: 'album', goArtist: 'person', goSeason: 'folder', goSeries: 'tv',
+        addToPlaylist: 'playlist_add', addToCollection: 'playlist_add', removeFromPlaylist: 'remove', removeFromCollection: 'remove', unresume: 'remove_done', move: 'swap_vert',
+        mediaInfo: 'info', subtitles: 'closed_caption', removeSubtitles: 'closed_caption', refresh: 'refresh', edit: 'edit', images: 'image', identify: 'edit',
+        copyUrl: 'content_copy', download: 'file_download', delete: 'delete', played: 'check', unplayed: 'check', favourite: 'favorite', unfavourite: 'favorite' };
+    // stock's order (itemContextMenu): the item's own actions, then editing, then the context's; a rule between
+    const ORDER = ['playFromStart', 'queue', 'instantMix', 'addToCollection', 'addToPlaylist', 'download', 'copyUrl', 'played', 'unplayed', 'favourite', 'unfavourite', 'delete', '|',
+        'edit', 'images', 'subtitles', 'removeSubtitles', 'identify', 'mediaInfo', 'refresh', '|',
+        'move', 'removeFromPlaylist', 'removeFromCollection', 'unresume', 'goAlbum', 'goArtist', 'goSeason', 'goSeries'];
+    const groupOf = (id) => { const i = ORDER.indexOf(id); return i < 0 ? 9 : ORDER.slice(0, i).filter((x) => x === '|').length; };
+    const rank = (id) => { const i = ORDER.indexOf(id); return i < 0 ? 999 : i; };
     const WIDE = [['edit', 'Details'], ['images', 'Images'], ['identify', 'Identify'], ['mediaInfo', 'Media info'], ['refresh', 'Refresh']];
 
     async function menu(ref, where) {
@@ -27,11 +39,13 @@
             render(body) {
                 if (where && where.sortWith && D.sortRow) body.append(D.sortRow(where.sortWith), el('div', 'bl-rule'));
                 let group = null;
-                for (const a of m.actions) {
-                    if (group !== null && a.group !== group) body.append(el('div', 'bl-rule'));
-                    group = a.group;
-                    const label = a.dialog && a.id !== 'delete' && a.id !== 'mediaInfo' ? `${a.label}…` : a.label;
-                    body.append(D.row(label, { danger: a.danger, go: () => act(a, item, where, m) }));
+                const onDetails = /^#\/details/.test(location.hash);  // there they are the page's own buttons, as in stock
+                for (const a of [...m.actions].sort((x, y) => rank(x.id) - rank(y.id))) {
+                    if (onDetails && ['played', 'unplayed', 'favourite', 'unfavourite'].includes(a.id)) continue;
+                    const g = groupOf(a.id);
+                    if (group !== null && g !== group) body.append(el('div', 'bl-rule'));
+                    group = g;
+                    body.append(D.row(STOCK[a.id] || a.label, { icon: ICON[a.id] || 'more_horiz', go: () => act(a, item, where, m) }));
                 }
             }
         });
@@ -83,9 +97,9 @@
         },
         delete(item) {
             D.panel.ask({
-                push: true, title: `Delete ${item.Name}?`, path: `${item.Name} › Options`,
-                text: 'It goes from the server and its files from the disk, for everyone. This can’t be undone.',
-                choices: [{ label: 'Keep it', safe: true }, { label: 'Delete', danger: true, run: async () => {
+                push: true, title: 'Delete Item', path: `${item.Name} › Options`,
+                text: 'Deleting this item will delete it from both the file system and your media library. Are you sure you wish to continue?',
+                choices: [{ label: 'Cancel', safe: true }, { label: 'Delete', danger: true, run: async () => {
                     try { await I.remove(item); D.notice(`Deleted ${item.Name}`); if (/^#\/details/.test(location.hash)) history.back(); else if (D.currentColumn) D.currentColumn.reload(); } catch (e) { fail(e); }
                 } }]
             });

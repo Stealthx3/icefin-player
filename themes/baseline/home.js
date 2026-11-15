@@ -22,6 +22,35 @@
         for (let i = 0; i < 10; i++) { const v = cp[`homesection${i}`] || DEFAULTS[i]; if (v && v !== 'none' && !out.includes(v)) out.push(v); }
         return out;
     }
+    // Home Screen Sections (the server plugin, the user's call 6): when the plugin is on for this user, its sections
+    // replace stock's, each drawn as a stock row; the ones that are stock's own sections draw as Baseline's. If the
+    // plugin is off, slow or failing, the home is stock's.
+    const within = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
+    const PLUGIN_OWN = { MyMedia: 'smalllibrarytiles', ContinueWatching: 'resume', NextUp: 'nextup', LiveTV: 'livetv', LatestMedia: 'latestmedia' };
+    const PLUGIN_SHAPE = { Portrait: 'portrait', Landscape: 'backdrop', Square: 'square' };
+    async function pluginSections() {
+        const cl = c();
+        let meta = null;
+        try { meta = await within(cl.getJSON(cl.getUrl('HomeScreen/Meta')), 3000); } catch (e) { return null; }
+        if (!meta || !meta.Enabled) return null;
+        let r = null;
+        try { r = await within(cl.getJSON(cl.getUrl('HomeScreen/Sections', { userId: uid() })), 8000); } catch (e) { console.warn('baseline: Home Screen Sections did not answer', e); return null; }
+        const list = (r && r.Items) || [];
+        if (!list.length) return null;
+        return list.map((sec) => {
+            if (PLUGIN_OWN[sec.Section] && !sec.AdditionalData) return PLUGIN_OWN[sec.Section];
+            return async () => {
+                const q = { userId: uid() };
+                if (sec.AdditionalData) q.additionalData = sec.AdditionalData;
+                const res = await within(cl.getJSON(cl.getUrl(`HomeScreen/Section/${encodeURIComponent(sec.Section)}`, q)), 10000);
+                const items = (res && res.Items) || [];
+                if (!items.length) return null;
+                const node = B.cardRow(sec.DisplayText || sec.Section, cards(items, { shape: PLUGIN_SHAPE[sec.ViewMode] }));
+                node.setAttribute('data-bl-plugin-section', sec.Section);
+                return node;
+            };
+        });
+    }
     const cards = (items, o) => items.map((it) => B.card(it, Object.assign({ row: true }, o || {})));
     const IMG = 'Primary,Backdrop,Thumb';
 
@@ -122,12 +151,12 @@
             } else {
                 const views = await ui.userViews();
                 if (S !== me) return;
-                const list = await homeSections();
+                const list = (await pluginSections()) || await homeSections();
                 if (S !== me) return;
                 // each section draws where it belongs as soon as it arrives; focus lands on the first card
                 const slots = list.map(() => { const s = el('div', 'bl-slot'); page.append(s); return s; });
                 await Promise.all(list.map(async (id, k) => {
-                    const fn = SECTIONS[id];
+                    const fn = typeof id === 'function' ? id : SECTIONS[id];
                     if (!fn) return;
                     let node = null;
                     try { node = await fn(views); } catch (e) { console.error('baseline: home section', id, e); }
