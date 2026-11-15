@@ -23,6 +23,8 @@ class inputPlugin {
         this.positionUpdateInterval = null;
         this.attachedPlayer = null;
         window.icefinPlaybackManager = playbackManager;  // ICEFIN-HOOK: the capability prompt restarts playback for a transcode (PLAN 6.3)
+        window.icefinInputManager = inputManager;  // ICEFIN-HOOK: lab tests send actions down the controller path (PLAN 9.38)
+        window.icefinWebServices = arguments[0];  // ICEFIN-HOOK: jellyfin-web's services for the engine's accounts.js (PLAN 9.44)
 
         (async () => {
             const api = await window.apiPromise;

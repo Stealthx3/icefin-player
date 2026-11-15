@@ -1,29 +1,392 @@
-/* Almanac: info pane with a live preview in the corner, a menu row, and the guide grid. Geometry follows the target's
-   measurements (docs/themes/references/almanac.json); px at 1920x1080 map to vw (x/19.2) and vh (y/10.8). Colours from
-   tokens. */
+/* Almanac (PLAN 9.15, the 9.49 pass; the "Almanac Screens" canvas). The guide's grammar on every screen: the info pane
+   at the top with a picture in the corner, the tab strip, a header and rows like channels (a label in the channel
+   column, cells running right like programmes); options in a list box over the dimmed screen; hints in the bottom bar.
+   Geometry follows the target's measurements (docs/themes/references/almanac.json): px at 1280x720 map to vw (x/12.8)
+   and vh (y/7.2), the same as the reference's 1920x1080 (x/19.2, y/10.8). Colours from tokens. Motion: the
+   MotionScreens, MotionPanel and MotionTimings boards. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
-[data-al] { color: var(--icefin-color-text); overflow: hidden !important; display: flex; flex-direction: column; padding: 0 0 2vh; box-sizing: border-box;
+:root { --al-cw: 17.23vw; --al-ch: 24.45vw; --al-rh: 5.14vh; --al-rp: 5.42vh; --al-right: 6.64vw; --al-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --al-edge: var(--icefin-color-live); --al-lime: var(--icefin-color-focus); --al-on-lime: var(--icefin-color-onFocus); }
+.al-screen [hidden], [data-al] [hidden], .al-panel-host [hidden], .al-clock [hidden], .al-hints[hidden] { display: none !important; }
+@keyframes al-fade { from { opacity: 0; } }
+
+/* ---- the screen ---- */
+.al-screen { position: absolute; inset: 0; overflow: hidden !important; color: var(--icefin-color-text);
+  background: linear-gradient(180deg, var(--icefin-color-surface) 0%, var(--icefin-color-background) 42%); }
+
+/* the info pane: the path or the clock, the title, the lime when-line, two or three lines of what it is */
+.al-screen .al-pane { position: absolute; left: 15.7vw; top: 4.72vh; width: 41vw; z-index: 2; }
+.al-screen .al-crumb { font-size: 0.94vw; line-height: 1.3; color: var(--icefin-color-textSecondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-screen .al-title { margin-top: 0.9vh; font-size: 1.95vw; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-screen .al-when { margin-top: 0.8vh; font-size: 1.09vw; font-weight: 600; color: var(--al-lime); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.4em; }
+.al-screen .al-desc { margin-top: 0.6vh; width: 40.6vw; font-size: 1.05vw; line-height: 1.45; color: var(--icefin-color-textSecondary);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.al-screen .al-pane.al-fresh .al-title, .al-screen .al-pane.al-fresh .al-when, .al-screen .al-pane.al-fresh .al-desc { animation: al-fade 120ms ease-out 80ms both; }
+.al-poster { position: absolute; left: 3.44vw; top: 4.72vh; width: 10.3vw; height: 26.4vh; background: center / cover no-repeat var(--icefin-color-surfaceRaised);
+  box-shadow: inset 0 0 0 2px rgb(160 190 255 / 0.3); z-index: 2; }
+/* the corner: the lit item's picture after a rest */
+.al-pv { position: absolute; right: 2.5vw; top: 0; width: 26.56vw; height: 32.36vh; background: center / cover no-repeat var(--icefin-color-surface);
+  box-shadow: inset 0 0 0 2px var(--icefin-color-divider); opacity: 0.35; transition: opacity 300ms ease-out; z-index: 1; }
+.al-pv.on { opacity: 1; }
+.al-pv-label { position: absolute; left: 0.6vw; bottom: 1.1vh; font-size: 0.86vw; font-weight: 700; padding: 0.3vh 0.55vw; background: var(--icefin-color-background); }
+.al-pv-label:empty { display: none; }
+
+/* the clock and the server in the pane's small line; the path instead of the clock below the root */
+.al-crumb .al-clock { display: inline-flex; gap: 0.7vw; align-items: baseline; }
+.al-clock-time { font-variant-numeric: tabular-nums; }
+.al-clock-extra:empty { display: none; }
+.al-nested .al-clock-time { display: none; }
+.al-server { border: 0; padding: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.al-server.down { color: var(--icefin-color-error); }
+/* the music capsule at the hint bar's right, on every screen (HomeMusic board) */
+.al-song { position: fixed; right: var(--al-right); top: 90vh; height: 5.56vh; display: flex; align-items: center; gap: 0.8vw; z-index: 1101; }
+.al-song-label { border: 0; background: none; color: var(--icefin-color-text); font: inherit; font-size: 0.98vw; cursor: pointer; padding: 0; }
+.al-song-bar { width: 7vw; height: 0.42vh; min-height: 3px; background: var(--icefin-color-surfaceRaised); cursor: pointer; padding: 0.8vh 0; background-clip: content-box; }
+.al-song-fill { height: 100%; background: var(--al-lime); transition: width 1s linear; }
+
+/* the tab strip: the app's places (or a screen's own tabs) */
+.al-tabs { position: absolute; left: var(--al-ch); top: 33.2vh; display: flex; gap: 0.47vw; z-index: 2; max-width: calc(100vw - var(--al-ch) - var(--al-right)); overflow: hidden; }
+.al-tab { border: 0; padding: 0.55vh 0.94vw; background: var(--icefin-color-surface); color: var(--icefin-color-text); font: inherit; font-size: 0.98vw; border-radius: var(--icefin-shape-cardRadius);
+  white-space: nowrap; cursor: pointer; outline: none; transition: background-color 90ms linear, color 90ms linear; }
+.al-tab.current { box-shadow: inset 0 -0.42vh 0 var(--al-lime); }
+.al-tab.icefin-focused { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+/* the header over the rows */
+.al-hdr { position: absolute; left: var(--al-ch); right: var(--al-right); top: 37.64vh; height: 4.17vh; display: flex; align-items: center; gap: 1.2vw; padding-left: 0.8vw;
+  border-bottom: 2px solid var(--icefin-color-divider); box-sizing: border-box; font-size: 0.94vw; font-weight: 600; color: var(--icefin-color-textSecondary); z-index: 2; }
+.al-hdr-count { font-weight: 400; }
+.al-hdr-sort { margin-left: auto; border: 0; background: none; color: var(--al-lime); font: inherit; cursor: pointer; }
+
+/* ---- the rows ---- */
+.al-rows { position: absolute; left: 0; right: 0; top: 42.92vh; height: calc(8 * var(--al-rp)); overflow: hidden; z-index: 1; }
+.al-gr { position: absolute; left: 0; right: var(--al-right); top: calc(var(--al-r, 0) * var(--al-rp)); height: var(--al-rh); transition: top 180ms var(--al-ease); }
+.al-ch { position: absolute; left: 0; top: 0; bottom: 0; width: var(--al-ch); display: flex; align-items: center; gap: 0.6vw; padding: 0 0.8vw 0 1.4vw; box-sizing: border-box;
+  background: var(--icefin-color-surface); border-bottom: 1px solid var(--icefin-color-background); font-size: 1.05vw; font-weight: 700; white-space: nowrap; overflow: hidden; }
+.al-ch-label { overflow: hidden; text-overflow: ellipsis; }
+.al-ch-sub { font-size: 0.86vw; font-weight: 400; color: var(--icefin-color-textSecondary); }
+.al-ch.opens { cursor: pointer; }
+.al-gr.lit .al-ch { color: var(--al-lime); }
+.al-lane { position: absolute; left: var(--al-ch); right: 0; top: 0; bottom: 0; overflow: hidden; }
+.al-lane.has-more-right::after { content: "›"; position: absolute; right: 0; top: 0; bottom: 0; width: 1.4vw; display: flex; align-items: center; justify-content: center;
+  font-size: 1.2vw; color: var(--icefin-color-text); background: linear-gradient(90deg, transparent, var(--icefin-color-background)); pointer-events: none; z-index: 2; }
+.al-c { position: absolute; top: 0; bottom: 0; left: calc(var(--al-x, 0) * var(--al-cw)); width: calc(var(--al-w, 1) * var(--al-cw)); box-sizing: border-box;
+  display: flex; align-items: center; gap: 0.5vw; padding: 0 0.8vw; margin: 0; border: 0; border-left: 1px solid var(--icefin-color-background); border-bottom: 1px solid var(--icefin-color-background);
+  background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 1.05vw; text-align: left; white-space: nowrap; overflow: hidden; cursor: pointer; outline: none;
+  transition: left 180ms var(--al-ease), background-color 90ms linear, color 90ms linear; }
+.al-c.gone { visibility: hidden; }
+.al-c-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.al-c-sub { flex: none; font-size: 0.86vw; opacity: 0.75; }
+.al-c.muted { background: var(--icefin-color-surface); color: var(--icefin-color-textSecondary); }
+.al-c.more { color: var(--icefin-color-textSecondary); }
+.al-c.played .al-c-name::before { content: "✓ "; color: var(--al-lime); }
+.al-c-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 0.42vh; min-height: 2px; background: rgb(0 0 0 / 0.35); }
+.al-c-prog b { display: block; height: 100%; background: var(--al-lime); }
+.al-c.lit, .al-c.icefin-focused { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-c.lit .al-c-prog b, .al-c.icefin-focused .al-c-prog b { background: var(--al-on-lime); }
+.al-c.lit.played .al-c-name::before { color: var(--al-on-lime); }
+.al-c.wide { white-space: normal; line-height: 1.25; }
+/* into a level the rows rise in, a row at a time; Back brings them down; a new screen fades them in */
+.al-rows.al-in .al-gr { animation: al-rise 220ms var(--al-ease) both; animation-delay: calc(var(--al-r, 0) * 30ms); }
+.al-rows.al-back .al-gr { animation: al-drop 220ms var(--al-ease) both; animation-delay: calc(var(--al-r, 0) * 20ms); }
+.al-rows.al-first .al-gr { animation: al-fade 200ms ease-out both; animation-delay: calc(var(--al-r, 0) * 20ms); }
+@keyframes al-rise { from { transform: translateY(3.33vh); opacity: 0; } }
+@keyframes al-drop { from { transform: translateY(-3.33vh); opacity: 0; } }
+/* an empty screen: one row with its way out lit (Notices board) */
+.al-empty { position: absolute; left: 0; right: 0; top: 0; height: var(--al-rh); }
+.al-empty .al-empty-way { left: 0; }
+.al-empty .al-empty-text { left: var(--al-cw); width: calc(3 * var(--al-cw)); cursor: default; }
+
+/* ---- hints: the bottom bar the target has, page-aware (Hints board) ---- */
+.al-hints { position: fixed; left: 0; right: 0; top: 90vh; height: 5.56vh; display: flex; align-items: center; gap: 1.72vw; padding-left: var(--al-ch); box-sizing: border-box;
+  border-top: 1px solid var(--icefin-color-divider); background: var(--icefin-color-background); font-size: 0.98vw; color: rgb(238 243 255 / 0.8); z-index: 1100; pointer-events: none; transition: opacity 120ms; }
+.al-hint b { color: var(--al-lime); font-weight: 700; }
+html[data-al-input="pointer"] .al-hints, html[data-icefin-osd-playing] .al-hints { opacity: 0; }
+body:has(#icefin-theme-overlay) .al-hints { z-index: 1102; }
+
+/* ---- the pointer's Back and Home, top left while the mouse moves ---- */
+.al-pnav { position: absolute; left: 1.4vw; top: 1.2vh; display: flex; flex-direction: column; gap: 0.6vh; z-index: 4; opacity: 0; pointer-events: none; transition: opacity 200ms; }
+html[data-al-input="pointer"] .al-pnav { opacity: 1; pointer-events: auto; }
+.al-pnav-btn { display: flex; align-items: center; gap: 0.4vw; border: 0; padding: 0.4vh 0.6vw; background: var(--icefin-color-surface); color: var(--icefin-color-text); font: inherit; font-size: 0.86vw; cursor: pointer; }
+.al-pnav-btn:hover { background: var(--al-lime); color: var(--al-on-lime); }
+.al-pnav-btn svg { width: 1.8vh; height: 1.8vh; }
+
+/* ---- the list box: options, pickers, questions and dialogs (ItemOptions, MenuDialog, WideDialog, SortFilter) ---- */
+.al-panel-host { position: fixed; inset: 0; z-index: 1001; }
+.al-panel-dim { position: absolute; inset: 0; background: rgb(2 8 26 / 0.5); animation: al-fade 140ms ease-out both; }
+.al-panel-video .al-panel-dim { background: rgb(2 8 26 / 0.25); }
+.al-panel { position: absolute; left: 50vw; top: 5.56vh; width: 37.5vw; max-height: 84vh; display: grid; color: var(--icefin-color-text);
+  animation: al-box-in 180ms var(--al-ease) both; }
+.al-panel.al-panel-wide { left: 12.5vw; width: 75vw; }
+@keyframes al-box-in { from { transform: translateX(1.9vw); opacity: 0; } }
+.al-panel-leave .al-panel { transform: translateX(1.9vw); opacity: 0; transition: transform 140ms cubic-bezier(0.4, 0, 1, 1), opacity 140ms; }
+.al-panel-leave .al-panel-dim { opacity: 0; transition: opacity 140ms; }
+.al-panel-level { grid-area: 1 / 1; align-self: start; display: flex; flex-direction: column; max-height: 84vh; background: var(--icefin-color-surface);
+  box-shadow: 0 0 0 2px var(--al-edge), 0 2.2vh 5.5vh rgb(0 0 0 / 0.5); }
+.al-panel-level.al-level-in { animation: al-level-in 180ms var(--al-ease) both; }
+.al-panel-level.al-level-under { opacity: 0.35; transform: translate(-3.1vw, -5.5vh); transition: opacity 180ms, transform 180ms var(--al-ease); pointer-events: none; }
+.al-panel-level.al-level-out { animation: al-level-out 140ms cubic-bezier(0.4, 0, 1, 1) both; pointer-events: none; }
+@keyframes al-level-in { from { transform: translate(3.1vw, 5.5vh); opacity: 0; } }
+@keyframes al-level-out { to { transform: translate(3.1vw, 5.5vh); opacity: 0; } }
+.al-panel-head { padding: 1.7vh 1.4vw 1.1vh; border-bottom: 1px solid var(--icefin-color-divider); }
+.al-panel-path { font-size: 0.9vw; color: var(--icefin-color-textSecondary); }
+.al-panel-title { font-size: 1.48vw; font-weight: 700; margin-top: 0.2vh; }
+.al-panel-body { overflow-y: auto; scroll-padding: 2vh; padding-bottom: 1.4vh; }
+.al-row { display: flex; align-items: center; gap: 0.8vw; min-height: 4.72vh; padding: 0.6vh 1.4vw; box-sizing: border-box; background: var(--icefin-color-surfaceRaised);
+  border-bottom: 1px solid var(--icefin-color-background); font-size: 1.05vw; cursor: pointer; outline: none; transition: background-color 90ms linear, color 90ms linear; }
+.al-row-label { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.al-row-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-row-sub { font-size: 0.86vw; opacity: 0.75; margin-top: 0.1vh; }
+.al-row-value { font-size: 0.94vw; opacity: 0.85; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.al-row-icon, .al-row-check { width: 2.2vh; height: 2.2vh; flex: none; }
+.al-row-check { color: var(--al-lime); }
+.al-row.al-row-on { box-shadow: inset 0.3vw 0 0 var(--al-lime); }
+.al-row-danger { color: #ff8a7a; }
+.al-row:hover { background: color-mix(in srgb, var(--icefin-color-surfaceRaised) 70%, var(--al-lime)); }
+.al-row.icefin-focused, .al-level-under .al-row.al-chosen { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-row.icefin-focused .al-row-check { color: var(--al-on-lime); }
+.al-switch { display: inline-block; width: 2.4vw; height: 1.2vw; border-radius: 0.2vw; background: var(--icefin-color-background); position: relative; vertical-align: middle; }
+.al-switch i { position: absolute; top: 0.15vw; left: 0.15vw; width: 0.9vw; height: 0.9vw; background: var(--icefin-color-textSecondary); transition: left 120ms var(--al-ease); }
+.al-switch.on { background: var(--al-lime); }
+.al-switch.on i { left: 1.35vw; background: var(--al-on-lime); }
+.al-row.icefin-focused .al-switch:not(.on) { background: rgb(10 26 51 / 0.35); }
+.al-sec { padding: 1vh 1.4vw 0.4vh; font-size: 0.86vw; font-weight: 600; color: var(--icefin-color-textSecondary); background: var(--icefin-color-surface); }
+.al-rule { height: 0.83vh; background: var(--icefin-color-surface); }
+.al-note { margin: 1vh 1.4vw; padding: 0.8vh 0.9vw; border-left: 3px solid var(--al-lime); background: var(--icefin-color-background); font-size: 1vw; line-height: 1.45; }
+.al-field { display: grid; grid-template-columns: 14vw 1fr; margin: 0; border-bottom: 1px solid var(--icefin-color-background); }
+.al-field-label { display: flex; align-items: center; padding: 0 1vw; min-height: 5vh; background: var(--icefin-color-surface); font-size: 0.98vw; font-weight: 600; color: var(--icefin-color-textSecondary); }
+.al-input { width: 100%; box-sizing: border-box; min-height: 5vh; background: var(--icefin-color-surfaceRaised); border: 0; color: var(--icefin-color-text); font: inherit; font-size: 1.05vw; padding: 0 1vw; outline: none; }
+textarea.al-input { min-height: 9vh; padding-top: 1vh; resize: none; line-height: 1.45; }
+.al-input.icefin-focused, .al-input:focus { background: var(--al-lime); color: var(--al-on-lime); }
+.al-foot { display: flex; gap: 0.5vw; padding: 1.6vh 1.4vw 0; }
+.al-btn { border: 0; padding: 1.1vh 1.7vw; background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 1.09vw; cursor: pointer; outline: none; }
+.al-btn.icefin-focused, .al-btn:hover { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-btn.al-btn-off { opacity: 0.35; }
+.al-ptabs { display: flex; flex-wrap: wrap; gap: 0.3vw; padding: 1vh 1.4vw; }
+.al-ptab { border: 0; padding: 0.7vh 1.1vw; background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 1vw; cursor: pointer; outline: none; }
+.al-ptab.on { box-shadow: inset 0 -0.42vh 0 var(--al-lime); }
+.al-ptab.icefin-focused { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-images { display: flex; flex-wrap: wrap; gap: 0.6vw; margin: 1vh 1.4vw; }
+.al-image { position: relative; width: 9vw; height: 13vh; background: center / cover no-repeat var(--icefin-color-surfaceRaised); cursor: pointer; outline: none; }
+.al-image.icefin-focused, .al-image:hover { box-shadow: 0 0 0 3px var(--al-lime); }
+.al-image-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.4vh 0.4vw; font-size: 0.78vw; background: rgb(2 8 26 / 0.8); }
+
+/* ---- notices (Notices board): top right, under the corner's picture ---- */
+.al-notice { position: fixed; right: 2.5vw; top: 34vh; width: 23.4vw; padding: 1.2vh 1.1vw; box-sizing: border-box; z-index: 1200; font-size: 1vw; color: var(--icefin-color-text);
+  background: var(--icefin-color-surface); box-shadow: 0 0 0 2px var(--al-edge); border-left: 0.31vw solid var(--al-lime); animation: al-notice-in 200ms var(--al-ease) both; }
+.al-notice-bad { border-left-color: var(--icefin-color-nowLine); }
+.al-notice-out { opacity: 0; transform: translateX(1.6vw); transition: opacity 160ms, transform 160ms cubic-bezier(0.4, 0, 1, 1); }
+@keyframes al-notice-in { from { opacity: 0; transform: translateX(1.6vw); } }
+
+/* ---- Now playing, the queue and lyrics (NowPlaying board): the frame again ---- */
+[data-al-screen="music"] { position: absolute; inset: 0; overflow: hidden; color: var(--icefin-color-text); background: linear-gradient(180deg, var(--icefin-color-surface) 0%, var(--icefin-color-background) 42%); }
+[data-al-screen="music"] > .al-clock { position: absolute; left: 15.7vw; top: 2.2vh; font-size: 0.94vw; color: var(--icefin-color-textSecondary); }
+.al-np-song { position: absolute; left: 3.44vw; top: 6.1vh; display: flex; gap: 1.33vw; z-index: 2; }
+.al-np-art { width: 10.94vw; height: 19.44vh; flex: none; background: center / cover no-repeat var(--icefin-color-surfaceRaised); box-shadow: inset 0 0 0 2px rgb(160 190 255 / 0.3); }
+.al-np-info { width: 40.6vw; padding-top: 1.1vh; }
+.al-np-title { font-size: 1.95vw; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-np-sub { font-size: 1.09vw; font-weight: 600; color: var(--al-lime); margin-top: 0.8vh; }
+.al-np-time { display: flex; align-items: center; gap: 0.8vw; margin-top: 2vh; font-size: 0.94vw; color: var(--icefin-color-textSecondary); font-variant-numeric: tabular-nums; }
+.al-np-bar { flex: 1; height: 0.83vh; background: var(--icefin-color-surfaceRaised); position: relative; cursor: pointer; outline: none; }
+.al-np-fill { position: relative; height: 100%; background: var(--al-lime); transition: width 500ms linear; }
+.al-np-knob { position: absolute; right: -0.16vw; top: -0.55vh; width: 0.31vw; height: 1.9vh; background: #fff; }
+.al-np-bar.icefin-focused { box-shadow: 0 0 0 2px var(--al-lime); }
+.al-np-transport { display: flex; gap: 0.3vw; margin-top: 1.7vh; }
+.al-np-btn { border: 0; padding: 0.9vh 1.25vw; background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 1.09vw; cursor: pointer; outline: none; }
+.al-np-btn.on { box-shadow: inset 0 -0.42vh 0 var(--al-lime); }
+.al-np-btn.icefin-focused, .al-np-btn:hover { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-np-lyrics { position: absolute; right: 2.5vw; top: 3.33vh; width: 26.56vw; height: 29vh; padding: 0 1.4vw; box-sizing: border-box; overflow: hidden; background: var(--icefin-color-background);
+  display: none; -webkit-mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent); }
+.al-np-has-lyrics .al-np-lyrics { display: block; }
+.al-np-lyrics::before, .al-np-lyrics::after { content: ""; display: block; height: 11vh; }
+.al-np-line { font-size: 1.09vw; line-height: 1.75; color: rgb(238 243 255 / 0.45); transition: color 300ms ease; }
+.al-np-line.near { color: rgb(238 243 255 / 0.65); }
+.al-np-line.now { color: var(--icefin-color-text); font-weight: 700; }
+.al-np-qhead { position: absolute; left: var(--al-ch); top: 33.2vh; padding: 0.55vh 0.94vw; background: var(--icefin-color-surface); box-shadow: inset 0 -0.42vh 0 var(--al-lime); font-size: 0.98vw; z-index: 2; }
+.al-np-queue { position: absolute; left: 0; right: var(--al-right); top: 42.92vh; display: flex; flex-direction: column; z-index: 2; }
+.al-np-qrow { display: flex; align-items: center; height: var(--al-rh); margin-bottom: 0.28vh; background: var(--icefin-color-surfaceRaised); font-size: 1.05vw; cursor: pointer; outline: none;
+  transition: background-color 90ms linear, transform 140ms var(--al-ease); }
+.al-np-qart { display: none; }
+.al-np-qname { width: var(--al-ch); flex: none; align-self: stretch; display: flex; align-items: center; padding: 0 0.8vw 0 1.4vw; box-sizing: border-box; background: var(--icefin-color-surface);
+  font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-np-qsub { padding: 0 0.8vw; color: var(--icefin-color-textSecondary); font-variant-numeric: tabular-nums; }
+.al-np-qrow.past { opacity: 0.6; }
+.al-np-qrow.playing .al-np-qname { color: var(--al-lime); }
+.al-np-qrow.icefin-focused, .al-np-qrow:hover { background: var(--al-lime); color: var(--al-on-lime); }
+.al-np-qrow.icefin-focused .al-np-qsub { color: var(--al-on-lime); }
+.al-np-qrow.al-lifted { box-shadow: 0 0 0 2px var(--al-lime), 0 1.1vh 2.5vh rgb(0 0 0 / 0.5); transform: translateX(1.4vw); }
+.al-np-nothing { position: absolute; left: var(--al-ch); top: 42.92vh; font-size: 1.05vw; color: var(--icefin-color-textSecondary); z-index: 2; }
+.al-np-idle .al-np-song, .al-np-idle .al-np-queue, .al-np-idle .al-np-qhead { opacity: 0.4; }
+
+/* ---- the player (Player, PlayerExtras): the info banner docked at the bottom ---- */
+.al-pl { position: absolute; inset: 0; color: var(--icefin-color-text); }
+.al-pl-shade-top, .al-pl-shade-bottom, .al-pl-top, .al-pl-bottom { opacity: 0; transition: opacity 160ms ease-in, transform 160ms ease-in; pointer-events: none; }
+.al-pl-shown .al-pl-shade-bottom, .al-pl-shown .al-pl-top, .al-pl-shown .al-pl-bottom { opacity: 1; transform: none; pointer-events: auto; transition-duration: 200ms; transition-timing-function: var(--al-ease); }
+.al-pl-shade-top { display: none; }
+.al-pl-shade-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 34.7vh;
+  background: linear-gradient(180deg, rgb(7 26 61 / 0) 0%, rgb(7 26 61 / 0.94) 22%, var(--icefin-color-background) 100%); transform: translateY(2vh); }
+.al-pl-top { position: absolute; left: 4.69vw; right: 34vw; top: 68.6vh; transform: translateY(2vh); }
+.al-pl-title { font-size: 1.88vw; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-pl-sub { font-size: 1.05vw; font-weight: 600; color: var(--al-lime); margin-top: 0.6vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-pl-bottom { position: absolute; left: 4.69vw; right: 4.69vw; top: 76vh; transform: translateY(2vh); }
+.al-pl-times { position: relative; display: flex; justify-content: space-between; font-size: 0.94vw; color: rgb(238 243 255 / 0.8); margin-bottom: 0.9vh; font-variant-numeric: tabular-nums; }
+.al-pl-bar { position: relative; height: 0.83vh; background: var(--icefin-color-surfaceRaised); cursor: pointer; outline: none; }
+.al-pl-bar::before { content: ""; position: absolute; left: 0; right: 0; top: -1.4vh; bottom: -1.4vh; }
+.al-pl-fill { height: 100%; background: var(--al-lime); }
+.al-pl-knob { position: absolute; top: -0.7vh; width: 0.31vw; height: 2.2vh; margin-left: -0.16vw; background: #fff; }
+.al-pl-bar.icefin-focused { box-shadow: 0 0 0 2px var(--al-lime); }
+.al-pl-ticks i { position: absolute; top: 0; width: 2px; height: 100%; background: var(--icefin-color-background); }
+.al-pl-live .al-pl-bar { cursor: default; }
+.al-pl-live .al-pl-times span:first-child { background: var(--icefin-color-nowLine); color: #fff; padding: 0 0.5vw; font-weight: 700; }
+.al-pl-transport { display: flex; gap: 0.3vw; margin-top: 1.9vh; }
+.al-pl-btn { border: 0; padding: 0.8vh 1.1vw; background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 1.05vw; cursor: pointer; outline: none; }
+.al-pl-btn[hidden] { display: none; }
+.al-pl-btn.icefin-focused, .al-pl-btn:hover { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-pl-archive { position: absolute; right: 2.5vw; bottom: 6vh; display: flex; flex-direction: column; align-items: flex-end; gap: 1.4vh; transition: bottom 200ms var(--al-ease); }
+.al-pl-shown .al-pl-archive { bottom: 37vh; }
+.al-pl-skip { position: relative; border: 0; padding: 1.1vh 1.4vw; background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 1.09vw; font-weight: 700;
+  cursor: pointer; outline: none; animation: al-fade 200ms ease-out both; }
+.al-pl-skip.icefin-focused, .al-pl-skip:hover { background: var(--al-lime); color: var(--al-on-lime); }
+.al-pl-skipline { display: block; height: 0.3vh; margin-top: 0.6vh; background: rgb(0 0 0 / 0.3); }
+.al-pl-skipline b { display: block; height: 100%; width: 100%; background: currentColor; transition: width 1s linear; }
+.al-pl-upnext { width: 22.7vw; padding: 1.4vh 0.94vw; box-sizing: border-box; background: var(--icefin-color-surface); box-shadow: 0 0 0 2px var(--al-edge); animation: al-box-in 200ms var(--al-ease) both; }
+.al-pl-count { font-size: 0.98vw; color: var(--icefin-color-textSecondary); }
+.al-pl-upnext-img { width: 100%; aspect-ratio: 16 / 9; background: center / cover no-repeat var(--icefin-color-surfaceRaised); margin-top: 0.8vh; }
+.al-pl-upnext-title { font-size: 1.09vw; font-weight: 700; margin-top: 0.8vh; }
+.al-pl-upnext-row { display: flex; gap: 0.3vw; margin-top: 1vh; }
+.al-pl-word { border: 0; padding: 0.6vh 0.8vw; background: var(--icefin-color-surfaceRaised); color: var(--icefin-color-text); font: inherit; font-size: 0.98vw; cursor: pointer; outline: none; }
+.al-pl-word.icefin-focused, .al-pl-word:hover { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+html[data-icefin-motion="low"] .al-pl * { transition: none !important; animation: none !important; }
+
+/* ---- jellyfin-web's pages in Almanac's frame (PrefsFramed board) ---- */
+#icefin-stock-chrome .al-sc { position: fixed; inset: 0 0 auto 0; height: 19.4vh; pointer-events: none; color: var(--icefin-color-text); }
+#icefin-stock-chrome .al-sc::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 13.33vh; background: var(--icefin-color-surface); border-bottom: 2px solid var(--al-edge); }
+.al-sc-nav { position: absolute; left: 1.4vw; top: 1.2vh; display: flex; gap: 0.4vw; pointer-events: auto; opacity: 0; transition: opacity 200ms; }
+html[data-al-input="pointer"] .al-sc-nav { opacity: 1; }
+.al-sc-back { display: flex; align-items: center; gap: 0.4vw; border: 0; padding: 0.4vh 0.6vw; background: var(--icefin-color-surfaceRaised); color: inherit; font: inherit; font-size: 0.86vw; cursor: pointer; }
+.al-sc-back:hover { background: var(--al-lime); color: var(--al-on-lime); }
+.al-sc-back svg { width: 1.6vh; height: 1.6vh; }
+.al-sc-icon { display: none; }
+.al-sc-name { position: absolute; left: 4.69vw; top: 5vh; font-size: 1.72vw; font-weight: 700; }
+.al-sc-tabs { position: absolute; left: 4.69vw; top: 14.7vh; display: flex; gap: 0.47vw; pointer-events: auto; }
+.al-sc-tab { border: 0; padding: 0.7vh 1.1vw; background: var(--icefin-color-surface); color: var(--icefin-color-text); font: inherit; font-size: 1.02vw; cursor: pointer; }
+.al-sc-tab.on { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-sc-tab:hover, .al-sc-tab:focus { box-shadow: 0 0 0 2px var(--al-lime); outline: none; }
+.al-sc-clock { position: absolute; right: 4.69vw; top: 4.4vh; font-size: 1.56vw; font-weight: 700; font-variant-numeric: tabular-nums; }
+html[data-icefin-stock] body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, var(--icefin-color-surface) 0%, var(--icefin-color-background) 42%); }
+html[data-icefin-stock] .skinHeader, html[data-icefin-stock] header.MuiAppBar-root, html[data-icefin-stock] .mainDrawerHandle,
+html[data-icefin-stock] .backdropContainer, html[data-icefin-stock] .backgroundContainer { visibility: hidden !important; }
+html[data-icefin-stock] .mainAnimatedPage, html[data-icefin-stock] .page { color: var(--icefin-color-text); background: transparent !important;
+  padding-top: 21vh !important; padding-left: 4.69vw !important; padding-right: 30vw !important; padding-bottom: 12vh !important; box-sizing: border-box; }
+html[data-icefin-stock], html[data-icefin-stock] .page, html[data-icefin-stock] .scrollY { scroll-padding: 22vh 0 12vh; }
+html[data-icefin-stock] .page h1, html[data-icefin-stock] .page h2, html[data-icefin-stock] .page .sectionTitle { font-weight: 600; color: var(--icefin-color-textSecondary); font-size: 1.17vw; margin: 2.6vh 0 1.2vh; }
+html[data-icefin-stock] .page .fieldDescription, html[data-icefin-stock] .page .secondaryText { color: var(--icefin-color-textSecondary); font-size: 0.86vw; }
+html[data-icefin-stock] .page .checkboxContainer { margin: 0 !important; padding: 0.9vh 0.94vw 0.9vh 0.94vw !important; border-bottom: 1px solid var(--icefin-color-background); background: var(--icefin-color-surfaceRaised); max-width: 64vw; box-sizing: border-box; }
+html[data-icefin-stock] .page .selectContainer, html[data-icefin-stock] .page .inputContainer {
+  margin: 0 !important; padding: 0.6vh 0.94vw !important; border-bottom: 1px solid var(--icefin-color-background); background: var(--icefin-color-surfaceRaised); max-width: 64vw; box-sizing: border-box; }
+html[data-icefin-stock] .page .selectLabel, html[data-icefin-stock] .page .inputLabel, html[data-icefin-stock] .page .checkboxLabel { font-size: 1.09vw; color: rgb(238 243 255 / 0.85); }
+html[data-icefin-stock] .page input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html[data-icefin-stock] .page select, html[data-icefin-stock] .page textarea {
+  font: inherit; font-size: 1.09vw; color: var(--icefin-color-text); background: var(--icefin-color-surface) !important; border: 0 !important; border-radius: 0 !important; padding: 0.7vh 0.7vw; box-shadow: none !important; }
+html[data-icefin-stock] .page .selectContainer:focus-within, html[data-icefin-stock] .page .inputContainer:focus-within, html[data-icefin-stock] .page .checkboxContainer:focus-within { background: var(--al-lime); }
+html[data-icefin-stock] .page .selectContainer:focus-within .selectLabel, html[data-icefin-stock] .page .inputContainer:focus-within .inputLabel, html[data-icefin-stock] .page .checkboxContainer:focus-within .checkboxLabel,
+html[data-icefin-stock] .page .selectContainer:focus-within .fieldDescription, html[data-icefin-stock] .page .checkboxContainer:focus-within .fieldDescription { color: var(--al-on-lime) !important; font-weight: 700; }
+html[data-icefin-stock] .page select:focus, html[data-icefin-stock] .page input:focus { outline: none; }
+html[data-icefin-stock] .page select option { color: var(--icefin-color-text); background: var(--icefin-color-surface); }
+html[data-icefin-stock] .page .checkboxOutline { border-radius: 0.2vh !important; border: 2px solid var(--icefin-color-textSecondary) !important; background: transparent !important; }
+html[data-icefin-stock] .page input[type=checkbox]:checked + span + .checkboxOutline { background: var(--al-lime) !important; border-color: var(--al-lime) !important; }
+html[data-icefin-stock] .page .checkboxContainer:focus-within .checkboxOutline { border-color: var(--al-on-lime) !important; }
+html[data-icefin-stock] .page .raised, html[data-icefin-stock] .page .button-submit, html[data-icefin-stock] .page .button-cancel, html[data-icefin-stock] .page .btnAddServer {
+  font: inherit; font-size: 1.09vw; text-transform: none; color: var(--icefin-color-text) !important; background: var(--icefin-color-surfaceRaised) !important; border: 0 !important;
+  border-radius: 0 !important; box-shadow: none !important; padding: 1.1vh 1.7vw !important; margin-right: 0.4vw !important; }
+html[data-icefin-stock] .page .raised:focus, html[data-icefin-stock] .page .button-submit:focus, html[data-icefin-stock] .page .raised:hover, html[data-icefin-stock] .page .button-submit:hover {
+  background: var(--al-lime) !important; color: var(--al-on-lime) !important; font-weight: 700; outline: none; }
+/* jellyfin-web's leftover dialogs and action sheets as Almanac's list box (Notices board) */
+html[data-icefin-theme]:not([data-icefin-dashboard]):not([data-icefin-osd-playing]) .dialogContainer .dialog { background: var(--icefin-color-surface) !important; color: var(--icefin-color-text);
+  border-radius: 0 !important; box-shadow: 0 0 0 2px var(--al-edge), 0 2.2vh 5.5vh rgb(0 0 0 / 0.5) !important; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .actionSheetMenuItem:focus, html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .listItem-button:focus {
+  background: var(--al-lime) !important; color: var(--al-on-lime) !important; font-weight: 700; outline: none; }
+html[data-icefin-theme]:not([data-icefin-dashboard]) .dialogContainer .button-flat[data-id="delete"], html[data-icefin-theme] .dialogContainer .btnDelete { color: #ff8a7a !important; }
+html[data-icefin-theme] .toast { background: var(--icefin-color-surface) !important; border-left: 0.31vw solid var(--al-lime); border-radius: 0 !important; color: var(--icefin-color-text) !important; box-shadow: 0 0 0 2px var(--al-edge) !important; }
+
+/* ---- Settings › Home (HomeOrder board): rows with Shown and Move, a preview of the home in the corner ---- */
+.al-hp { position: absolute; left: 0; right: var(--al-right); top: 33.2vh; bottom: 11vh; overflow-y: auto; scroll-behavior: smooth; scrollbar-width: none; }
+.al-hp-head { margin: 1.4vh 0 0.6vh var(--al-ch); font-size: 0.94vw; font-weight: 600; color: var(--icefin-color-textSecondary); }
+.al-hp-row { position: relative; height: var(--al-rh); margin-bottom: 0.28vh; transition: transform 140ms var(--al-ease); }
+.al-hp-row .al-c { position: relative; display: inline-flex; height: 100%; width: var(--al-cw); left: auto; vertical-align: top; }
+.al-hp-row .al-hp-move { width: calc(2 * var(--al-cw)); }
+.al-hp-row.off .al-ch, .al-hp-row.off .al-hp-move { opacity: 0.5; }
+.al-hp-row.off .al-hp-state:not(.icefin-focused) { background: var(--icefin-color-surface); color: var(--icefin-color-textSecondary); }
+.al-hp-row.al-lifted { transform: translateX(1.4vw); box-shadow: 0 0 0 2px var(--al-lime), 0 1.1vh 2.5vh rgb(0 0 0 / 0.5); z-index: 2; }
+.al-hp-row.al-lifted .al-hp-move { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+.al-hp-foot { margin-top: 1.4vh; }
+.al-hp-foot .al-hp-reset { width: calc(2 * var(--al-cw)); }
+.al-hp-pv { padding: 1.7vh 0.94vw; box-sizing: border-box; display: flex; flex-direction: column; gap: 0.7vh; background: var(--icefin-color-background); }
+.al-hp-pv i { display: block; height: 2.8vh; background: var(--icefin-color-surfaceRaised); transition: background-color 120ms; }
+.al-hp-pv i.off { opacity: 0.25; }
+.al-hp-pv i.lit { background: var(--al-lime); }
+
+/* ---- Quick Connect and Forgot password (QuickConnect board): a list box of six slots ---- */
+.al-qc { position: absolute; left: 26.56vw; top: 16.67vh; width: 46.9vw; padding: 1.7vh 1.7vw 2.8vh; box-sizing: border-box; z-index: 2;
+  background: var(--icefin-color-surface); box-shadow: 0 0 0 2px var(--al-edge), 0 2.2vh 5.5vh rgb(0 0 0 / 0.5); }
+.al-qc-path { font-size: 0.9vw; color: var(--icefin-color-textSecondary); }
+.al-qc-title { font-size: 1.48vw; font-weight: 700; margin: 0.2vh 0 1.4vh; padding-bottom: 1.1vh; border-bottom: 1px solid var(--icefin-color-divider); }
+.al-qc-text { font-size: 1.05vw; line-height: 1.5; color: rgb(238 243 255 / 0.8); margin-bottom: 1vh; }
+.al-qc-slots { display: flex; gap: 0.63vw; justify-content: center; outline: none; padding: 3vh 0; }
+.al-qc-slot { position: relative; width: 4.84vw; height: 10.56vh; display: flex; align-items: center; justify-content: center; font-size: 2.65vw; font-weight: 700; background: var(--icefin-color-surfaceRaised); font-variant-numeric: tabular-nums; }
+.al-qc-slots.icefin-focused .al-qc-slot.at { background: var(--al-lime); color: var(--al-on-lime); }
+.al-qc-slots.icefin-focused .al-qc-slot.at::before, .al-qc-slots.icefin-focused .al-qc-slot.at::after { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.94vw; color: var(--al-lime); }
+.al-qc-slots.icefin-focused .al-qc-slot.at::before { content: "▲"; top: -2.5vh; }
+.al-qc-slots.icefin-focused .al-qc-slot.at::after { content: "▼"; bottom: -2.5vh; }
+.al-qc-typed { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.al-qc-buttons { display: flex; gap: 0.5vw; margin-top: 2vh; }
+.al-qc-hint { font-size: 0.9vw; color: var(--icefin-color-textSecondary); margin-top: 1.8vh; }
+.al-qc-note { font-size: 1vw; margin-top: 1.8vh; padding: 0.8vh 0.9vw; border-left: 3px solid var(--al-lime); background: var(--icefin-color-background); min-height: 1em; }
+.al-qc-note:empty { display: none; }
+.al-qc-show { font-size: 2.65vw; font-weight: 700; letter-spacing: 0.4em; margin: 2vh 1.4vw; font-variant-numeric: tabular-nums; color: var(--al-lime); }
+[data-al-screen="quickconnect"], [data-al-screen="forgot"] { position: absolute; inset: 0; background: linear-gradient(180deg, var(--icefin-color-surface) 0%, var(--icefin-color-background) 42%); color: var(--icefin-color-text); }
+
+/* ---- search: the query line in the pane (Search board) ---- */
+.al-search-input { position: absolute; left: 15.7vw; top: 12.8vh; width: 40.6vw; height: 5.56vh; box-sizing: border-box; z-index: 3; border: 0; border-bottom: 2px solid var(--al-lime);
+  background: transparent; color: var(--icefin-color-text); font: inherit; font-size: 1.72vw; padding: 0; outline: none; }
+.al-search-input.icefin-focused, .al-search-input:focus { background: rgb(200 230 57 / 0.12); }
+[data-al-screen="search"] .al-when, [data-al-screen="search"] .al-desc { visibility: hidden; }
+
+/* ---- the on-screen keyboard: keys in Almanac's cells, a band across the bottom ---- */
+html[data-icefin-theme] #icefin-osk { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; padding: 2vh var(--al-right) 2.2vh var(--al-ch); box-sizing: border-box;
+  color: var(--icefin-color-text); font-family: "Noto Sans", sans-serif; background: var(--icefin-color-surface); box-shadow: 0 -2px 0 var(--al-edge); animation: al-osk-in 180ms var(--al-ease) both; }
+@keyframes al-osk-in { from { transform: translateY(20%); opacity: 0; } }
+html[data-icefin-theme] #icefin-osk .icefin-osk-preview { font-size: 1.4vw; min-height: 2em; padding: 0.4vh 0.6vw; margin-bottom: 1vh; border-bottom: 2px solid var(--al-lime); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-preview:empty::before { content: attr(data-placeholder); color: var(--icefin-color-textSecondary); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-row { display: flex; gap: 2px; margin: 2px 0; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-key { flex: 1; min-height: 4.72vh; display: flex; align-items: center; justify-content: center; font-size: 1.17vw; cursor: pointer; background: var(--icefin-color-surfaceRaised); }
+html[data-icefin-theme] #icefin-osk .icefin-osk-wide { flex: 1.6; font-size: 0.94vw; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-space { flex: 4; font-size: 0.94vw; }
+html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-icefin-theme] #icefin-osk .icefin-osk-key:hover { background: var(--al-lime); color: var(--al-on-lime); font-weight: 700; }
+html[data-icefin-motion="low"] #icefin-osk { animation: none; }
+
+/* ---- reduced or low motion: cross-fades only (MotionTimings) ---- */
+html[data-icefin-motion="low"] .al-screen *, html[data-icefin-motion="low"] .al-panel-host *, html[data-icefin-motion="low"] .al-panel-host,
+html[data-icefin-motion="low"] #icefin-stock-chrome * { transition-duration: 0s !important; animation: none !important; }
+html[data-icefin-motion="low"] .al-rows .al-gr, html[data-icefin-motion="low"] .al-panel, html[data-icefin-motion="low"] .al-panel-level.al-level-in { animation: al-fade 100ms linear both !important; }
+
+/* ---- the guide (Guide board; PLAN 9.15): the reference's geometry at 1920x1080 (x/19.2, y/10.8) ---- */
+[data-al="guide"] { position: absolute; inset: 0; color: var(--icefin-color-text); overflow: hidden !important; display: flex; flex-direction: column; padding: 0 0 2vh; box-sizing: border-box;
   background: linear-gradient(180deg, var(--icefin-color-surface) 0%, var(--icefin-color-background) 40%); }
-
-/* Info pane: what has focus, and the focused channel live in the corner */
 /* The info pane 350 tall: the title from x 302 centred on y 110; the live preview in the corner, 510 wide, ending x 1872. */
-.al-top { display: flex; gap: 2vw; height: 32.41vh; flex: none; padding: 0 2.5vw 0 15.73vw; box-sizing: border-box; }
-.al-info { flex: 1; min-width: 0; padding-top: 5.37vh; }
-.al-clock { font-size: 1.1vw; line-height: 1; color: var(--icefin-color-textSecondary); margin-bottom: 1vh; }
-.al-title { font-size: 1.9vw; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.al-when { margin: 0.6vh 0 1vh; color: var(--icefin-color-accent); font-weight: 600; font-size: 1.05vw; }
-.al-desc { line-height: 1.4; max-height: 4.2em; overflow: hidden; color: var(--icefin-color-textSecondary); font-size: 1.05vw; }
-.al-preview { width: 26.56vw; flex: none; height: 32.41vh; background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
-  border: 0.15em solid var(--icefin-color-divider); position: relative; overflow: hidden; }
-.al-preview-label { position: absolute; left: 0.5em; bottom: 0.4em; font-size: 0.8em; font-weight: 700; padding: 0.1em 0.5em; background: var(--icefin-color-background); }
-
-/* Menu row */
-.al-menu { display: flex; gap: 0.6vw; height: 5.28vh; align-items: center; margin: 0 0 0 24.48vw; flex: none; font-size: 0.94vw; }
-.al-menu-item { padding: 0.35em 1em; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface); outline: none; white-space: nowrap; }
-.al-menu-item.current { box-shadow: inset 0 -0.2em 0 var(--icefin-color-accent); }
-.al-menu-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
-
-/* Guide */
+[data-al="guide"] .al-top { display: flex; gap: 2vw; height: 32.41vh; flex: none; padding: 0 2.5vw 0 15.73vw; box-sizing: border-box; }
+[data-al="guide"] .al-info { flex: 1; min-width: 0; padding-top: 5.37vh; }
+[data-al="guide"] .al-clock { font-size: 0.94vw; line-height: 1; color: var(--icefin-color-textSecondary); margin-bottom: 1vh; }
+[data-al="guide"] .al-title { font-size: 1.95vw; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-al="guide"] .al-when { margin: 0.6vh 0 1vh; color: var(--al-lime); font-weight: 600; font-size: 1.09vw; }
+[data-al="guide"] .al-desc { line-height: 1.4; max-height: 4.2em; overflow: hidden; color: var(--icefin-color-textSecondary); font-size: 1.05vw; }
+[data-al="guide"] .al-preview { width: 26.56vw; flex: none; height: 32.41vh; background: var(--icefin-color-surfaceRaised) center / cover no-repeat;
+  box-shadow: inset 0 0 0 2px var(--icefin-color-divider); position: relative; overflow: hidden; }
+[data-al="guide"] .al-preview-label { position: absolute; left: 0.5em; bottom: 0.4em; font-size: 0.86vw; font-weight: 700; padding: 0.1em 0.5em; background: var(--icefin-color-background); }
+/* the tab strip (the app's places) */
+[data-al="guide"] .al-menu { display: flex; gap: 0.47vw; height: 5.28vh; align-items: center; margin: 0 0 0 24.48vw; flex: none; font-size: 0.98vw; }
+[data-al="guide"] .al-menu-item { padding: 0.55vh 0.94vw; border-radius: var(--icefin-shape-cardRadius); background: var(--icefin-color-surface); outline: none; white-space: nowrap; cursor: pointer;
+  transition: background-color 90ms linear, color 90ms linear; }
+[data-al="guide"] .al-menu-item.current { box-shadow: inset 0 -0.42vh 0 var(--al-lime); }
+[data-al="guide"] .al-menu-item.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); font-weight: 700; }
 /* The grid: times centred on y ~435 from x 470, 324 px a half hour (two hours to x 1766); channel rows 58.6 apart from y 464. */
 .al-guide { flex: 1; min-height: 0; position: relative; margin-right: 8.02vw; font-size: 1.05vw; }
 .al-guide .icefin-guide-times { position: relative; height: 5.28vh; margin-left: 24.48vw; border-bottom: 0.12em solid var(--icefin-color-divider); box-sizing: border-box; }
@@ -31,22 +394,27 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
   border-left: 0.1em solid var(--icefin-color-divider); box-sizing: border-box; }
 .al-guide .icefin-guide-row { display: flex; height: 5.43vh; box-sizing: border-box; border-bottom: 0.1em solid var(--icefin-color-background); }
 .al-guide .icefin-guide-channel { width: 24.48vw; flex: none; display: flex; align-items: center; gap: 0.8em; padding: 0 0.8em; box-sizing: border-box;
-  background: var(--icefin-color-surfaceRaised); font-weight: 600; white-space: nowrap; overflow: hidden; }
-.al-chno { color: var(--icefin-color-accent); min-width: 2.2em; }
+  background: var(--icefin-color-surface); font-weight: 700; white-space: nowrap; overflow: hidden; }
+.al-chno { color: var(--al-lime); min-width: 2.2em; }
 .al-guide .icefin-guide-lane { flex: 1; }
 .al-guide .icefin-guide-cell { box-sizing: border-box; padding: 0 0.7em; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  background: var(--icefin-color-surface); border-left: 0.12em solid var(--icefin-color-background); outline: none; }
+  background: var(--icefin-color-surfaceRaised); border-left: 0.12em solid var(--icefin-color-background); outline: none; transition: background-color 90ms linear, color 90ms linear; }
 .al-guide .icefin-guide-live { background: var(--icefin-color-live); }
 .al-guide .icefin-guide-gap { color: var(--icefin-color-textSecondary); }
 .al-guide .icefin-guide-cut-start::before { content: "‹ "; color: var(--icefin-color-textSecondary); }
 .al-guide .icefin-guide-cut-end::after { content: " ›"; margin-left: auto; color: var(--icefin-color-textSecondary); }
-.al-guide .icefin-guide-cell.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
+.al-guide .icefin-guide-cell.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); font-weight: 700; }
 .al-guide .icefin-guide-now { position: absolute; top: 5.28vh; bottom: 0; width: 0.18em; background: var(--icefin-color-nowLine); z-index: 2; pointer-events: none; }
-.al-empty { margin-top: 6vh; font-size: 1.3em; color: var(--icefin-color-textSecondary); }
+.al-rec { color: var(--icefin-color-nowLine); }
+.icefin-guide-cell.icefin-focused .al-rec { color: #b8261a; }
+[data-al="guide"] .al-empty { margin-top: 6vh; font-size: 1.3em; color: var(--icefin-color-textSecondary); }
 
-/* Details (9.18): an information pane on the left like the guide's, the lists beside it, lime focus rows. */
-.icefin-details .icefin-d-section h2 { text-transform: uppercase; letter-spacing: 0.08em; font-size: 1em; color: var(--icefin-color-textSecondary); }
-.icefin-details .icefin-d-actions { flex-direction: column; align-items: stretch; gap: 0.25em; }
-.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0.2em; background: var(--icefin-color-surface); }
+/* ---- the engine's screens Almanac keeps: the settings hub (Client settings) and the details fallback ---- */
+.icefin-details .icefin-d-section h2 { font-size: 1em; color: var(--icefin-color-textSecondary); }
+.icefin-details .icefin-d-actions { flex-direction: column; align-items: stretch; gap: 2px; }
+.icefin-details .icefin-d-btn, .icefin-details .icefin-d-select { border-radius: 0; background: var(--icefin-color-surfaceRaised); }
 .icefin-details .icefin-d-btn.icefin-focused, .icefin-details .icefin-d-select.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); }
-.icefin-details .icefin-d-card .icefin-d-img { border-radius: 0.2em; }
+.icefin-settings .icefin-d-btn { border-radius: 0; background: var(--icefin-color-surfaceRaised); }
+.icefin-settings .icefin-d-btn.icefin-focused { background: var(--icefin-color-focus); color: var(--icefin-color-onFocus); font-weight: 700; }
+/* the clock on Almanac's own screens outside the rows engine (Now playing, Quick Connect) */
+[data-al-screen="quickconnect"] > .al-clock, [data-al-screen="forgot"] > .al-clock { position: absolute; left: 26.56vw; top: 10vh; font-size: 0.94vw; color: var(--icefin-color-textSecondary); }

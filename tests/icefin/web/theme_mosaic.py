@@ -75,7 +75,7 @@ def main():
         page.wait_for("(() => { const r = document.querySelector('#icefin-theme-root[data-pv]'); return !!r && +r.getAttribute('data-pv-ready') > 0; })()", timeout=40)
         time.sleep(1.5)
         heads = json.loads(js("JSON.stringify([...document.querySelectorAll('.icefin-pivot-header')].map(e => e.textContent))"))
-        check("pivot headers: home, the libraries, settings", heads[0] == "home" and heads[-1] == "settings" and all(h == h.lower() for h in heads), json.dumps(heads))
+        check("pivot headers: search, home, the libraries, settings", "home" in heads and heads[0] in ("search", "home") and heads[-1] == "settings" and all(h == h.lower() for h in heads), json.dumps(heads))
         hsize = js("parseFloat(getComputedStyle(document.querySelector('.icefin-pivot-header.active')).fontSize) / innerHeight")
         check("headers are 42/1080 type, the grid the larger part (typography-led)", abs(hsize - 42 / 1080) < 0.008, f"{hsize:.3f} of the height")
         sizes = json.loads(js("JSON.stringify([...document.querySelectorAll('.pv-tile')].map(t => t.mosaicTile.size))"))
