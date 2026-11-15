@@ -54,7 +54,7 @@
                 box.append(el('h2', 'bl-hub-title', 'Administration'), link('dashboard', 'Dashboard', () => B.go('#/dashboard')), link('mode_edit', 'Metadata Manager', () => B.go('#/metadata')));
             }
             box.append(el('h2', 'bl-hub-title', 'User'), link('storage', 'Select Server', () => ctx.selectServer()),
-                link('exit_to_app', 'Sign Out', () => B.panel.ask({ title: 'Sign Out', text: 'Are you sure you want to sign out?', choices: [{ label: 'Cancel', safe: true }, { label: 'Sign Out', run: () => ctx.signOut() }] })),
+                link('exit_to_app', 'Sign Out', () => B.panel.ask({ title: 'Sign Out', text: 'Are you sure you want to sign out?', choices: [{ label: 'Cancel', safe: true }, { label: 'Sign Out', run: () => B.farewell(() => ctx.signOut()) }] })),
                 link('close', 'Exit Application', () => B.exitAsk && B.exitAsk()));
             page.append(box);
             B.arrive(root, box.querySelector('.bl-hub-item'));

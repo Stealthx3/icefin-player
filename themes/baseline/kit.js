@@ -98,7 +98,7 @@
         const n = B.el('div', 'bl-toast' + (bad ? ' bad' : ''), text);
         n.setAttribute('role', 'status');
         B.layer().append(n);
-        T.ctx.sound(bad ? 'error' : 'notice');
+        T.ctx.sound(bad ? 'error' : 'navigate');
         requestAnimationFrame(() => n.classList.add('on'));
         setTimeout(() => n.classList.add('out'), 3300);
         setTimeout(() => n.remove(), 3700);
@@ -115,6 +115,13 @@
         return B.branding;
     };
     B.mark = () => `${B.base}icefin-mark.svg`;
+    // the goodbye jingle before leaving or signing out (the sound set, the user's call 7); straight away when music is off
+    B.farewell = async (then) => {
+        let played = false;
+        try { played = !!(T.ctx.music && await T.ctx.music.jingle('goodbye')); } catch (e) { played = false; }
+        if (played) await new Promise((r) => setTimeout(r, 1500));
+        then();
+    };
 
     // ---- the header (stock's TV skinHeader): Back, Home and the page's title on the left (Icefin's mark on the home),
     // SyncPlay, Search, the user and the clock on the right; the page's tabs centred under it ----
