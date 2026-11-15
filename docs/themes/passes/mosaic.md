@@ -357,3 +357,35 @@ clarity). Plaza's timings, for reference:
       covered Wayland window stops drawing, and the tests' screenshots wait).
 - [ ] **A host walk** of the finished theme on the user's server (screenshots, transition films and the cut-off audit
       of every element) and the user's review against the mock-ups (the pipeline's Gate 2).
+
+## The target's other screens (measured 2026-11-15, watched in the browser, nothing downloaded)
+
+Sources: IGN, "New Xbox 360 2012 Dashboard Update Walkthrough" (https://www.youtube.com/watch?v=3zOX7_67dIQ, direct
+feed) and Jeremy Hill, "Xbox 360 Dashboard Update 2012 Tour" (https://www.youtube.com/watch?v=olTeUQbIjoU, 640x360
+capture). Layout, timing and colours only; no tiles, icons, sounds, fonts or names.
+
+- **Home**: one row of lowercase pivot headers (the current one dark, the rest grey), the pivots before it trailing
+  off the left edge and the next ones off the right; under it a grid of flat tiles in three sizes, the first column
+  of each pivot green tiles with a white glyph top and a label bottom left, the rest art. The account top right with
+  a small picture; hints bottom left as coloured face dots and words. A grey field, lighter at the top.
+- **Hubs** (a library opened): the same pivot, smaller and starting at the left (my videos, spotlight, movies, tv,
+  recommended), the hub's name top right with a small mark; tiles of one size in a 4-wide grid; dark tiles for
+  "my" things with a white glyph.
+- **Strips** (my pins, recent, search results, a season's episodes): one row of tall cards running off the right,
+  the focused card lifted and white; "2 of 14" under the title top right; a filter top left ("show me / all media").
+  Cards carry art on top and a title, a line of facts and a description on white below.
+- **Details**: the item's art dimmed as the whole background; its title top right; a pivot of its sections (overview,
+  details, related, seasons by number, extras, gallery) under the title; under the current section a 2x2 block of
+  action tiles (green for a game, white for a show or song: an icon top right, a label bottom left), the art beside
+  them, then the facts and description in a column. Further sections off the right.
+- **Now playing**: a white panel over the dimmed screen: art, title, artist and time; then two rows of round-icon
+  buttons with words (Pause, Previous, Next; Pin, Shuffle, Explore). A small now-playing strip (art, progress, time)
+  sits low in the middle of hub pages while music plays.
+- **Lists and settings**: a dark panel of rows with checkboxes, the decisions as green tiles to the right (OK, Undo);
+  search suggestions as a column of white bars.
+- **Search**: a search bar across a pivot of its own; suggestions as white bars under "search for"; results as a strip.
+- **Dialogs and progress**: a white box centred on the dimmed screen, a line of text and a thin progress bar; the
+  Back hint stays bottom left.
+- **Keyboard**: a dark grid of square keys, 10 wide, a side column (Backspace, Symbols, Accents, Caps, Enter) and a
+  wide Space; the suggestion box above, left.
+- **Not found**: the system guide of this version (not shown in either source); a full-screen video player bar.
