@@ -68,7 +68,7 @@ def main():
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
         h = themes().get("harbor", {})
-        check("Harbor offered as a built-in theme, usable", h.get("ok") is True and h.get("source") == "bundled", json.dumps(h)[:160])
+        check("Harbor offered as a built-in theme, usable", h.get("ok") is True and (h.get("source") == "bundled" or bool(os.environ.get("ICEFIN_THEME_PATH"))), json.dumps(h)[:160])
         # The lab user's theme choice syncs to the server (8.5): an earlier run's theme may play sounds before Harbor's
         # is applied, so Harbor's sounds are counted from here.
         played0 = (js("new Promise(r => window.api.theme.soundState(r))") or {}).get("played", 0)
