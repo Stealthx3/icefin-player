@@ -134,7 +134,7 @@
         const name = item.Type === 'Episode' ? `${item.SeriesName || ''} · ${item.Name}` : item.Name;
         t.setAttribute('aria-label', name);
         t.append(el('div', 'hb-caption', name));
-        t.addEventListener('click', () => openInfo(item));
+        t.addEventListener('click', () => { const D = window.icefinHarbor; if (D && D.openItem) { T.ctx.sound('select'); D.openItem(item, t); } else openInfo(item); });  // 9.52: the shared details page
         return t;
     }
 
@@ -309,6 +309,11 @@
         onAction(action, ctx) {
             if (!S || !S.rail) return false;
             const f = ctx.focused();
+            const D = window.icefinHarbor;  // 9.52: the shared item menu, play and exit
+            if (D && f && f.harborItem && !S.dialog) {
+                if (action === 'menu' && D.itemMenu) { D.itemMenu(f.harborItem, {}); return true; }
+                if ((action === 'play_pause' || action === 'playpause') && D.playable(f.harborItem)) { ctx.sound('select'); D.playItem(f.harborItem, true); return true; }
+            }
             if (S.dialog) {
                 const i = S.dialog.buttons.indexOf(f);
                 if (action === 'back') { closeInfo(); ctx.sound('back'); return true; }
@@ -327,6 +332,7 @@
                     if (enterContent()) ctx.sound('focus');
                     return true;
                 }
+                if (action === 'back' && D && D.exitAsk) { D.exitAsk(); return true; }
                 return action === 'left';
             }
             const r = S.shelves.findIndex((row) => row.includes(f));
@@ -367,27 +373,4 @@
             S = null;
         }
     });
-})();
-
-// Details (PLAN 9.18): the engine's details screen (every feature of the stock page) in this theme's layout; the look
-// is in styles.css, "Details".
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'poster' }));
-})();
-
-// Player controls (PLAN 9.19): jellyfin-web's own controls (every function kept) in this theme's layout; the look is
-// the osd.* tokens in tokens.json.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.osd) T.ui.osd.set({ layout: 'bar' });
-})();
-
-// Settings (PLAN 9.24): the engine's settings area (Client settings, Classic View, Server Settings) in this theme's look.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.settings) T.registerScreen('#/mypreferencesmenu', T.ui.settings.screen({ layout: 'list' }));
 })();
