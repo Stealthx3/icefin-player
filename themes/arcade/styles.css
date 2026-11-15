@@ -96,9 +96,6 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 /* ---- the ground: the sky over the floor, slow rings (Effects board) ---- */
 .ac-screen, [data-ar] { position: absolute; inset: 0; overflow: hidden !important; color: var(--icefin-color-text);
   background: var(--ac-ground); }
-.ac-screen::before { content: ""; position: absolute; left: -15vw; top: -36vh; width: 70vw; height: 125vh; border-radius: 50%; pointer-events: none;
-  background: repeating-radial-gradient(circle, rgb(255 255 255 / 0) 0 7.2vh, rgb(255 255 255 / 0.07) 7.3vh 7.5vh); animation: ac-drift 60s linear infinite alternate; }
-@keyframes ac-drift { to { transform: translate(3vw, 2vh) scale(1.04); } }
 
 /* the page's name (top left), the clock (top right), the mark (bottom right) */
 .ac-ttl { position: absolute; left: 3.12vw; top: 3.6vh; z-index: 3; text-shadow: none; max-width: 60vw; }
