@@ -320,8 +320,21 @@ def tide():
     return {"focus": (tock, -14), "select": (crystal, -10), "back": (back, -13), "navigate": (nav, -15), "error": (err, -11)}
 
 
+def baseline():
+    # Stock's look has no sounds; Baseline's are as plain as its screens: clean, glassy sine and triangle blips in a
+    # small bright room. A soft tick for focus, a rising pair (B5, E6) to choose, the same pair falling to go back, a
+    # light air sweep for a page or tab, two low soft steps down for an error.
+    tick = reverb(mul(tone(32, 1250, 1180, "sine", 0.6), env(n_of(32), 0.6, 8)), 0.12, 0.6, 120)
+    blip = lambda f, ms: mul(tone(ms, f, f, "tri"), env(n_of(ms), 1, ms / 3.2))
+    pair = lambda a, b: reverb(mix(blip(a, 70), (gain(blip(b, 90), 0.85), 48)), 0.16, 0.7, 180)
+    nav = reverb(mix(mul(bandpass(sweep_lowpass(noise(180, 131), 900, 5200), 500, 7000), env(n_of(180), 55, 45)),
+                     gain(mul(tone(120, 1568, 1660, "sine"), env(n_of(120), 20, 35)), 0.25)), 0.16, 0.7, 160)
+    err = reverb(mix(mul(tone(120, 330, 320, "soft"), env(n_of(120), 2, 45)), (mul(tone(170, 277, 270, "soft"), env(n_of(170), 2, 60)), 95)), 0.14)
+    return {"focus": (tick, -18), "select": (pair(988, 1319), -12), "back": (gain(pair(1319, 988), 0.9), -14), "navigate": (nav, -17), "error": (err, -12)}
+
+
 SETS = {"media-center": media_center, "harbor": harbor, "spark": spark, "plum": plum, "plaza": plaza, "orbit": orbit, "mosaic": mosaic,
-        "lumen": lumen, "marquee": marquee, "almanac": almanac, "arcade": arcade, "tide": tide}
+        "lumen": lumen, "marquee": marquee, "almanac": almanac, "arcade": arcade, "tide": tide, "baseline": baseline}
 MAX_MS = 2600  # Plaza's hall tails run to about two seconds
 
 
