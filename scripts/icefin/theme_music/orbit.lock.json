@@ -1,0 +1,17 @@
+{
+ "files": {
+  "ambient": "0217ef58ef1e2196f90808284d7eb52d123b69bf17d646f98c1cb82e8d2ffffb",
+  "goodbye": "44500f8e34834733f0399ae0f15a63960f79afa431f4d87027de59e4f11df96f",
+  "guide": "bdbc2dddbc01b43aaf50859e6d65fdd2294ad7400210fdc9cbe2b861beaaca65",
+  "startup": "788eebcc5c2c78beb351f39033eb9f80e1fbc2cfdaf12171c205edab6bc3c2fd"
+ },
+ "music": {
+  "ambient": "music/ambient.ogg",
+  "jingles": {
+   "goodbye": "music/goodbye.ogg",
+   "guide": "music/guide.ogg"
+  },
+  "startup": "music/startup.ogg"
+ },
+ "recipes": "9571d1d60acc994713755c65aa094e58dca37e2adecbcc416cb3b3cf98896690"
+}

@@ -89,7 +89,7 @@
     // V.move(dir) -> true (moved), or 'up' | 'down' | 'left' | 'right' (an edge the caller handles)
     function makeView(box, entries, o) {
         const V = { box, entries, at: 0, page: 0, mode: o.mode, alive: true };
-        const sections = o.mode === 'list' && entries.some((e) => e.row);
+        const sections = o.mode === 'list' && o.sections !== false && entries.some((e) => e.row);
         const inner = el('div', 'or-view or-view-' + o.mode);
         const foot = el('div', 'or-foot');
         const count = el('span', 'or-count');
@@ -125,7 +125,9 @@
                 return { cols, rows, per: cols * rows };
             }
             const rh = (o.rowH || (entries.some((e) => e.sub || e.cellSub) ? 5.6 : 3.9)) * vh();
-            const rows = Math.max(3, Math.floor(r.height / rh));
+            let rows = Math.max(3, Math.floor(r.height / rh));
+            // section labels take about two thirds of a row each: fewer rows a page when the list has them
+            if (sections) rows = Math.max(3, rows - Math.ceil(Math.min(new Set(entries.map((e) => e.row)).size, rows / 2) * 0.7));
             inner.style.setProperty('--or-rh', `${rh}px`);
             return { cols: 1, rows, per: rows };
         }
@@ -446,7 +448,7 @@
             const cnt = el('div', 'or-deck-count');
             stage.append(cnt);
             deck.count = cnt;
-            deck.panels.forEach((p, i) => { if (Math.abs(i - deck.at) <= 1 || p.front) fillPanel(p); });
+            deck.panels.forEach((p, i) => { if ((i - deck.at <= 3 && i - deck.at >= -1) || p.front) fillPanel(p); });
             place(how);
             focusDeck(true);
         }
@@ -486,7 +488,7 @@
             p.body.textContent = '';
             if (!entries.length) { p.body.append(el('div', 'or-empty-text', (p.level && p.level.empty && p.level.empty.title) || 'Nothing here')); p.view = null; return; }
             const mode = p.front ? 'list' : modeOf(entries, Object.assign({}, p.level || {}, { mode: entries.length > 6 && modeOf(entries, {}) === 'grid' ? 'grid' : 'list' }));
-            p.view = makeView(p.body, entries, { mode, tileH: 14, letters: false, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
+            p.view = makeView(p.body, entries, { mode, tileH: 14, letters: false, sections: !!p.front, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
                 onFocus: (e) => { hintsFor(e); if (opts.onFocus) opts.onFocus(e, C); } });
             const ff = p.front ? Math.max(0, entries.findIndex((e) => e.focusFirst)) : (p.focusAt || 0);
             p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : ff));
@@ -511,7 +513,7 @@
             if (!p.filled) fillPanel(p).then(() => { if (deck && deck.panels[deck.at] === p) focusDeck(true); });
             V = p.view;
             if (V) { V.draw(); V.focus(quiet); } else hintsFor(null);
-            for (const q of [deck.panels[deck.at - 1], deck.panels[deck.at + 1]]) if (q && !q.filled) fillPanel(q);
+            for (const q of deck.panels.slice(Math.max(0, deck.at - 1), deck.at + 4)) if (q && !q.filled) fillPanel(q);
         }
         function deckGo(i, quiet) {
             if (!deck || i < 0 || i >= deck.panels.length) return false;
@@ -647,6 +649,7 @@
                 S.stack[S.stack.length - 1] = level;
                 return C.redraw('none');
             },
+            refocus() { if (S.alive && V && !(T.ctx.focused && T.ctx.focused())) V.focus(true); },
             reload() { const lv = content || cur(); lv.reload = true; if (lv !== cur()) { /* a folder tab's level */ } return show('none'); },
             activate(e, d) {
                 if (!e) return;
@@ -710,6 +713,7 @@
                 }
                 if (a === 'menu') {
                     const e = C.entry();
+                    if (deck && (!e || e.synthetic) && cur().pane && D.itemMenu) { D.itemMenu(cur().pane, {}); return true; }  // an empty panel: the item's own menu
                     if (!e || e.synthetic) { if (content && content.sortable && D.sortPanel) { D.sortPanel(C); return true; } return false; }
                     if (e.menu) { e.menu(C); return true; }
                     if (e.item && D.itemMenu) { D.itemMenu(e.item, { column: C }); return true; }
@@ -768,7 +772,7 @@
         const views = D.orderedViews ? D.orderedViews(D.views, prefs) : D.views;
         const out = [{ label: 'Home', go: () => T.ctx.navigate('#/home') }];
         for (const v of views) if (!(prefs.hidden || []).includes(v.Id)) out.push({ label: v.Name, go: () => T.ctx.navigate(D.viewRoute(v)) });
-        out.push({ label: 'Search', go: () => T.ctx.navigate('#/search') }, { label: 'Settings', go: () => T.ctx.navigate('#/home?or=settings') });
+        out.push({ label: 'Search', go: () => T.ctx.navigate('#/search') }, { label: 'Settings', go: () => T.ctx.navigate('#/mypreferencesmenu') });
         return out;
     };
     D.loadViews();

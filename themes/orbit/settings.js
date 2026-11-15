@@ -198,7 +198,7 @@
             };
             head('Home’s rows, top to bottom');
             for (const r of rowsAll) item('row', r.id, r.name, (prefs.rowsHidden || []).includes(r.id));
-            head('The libraries in the tab strip, left to right');
+            head('The libraries in the guide’s Library blade, top to bottom');
             for (const v of views) item('view', v.Id, v.Name, (prefs.hidden || []).includes(v.Id));
             const reset = D.focusable(el('button', 'or-c or-hp-reset', 'Reset to the default order'));
             reset.type = 'button';

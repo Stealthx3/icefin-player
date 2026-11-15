@@ -207,7 +207,7 @@
         const you = [['Profile', go('#/userprofile')], ['Quick Connect', go('#/quickconnect')],
             ['Switch user', () => D.panel.ask({ title: 'Switch user?', path: 'You', text: 'You sign out here and choose who signs in.', choices: [{ label: 'Stay', safe: true }, { label: 'Switch user', run: () => T.ctx.signOut() }] })],
             ['Switch server', () => T.ctx.selectServer()], ['Sign out…', () => D.signOutAsk(user)]];
-        const settings = [['Client Settings', go('#/mypreferencesmenu')], ['Display', go('#/mypreferencesdisplay')], ['Home', go('#/mypreferenceshome')], ['Playback', go('#/mypreferencesplayback')],
+        const settings = [['Client Settings', go('#/mypreferencesmenu?pane=client')], ['Display', go('#/mypreferencesdisplay')], ['Home', go('#/mypreferenceshome')], ['Playback', go('#/mypreferencesplayback')],
             ['Subtitles', go('#/mypreferencessubtitles')], ['Controls', go('#/mypreferencescontrols')],
             ['Classic View', () => { if (ui.settings && ui.settings.classic) ui.settings.classic(); else T.ctx.navigate('#/home?icefin=stock'); }]];
         if (admin) settings.push(['Server dashboard', go('#/dashboard')]);
@@ -218,6 +218,7 @@
         mount(host, ctx) {
             Gd.open = true;
             Gd.ctx = ctx;
+            try { if (T.ctx.music && T.ctx.music.jingle) T.ctx.music.jingle('guide'); } catch (e) { /* jingles off */ }
             host.classList.add('ob-guide-host');
             const dim = el('div', 'ob-guide-dim');
             dim.addEventListener('click', () => ctx.close());

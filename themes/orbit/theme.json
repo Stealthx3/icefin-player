@@ -30,6 +30,14 @@
     "navigate": "sounds/navigate.wav",
     "error": "sounds/error.wav"
   },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "guide": "music/guide.ogg",
+      "goodbye": "music/goodbye.ogg"
+    }
+  },
   "schemes": {
     "dark": {
       "name": "Dark",

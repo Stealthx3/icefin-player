@@ -31,6 +31,7 @@
     const HOST = {
         mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
         unmount() { host = null; stack = []; ui.overlay.set(D.guideOverlay || null);  // the guide is the overlay again (channels.js)
+            setTimeout(() => { if (!host && D.currentColumn && D.currentColumn.refocus) D.currentColumn.refocus(); }, ui.motion.duration(160));
             if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260)); },
         leave(h) { h.classList.add('or-panel-leave'); return ui.motion.duration(220); },
         onAction(a, f0) {
