@@ -67,8 +67,8 @@
         const host = document.getElementById('icefin-theme-root');
         if (!host || M.band.open) return;
         M.band(host, {
-            title: 'Close Icefin?', text: 'Anything playing stops. Icefin opens on this start screen next time.',
-            note: 'Back again closes this without closing Icefin.',
+            title: 'Close IceFin Player?', text: 'Anything playing stops. IceFin Player opens on this start screen next time.',
+            note: 'Back again closes this without closing IceFin Player.',
             choices: [{ label: 'Yes', run: () => T.ctx.exit() }, { label: 'No', safe: true }, { label: 'Switch user', run: () => T.ctx.signOut() }]
         }).then(() => { const f = document.querySelector('#icefin-theme-root .mc-cat.current .mc-tile'); if (f && !T.ctx.focused()) T.ctx.focus(f); });
     }

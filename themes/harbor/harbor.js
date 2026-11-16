@@ -98,7 +98,7 @@
     ui.chrome.set('sideRail', {
         width: '24.0625vw',  // 462 of 1920
         async mount(rail) {
-            rail.append(el('div', 'hb-brand', 'Icefin'));
+            rail.append(el('div', 'hb-brand', 'IceFin Player'));
             const view = el('div', 'hb-rail-view');
             pin(view);
             const list = el('div', 'hb-rail-list');
