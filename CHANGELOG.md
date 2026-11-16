@@ -41,6 +41,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Harbor, Orbit and Mosaic show your server's icon (Harbor its banner or icon and name) where the interface they follow shows its own brand.
 
 ### Fixed
+- Back on Jellyfin's own home opened from a theme (Classic home) returns to where it was opened from, with a controller, a remote or the keyboard.
 - A crash when a new item started while the last one's cover art was still downloading (for the desktop's media controls). The same mistake could crash Icefin when the server address check or a URL lookup was replaced by a newer one.
 - Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
 - Nintendo controllers (Switch Pro, Joy-Cons) show Nintendo button prompts again, and the Nintendo Button Layout option applies to them; they were treated as generic pads.
