@@ -215,6 +215,14 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) and `walk` (the controller
   walk over every screen, stock and every theme, up to ~2.5 h; 7.6) run only when named. The app group includes the
   quick controller checks: every pad family (virtual pads, `docs/dev/HARDWARE-SIMULATION.md` option C) and Steam's.
+- **QA crawler (PLAN 11.7, D40/D41):** `tests/icefin/web/input_walk.py` touches every element and path on every screen
+  with pad (each family), keys (DevTools key events) and mouse (DevTools mouse events), per theme and stock, and writes
+  per-theme `report.json` / `report.md` with findings (broken Back, dead controls, no focus indicator, elements the mouse
+  can use that pad or keys never reach, focus lost, script errors, plugin UI as info). Lab: `python3 input_walk.py --app
+  ~/build-matrix/src/icefin-player --server jf12 --out ~/iwalk [--themes a,b --inputs pad,keys,mouse --family all]`
+  (`lab-matrix.py --only input_walk`). Host: `--host` (the installed Flatpak, 1920x1080, sleep/lock inhibited, each theme
+  paired with a stock control, ends on stock; `--steam shortcut,gamescope`; the shortcut is managed with
+  `scripts/icefin/qa-steam-shortcut.py add|remove|status`, with Steam closed). Pads on the host need /dev/uinput and /dev/uhid.
   `--list` prints the tests; `--only` / `--skip` take names. The budget test runs in `lab-icefin-htpcsim` (above).
 - **Tree and builds:** `~/src-matrix` (`git archive` of the commit plus the mpvqt submodule), built twice:
   ```
