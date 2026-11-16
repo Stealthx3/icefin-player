@@ -9,6 +9,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 
 ### Added
 - A device wallpaper (animated SVG, looping MP4 or WebM, or a picture) behind any theme, chosen in Client Settings under Theme.
+- Almanac and Tide have their own music: a startup jingle, a background loop and a goodbye (Almanac an easy lounge groove, Tide a still, wave-like wash).
 - Steam artwork for adding IceFin Player as a non-Steam game, with steps in docs/INSTALL.md.
 - Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
 - Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
