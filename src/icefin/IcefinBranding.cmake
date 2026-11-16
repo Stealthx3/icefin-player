@@ -2,7 +2,7 @@
 # Included from CMakeModules/NameConfiguration.cmake (ICEFIN-HOOK) before Names.cpp is configured, so
 # the binary, data/cache/log directories and socket names all become icefin-player.
 set(ICEFIN_APP_ID io.github.stealthx3.IcefinPlayer)
-set(ICEFIN_DISPLAY_NAME "Icefin Player")
+set(ICEFIN_DISPLAY_NAME "IceFin Player")
 set(ICEFIN_ORG_DOMAIN stealthx3.github.io)
 set(ICEFIN_USER_AGENT_PRODUCT IcefinPlayer)
 file(READ "${CMAKE_SOURCE_DIR}/src/icefin/VERSION" ICEFIN_VERSION)

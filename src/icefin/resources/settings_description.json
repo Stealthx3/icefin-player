@@ -18,7 +18,7 @@
       {
         "value": "icefin_standby",
         "display_name": "Receiver in Standby",
-        "help": "What Icefin sends over HDMI when a track starts while the receiver or TV reports it isn't ready (standby, off or unplugged). Linux doesn't mark a bitstream as compressed audio then, so a receiver may stay silent or play noise.\n\n- Switch When It Wakes: PCM at first; once the receiver has been ready for 4 seconds (it may still be starting up), the bitstream.\n- Always PCM: PCM for the whole track.\n- Keep Bitstream: the bitstream the receiver took last time, straight away. For receivers that report standby wrongly but still decode.",
+        "help": "What IceFin Player sends over HDMI when a track starts while the receiver or TV reports it isn't ready (standby, off or unplugged). Linux doesn't mark a bitstream as compressed audio then, so a receiver may stay silent or play noise.\n\n- Switch When It Wakes: PCM at first; once the receiver has been ready for 4 seconds (it may still be starting up), the bitstream.\n- Always PCM: PCM for the whole track.\n- Keep Bitstream: the bitstream the receiver took last time, straight away. For receivers that report standby wrongly but still decode.",
         "default": "wake",
         "possible_values": [
           [ "wake", "Switch When It Wakes" ],
@@ -84,7 +84,7 @@
       {
         "value": "active",
         "display_name": "Theme",
-        "help": "The look of the app. Off keeps the stock look. Your choice is saved for your user on the server, so it follows you to other Icefin devices.",
+        "help": "The look of the app. Off keeps the stock look. Your choice is saved for your user on the server, so it follows you to other IceFin Player devices.",
         "default": "",
         "possible_values": [ [ "", "Off (stock look)" ] ]
       },
@@ -97,7 +97,7 @@
       {
         "value": "jingles",
         "display_name": "Theme Jingles",
-        "help": "Play the theme's startup jingle when Icefin opens, and its short jingles where the theme has them (opening a channel, for example). Silent while anything plays.",
+        "help": "Play the theme's startup jingle when IceFin Player opens, and its short jingles where the theme has them (opening a channel, for example). Silent while anything plays.",
         "default": true
       },
       {
@@ -116,7 +116,7 @@
       {
         "value": "sync",
         "display_name": "Sync Theme With Account",
-        "help": "Keep the theme, colour scheme and preset the same on every Icefin device signed in to this account: a change here appears on the others, and theirs here. Off, this device keeps its own theme, so several devices on one account can use different themes at the same time.",
+        "help": "Keep the theme, colour scheme and preset the same on every IceFin Player device signed in to this account: a change here appears on the others, and theirs here. Off, this device keeps its own theme, so several devices on one account can use different themes at the same time.",
         "default": false
       }
     ]
@@ -148,7 +148,7 @@
       {
         "value": "force_transcode_dovi",
         "display_name": "Force Transcode Dolby Vision",
-        "help": "If set, the server always converts Dolby Vision profile 5 video before it plays. The default is off: the Vulkan renderer shows Dolby Vision itself, and where this renderer can't, Icefin asks at play time (play anyway, or ask the server for an HDR10 or SDR version).",
+        "help": "If set, the server always converts Dolby Vision profile 5 video before it plays. The default is off: the Vulkan renderer shows Dolby Vision itself, and where this renderer can't, IceFin Player asks at play time (play anyway, or ask the server for an HDR10 or SDR version).",
         "default": false
       },
       {

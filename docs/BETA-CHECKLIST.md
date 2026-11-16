@@ -1,6 +1,6 @@
 # Beta checklist: what only real hardware can show (D28)
 
-Icefin is built and checked in the virtual lab. These rows need a real GPU, TV, receiver, controller or Steam,
+IceFin Player is built and checked in the virtual lab. These rows need a real GPU, TV, receiver, controller or Steam,
 and a person to look or listen. Beta testers run whichever rows their hardware allows and report the result with
 the diagnostics report (Client Settings → Hardware → *Copy report*, PLAN 11.4), the hardware they used and, where it helps, a
 phone photo of the TV or receiver display.
@@ -45,8 +45,8 @@ result is seen; anything else is a bug report (P1 if playback is silent, black o
 | --- | --- | --- | --- | --- |
 | C1 | Xbox pad (USB and Bluetooth), DualSense, Switch Pro, an 8BitDo pad | Walk every screen of the default theme and two clone themes | Every screen reachable; on-screen glyphs match the pad | 7.6 |
 | C2 | Steam Deck or Steam Controller, Steam game mode | Same | One input per press (no duplicates); glyphs match the pad (not "generic") | 7.4, 7.6 |
-| C3 | Any pad, Steam running on the desktop | Start Icefin from the app menu (not from Steam); press the D-pad, A and B on a themed screen | Each press acts once; the log says "duplicate guard on"; typing in the search field is unaffected | 7.4 |
-| C5 | Steam Deck or any pad, Steam | Add Icefin as a non-Steam game, apply the recommended layout (INSTALL, Controllers), then export it from Steam's controller settings | Trackpad moves the pointer; L4 goes Home (hold: overlay panel); R4 opens the menu; send us the exported layout so it can ship | 7.4 |
+| C3 | Any pad, Steam running on the desktop | Start IceFin Player from the app menu (not from Steam); press the D-pad, A and B on a themed screen | Each press acts once; the log says "duplicate guard on"; typing in the search field is unaffected | 7.4 |
+| C5 | Steam Deck or any pad, Steam | Add IceFin Player as a non-Steam game, apply the recommended layout (INSTALL, Controllers), then export it from Steam's controller settings | Trackpad moves the pointer; L4 goes Home (hold: overlay panel); R4 opens the menu; send us the exported layout so it can ship | 7.4 |
 | C4 | Bluetooth or IR five-way remote | Walk the default theme and Media Center | Every screen reachable with five keys and Back | SPEC |
 
 ## Reporting

@@ -181,7 +181,7 @@
         const remote = !!(now && !now.isLocalPlayer);
         const out = list.map((t) => ({ id: t.id, name: t.name || t.deviceName || '', kind: KIND(t), app: t.appName || '', current: remote ? now.id === t.id : !!t.isLocalPlayer }));
         // this device is always a target (jellyfin-web lists none while nothing else is signed in)
-        if (!out.some((t) => t.kind === 'this')) out.unshift({ id: 'localplayer', name: 'This Icefin', kind: 'this', app: 'Icefin', current: !remote });
+        if (!out.some((t) => t.kind === 'this')) out.unshift({ id: 'localplayer', name: 'This IceFin Player', kind: 'this', app: 'IceFin Player', current: !remote });
         return out;
     }
     async function setPlayTarget(id) {

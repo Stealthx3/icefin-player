@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Icefin Player are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Upstream merges are listed with the upstream version they bring in.
+All notable changes to IceFin Player are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Upstream merges are listed with the upstream version they bring in.
 
 ## [Unreleased]
 
@@ -8,6 +8,7 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Spark, Marquee and Plum are left out of the built-in themes for now; they return in a later update. A device that used one of them shows the stock look until another theme is chosen.
 
 ### Added
+- Steam artwork for adding IceFin Player as a non-Steam game, with steps in docs/INSTALL.md.
 - Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
 - Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
 - Media Center: library screens for movies, TV, music, pictures, books, music videos and playlists, with sorts and filters along the top, a sideways grid with the glass focus, and genres as stacks of covers.
@@ -23,6 +24,8 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
+- The app is now written IceFin Player (window title, app menus and stores, the client name your server shows, the diagnostics report). Servers that list devices show the new name for this client; nothing else changes.
+- Store listings get the suite's brand colours (light #80e5ff, dark #06445e).
 - New app icon: the Progress ring mark from the IceSuite art kit (the fin and wave inside a playback ring), installed as a full hicolor set (16–512 px, scalable and symbolic). The README has the kit's banner and feature icons.
 - Plaza 0.9.0, from a walk of every element: tabs slide toward the tab you pick; menus and pickers rise in and fall out; the sort and filter panel slides from its edge; a poster grows into its details and Back shrinks it home; settings tiles grow into their pages; the bar's caption cross-fades; details fade under the frame; the focused name stays inside the window; sheets end above the bar; Display's tick boxes are switch rows and the bar names the focused setting.
 - Plaza's details page goes back to its top when focus returns to the actions or pickers (after a picker closes, or Up from a list), so the title isn't left under the band.

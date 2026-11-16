@@ -8,7 +8,8 @@ normally the art kit's brand folder:
 
 Sources: src/icefin/meta/<app id>.metainfo.xml (name, summary, description, releases, URLs, license),
 src/icefin/meta/<app id>.desktop (generic name, keywords, categories), themes/*/theme.json (bundled themes),
-README.md (goals, feature list, relationship and credits text), src/icefin/VERSION.
+README.md (goals, feature list, relationship and credits text), src/icefin/VERSION;
+themes-later/*/theme.json (themes held back for a later update, D36).
 Run it again whenever one of those changes; never edit the exported files by hand.
 """
 import datetime, json, pathlib, re, sys, xml.etree.ElementTree as ET
@@ -54,11 +55,13 @@ def desktop():
 
 
 def themes():
+    """Built-in themes (themes/) and the ones held back for a later update (themes-later/, D36)."""
     out = []
-    for f in sorted((ROOT / 'themes').glob('*/theme.json')):
-        j = json.loads(f.read_text())
-        out.append({'id': j.get('id'), 'name': j.get('name'), 'version': j.get('version'),
-                    'description': j.get('description', '')})
+    for folder, stage in (('themes', 'built-in'), ('themes-later', 'later update')):
+        for f in sorted((ROOT / folder).glob('*/theme.json')):
+            j = json.loads(f.read_text())
+            out.append({'id': j.get('id'), 'name': j.get('name'), 'version': j.get('version'), 'stage': stage,
+                        'description': j.get('description', '')})
     return out
 
 
@@ -134,11 +137,11 @@ def main():
         '',
         readme_section('Planned features'),
         '',
-        f"## Bundled themes ({len(data['themes'])}, from the theme packages)",
+        f"## Themes ({len(data['themes'])}, from the theme packages; staged releases, D36)",
         '',
-        '| Theme | Version | Description |',
-        '| --- | --- | --- |',
-    ] + [f"| {t['name']} | {t['version']} | {t['description']} |" for t in data['themes']] + [
+        '| Theme | Version | Ships | Description |',
+        '| --- | --- | --- | --- |',
+    ] + [f"| {t['name']} | {t['version']} | {t['stage']} | {t['description']} |" for t in data['themes']] + [
         '',
         '## Relationship to Jellyfin and credits (README; use this wording)',
         '',
