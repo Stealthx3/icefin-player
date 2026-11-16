@@ -2,10 +2,26 @@
   "schema": 1,
   "id": "harbor",
   "name": "Harbor",
-  "version": "0.2.0",
-  "description": "A persistent left menu, a categories row and shelves of posters over the focused item's fanart, with a zooming focus and an info dialog. Dark menu beside a teal-lit field, cyan focus.",
+  "version": "0.3.0",
+  "description": "The target's layout: a persistent menu down the left, each entry with its categories and shelves of posters over the focused item's fanart; libraries as the media window (the path and Sort by, posters or a list, the side blade); details as the info page; dark panels with a cyan title bar and cyan focus; the menu over any screen.",
   "styles": "styles.css",
   "scripts": [
+    "kit.js",
+    "panel.js",
+    "views.js",
+    "data.js",
+    "home.js",
+    "menus.js",
+    "itemmenu.js",
+    "details.js",
+    "guide.js",
+    "tv.js",
+    "library.js",
+    "np.js",
+    "player.js",
+    "settings.js",
+    "account.js",
+    "interim.js",
     "harbor.js"
   ],
   "sounds": {
@@ -31,6 +47,14 @@
           "scrim": "rgba(0, 3, 5, 0.65)"
         }
       }
+    }
+  },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "menu": "music/menu.ogg",
+      "goodbye": "music/goodbye.ogg"
     }
   }
 }
