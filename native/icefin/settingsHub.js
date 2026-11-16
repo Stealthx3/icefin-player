@@ -335,9 +335,12 @@
                 wrap.append(nav, body);
                 root.append(wrap);
                 root.setAttribute('data-icefin-settings', 'prefs');
-                // jellyfin-web builds the page a moment after the route changes: wait for its form
+                // jellyfin-web builds the page a moment after the route changes, and the page it leaves stays shown for a
+                // moment: the form is on a page that is new since this screen came up, or was hidden then and isn't now
+                const before = new Map([...document.querySelectorAll('.page')].map((p) => [p, p.classList.contains('hide')]));
                 const findForm = () => {
-                    const pages = [...document.querySelectorAll('.page')].filter((p) => !p.classList.contains('hide') && !root.contains(p) && p.querySelector('form'));
+                    const pages = [...document.querySelectorAll('.page')].filter((p) => !p.classList.contains('hide') && !root.contains(p)
+                        && (!before.has(p) || before.get(p)) && p.querySelector('form'));
                     const pg = pages.pop();
                     return pg ? pg.querySelector('form') : null;
                 };
