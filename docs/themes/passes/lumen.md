@@ -357,3 +357,188 @@ clarity). Plaza's timings, for reference:
       covered Wayland window stops drawing, and the tests' screenshots wait).
 - [ ] **A host walk** of the finished theme on the user's server (screenshots, transition films and the cut-off audit
       of every element) and the user's review against the mock-ups (the pipeline's Gate 2).
+
+## The target's other screens (measured 2026-11-16, watched in the browser, nothing downloaded)
+
+Sources: the target's published layout guidelines (in `docs/themes/references/lumen.json`: 80 px side and 60 px top
+and bottom insets, the two-to-nine-column grids with 40 px gutters, at least 100 px between rows); 9to5Mac, "7 tvOS 26
+Features You NEED to Try! (Full Hands-On Walkthrough)" (https://www.youtube.com/watch?v=SpQ8_j-egfE, 854x480, the
+current version filmed off a TV) and AppleInsider, "Everything New in tvOS 26! Karaoke Mode, New UI, & More!"
+(https://www.youtube.com/watch?v=om2Sg3q2q8g, 854x480). Layout, timing and colours only; no logos, icons, sounds, fonts
+or names.
+
+- **The current version moves navigation to a sidebar**: a rounded frosted panel floating at the left (about a fifth of
+  the width, inset from the edges), the profile's initial and the clock at its top, then the sections (Search, Home,
+  the libraries), a small heading over a second group, each row a small round icon and a word; the focused row a
+  white pill with dark text. It slides in over the page when focus goes left from the content and leaves when focus
+  goes back; the page behind stays where it was. The version Lumen 0.2.0 measured had a frosted tab bar along the top
+  (still the platform's pattern for apps with few sections).
+- **Home**: a full-bleed hero of the featured item filling the screen: its title large at the left above the middle,
+  a rating badge and one line of facts, two lines of overview, then a white pill button and round glass buttons
+  (add, info) and an arrow to the next hero; page dots centred over the first row; the first row of 16:9 cards peeks
+  along the bottom. Down from the hero, the rows: Continue Watching (16:9 cards with a progress line and time left
+  under the art), poster rows, numbered rows; row titles small and bold at the side inset.
+- **Context menu** (press and hold): a small frosted panel beside the item, rows with an icon and a word, the focused
+  row a white pill.
+- **Settings**: the left half shows a large picture of the section; the right half is a list of rounded rows (the
+  setting at the left, its value, a check or a chevron at the right), frosted, the focused row white.
+- **System home**: a full-bleed top shelf of the focused app's content, a frosted dock of icons, the clock and the
+  profile top right.
+- **The player** (not reached in either video; from the platform's standard player): the transport bar along the
+  foot inside the insets: the title and episode at the left above a thin scrub line, the elapsed and remaining times
+  under its ends, round frosted buttons (subtitles, audio, more) at the right above the line; swiping down opens an
+  info panel of tabs (Info, Chapters, Audio, Subtitles) along the top.
+- **Not found**: search and a details page on screen long enough to measure. The boards use the platform's standard
+  patterns: search as a keyboard row across the top with results in grid rows under it; a details page as a
+  full-bleed backdrop with the title, facts, overview and pill buttons at the left, and rows (seasons, episodes, cast as
+  round portraits, related) under it.
+
+## Gate 1 map: every checklist item (2026-11-16)
+
+The design for the pass: 26 boards on the "Lumen Screens" canvas, https://claude.ai/artifact/CNhbq1YWamNTrMPJ7gFvqJ (Gate 1), drawn from walk 1 (14 of 69 drawn by the theme, 48 gaps, 25 with failing checks; every gap has a board), `docs/themes/references/lumen.json` and the target's public material (above). Every item below is one of: **board**, **tests**, **not in the target** (a reason, for your call) or **not in this pass**. None is missing. Totals: 120 board, 8 not in the target, 14 tests, 1 not in this pass.
+
+| § | Item | Covered by | Where |
+|---|---|---|---|
+| 1.1 | The target's home | board | Home, HomeMore (the paging hero, then rows; the focused item's backdrop behind) |
+| 1.1 | Home chrome (clock, Settings, Search) | board | Main, Home (the clock top right; Search and Settings on the sidebar) |
+| 1.1 | The server's status | board | Guide (the sidebar's profile row: the server's state beside the name; A opens Choose a server) |
+| 1.1 | Each library shows what it is | board | HomeMore (each library's page from the sidebar, its hero and rows) |
+| 1.1 | A preview or focus state | board | HomeMore, Main (the lift, tilt and highlight; the backdrop follows focus); Decisions 6 |
+| 1.1 | Sub-views of the home | board | Home, HomeMore (`#/home?lm=` for each library's page and the rows' See all) |
+| 1.1 | The order is the user's | board | Prefs (Settings › Home: switches and Move) |
+| 1.1 | The music capsule | board | Guide (Now playing on the sidebar), Music |
+| 1.1 | Exit at the root | board | Dialogs (Exit Icefin?, Cancel focused) |
+| 1.2 | A shared frame | board | every board (the sidebar pill top left, the clock top right, the hints bottom left) |
+| 1.2 | A colour per content kind | not in the target | the target is monochrome over the art; kinds show by their art and glyphs |
+| 1.2 | Now playing on every framed screen | board | Guide (the sidebar's Now playing row over any screen) |
+| 1.3 | Every library type themed | board | LibMovies, LibLists, LibLiveTV, LibMore |
+| 1.3 | Section tabs per library | board | LibMovies, LibLists, LibLiveTV (category pills in a glass bar) |
+| 1.3 | Drill-downs with Play all and Shuffle | board | LibLists (an album, a playlist), DetailsMore (collection) |
+| 1.3 | Sort and filter panel, A–Z rail | board | LibMovies (A to Z at the right edge), LibMore (the sort and filter menu) |
+| 1.3 | Grids page like the target | board | LibMovies (six across, a row at a time) |
+| 1.3 | Playlists, photos and home videos, books | board | LibLists, LibMore |
+| 1.3 | Series: seasons as tabs, Next up first | board | DetailsSeries (season pills, Next up as the main button) |
+| 1.3 | Continue Watching and Next Up screens | board | Home, HomeMore (rows; See all opens their grids) |
+| 1.3 | Search with filters and keyboard | board | Search; Decisions 8 |
+| 1.3 | Empty states | board | Framed (nothing here yet, with a button that helps) |
+| 1.4 | Every item type with every function | board | DetailsMovie, DetailsSeries, DetailsMore |
+| 1.4 | In the theme's frame, tabs following the scroll | board | DetailsMovie (the product page scrolls to Cast, Extras, Related, Information), DetailsSeries |
+| 1.4 | Clear labels | board | DetailsMovie (38 min left), DetailsSeries (Season 2, 31 min left), DetailsMore (counts) |
+| 1.4 | Placeholders (initials, chapter times) | board | DetailsMovie, SignIn (initials), PlayerMore (chapter times), Effects |
+| 1.4 | Pickers as the theme's cards | board | Menus, PlayerMore (glass menus beside the row) |
+| 1.4 | Back to the top on return | tests | the pass test: the front panel's actions in view after a picker closes |
+| 1.5 | The theme's own item menu | board | Menus |
+| 1.5 | Each dialog themed and complete | board | Menus, Dialogs |
+| 1.5 | jellyfin-web's dialogs as the theme's cards | board | Framed (editors in glass panels), Dialogs |
+| 1.5 | A notice of the theme's own | board | Dialogs (a glass banner top right) |
+| 1.6 | Channels, guide, recordings, schedule | board | LibLiveTV |
+| 1.6 | A programme's sheet with steppers | board | Framed (record early / late), LibLiveTV |
+| 1.6 | Previews that fall back | board | LibLiveTV, DetailsMore (channel), Effects |
+| 1.6 | Connecting dialog and its error | board | PlayerExtras, Dialogs |
+| 1.7 | Now playing, Queue, Lyrics | board | Music |
+| 1.7 | Instant mix | board | Framed (a song's, album's or artist's options), Music |
+| 1.8 | The theme's controls | board | Player |
+| 1.8 | Pickers over the video | board | PlayerMore |
+| 1.8 | Skip prompts and Up next | board | PlayerExtras |
+| 1.8 | Live TV in the player | board | PlayerExtras |
+| 1.8 | The web fallback and osd tokens | board | Player (osd tokens kept for jellyfin-web's controls under More) |
+| 1.8 | A readability shade | board | Player |
+| 1.8 | Photos and books framed | board | LibMore |
+| 1.9 | Play on and Watch together | board | Guide (quick settings), PlayerMore (under ⋯) |
+| 1.10 | The settings hub | board | Settings (the picture at the left, categories at the right) |
+| 1.10 | Client Settings in the frame | board | Settings, Framed |
+| 1.10 | Settings › Home | board | Prefs |
+| 1.10 | The preference pages framed | board | Prefs |
+| 1.10 | The user's menu (You) | board | Prefs (profile), Guide (the sidebar's profile row) |
+| 1.10 | Profile and Quick Connect approve | board | Prefs |
+| 1.11 | Sign in | board | SignIn |
+| 1.11 | Choose and add a server | board | SignIn |
+| 1.11 | Nothing before sign-in; stock without a theme | board | SignIn (note) |
+| 1.12 | A frame around every page | board | Framed |
+| 1.12 | jellyfin-web's chrome hidden | board | Framed |
+| 1.12 | The ground on its own layer | tests | the pass test: nothing stale over video at playback start |
+| 1.12 | Content clears the frame | board | Framed; tests (focus never under the frame) |
+| 1.12 | Fields, buttons, switches in the look | board | Framed, Prefs |
+| 1.12 | The on-screen keyboard | board | Input, Search, SignIn |
+| 1.12 | Dashboard stays stock | board | Framed (a Settings row) |
+| 1.12 | A way out to stock | board | Settings, Guide |
+| 2.1 | Everything the mouse can use, the pad reaches | board | Input; tests (reach walk) |
+| 2.1 | Reached by presses alone | tests | the reach walk |
+| 2.1 | Only the visible page's items | board | Input; tests |
+| 2.1 | Grids page at their edges | board | LibMovies, Input |
+| 2.1 | Modal cards hold focus | board | Input; tests |
+| 2.1 | Framed pages move as one | board | Input |
+| 2.2 | Focus always shown | board | Input |
+| 2.2 | Room for the glow | board | Input (room for the 10 % lift and its shadow); tests (no clipped card) |
+| 2.2 | Glow over an engine shadow | tests | the polish test (the lift over the engine's focus) |
+| 2.2 | Hover apart from focus | board | Input |
+| 2.3 | The focused item's caption | board | LibMovies, HomeMore, Input |
+| 2.3 | A name pill under the focused item | board | LibMovies, HomeMore (the title and year under the lifted card) |
+| 2.3 | Page-aware controller hints | board | Input (small, bottom left, per pad family); Decisions 7 |
+| 2.4 | Back, innermost first | board | Input |
+| 2.4 | Menu acts on the focused item | board | Input, Menus |
+| 2.4 | Play/Pause on the focused item | board | Input, LibMovies |
+| 2.4 | Search and Home from anywhere | board | Input, Guide |
+| 2.4 | Steppers | board | Framed, PlayerMore |
+| 2.4 | Destructive actions confirm | board | Menus (Cancel focused, Delete red), Dialogs |
+| 2.4 | Focus comes back where it was | board | Input |
+| 2.5 | Hover moves focus | board | Input |
+| 2.5 | Clicking outside closes | board | Input, LibMore |
+| 2.5 | Pointer seeking | board | Input, Player |
+| 2.5 | The physical keyboard | board | Search, Prefs (Quick Connect digits) |
+| 2.5 | Text fields and the keyboard | board | Search |
+| 2.6 | One move model | board | Input, Music (queue), Prefs (Settings › Home) |
+| 2.6 | By pointer | board | Input |
+| 2.7 | Any input brings the controls back | board | Player |
+| 2.7 | ◀▶ on the time line | board | Player |
+| 2.7 | A new skip prompt takes focus | board | PlayerExtras |
+| 3 | A focus animation on every kind | board | Motion, Input |
+| 3 | Page turns | board | Motion |
+| 3 | The preview opens from the item | board | Motion (menus grow from the item; details fade up) |
+| 3 | Tabs | board | Motion |
+| 3 | The caption cross-fades | board | Motion, Player (button words) |
+| 3 | Shared-element flights | not in the target | the target fades pages; the backdrop carries over instead (Motion) |
+| 3 | Sheets rise and fall | board | Motion |
+| 3 | Side panels slide | board | Motion, LibMore |
+| 3 | Bar caption and hints step back | tests | the polish test |
+| 3 | Now playing slides | board | Motion (the sidebar), Guide |
+| 3 | Player chrome | board | Motion, Player |
+| 3 | Progress lines, lyrics | board | Motion, Music |
+| 3 | Ambient loops on decoration only | not in the target | nothing moves on its own except the hero paging, off in low motion (Motion) |
+| 3 | Low motion | board | Motion |
+| 4 | A signature ground | board | Effects, Main (black under the darkened backdrop) |
+| 4 | Item framing | board | Main, Effects (rounded cards, the lift and highlight) |
+| 4 | Reflections | not in the target | none (Effects) |
+| 4 | Fade masks | board | Effects (rows fade at the right edge; the backdrop darkened left and foot) |
+| 4 | Original illustrations per kind | board | Effects (round glyphs per kind), DetailsMore |
+| 4 | Live tiles | not in the target | the hero pages instead (Home) |
+| 4 | Object metaphors | not in the target | none added |
+| 4 | A muted preview | not in the target | Decisions 6 |
+| 4 | Fallbacks for missing pictures | board | Effects, DetailsMore (glyph on a gradient, initials for people) |
+| 4 | Custom chrome geometry | board | Guide (the floating sidebar, quick settings), Player |
+| 4 | Glows on progress and now | not in the target | flat white progress, a soft glow on the guide's now line only (LibLiveTV) |
+| 4 | A readability shade | board | Player |
+| 5 | Five UI sounds | board | Effects (Lumen's own soft set) |
+| 5 | Each sound on its action | tests | the pass test |
+| 5 | Startup jingle and ambient loop | board | Effects; Decisions 5 |
+| 5 | Jingles where the target has them | board | Effects (menu, goodbye); Decisions 5 |
+| 5 | The ambient loop waits | board | Effects |
+| 5 | Client Settings apply | board | Settings, Effects |
+| 6 | theme.json complete | board | Effects |
+| 6 | Every colour token, dark scheme, contrast | board | Effects; tests (theme-contrast) |
+| 6 | Shape tokens | board | Effects |
+| 6 | The fallback player's tokens | board | Effects |
+| 6 | Type | board | Effects; Decisions 4 |
+| 6 | Geometry from the reference | tests | clone_layout.py --theme lumen (reference updated for the sidebar and hero) |
+| 6 | Original illustrations and icons; server branding | board | Main, SignIn (the icefin fin, the server's name) |
+| 7 | Nothing runs past the sides | tests | the walk's audit |
+| 7 | 16:9, wider, 4K | board | Effects; tests |
+| 7 | Custom CSS and plugins don't break it | tests | the lab's plugin servers |
+| 7 | The overlay is the theme's own | board | Guide; tests |
+| 7 | The engine stays theme-agnostic | tests | theme lint |
+| 8 | theme_orbit.py and clone_layout | tests | theme_lumen.py and clone_layout, kept and extended |
+| 8 | A reach walk | tests | lumen_pass.py with a virtual pad |
+| 8 | A polish test | tests | lumen_pass.py, low motion included |
+| 8 | Player, menu, music, sign-in, framed pages | tests | lumen_pass.py |
+| 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Lumen's walks and tests |
+| 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
