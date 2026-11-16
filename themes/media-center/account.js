@@ -79,7 +79,7 @@
                         status(note, `Connecting to ${s.name || s.address}…`);
                         const res = await T.ctx.connect(s.id);
                         if (res && res.state === 'Unavailable') status(note, `${s.name || s.address} isn't reachable right now.`, true);
-                        else if (res && res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before Icefin can use it.', true);
+                        else if (res && res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before IceFin Player can use it.', true);
                     });
                     list.append(r);
                 }
@@ -108,7 +108,7 @@
                 status(note, 'Connecting…');
                 const res = await T.ctx.connect(a);
                 if (!res || res.state === 'Unavailable') status(note, 'Nothing answered at that address. Check it, and that the server is running.', true);
-                else if (res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before Icefin can use it.', true);
+                else if (res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before IceFin Player can use it.', true);
             };
             f.input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
             col.append(button('Connect', go), button('Choose a known server', () => T.ctx.navigate('#/selectserver')));

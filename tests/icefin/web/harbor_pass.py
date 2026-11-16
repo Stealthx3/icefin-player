@@ -122,7 +122,7 @@ def main():
             act("back")
             page.wait_for("!!document.querySelector('.hr-panel .hr-row')", timeout=10)
             settle(0.4)
-            check("Back on the menu asks to exit, the safe choice focused", "Exit Icefin?" in js("document.querySelector('.hr-panel-title').textContent") and focused() == "Cancel", str(focused()))
+            check("Back on the menu asks to exit, the safe choice focused", "Exit IceFin Player?" in js("document.querySelector('.hr-panel-title').textContent") and focused() == "Cancel", str(focused()))
             shot("exit.png")
             act("back"); settle(0.6)
             check("Back again keeps you on the home", js("!document.querySelector('.hr-panel')") is True and "#/home" in js("location.hash"))
@@ -137,7 +137,7 @@ def main():
                 pass
             settle(0.6)
             rows = texts(".hr-mm .hr-li-name")
-            check("the menu over the screen: Home focused, the libraries, Settings, Exit", focused() == "Home" and "Settings" in rows and "Exit Icefin" in rows, str(rows))
+            check("the menu over the screen: Home focused, the libraries, Settings, Exit", focused() == "Home" and "Settings" in rows and "Exit IceFin Player" in rows, str(rows))
             shot("guide.png")
             act("back"); settle(0.6)
             check("Back closes it", js("!document.querySelector('.hr-mm')") is True)

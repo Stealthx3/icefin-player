@@ -134,7 +134,7 @@
             const logo = B.el('div', 'bl-logo');
             logo.style.backgroundImage = `url("${B.mark()}")`;
             logo.setAttribute('role', 'img');
-            logo.setAttribute('aria-label', 'Icefin');
+            logo.setAttribute('aria-label', 'IceFin Player');
             left.append(logo);
         } else {
             const back = B.btn('bl-hbtn', null); back.append(B.icon('arrow_back')); back.title = 'Back'; back.setAttribute('aria-label', 'Back');

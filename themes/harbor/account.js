@@ -240,7 +240,7 @@
             const out = list.map((s) => ({
                 name: s.name, sub: [s.current ? '● this one' : '', s.address, s.lastUsed ? `last used ${new Date(s.lastUsed).toLocaleDateString()}` : ''].filter(Boolean).join(' · '),
                 icon: 'server', shape: 'icon', okLabel: 'connect', go: () => connect(s.id, C),
-                menu: () => D.panel.ask({ title: `Forget ${s.name}?`, path: 'Servers', text: 'Icefin forgets its address and your sign-in there.', choices: [{ label: 'Keep it', safe: true }, { label: 'Forget it', danger: true, run: async () => { await ctx.forgetServer(s.id); if (D.currentColumn) D.currentColumn.reload(); } }] })
+                menu: () => D.panel.ask({ title: `Forget ${s.name}?`, path: 'Servers', text: 'IceFin Player forgets its address and your sign-in there.', choices: [{ label: 'Keep it', safe: true }, { label: 'Forget it', danger: true, run: async () => { await ctx.forgetServer(s.id); if (D.currentColumn) D.currentColumn.reload(); } }] })
             }));
             out.push({ name: 'Add a server', sub: 'type its address', icon: 'add', shape: 'icon', go: () => addServer(C) });
             return out;

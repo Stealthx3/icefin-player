@@ -169,7 +169,7 @@
         out.push({ id: 'settings', title: 'settings', tiles: async () => {
             const list = await D.settingsEntries();
             const icon = { Profile: 'person', 'Quick Connect': 'quick', 'Switch user': 'people', 'Sign out': 'signout', Display: 'display', Home: 'home', Playback: 'play', Subtitles: 'subtitles',
-                Controls: 'controls', 'Play on…': 'cast', 'Watch together…': 'together', 'Client settings': 'client', 'Classic view': 'classic', 'Classic home': 'home', Dashboard: 'dashboard', 'Exit Icefin…': 'exit' };
+                Controls: 'controls', 'Play on…': 'cast', 'Watch together…': 'together', 'Client settings': 'client', 'Classic view': 'classic', 'Classic home': 'home', Dashboard: 'dashboard', 'Exit IceFin Player…': 'exit' };
             return list.map((x) => ({ size: 'small', glyph: icon[x.name] || 'settings', entry: Object.assign({}, x, { name: x.name.replace('…', '') }) }));
         } });
         return out;
@@ -317,7 +317,7 @@
             ['Subtitles', go('#/mypreferencessubtitles')], ['Controls', go('#/mypreferencescontrols')],
             ['Classic View', () => { if (ui.settings && ui.settings.classic) ui.settings.classic(); else T.ctx.navigate('#/home?icefin=stock'); }]];
         if (admin) settings.push(['Server dashboard', go('#/dashboard')]);
-        settings.push(['Exit Icefin…', () => D.exitAsk()]);
+        settings.push(['Exit IceFin Player…', () => D.exitAsk()]);
         return [{ name: 'home', rows: home }, { name: 'media', rows: media }, { name: 'you', rows: you }, { name: 'settings', rows: settings }];
     }
     const GUIDE = {
