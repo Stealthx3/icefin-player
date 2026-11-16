@@ -285,9 +285,11 @@ void SystemComponent::resolveUrl(const QString& url, std::function<void(const QS
 {
   // Abort any pending resolve
   if (m_resolveUrlReply) {
-    m_resolveUrlReply->abort();
-    m_resolveUrlReply->deleteLater();
-    m_resolveUrlReply = nullptr;
+    // ICEFIN-HOOK: abort() runs the finished handler at once, which nulls the member; take the reply first
+    QNetworkReply* reply = m_resolveUrlReply;
+    m_resolveUrlReply = nullptr;  // ICEFIN-HOOK: null before abort
+    reply->abort();  // ICEFIN-HOOK: abort via the local
+    reply->deleteLater();  // ICEFIN-HOOK: delete via the local
   }
 
   QNetworkRequest request(url);
@@ -334,9 +336,11 @@ void SystemComponent::checkServerConnectivity(QString url)
   }
 
   if (m_connectivityCheckReply) {
-    m_connectivityCheckReply->abort();
-    m_connectivityCheckReply->deleteLater();
-    m_connectivityCheckReply = nullptr;
+    // ICEFIN-HOOK: abort() runs the finished handler at once, which nulls the member; take the reply first
+    QNetworkReply* reply = m_connectivityCheckReply;
+    m_connectivityCheckReply = nullptr;  // ICEFIN-HOOK: null before abort
+    reply->abort();  // ICEFIN-HOOK: abort via the local
+    reply->deleteLater();  // ICEFIN-HOOK: delete via the local
   }
 
   // Store for retry
@@ -608,6 +612,7 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/icefin/themeEngine.js",  // ICEFIN-HOOK: theme web runtime (PLAN 8.3)
     ":/web-client/extension/icefin/capabilities.js",  // ICEFIN-HOOK: generic theme capabilities (PLAN 9.2, 9.3)
     ":/web-client/extension/icefin/accounts.js",  // ICEFIN-HOOK: servers, sign-in, queue, Play on, Watch together for themes (PLAN 9.44)
+    ":/web-client/extension/icefin/itemActions.js",  // ICEFIN-HOOK: an item's actions and dialog data for themes' item menus (PLAN 9.60)
     ":/web-client/extension/icefin/serverBrand.js",  // ICEFIN-HOOK: the server's branding for themes (PLAN 9.27, 9.45)
     ":/web-client/extension/icefin/detailsScreen.js",  // ICEFIN-HOOK: themed details screens (PLAN 9.18)
     ":/web-client/extension/icefin/settingsHub.js",  // ICEFIN-HOOK: themed settings area (PLAN 9.24)
@@ -617,6 +622,7 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/icefin/themeSync.js",  // ICEFIN-HOOK: per-user theme choice (PLAN 8.5)
     ":/web-client/extension/icefin/hardwarePage.js",  // ICEFIN-HOOK: Client Settings -> Hardware (PLAN 4.1)
     ":/web-client/extension/icefin/themeManager.js",  // ICEFIN-HOOK: Client Settings -> Theme manager (PLAN 9.21)
+    ":/web-client/extension/icefin/wallpaper.js",  // ICEFIN-HOOK: device wallpaper behind themes (PLAN 9.26)
     ":/web-client/extension/icefin/clientSettings.js",  // ICEFIN-HOOK: Client Settings arrangement and drop-downs (PLAN 9.22)
     ":/web-client/extension/icefin/capabilityPrompt.js",  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
     ":/web-client/extension/icefin/deviceProfile.js",  // ICEFIN-HOOK: Auto device profile (PLAN 6.4)

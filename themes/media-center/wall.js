@@ -1,6 +1,6 @@
 // Media Center: the poster wall (Icefin reference theme, PLAN 8.6). A library as a wall of posters, seven across, the
 // focused row held on a fixed line, art loaded only near the visible rows and the next page fetched before the end.
-// Opened from the start strip's "All ..." tile (#/list?parentId=...); a list without a library goes to jellyfin-web.
+// Opened from the start strip's "All ..." tile (#/list?parentId=...); a genre, studio or person list is library.js's.
 (function () {
     'use strict';
     const T = window.icefinTheme;
@@ -57,8 +57,13 @@
         if (W.tiles.length - i <= COLS * 2) more();
     }
 
-    T.registerScreen('#/list', {
+    // A drill-down list (a genre, studio, person: the ListPage board) is the library screen's (library.js, 9.60);
+    // the wall keeps folders.
+    let D = null;
+    window.icefinMediaCenter.register('#/list', {
+        onBack() { return D && D.onBack ? D.onBack() : false; },
         onAction(action, ctx) {
+            if (D) return false;
             if (!W || !W.tiles.length) return false;
             const i = W.tiles.indexOf(ctx.focused());
             if (i < 0) return false;
@@ -73,6 +78,9 @@
         },
         async mount(root) {
             const params = new URLSearchParams(location.hash.split('?')[1] || '');
+            const Mc = window.icefinMediaCenter;
+            D = Mc && Mc.listKind && Mc.listKind(params) ? Mc.listScreen : null;
+            if (D) return D.mount(root);
             const parentId = params.get('parentId') || params.get('topParentId');
             if (!parentId) { location.replace(location.hash + (location.hash.includes('?') ? '&' : '?') + 'icefin=stock'); return; }
             root.setAttribute('data-mc', 'wall');
@@ -110,10 +118,12 @@
             }
             await more();
             if (!W || W.root !== root) return;
-            if (W.tiles.length) T.ctx.focus(W.tiles[0]);
+            const home = Mc && Mc.flyHome ? Mc.flyHome((id) => W.tiles.find((x) => x.dataset.id === id) || null) : null;
+            if (home) focusAt(W.tiles.indexOf(home), T.ctx); else if (W.tiles.length) T.ctx.focus(W.tiles[0]);
             root.setAttribute('data-mc-ready', '1');
         },
         unmount() {
+            if (D) { D.unmount(); D = null; return; }
             if (W && W.io) W.io.disconnect();
             if (W && W.chrome) W.chrome.stop();
             W = null;

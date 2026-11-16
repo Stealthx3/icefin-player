@@ -2,10 +2,34 @@
   "schema": 1,
   "id": "lumen",
   "name": "Lumen",
-  "version": "0.2.0",
-  "description": "A translucent tab bar that hides once focus leaves it, a full-bleed top shelf for the focused item, and rows of posters that lift and tilt with a moving highlight, on a dark field with white type.",
+  "version": "0.3.0",
+  "description": "The target's current layout: a frosted sidebar from the left over any screen, a paging hero over the featured item's backdrop, rows of cards that lift and tilt with a moving highlight, product pages over full-bleed art, the letter row for search, the standard player with an info panel; glass panels and white pills.",
   "styles": "styles.css",
+  "fonts": [
+    {
+      "family": "Inter",
+      "file": "fonts/Inter.woff2",
+      "weight": "100 900",
+      "style": "normal"
+    }
+  ],
   "scripts": [
+    "kit.js",
+    "panel.js",
+    "views.js",
+    "data.js",
+    "home.js",
+    "menus.js",
+    "itemmenu.js",
+    "details.js",
+    "guide.js",
+    "tv.js",
+    "library.js",
+    "np.js",
+    "player.js",
+    "settings.js",
+    "account.js",
+    "interim.js",
     "lumen.js"
   ],
   "sounds": {
@@ -14,6 +38,14 @@
     "back": "sounds/back.wav",
     "navigate": "sounds/navigate.wav",
     "error": "sounds/error.wav"
+  },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "menu": "music/menu.ogg",
+      "goodbye": "music/goodbye.ogg"
+    }
   },
   "schemes": {
     "dark": {

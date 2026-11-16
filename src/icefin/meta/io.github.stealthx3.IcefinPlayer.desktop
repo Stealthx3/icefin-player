@@ -1,6 +1,6 @@
 [Desktop Entry]
 Version=1.0
-Name=Icefin Player
+Name=IceFin Player
 GenericName=Media Player
 Comment=Themeable Jellyfin client for the desktop and the living room
 Exec=icefin-player

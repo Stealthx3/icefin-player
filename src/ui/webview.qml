@@ -8,7 +8,7 @@ import QtQuick.Controls 6.0
 Window
 {
   id: mainWindow
-  title: "Icefin Player"  // ICEFIN-HOOK: window title (branding, PLAN 1.3)
+  title: "IceFin Player"  // ICEFIN-HOOK: window title (branding, PLAN 1.3)
   objectName: "mainWindow"
   width: 1280
   height: 720

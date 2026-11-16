@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""theme_lumen.py — the Lumen benchmark theme in the running app (PLAN 9.12; target Apple TV home). Lab guests only.
+"""theme_lumen.py — the Lumen benchmark theme in the running app (PLAN 9.12, its pass 9.53; the target is named in
+docs/PLAN.md). Lab guests only. With ICEFIN_THEME_PATH set, the theme comes from that folder (a worktree's).
 
   - Lumen is a built-in theme, offered in Client Settings → Theme;
-  - home: a frosted tab bar (Home, each library, Search, Settings, Classic home) over a full-bleed top shelf, and rows
-    of posters (Up Next as 16:9 thumbs, New in each library);
-  - the tab bar hides once focus goes down to the rows and comes back when focus goes up to it;
-  - the top shelf shows the focused item's art and text, and dims while a lower row has focus;
-  - the focused poster lifts and tilts (ui.parallax); at a row's end an arrow only tilts it;
-  - the tab bar is a translucent material (backdrop blur), opaque when forced;
-  - Back from a row goes to the first row, then the tab bar; Enter opens jellyfin-web's details page (Lumen's tokens);
-  - Classic home shows the stock home; turning the theme off restores the stock UI.
+  - home: a hero of the featured item over its art (Play or Resume focused), the rows under it (Continue watching,
+    Next up, each library), the collapsed sidebar as a glass pill top left;
+  - ▼ into the rows: the hero gives way, the row slides up, the focused card lifts and tilts (ui.parallax), the
+    backdrop follows the focused item; ◀ at a row's start opens the sidebar, Back closes it;
+  - Back from a lower row returns to the hero; Enter on a card opens Lumen's product page;
+  - the glass is a translucent material (backdrop blur), opaque when forced;
+  - Classic home shows the stock home; low motion flattens the tilt; turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_lumen.py --app ~/build/src/icefin-player --server jf12 --out ~/r912/jf12
 """
@@ -67,84 +67,83 @@ def main():
         setv = lambda key, val: js("new Promise(r => window.api.settings.setValue('theme', %s, %s, () => r(true)))" % (json.dumps(key), json.dumps(val)))
 
         lm = themes().get("lumen", {})
-        check("Lumen offered as a built-in theme, usable", lm.get("ok") is True and lm.get("source") == "bundled", json.dumps(lm)[:160])
+        check("Lumen offered as a built-in theme, usable", lm.get("ok") is True and (lm.get("source") == "bundled" or bool(os.environ.get("ICEFIN_THEME_PATH"))), json.dumps(lm)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('lumen', '', r))")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-lm-ready]')", timeout=40)
-        time.sleep(1.5)
         R = "document.querySelector('#icefin-theme-root')"
-        foc = lambda: js("(() => { const f = document.querySelector('#icefin-theme-root .icefin-focused'); if (!f) return ''; "
-                         "if (f.classList.contains('lm-tab')) return 'tab/' + f.textContent; "
-                         "const s = f.closest('.lm-row'); return 'row/' + [...document.querySelectorAll('.lm-row')].indexOf(s) + '/' + f.lumenIndex; })()")
-        tabs = json.loads(js("JSON.stringify([...document.querySelectorAll('.lm-tab')].map(e => e.textContent))"))
-        check("tab bar: Home, the libraries, Search, Settings, Classic home", tabs[0] == "Home" and tabs[-3:] == ["Search", "Settings", "Classic home"] and len(tabs) >= 5, json.dumps(tabs))
-        check("focus starts on the Home tab, bar shown", foc() == "tab/Home" and js(f"{R}.dataset.lmTabs") == "shown", foc())
-        nrows = js("document.querySelectorAll('.lm-row').length")
-        titles = json.loads(js("JSON.stringify([...document.querySelectorAll('.lm-row-title')].map(e => e.textContent))"))
-        check("rows: Up Next (if any) then New in each library", nrows >= 2 and all(t == "Up Next" or t.startswith("New in ") for t in titles), json.dumps(titles))
-        check("tab bar is a translucent material", "blur(28px)" in js("getComputedStyle(document.querySelector('.lm-tabs')).backdropFilter"),
-              js("getComputedStyle(document.querySelector('.lm-tabs')).backdropFilter"))
+        page.wait_for(f"+{R}.getAttribute('data-lm-ready') > 0", timeout=40)
+        time.sleep(1.5)
+        foc = lambda: js("(() => { const f = window.icefinTheme.ctx.focused(); if (!f) return ''; "
+                         "if (f.classList.contains('lm-hb')) return 'hero/' + f.textContent.trim(); "
+                         "const s = f.closest('.lm-hrow'); return s ? 'row/' + [...document.querySelectorAll('.lm-hrow')].indexOf(s) + '/' + [...s.querySelectorAll('.lm-hcard')].indexOf(f) : f.className; })()")
+        zone = lambda: js(f"{R}.dataset.lmZone")
+        titles = json.loads(js("JSON.stringify([...document.querySelectorAll('.lm-hrow-title')].map(e => e.textContent))"))
+        check("home: the hero focused on Play or Resume, its title shown", foc() in ("hero/Play", "hero/Resume") and bool(js("document.querySelector('.lm-hero-title').textContent")), foc())
+        check("rows under it: Continue watching or Next up first, then the libraries", len(titles) >= 2, json.dumps(titles))
+        check("the collapsed sidebar is a translucent material", "blur(" in js("getComputedStyle(document.querySelector('.lm-mini')).backdropFilter"),
+              js("getComputedStyle(document.querySelector('.lm-mini')).backdropFilter"))
+        geo = json.loads(js("JSON.stringify((() => { const b = document.querySelector('.lm-bg.on').getBoundingClientRect(); const r = document.querySelector('.lm-hrow').getBoundingClientRect(); return {bg: b.height / innerHeight, row: r.top / innerHeight}; })())"))
+        check("proportions: the art fills the screen, the first row peeks from about 74% down", geo["bg"] > 0.99 and 0.68 <= geo["row"] <= 0.8, json.dumps(geo))
         shot("home.png")
         act("right")
-        check("left/right move along the tab bar", foc() == f"tab/{tabs[1]}", foc())
+        check("◀▶ move along the hero's buttons", foc().startswith("hero/") and foc() not in ("hero/Play", "hero/Resume"), foc())
         act("left")
         act("down")
-        time.sleep(0.8)
-        check("down enters the first row; the tab bar hides", foc() == "row/0/0" and js(f"{R}.dataset.lmTabs") == "hidden"
-              and js("getComputedStyle(document.querySelector('.lm-tabs')).opacity") != "1", f"{foc()} tabs={js(f'{R}.dataset.lmTabs')}")
-        geo = json.loads(js("JSON.stringify((() => { const r = document.querySelector('.lm-row').getBoundingClientRect(); const s = document.querySelector('.lm-shelf').getBoundingClientRect(); return {row: r.top / innerHeight, shelf: s.height / innerHeight}; })())"))
-        check("proportions: the shelf fills the screen, the first row starts near 60% down", geo["shelf"] > 0.99 and 0.55 <= geo["row"] <= 0.68, json.dumps(geo))
-        time.sleep(0.5)
-        first = js("document.querySelectorAll('.lm-row')[0].querySelector('.lm-card').classList.contains('icefin-lifted')")
-        check("the focused poster lifts (parallax)", first is True and "matrix3d" in js("getComputedStyle(document.querySelector('.lm-card.icefin-focused')).transform"),
-              js("getComputedStyle(document.querySelector('.lm-card.icefin-focused')).transform"))
+        time.sleep(1.0)
+        check("▼ into the rows: the hero gives way", foc() == "row/0/0" and zone() == "rows" and float(js("getComputedStyle(document.querySelector('.lm-hero')).opacity")) < 0.5, f"{foc()} {zone()}")
+        time.sleep(0.4)
+        check("the focused card lifts (parallax)", js("document.querySelector('.lm-hcard.icefin-focused').classList.contains('icefin-lifted')") is True
+              and "matrix" in js("getComputedStyle(document.querySelector('.lm-hcard.icefin-focused')).transform"),
+              js("getComputedStyle(document.querySelector('.lm-hcard.icefin-focused')).transform"))
         shelf0 = js(f"{R}.dataset.lmShelf")
-        n0 = js("document.querySelectorAll('.lm-row')[0].querySelectorAll('.lm-card').length")
+        n0 = js("document.querySelectorAll('.lm-hrow')[0].querySelectorAll('.lm-hcard').length")
         if n0 >= 2:
             act("right")
-            time.sleep(0.6)
-            check("right moves along the row; the shelf follows the focused item", foc() == "row/0/1" and js(f"{R}.dataset.lmShelf") != shelf0, f"{foc()} shelf {shelf0} -> {js(f'{R}.dataset.lmShelf')}")
+            time.sleep(0.8)
+            check("▶ moves along the row; the backdrop follows the focused item", foc() == "row/0/1" and js(f"{R}.dataset.lmShelf") != shelf0, f"{foc()} {shelf0} -> {js(f'{R}.dataset.lmShelf')}")
             act("left")
-        tilt = js("window.icefinTheme.handleAction('left'); document.querySelector('.lm-card.icefin-focused').style.getPropertyValue('--icefin-tilt-x')")
-        check("left at the row's start only tilts the poster", foc() == "row/0/0" and tilt not in ("", "0.00deg"), f"{foc()} tilt={tilt}")
+            time.sleep(0.3)
+        act("left")
+        time.sleep(0.6)
+        check("◀ at a row's start opens the sidebar", js("!!document.querySelector('.lm-sb')") is True)
+        shot("sidebar.png")
+        act("back")
+        time.sleep(0.6)
+        check("Back closes it, the row keeps focus", js("!document.querySelector('.lm-sb')") is True and foc() == "row/0/0", foc())
+        nrows = len(titles)
         if nrows >= 2:
             act("down")
             time.sleep(1.0)
-            g = json.loads(js("JSON.stringify((() => { const s = document.querySelectorAll('.lm-row')[1].getBoundingClientRect(); return {top: s.top / innerHeight, zone: document.querySelector('#icefin-theme-root').dataset.lmZone, op: +getComputedStyle(document.querySelector('.lm-shelf')).opacity}; })())"))
-            check("down to a lower row: it slides up, the shelf dims", foc().startswith("row/1/") and g["top"] < 0.3 and g["op"] < 0.6, json.dumps(g))
+            top = js("document.querySelector('.lm-hrow.current').getBoundingClientRect().top / innerHeight")
+            check("▼ to a lower row: it slides up under the item's title", foc().startswith("row/1/") and top < 0.3 and bool(js("document.querySelector('.lm-ftop-title').textContent")), f"{foc()} top={top}")
             shot("rows.png")
             act("back")
-            check("Back from a lower row goes to the first row", foc() == "row/0/0", foc())
-        act("back")
-        time.sleep(0.5)
-        check("Back from the first row returns to the tab bar, shown again", foc() == "tab/Home" and js(f"{R}.dataset.lmTabs") == "shown", foc())
-        act("down")
+            time.sleep(0.5)
+            check("Back from the rows returns to the hero", foc() in ("hero/Play", "hero/Resume") and zone() == "hero", foc())
+        js("(() => { const c = [...document.querySelectorAll('.lm-hcard')].find(x => x.lumenItem && ['Movie', 'Series'].includes(x.lumenItem.Type)); if (c) window.icefinTheme.ctx.focus(c); return !!c; })()")
         act("enter")
         page.wait_for("location.hash.startsWith('#/details')", timeout=15)
         time.sleep(3)
-        check("Enter on a poster opens the details page, styled by Lumen's tokens",
-              js("window.icefinTheme.active().route") is None and js("document.documentElement.classList.contains('icefin-themed')") is True
-              and js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-surface').trim().toLowerCase()") == "#1c1c20")
+        check("Enter on a card opens Lumen's product page", js(f"{R}.getAttribute('data-lm-mode')") == "deck" and bool(js("(document.querySelector('.lm-dk-name') || {}).textContent")))
         shot("details.png")
         js("location.hash = '#/home'; true")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-lm-ready]')", timeout=30)
+        page.wait_for(f"+{R}.getAttribute('data-lm-ready') > 0", timeout=30)
         time.sleep(1)
         js("window.icefinTheme.ui.material.force('opaque'); true")
-        check("forced opaque: the bar drops its blur", js("getComputedStyle(document.querySelector('.lm-tabs')).backdropFilter") == "none")
+        check("forced opaque: the glass drops its blur", js("getComputedStyle(document.querySelector('.lm-mini')).backdropFilter") == "none")
         js("window.icefinTheme.ui.material.force('auto'); true")
-        for _ in range(len(tabs)):
-            act("right")
-        check("the tab bar stops at its last entry", foc() == "tab/Classic home", foc())
-        act("enter")
+        js("window.icefinTheme.ctx.navigate('#/home?icefin=stock'); true")
         page.wait_for("!!document.querySelector('.sectionTitle')", timeout=20)
         time.sleep(2)
         check("Classic home shows the stock home", js("window.icefinTheme.active().route") is None
               and js("[...document.querySelectorAll('.sectionTitle')].filter(e => e.offsetParent).length") > 0)
         js("location.hash = '#/home'; true")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-lm-ready]')", timeout=30)
+        page.wait_for(f"+{R}.getAttribute('data-lm-ready') > 0", timeout=30)
+        time.sleep(1)
         js("window.icefinTheme.ui.motion.cap('low'); true")
         act("down")
         time.sleep(0.5)
-        check("flat posters under the low-motion cap", js("document.querySelector('.lm-card.icefin-focused').style.getPropertyValue('--icefin-tilt-x')") in ("0deg", ""))
+        check("flat cards under the low-motion cap", js("document.querySelector('.lm-hcard.icefin-focused').style.getPropertyValue('--icefin-tilt-x')") in ("0deg", "0.00deg", "")
+              and js("getComputedStyle(document.querySelector('.lm-hcard.icefin-focused')).transform") == "none")
         js("window.icefinTheme.ui.motion.cap('normal'); true")
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)

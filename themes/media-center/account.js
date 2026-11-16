@@ -48,7 +48,7 @@
 
     // ---- choose a server ----
     let A = null;
-    T.registerScreen('#/selectserver', {
+    window.icefinMediaCenter.register('#/selectserver', {
         beforeSignIn: true,
         async mount(root) {
             const chrome = page(root, 'choose a server', 'servers');
@@ -79,7 +79,7 @@
                         status(note, `Connecting to ${s.name || s.address}…`);
                         const res = await T.ctx.connect(s.id);
                         if (res && res.state === 'Unavailable') status(note, `${s.name || s.address} isn't reachable right now.`, true);
-                        else if (res && res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before Icefin can use it.', true);
+                        else if (res && res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before IceFin Player can use it.', true);
                     });
                     list.append(r);
                 }
@@ -92,7 +92,7 @@
     });
 
     // ---- add (connect to) a server ----
-    T.registerScreen('#/addserver', {
+    window.icefinMediaCenter.register('#/addserver', {
         beforeSignIn: true,
         mount(root) {
             const chrome = page(root, 'connect to a server', 'addserver');
@@ -108,7 +108,7 @@
                 status(note, 'Connecting…');
                 const res = await T.ctx.connect(a);
                 if (!res || res.state === 'Unavailable') status(note, 'Nothing answered at that address. Check it, and that the server is running.', true);
-                else if (res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before Icefin can use it.', true);
+                else if (res.state === 'ServerUpdateNeeded') status(note, 'That server needs an update before IceFin Player can use it.', true);
             };
             f.input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
             col.append(button('Connect', go), button('Choose a known server', () => T.ctx.navigate('#/selectserver')));
@@ -122,7 +122,7 @@
 
     // ---- who's watching, and the password; Quick Connect ----
     let L = null;
-    T.registerScreen('#/login', {
+    window.icefinMediaCenter.register('#/login', {
         beforeSignIn: true,
         onBack() {
             if (M.band.open) { M.band.open.close(); return true; }
