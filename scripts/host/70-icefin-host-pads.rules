@@ -1,0 +1,8 @@
+# IceFin Player QA on the workstation (D40): virtual controllers for the host walks (tests/icefin/web/vpads.py).
+# Install once: sudo install -m 644 scripts/host/70-icefin-host-pads.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
+# Remove: sudo rm /etc/udev/rules.d/70-icefin-host-pads.rules && sudo udevadm control --reload
+# Access goes to whoever is logged in at the seat (uaccess), as Steam's own rules do for /dev/uinput, never to a group.
+# /dev/uhid: the emulated DualSense and Switch Pro, bound by the kernel's hid-playstation and hid-nintendo drivers.
+KERNEL=="uhid", TAG+="uaccess"
+# hidraw of an emulated pad (its HID device is named <bus>:<vendor>:<product>.<n>), for SDL's HIDAPI path.
+KERNEL=="hidraw*", KERNELS=="*:054C:*|*:057E:*|*:28DE:*|*:2DC8:*", TAG+="uaccess"
