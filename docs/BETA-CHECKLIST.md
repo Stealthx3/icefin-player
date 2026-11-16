@@ -47,7 +47,7 @@ result is seen; anything else is a bug report (P1 if playback is silent, black o
 | C2 | Steam Deck or Steam Controller, Steam game mode | Same | One input per press (no duplicates); glyphs match the pad (not "generic") | 7.4, 7.6 |
 | C3 | Any pad, Steam running on the desktop | Start Icefin from the app menu (not from Steam); press the D-pad, A and B on a themed screen | Each press acts once; the log says "duplicate guard on"; typing in the search field is unaffected | 7.4 |
 | C5 | Steam Deck or any pad, Steam | Add Icefin as a non-Steam game, apply the recommended layout (INSTALL, Controllers), then export it from Steam's controller settings | Trackpad moves the pointer; L4 goes Home (hold: overlay panel); R4 opens the menu; send us the exported layout so it can ship | 7.4 |
-| C4 | Bluetooth or IR five-way remote | Walk the default theme and Plum | Every screen reachable with five keys and Back | SPEC |
+| C4 | Bluetooth or IR five-way remote | Walk the default theme and Media Center | Every screen reachable with five keys and Back | SPEC |
 
 ## Reporting
 
