@@ -344,8 +344,18 @@
                     const pg = pages.pop();
                     return pg ? pg.querySelector('form') : null;
                 };
-                let form = null;
-                for (let i = 0; i < 120 && !form && state.up; i++) { form = findForm(); if (!form) await new Promise((r) => setTimeout(r, 50)); }
+                // ...and has its fields: jellyfin-web fills the form after loading the user's settings (the Display page
+                // renders in steps), so wait until it has two or more fields and their count holds for a moment
+                const fields = (f) => f ? f.querySelectorAll('input:not([type=hidden]), select, textarea').length : 0;
+                let form = null, last = -1, still = 0;
+                for (let i = 0; i < 160 && state.up; i++) {
+                    const f = findForm();
+                    const n = fields(f);
+                    if (f && n >= 2 && n === last) { if (++still >= 3) { form = f; break; } } else still = 0;
+                    last = n;
+                    await new Promise((r) => setTimeout(r, 100));
+                }
+                if (!form && state.up) form = findForm();
                 if (!state.up) return;
                 if (!form) { host.append(el('p', 'icefin-s-note', 'This page is not available here.')); root.setAttribute('data-icefin-prefs-ready', '0'); return; }
                 state.form = form;
