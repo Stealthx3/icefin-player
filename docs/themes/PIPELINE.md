@@ -32,7 +32,8 @@ decision D31).
   screens before the merge to `main`.
 - Clone rules hold throughout (CLAUDE.md): layout, proportions, navigation, timing and colours only; no logos, icons,
   artwork, sounds, fonts or product names of the target. The engine stays theme-agnostic (theme lint).
-- **Themes first** (the user, 2026-11-14): other development waits until every theme in the queue is done.
+- **Themes first** (the user, 2026-11-14): other development waits until every theme in the queue is done (satisfied 2026-11-16).
+- **One theme in its stages at a time**, except in QA (D40): while a pass waits at a gate, the next pass's walk may run.
 
 ## The measure
 Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
@@ -76,6 +77,14 @@ Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
 | 9 | **Done** | `theme-pass.sh done <theme>` | the theme off `active`; the next in the queue named to the user | the user starts the next pass |
 
 `theme-pass.sh status` shows the queue and, for every theme, its branch against `main`, its worktree and its last walk.
+
+## QA/QC passes (D40)
+From 2026-11-16 the pipeline is the first part of QA/QC (D38, D40). Each of the 10 themes going to 1.0 gets 3 continuous passes, then 3 overall rounds give each theme one more pass (PLAN 11.8, 11.9). The stages are the same, with full gates every pass. What a QA pass adds:
+- **Every element and path, every input.** Besides the screen walk, the element crawl (PLAN 11.7) operates every control on every screen with the mouse, with the keyboard and with a controller (virtual pads on the host), and records what each one does and how Back returns. A control that does nothing, can't be reached by one of the inputs, or leaves no way back is a gap like a `missing` screen.
+- **Read-only on the user's account.** Saves, creates and deletes are opened and cancelled, never done; the lab checks the save paths.
+- **Audio at Gate 2.** The theme's UI sounds, jingles and music are part of the built-screens review.
+- **Questions go to the phone** (`docs/dev/HUMAN-DECISIONS.md`): a gate or a choice waits on the IceFin Decisions page while the next theme's walk or other work goes on; one pass's gate never stops the whole queue.
+`theme-pipeline.json` keeps the QA rounds in `qa` (pass number per theme).
 
 ## Plugins
 Plugin UI a themed screen must draw (MediaSegments and Intro Skipper skips, up next, SyncPlay, Home Screen Sections,
