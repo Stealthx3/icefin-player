@@ -98,7 +98,7 @@
     ui.chrome.set('sideRail', {
         width: '24.0625vw',  // 462 of 1920
         async mount(rail) {
-            // where Kodi shows its own logo: the server's banner, else its icon and name (PLAN 9.27, D39)
+            // where the target shows its own logo: the server's banner, else its icon and name (PLAN 9.27, D39)
             const brand = el('div', 'hb-brand', 'IceFin Player');
             rail.append(brand);
             if (ui.brand) ui.brand().then((b) => {
