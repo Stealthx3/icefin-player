@@ -192,7 +192,9 @@ DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|
                     # controls that switch the theme for the session or turn the engine off (the walk would continue on stock);
                     # "Classic home" (jellyfin-web's home inside the theme) stays allowed
                     r"|classic[ _-]?view|jellyfin[ _-]?web|stock (view|jellyfin)|(switch|change|choose|pick|select|use) (to )?(the |a |another )?(theme|stock)|"
-                    r"(turn|switch) (off|the theme)|disable (the )?(theme|engine)|theme (picker|chooser|selector)", re.I)
+                    r"(turn|switch) (off|the theme)|disable (the )?(theme|engine)|theme (picker|chooser|selector)"
+                    # quitting the app ends the walk (Exit IceFin Player, Quit the app, Close IceFin, Exit Application)
+                    r"|\b(exit|quit)\b|close (icefin|the app)", re.I)
 DANGER_CLS = re.compile(r"delete|remove|sign-?out|log-?out|favorit|userrating|playstate|btnuserdata|restart|shut|btn(save|submit|apply)|btnplayed", re.I)
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
 DLG_CHANGE = re.compile(r"create|new |add|edit|rename|delete|remove|identify|restart|shut|sign|password|playlist|collection|confirm|metadata|image", re.I)
@@ -1290,6 +1292,20 @@ class App:
     def use_theme(self, theme):
         use_theme(self.page, theme)     # reconnects self.page in place
 
+    def alive(self):
+        """The app still runs and its page answers."""
+        proc = getattr(self, "proc", None) or getattr(self, "app", None)
+        if proc is not None and hasattr(proc, "poll") and proc.poll() is not None:
+            return False
+        try:
+            return self.page.eval("1") == 1
+        except Exception:  # noqa: BLE001
+            try:
+                self.page.reconnect(timeout=10)
+                return self.page.eval("1") == 1
+            except Exception:  # noqa: BLE001
+                return False
+
 
 class LabApp(App):
     def __init__(self, a, steam=False):
@@ -1305,8 +1321,13 @@ class LabApp(App):
         self.pads = []
         self.open(steam)
 
+    def reopen(self):
+        self.close()
+        self.open(getattr(self, "steam", False))
+
     def open(self, steam=False):
         a = self.a
+        self.steam = steam
         cfgdir = tempfile.mkdtemp(prefix="icefin-iwalk-")
         self.log = open(os.path.join(a.out, f"app-{'steam' if steam else 'plain'}.log"), "w")
         env = dict(os.environ, DISPLAY=self.LAB_DISPLAY, QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8")
@@ -1442,6 +1463,10 @@ class HostApp(App):
         time.sleep(2)
         self.original = self.page.eval("new Promise(r => window.api.theme.selection(r))") or {}
         print("input_walk: your theme choice (replaced by stock jellyfin-web at the end):", json.dumps(self.original), flush=True)
+
+    def reopen(self):
+        self.close(leave=False)
+        self.__init__(self.a, self.scenario)
 
     def close(self, leave=True):
         """D41: the run ends with IceFin on stock jellyfin-web, not the theme the user had (host.Host.close still restores for other tests)."""
@@ -1614,6 +1639,15 @@ def main():
                                     runs.append((f"pad-{fam}" + ("" if scenario in ("plain", "steam-env") else f"-{scenario}"), "pad", fam))
                         for label, inp, family in runs:
                             pad = None
+                            if not app.alive():
+                                msg = f"{theme}: the app had quit or stopped answering before {label}; reopened"
+                                print("input_walk:", msg, flush=True)
+                                summary.append(f"- {msg}")
+                                reps.setdefault("_app", {"input": "app", "family": "", "screens": {}, "findings": []})["findings"].append(
+                                    {"severity": "high", "kind": "app-quit", "screen": "", "element": "", "run": label, "detail": msg})
+                                app.reopen()
+                                app.use_theme(theme)
+                                page = app.page
                             if inp == "pad":
                                 plug_as = "dualsense" if scenario == "shortcut" else family
                                 why = pad_missing("xbox" if scenario == "gamescope" else plug_as)
