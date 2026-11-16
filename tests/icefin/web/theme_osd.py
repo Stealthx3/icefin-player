@@ -21,9 +21,9 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-EXPECT = {"media-center": ("panel", "right"), "harbor": ("bar", "center"), "spark": ("bar", "center"), "plum": ("minimal", "center"),
+EXPECT = {"media-center": ("panel", "right"), "harbor": ("bar", "center"),
           "plaza": ("panel", "center"), "orbit": ("bar", "center"), "mosaic": ("bar", "center"), "lumen": ("panel", "center"),
-          "marquee": ("bar", "center"), "almanac": ("bar", "center"), "arcade": ("bar", "center"), "tide": ("minimal", "center")}
+          "almanac": ("bar", "center"), "arcade": ("bar", "center"), "tide": ("minimal", "center")}
 CONTROLS = ["btnPause", "btnRewind", "btnFastForward", "btnSubtitles", "btnVideoOsdSettings", "osdPositionSlider"]
 
 

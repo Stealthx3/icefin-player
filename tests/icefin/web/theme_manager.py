@@ -175,7 +175,7 @@ def main():
         page.wait_for("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim().toLowerCase() === '#111315'", timeout=20)
         check("Apply with Dark switches the theme's colours to its dark scheme", selection().get("scheme") == "dark")
         # The scheme is a preference across themes: another theme opens in its own Dark.
-        pick(".icefin-tm-theme", "spark")
+        pick(".icefin-tm-theme", "tide")
         time.sleep(0.5)
         check("Dark stays when another theme is chosen", js(f"{q('.icefin-tm-preset')}.value") == "|dark")
         pick(".icefin-tm-theme", "mosaic")
