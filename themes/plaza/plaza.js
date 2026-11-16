@@ -729,9 +729,9 @@
             barEl.innerHTML = '<svg class="pz-bar-svg" preserveAspectRatio="none" aria-hidden="true"><path class="pz-bar-fill"/><path class="pz-bar-shine"/><path class="pz-bar-line"/></svg>';
             S.barSvg = barEl.firstChild;
             const round = (cls, label, go) => { const b = P.focusable(el('div', 'pz-round ' + cls)); b.setAttribute('aria-label', label); b.addEventListener('click', go); return b; };
-            const settings = round('pz-left', 'Settings', () => T.ctx.navigate('#/mypreferencesmenu'));
+            const settings = round('pz-left', 'Settings', () => { P.homeReturn = 'settings'; T.ctx.navigate('#/mypreferencesmenu'); });
             settings.append(el('span', 'pz-round-mark', 'icefin'));
-            const search = round('pz-right', 'Search', () => T.ctx.navigate('#/search'));
+            const search = round('pz-right', 'Search', () => { P.homeReturn = 'search'; T.ctx.navigate('#/search'); });
             search.innerHTML = '<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="7"/><path d="M36 36 L52 52" stroke="currentColor" stroke-width="9" stroke-linecap="round"/></svg>';
             const clock = el('div', 'pz-clock'), date = el('div', 'pz-date');
             const tick = () => {
@@ -747,7 +747,7 @@
             // It is a button too: A or a click opens the choice of servers (the user, 2026-11-12)
             const srv = P.focusable(el('div', 'pz-srv'));
             srv.setAttribute('role', 'button');
-            srv.addEventListener('click', () => T.ctx.navigate('#/selectserver'));
+            srv.addEventListener('click', () => { P.homeReturn = 'srv'; T.ctx.navigate('#/selectserver'); });
             srv.innerHTML = '<svg viewBox="0 0 40 52" aria-hidden="true"><rect x="5" y="6" width="30" height="13" rx="3" fill="currentColor"/><rect x="5" y="24" width="30" height="13" rx="3" fill="currentColor" opacity=".7"/><circle cx="11" cy="12.5" r="2" fill="#fff"/><circle cx="11" cy="30.5" r="2" fill="#fff"/></svg>';
             const dot = el('span', 'pz-srv-dot');
             srv.append(dot);
@@ -786,6 +786,10 @@
                 .then(([views, favs, hasPlaylists]) => {
                     if (S !== mine) return;
                     fill(channels(views, favs, hasPlaylists));
+                    // back from a screen the bar opened (Settings, Search, the server): focus where it was opened from (QA 1)
+                    const back = { settings, search, srv }[P.homeReturn];
+                    P.homeReturn = null;
+                    if (back && back.isConnected) { T.ctx.focus(back); return; }
                     const reopen = P.reopen && S.list.find((x) => x.id === P.reopen);
                     P.reopen = null;
                     const t = reopen ? S.tiles.find((x) => x.plazaChannel === reopen) : S.tiles[0];

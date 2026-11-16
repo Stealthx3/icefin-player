@@ -7,7 +7,11 @@ finding is fixed in this pass or carries the user's reason (D41).
 
 ## Findings
 
-(from the walk)
+From the lab smoke walk of input_walk.py (keys, mouse, pad-xbox, 4 min each; the host walk follows):
+- [x] Back to the home from Settings, Search or the server button focused Live TV, not the control that opened the
+      screen. The home now refocuses the bar control that opened it (plaza.js, `P.homeReturn`).
+- [x] Back on Choose a server, opened from the home's server button while signed in, stayed there. It now goes back
+      (signin.js); while signing in, Back still has nowhere to go.
 
 ## 1. Themed elements: screens and surfaces
 

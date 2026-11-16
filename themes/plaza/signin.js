@@ -143,7 +143,8 @@
                 if (a === 'menu' && f && f.pzServer) { forget(f.pzServer); return true; }
                 return false;
             },
-            onBack() { return false; },
+            // signed in (opened from the home's server button): Back returns there; signing in has no way back (QA 1)
+            onBack() { const c = T.ctx.apiClient && T.ctx.apiClient(); if (c && c.isLoggedIn && c.isLoggedIn() && history.length > 1) { history.back(); return true; } return false; },
             unmount() { if (F) F.stop(); ui.pointerFirst(false); F = null; }
         };
         async function draw(grid) {
