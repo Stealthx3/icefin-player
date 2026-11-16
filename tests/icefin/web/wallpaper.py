@@ -114,7 +114,7 @@ def main():
             check(f"{kind}: the layer is up", bool(ok))
             time.sleep(2)
             diag = js("""(() => { const l = document.getElementById('icefin-wallpaper'); if (!l) return {}; const c = l.firstElementChild; const r = l.getBoundingClientRect();
-                return { display: getComputedStyle(l).display, z: getComputedStyle(l).zIndex, rect: [r.width, r.height], parent: l.parentNode && l.parentNode.tagName, child: c && c.tagName,
+                const at = document.elementsFromPoint(5, innerHeight - 5).slice(0, 6).map(e => e.tagName + (e.id ? '#' + e.id : '') + '.' + String(e.className).slice(0, 30)); return { at, vis: getComputedStyle(l).visibility, cvis: c && getComputedStyle(c).visibility, op: getComputedStyle(l).opacity, display: getComputedStyle(l).display, z: getComputedStyle(l).zIndex, rect: [r.width, r.height], parent: l.parentNode && l.parentNode.tagName, child: c && c.tagName,
                   src: c && (c.currentSrc || c.src || '').slice(0, 40), natural: c && (c.naturalWidth || c.videoWidth || c.width || 0), ready: c && (c.readyState !== undefined ? c.readyState : c.complete),
                   err: c && c.error ? c.error.code : null, playing: document.documentElement.hasAttribute('data-icefin-osd-playing') }; })()""")
             check(f"{kind}: the picture loads and shows", isinstance(diag, dict) and diag.get("display") != "none" and (diag.get("natural") or 0) > 0, json.dumps(diag))
