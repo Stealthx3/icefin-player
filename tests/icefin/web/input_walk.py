@@ -126,9 +126,23 @@ IW_JS = r"""
         const par = e.parentElement && e.parentElement.closest('button, a[href], [role=button]');
         if (par && par !== e && !e.matches('button, a[href], input, select, textarea, [role]') && !e.hasAttribute('data-icefin-focus')) continue;
         seen.add(e);
-        const i = info(e); els.set(i.key, e); out.push(i);
+        const i = info(e); els.set(i.key, e);
+        i.inview = rc.bottom > 0 && rc.right > 0 && rc.top < innerHeight && rc.left < innerWidth;
+        i.osk = !!e.closest('#icefin-osk, [data-icefin-osk], [role=application]');
+        out.push(i);
       }
       return out;
+    },
+    box(key) {
+      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return null;
+      e.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      const r = e.getBoundingClientRect();
+      return { x: r.left, y: r.top, w: r.width, h: r.height, vw: innerWidth, vh: innerHeight };
+    },
+    centers(key) {
+      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return null;
+      const c = L.cur(), f = (n) => { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+      return { t: f(e), c: c ? f(c) : null };
     },
     rect(key) {
       const e = els.get(key); if (!e || !e.isConnected) return null;
@@ -174,7 +188,11 @@ IW_JS = r"""
 
 # ---------------------------------------------------------------- the read-only rules
 DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|create|new playlist|add to|rate|scan|refresh|shut ?down|import|upload|"
-                    r"mark|unfavou?rite|empty|stop server|install|update)\b", re.I)
+                    r"mark|unfavou?rite|empty|stop server|install|update)\b"
+                    # controls that switch the theme for the session or turn the engine off (the walk would continue on stock);
+                    # "Classic home" (jellyfin-web's home inside the theme) stays allowed
+                    r"|classic[ _-]?view|jellyfin[ _-]?web|stock (view|jellyfin)|(switch|change|choose|pick|select|use) (to )?(the |a |another )?(theme|stock)|"
+                    r"(turn|switch) (off|the theme)|disable (the )?(theme|engine)|theme (picker|chooser|selector)", re.I)
 DANGER_CLS = re.compile(r"delete|remove|sign-?out|log-?out|favorit|userrating|playstate|btnuserdata|restart|shut|btn(save|submit|apply)|btnplayed", re.I)
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
 DLG_CHANGE = re.compile(r"create|new |add|edit|rename|delete|remove|identify|restart|shut|sign|password|playlist|collection|confirm|metadata|image", re.I)
@@ -190,7 +208,7 @@ LIBRARY = {"movies": r"^/movies", "tvshows": r"^/tv", "music": r"^/music", "live
 ITEM_TYPES = ["Movie", "Series", "Season", "Episode", "Audio", "MusicAlbum", "MusicArtist", "Person", "Playlist", "BoxSet", "Book", "Photo"]
 SEVERITY = {"broken-back": "high", "back-focus": "medium", "dead-control": "medium", "no-focus-indicator": "high", "unreachable-by-input": "medium",
             "focus-lost": "high", "obscured": "low", "script-error": "high", "required-missing": "medium", "hover-no-focus": "low", "shift-tab": "low",
-            "unpositioned": "low", "walk-error": "high", "plugin": "info"}
+            "unpositioned": "low", "walk-error": "high", "plugin": "info", "budget": "info"}
 
 
 def base(k):
@@ -431,11 +449,80 @@ class Walker:
         name = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:70]
         try:
             open(os.path.join(self.out, name + ".png"), "wb").write(base64.b64decode(self.page.send("Page.captureScreenshot", format="png")["data"]))
+            return name + ".png"
         except Exception:  # noqa: BLE001 (no frame while the window is covered: the entry stands without a picture)
             try:
                 self.page.reconnect()
             except Exception:  # noqa: BLE001
                 pass
+        return ""
+
+    def stable_focus(self):
+        """The focused element once it has settled: themes restore focus after their screen animation. Polls up to 1500 ms
+        until the focus is the same for 250 ms; returns what focus_now() gives then (None: nothing focused)."""
+        t0 = time.time()
+        last, since, f = object(), time.time(), None
+        while True:
+            f = self.focus_now()
+            key = f["key"] if f else ""
+            if key != last:
+                last, since = key, time.time()
+            elif time.time() - since >= 0.25:
+                break
+            if time.time() - t0 >= 1.5:
+                break
+            time.sleep(0.08)
+        return f
+
+    def clip_png(self, b):
+        """The element's box plus a 12 px margin, CSS px at scale 1, as PNG bytes (None when there is nothing to capture)."""
+        x0, y0 = max(0, b["x"] - 12), max(0, b["y"] - 12)
+        x1, y1 = min(b["vw"], b["x"] + b["w"] + 12), min(b["vh"], b["y"] + b["h"] + 12)
+        if x1 - x0 < 2 or y1 - y0 < 2:
+            return None
+        return base64.b64decode(self.page.send("Page.captureScreenshot", format="png", clip={"x": x0, "y": y0, "width": x1 - x0, "height": y1 - y0, "scale": 1})["data"])
+
+    @staticmethod
+    def img_diff(a, b):
+        """The fraction of pixels that differ (1.0 when they can't be compared pixel by pixel but the bytes differ)."""
+        if a == b:
+            return 0.0
+        try:
+            import io
+            from PIL import Image, ImageChops
+            ia, ib = Image.open(io.BytesIO(a)).convert("RGB"), Image.open(io.BytesIO(b)).convert("RGB")
+            if ia.size != ib.size:
+                return 1.0
+            h = ImageChops.difference(ia, ib).convert("L").histogram()
+            tot = ia.size[0] * ia.size[1]
+            return (tot - h[0]) / float(tot or 1)
+        except Exception:  # noqa: BLE001
+            return 1.0
+
+    def focus_pixels(self, key, back_to):
+        """Fraction of the element's pixels (with margin) that change when it takes focus; None when it can't be measured.
+        The element is unfocused now; focus is put back on `back_to` (a key) afterwards."""
+        try:
+            b = self.js(f"window.inputWalk.box({json.dumps(key)})")
+            if not b:
+                return None
+            off = self.clip_png(b)
+            if off is None or not self.js(f"window.inputWalk.focusKey({json.dumps(key)})"):
+                return None
+            time.sleep(0.3)
+            b2 = self.js(f"window.inputWalk.box({json.dumps(key)})") or b
+            on = self.clip_png(b2)
+            if on is None:
+                return None
+            return self.img_diff(off, on)
+        except Exception:  # noqa: BLE001
+            return None
+        finally:
+            if back_to:
+                try:
+                    self.js(f"window.inputWalk.focusKey({json.dumps(back_to)})")
+                except Exception:  # noqa: BLE001
+                    pass
 
     def finding(self, kind, screen, element, detail, shot=True, plugin=False):
         """plugin: the element is drawn by a server plugin. Its dead controls and missing focus looks are info (kind
@@ -446,12 +533,16 @@ class Walker:
         sev, was = SEVERITY.get(kind, "medium"), None
         if plugin and kind in ("dead-control", "no-focus-indicator", "hover-no-focus", "script-error"):
             sev, was, kind = "info", kind, "plugin"
-        self.findings.append({"severity": sev, "kind": kind, "screen": screen, "element": element,
-                              "detail": (f"[{was}] " if was else "") + str(detail)[:300], **({"was": was} if was else {})})
+        run = getattr(self, "label", self.inp)
+        rec = {"severity": sev, "kind": kind, "screen": screen, "element": element, "run": run,
+               "detail": (f"[{was}] " if was else "") + str(detail)[:300], **({"was": was} if was else {})}
+        self.findings.append(rec)
         self.tr("FINDING", kind, screen, element, detail)
         if shot and self.shots < 60:
             self.shots += 1
-            self.shot(f"finding-{len(self.findings):03d}-{kind}")
+            png = self.shot(f"finding-{len(self.findings):03d}-{kind}")
+            if png:
+                rec["shot"] = f"{run}/{png}"
 
     def errors(self, k, el=""):
         try:
@@ -470,6 +561,8 @@ class Walker:
             e["href"] = c["href"]
         if c.get("plugin"):
             e["plugin"] = True
+        if "inview" in c:
+            e["inview"], e["osk"] = c["inview"], c.get("osk", False)
         return e
 
     def reach(self, k, c):
@@ -556,17 +649,30 @@ class Walker:
             self.element(k, c)
         return items
 
-    def mark_off(self, k, before):
+    def mark_off(self, k, before, back_to=None):
+        """`before` has just lost focus. The style comparison is the fast path: a difference there is enough. Without one,
+        the pixels decide (themes draw focus with ring elements, glows and scale): reported only when the element's box
+        plus margin looks the same, or differs in under 0.5% of pixels, focused and not. `back_to`: the key focus is
+        on now, restored after the measurement."""
         if not before:
             return
         self.js(f"window.inputWalk.off({json.dumps(before['key'])})")
         v = self.js(f"window.inputWalk.vis({json.dumps(before['key'])})")
         if v is None:
             return
-        self.element(k, before)["focus_visible"] = v
+        el = self.element(k, before)
         if v is False:
-            self.finding("no-focus-indicator", k, before["label"] or before["key"], "focused and unfocused look the same (outline, shadow, transform, colours, classes, no ring)",
-                         plugin=before.get("plugin", False))
+            frac = self.focus_pixels(before["key"], back_to)
+            if frac is None:
+                return      # could not measure: no verdict
+            v = frac >= 0.005
+            if not v:
+                el["focus_visible"] = False
+                self.finding("no-focus-indicator", k, before["label"] or before["key"],
+                             f"focused and unfocused look the same (style check and {frac * 100:.2f}% of pixels differ in the element's box plus 12 px)",
+                             plugin=before.get("plugin", False))
+                return
+        el["focus_visible"] = v
 
     def collect(self, k, here):
         here["collected"] = True
@@ -596,7 +702,7 @@ class Walker:
                 self.moved(k, here, kk, s, d, path)
                 return None
             f2 = self.focus_now()
-            self.mark_off(k, before)
+            self.mark_off(k, before, f2["key"] if f2 else None)
             if f2 and (not before or f2["key"] != before["key"]):
                 path.append(d)
             if not f2 or f2["key"] in seen:
@@ -617,9 +723,12 @@ class Walker:
             if not step("up"):
                 break
 
+        cut = [False]
+
         def snake(horiz):
             for _ in range(4 * 14):
                 if self.late():
+                    cut[0] = True
                     break
                 moved = False
                 for _ in range(14):
@@ -636,7 +745,61 @@ class Walker:
         if self.inp == "keys" and not self.late() and self.restore(k, []):
             self.tab_sweep(k, take)
         self.enum(k)    # after the scrolling: lazy rows are in
-        self.tr("screen", k, "controls reached", len(ctrls))
+        # complete: the snake ended because focus stopped moving everywhere, not because the budget ran out
+        here["complete"] = not cut[0] and not self.late()
+        here["walk"] = "complete" if here["complete"] else "cut by the budget"
+        self.tr("screen", k, "controls reached", len(ctrls), "walk", here["walk"])
+        if here["complete"]:
+            self.check_unreached(k, here)
+
+    def direct_reach(self, key):
+        """Try the input itself: from the current focus, the arrow/D-pad direction that cuts the distance to the element's centre, up to 25 presses."""
+        for _ in range(25):
+            f = self.focus_now()
+            if f and f["key"] == key:
+                return True
+            cc = self.js(f"window.inputWalk.centers({json.dumps(key)})")
+            if not cc:
+                return False
+            if cc["c"]:
+                dx, dy = cc["t"]["x"] - cc["c"]["x"], cc["t"]["y"] - cc["c"]["y"]
+                d = ("right" if dx > 0 else "left") if abs(dx) >= abs(dy) else ("down" if dy > 0 else "up")
+            else:
+                d = "down"
+            self.drv.move(d)
+            if self.screen_key(self.settle(t=1.0)) != self.cur_screen_key:
+                return False
+        f = self.focus_now()
+        return bool(f and f["key"] == key)
+
+    def check_unreached(self, k, here):
+        """Elements on screen that this input's walk never reached: visible in the viewport, not in the on-screen keyboard.
+        Each gets one direct attempt; the ones the input can't reach either are flagged unreach (merge() reports them
+        when the mouse can use them). At most 20 per screen."""
+        els = self.screens[k]["elements"]
+        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("inview") and not e.get("osk")
+                and not str(e.get("outcome", "")).startswith("skipped: disabled")][:20]
+        self.cur_screen_key = k
+        for key, e in todo:
+            if self.late():
+                here["complete"], here["walk"] = False, "cut by the budget"
+                break
+            if not self.go_here(k):
+                break
+            if here.get("first_key"):
+                self.drv.focus(here["first_key"])
+            try:
+                ok = self.direct_reach(key)
+            except Exception as ex:  # noqa: BLE001
+                self.tr("direct reach error", key[-40:], ex)
+                continue
+            if ok:
+                e["reached"][self.inp] = True
+                self.tr("direct reach worked", e.get("label") or key[-40:])
+            else:
+                e["unreach"] = True
+                self.tr("direct reach failed", e.get("label") or key[-40:])
+        self.go_here(k)
 
     def tab_sweep(self, k, take):
         n, last, miss = 0, None, 0
@@ -720,13 +883,13 @@ class Walker:
         el["outcome"] = outcome if outcome in ("dialog", "in-place", "nothing") else f"screen: {pk}"
         self.tr("activated", label, "->", el["outcome"])
         if outcome == "nothing":
-            if not self.mouse and not self.js("window.inputWalk.focusedKey()"):
-                self.finding("focus-lost", k, label, "nothing focused after the action")
+            if not self.mouse and not self.stable_focus():
+                self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
             self.finding("dead-control", k, label, "no screen, dialog or visible change", plugin=c.get("plugin", False))
             return
         if outcome == "in-place":
-            if not self.mouse and not self.js("window.inputWalk.focusedKey()"):
-                self.finding("focus-lost", k, label, "nothing focused after the action")
+            if not self.mouse and not self.stable_focus():
+                self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
             return
         if outcome == "screen":
             route = s["route"]
@@ -754,7 +917,7 @@ class Walker:
             self.finding("broken-back", k, label, f"Back from {pk} ended on {kk} (want {k})")
             self.restore(k, c.get("path", []))
             return
-        f = self.focus_now() if not self.mouse or (pf and pf["key"] == c["key"]) else None
+        f = self.stable_focus() if not self.mouse or (pf and pf["key"] == c["key"]) else None
         want = pf["key"] if pf else None
         if want is not None:
             if not f:
@@ -810,7 +973,7 @@ class Walker:
                     before = self.focus_now()
                     self.drv.move(d)
                     f = self.focus_now()
-                    self.mark_off(pk, before)
+                    self.mark_off(pk, before, f["key"] if f else None)
                     if f and f["key"] not in seen:
                         seen.add(f["key"])
                         self.reach(pk, f)
@@ -842,7 +1005,7 @@ class Walker:
                     self.drv.move(d)
                     n += 1
                     f = self.focus_now()
-                    self.mark_off(dk, before)
+                    self.mark_off(dk, before, f["key"] if f else None)
                     if not f or f["key"] in seen:
                         break
                     seen[f["key"]] = True
@@ -985,11 +1148,15 @@ class Walker:
         missing += [f"a {lib} library" for lib, rx in self.present["libraries"] if not any(re.search(rx, r) for r in routes)]
         missing += [f"details of a {t}" for t in self.present["types"] if not any(f"/details" in k and f"[{t}]" in k for k in self.screens)]
         missing += [n for n, rx in PRIORITY_ROUTES[6:] if not any(re.search(rx, r) for r in routes)]
-        for m in missing:
-            self.finding("required-missing", "", m, "not reached within the budget or not reachable by this input", shot=False)
-        self.tr("done", len(self.screens), "screens; missing", missing)
+        budget_out = self.late()
+        if missing and budget_out:
+            self.finding("budget", "", "required screens not reached: " + ", ".join(missing), "the budget ran out before the walk reached them", shot=False)
+        else:
+            for m in missing:
+                self.finding("required-missing", "", m, "not reached with budget left: not reachable by this input", shot=False)
+        self.tr("done", len(self.screens), "screens; missing", missing, "budget ran out" if budget_out else "budget left")
         return {"theme": self.theme, "input": self.inp, "label": getattr(self, "label", self.inp), "family": self.family if self.inp == "pad" else "", "budget_min": self.a.budget_min,
-                "screens": self.screens, "findings": self.findings, "required_missing": missing, "queue_left": len(self.queue)}
+                "budget_out": budget_out, "screens": self.screens, "findings": self.findings, "required_missing": missing, "queue_left": len(self.queue)}
 
 
 # ---------------------------------------------------------------- merging the inputs of one theme
@@ -1005,15 +1172,21 @@ def merge(theme, reps):
            "screens": {}, "findings": []}
     for label, r in reps.items():
         inp = r["input"]
-        out["findings"] += [dict(f, input=label) for f in r["findings"]]
+        out["findings"] += [dict(f, input=label, run=f.get("run") or label) for f in r["findings"]]
+        out.setdefault("budget_out", {})[label] = r.get("budget_out")
         for k, sc in r["screens"].items():
-            m = out["screens"].setdefault(k, {"route": sc["route"], "hash": sc["hash"], "reached_by": {}, "elements": {}, "collected": {i: False for i in kinds}})
+            m = out["screens"].setdefault(k, {"route": sc["route"], "hash": sc["hash"], "reached_by": {}, "elements": {}, "collected": {i: False for i in kinds},
+                                              "walk": {}})
             m["reached_by"][label] = sc["reached_by"]
             m["collected"][inp] = m["collected"][inp] or sc["collected"]
+            if inp != "mouse" and sc["collected"]:
+                m["walk"][label] = sc.get("walk", "unknown")      # complete, or cut by the budget
             for key, e in sc["elements"].items():
                 me = m["elements"].setdefault(key, {"label": e["label"], "kinds": e["kinds"], "reached": {i: False for i in kinds}, "outcome": {}, "back_ok": {},
-                                                    "focus_visible": {}, "usable": False})
+                                                    "focus_visible": {}, "usable": False, "unreach": {}})
                 me["reached"][inp] = me["reached"][inp] or bool(e["reached"].get(inp))
+                if e.get("unreach") and sc.get("complete") and inp != "mouse":
+                    me["unreach"].setdefault(inp, label)    # the run whose complete walk and direct attempt both failed
                 me["outcome"][label], me["back_ok"][label], me["focus_visible"][label] = e["outcome"], e["back_ok"], e["focus_visible"]
                 for extra in ("hover_focus", "plugin"):
                     if e.get(extra) is not None:
@@ -1024,9 +1197,11 @@ def merge(theme, reps):
     for k, sc in out["screens"].items():
         for key, e in sc["elements"].items():
             for inp in ("pad", "keys"):
-                if e["usable"] and inp in kinds and sc["collected"].get(inp) and not e["reached"][inp]:
+                # only when that input's walk of the screen finished and a direct attempt (up to 25 presses) failed too
+                if e["usable"] and inp in kinds and sc["collected"].get(inp) and not e["reached"][inp] and e["unreach"].get(inp):
                     out["findings"].append({"severity": SEVERITY["unreachable-by-input"], "kind": "unreachable-by-input", "screen": k, "element": e["label"] or key,
-                                            "detail": f"an interactive element the mouse can use, never reached by {inp}", "input": inp})
+                                            "detail": f"an interactive element the mouse can use, not reached by {inp}: its walk of the screen finished and moving toward it failed",
+                                            "input": inp, "run": e["unreach"][inp]})
     return out
 
 
@@ -1045,15 +1220,39 @@ def markdown(m, reps):
     for inp, r in reps.items():
         els = sum(len(s["elements"]) for s in r["screens"].values())
         L.append(f"- {inp}: {len(r['screens'])} screens, {els} elements, {len(r['findings'])} findings; required missing: {', '.join(r['required_missing']) or 'none'}"
-                 + (f"; queue left {r['queue_left']}" if r["queue_left"] else ""))
-    kinds = {}
-    for f in m["findings"]:
-        kinds[f["kind"]] = kinds.get(f["kind"], 0) + 1
-    L += ["", "Findings by kind: " + (", ".join(f"{k} {n}" for k, n in sorted(kinds.items())) or "none"), ""]
-    order = {"high": 0, "medium": 1, "low": 2}
-    for f in sorted(m["findings"], key=lambda f: (order.get(f["severity"], 3), f["kind"]))[:80]:
-        L.append(f"- [{f['severity']}] {f['kind']} ({f.get('input', '')}) on `{f['screen'] or '-'}`: {f['element']}: {f['detail']}")
+                 + (f"; queue left {r['queue_left']}" if r["queue_left"] else "") + f"; {budget_text(r)}")
+    L += [""] + findings_md(m["findings"], "")
     return "\n".join(L) + "\n"
+
+
+def budget_text(r):
+    return "the budget ran out" if r.get("budget_out") else "the walk ended with budget left"
+
+
+def findings_md(findings, prefix):
+    """Findings grouped by kind and severity with counts, then the high and medium ones with screen, element, input and a screenshot link
+    (prefix: the path from the file being written to the theme's folder)."""
+    sevs = ["high", "medium", "low", "info"]
+    grid = {}
+    for f in findings:
+        grid.setdefault(f["kind"], {}).setdefault(f["severity"], 0)
+        grid[f["kind"]][f["severity"]] += 1
+    L = ["Findings by kind and severity:", ""]
+    if not grid:
+        L.append("none")
+    else:
+        L += ["| kind | " + " | ".join(sevs) + " | total |", "|---|" + "---|" * (len(sevs) + 1)]
+        for kind, row in sorted(grid.items()):
+            L.append(f"| {kind} | " + " | ".join(str(row.get(s, 0) or "") for s in sevs) + f" | {sum(row.values())} |")
+        L.append("| total | " + " | ".join(str(sum(1 for f in findings if f["severity"] == s)) for s in sevs) + f" | {len(findings)} |")
+    imp = [f for f in findings if f["severity"] in ("high", "medium")]
+    imp.sort(key=lambda f: ({"high": 0, "medium": 1}[f["severity"]], f["kind"], f["screen"]))
+    L += ["", f"High and medium findings ({len(imp)}):", ""]
+    for f in imp:
+        link = f" [screenshot]({prefix}{f['shot']})" if f.get("shot") else ""
+        ctl = " (also in the control)" if f.get("also_in_control") else ""
+        L.append(f"- [{f['severity']}] {f['kind']} · run {f.get('run') or f.get('input', '')} · screen `{f['screen'] or '-'}` · element {f['element']}: {f['detail']}{ctl}{link}")
+    return L
 
 
 # ---------------------------------------------------------------- sessions: the lab's build, or the host's Flatpak
@@ -1448,7 +1647,7 @@ def main():
                                 rep = w.run()
                             except Exception as ex:  # noqa: BLE001
                                 rep = {"theme": theme, "input": inp, "label": label, "family": family, "screens": w.screens, "findings": w.findings + [
-                                    {"severity": "high", "kind": "walk-error", "screen": "", "element": "", "detail": f"{type(ex).__name__}: {ex}"[:300]}],
+                                    {"severity": "high", "kind": "walk-error", "screen": "", "element": "", "run": label, "detail": f"{type(ex).__name__}: {ex}"[:300]}],
                                     "required_missing": [], "queue_left": len(w.queue)}
                             reps[label] = rep
                             json.dump(rep, open(os.path.join(idir, "report.json"), "w"), indent=1)
@@ -1466,6 +1665,8 @@ def main():
                         m = write_theme(theme)
                         high = sum(1 for f in m["findings"] if f["severity"] == "high" and not f.get("also_in_control"))
                         summary.append(f"- {theme} ({scenario}): {len(m['findings'])} findings, {high} high not in the control; runs {', '.join(m['runs'])}: {tdir}/report.md")
+                        summary += [f"  - {lab}: {budget_text(r)}" for lab, r in reps.items()]
+                        summary += ["", f"### {theme} ({scenario})", ""] + findings_md(m["findings"], theme + "/") + [""]
                     open(os.path.join(a.out, "summary.md"), "w").write("\n".join(summary) + "\n")
             finally:
                 app.close()
