@@ -2,11 +2,26 @@
   "schema": 1,
   "id": "arcade",
   "name": "Arcade",
-  "version": "0.2.0",
-  "description": "A controller-first home of a recent row led by a wide hero, feed pills over a row of cards and a bar of button hints; a filterable, sortable library grid, a quick-access panel from the right and an on-screen keyboard. Near-black navy with a light focus ring.",
+  "version": "0.3.0",
+  "description": "The target's controller-first grammar: a top bar and a bottom bar of button hints on every screen, a home of a recent row led by a wide hero with feed pills over cards, libraries as pill tabs over a capsule grid, a game-page details screen (hero, play bar, pill tabs over dark panels), a main menu from the left and quick access from the right, dark rounded panels with a lighter focus band. Near-black navy with a light focus ring.",
   "styles": "styles.css",
   "scripts": [
-    "arcade.js"
+    "kit.js",
+    "panel.js",
+    "views.js",
+    "data.js",
+    "home.js",
+    "menus.js",
+    "itemmenu.js",
+    "details.js",
+    "guide.js",
+    "tv.js",
+    "library.js",
+    "np.js",
+    "player.js",
+    "settings.js",
+    "account.js",
+    "interim.js"
   ],
   "sounds": {
     "focus": "sounds/focus.wav",
@@ -28,9 +43,22 @@
           "pill": "#1d2125",
           "onAccent": "#04121f",
           "onFocus": "#04121f",
-          "scrim": "rgba(4, 6, 9, 0.8)"
+          "scrim": "rgba(4, 6, 9, 0.8)",
+          "backdropTop": "#111b26",
+          "backdropMid": "#0e141b",
+          "backdropBottom": "#080b10",
+          "floor": "#06090d",
+          "panelLo": "#14181d"
         }
       }
+    }
+  },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "menu": "music/menu.ogg",
+      "goodbye": "music/goodbye.ogg"
     }
   }
 }

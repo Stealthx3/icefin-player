@@ -1,6 +1,8 @@
 #include "GamepadService.h"
 #include "GamepadNames.h"
 #include "GamepadComponent.h"
+#include "DuplicateGuard.h"
+#include <QCoreApplication>
 #include <QDebug>
 #include <QHash>
 #include <SDL3/SDL.h>
@@ -50,12 +52,14 @@ void GamepadWorker::refresh()
       qWarning().noquote() << "Icefin gamepad:" << it->name << "battery low:" << percent << "%";
   }
   { QMutexLocker l(&m_svc->m_lock); m_svc->m_pads = list; }
+  DuplicateGuard::instance().setPadsConnected(int(m_pads.size()));
   QMetaObject::invokeMethod(m_svc, &GamepadService::padsChanged, Qt::QueuedConnection);
 }
 
 void GamepadWorker::emitKey(const Pad& p, const QString& keycode, bool down)
 {
   const QString k = applyNintendoLayout(keycode, p.family, m_svc->m_nintendo.load());
+  if (DuplicateGuard::instance().pad(k, down, DuplicateGuard::nowMs())) return;  // Steam's desktop layout sent it as a key
   QMetaObject::invokeMethod(m_svc, [svc = m_svc, k, down, name = p.name] {
     // Per-controller remap (7.2): a remapped button sends its action directly ("direct" source: no map lookup).
     const QString action = GamepadComponent::remapped(name, k);
@@ -87,6 +91,11 @@ void GamepadWorker::run()
         if (!g) break;
         Pad p{g, QString::fromUtf8(SDL_GetGamepadName(g)), QString(), QString(), {}};
         p.family = familyFor(QString::fromUtf8(SDL_GetGamepadStringForType(SDL_GetGamepadType(g))), p.name);
+        if (p.family == "generic" && isSteamVirtualGamepad(SDL_GetGamepadVendor(g), SDL_GetGamepadProduct(g))) {
+          // Launched from Steam inside the Flatpak: SDL can't read Steam's /tmp file naming the pad behind it.
+          p.family = familyBehindSteam(qEnvironmentVariable("SDL_GAMECONTROLLER_IGNORE_DEVICES"));
+          qInfo().noquote() << "Icefin gamepad: Steam Virtual Gamepad; the pads Steam took over are" << p.family;
+        }
         char* m = SDL_GetGamepadMapping(g);
         p.mapping = m ? "SDL mapping database" : "none";
         if (m) SDL_free(m);
@@ -151,6 +160,8 @@ bool GamepadService::initInput()
   readLayout();
   if (auto* sec = SettingsComponent::Get().getSection(SETTINGS_SECTION_MAIN))
     connect(sec, &SettingsSection::valuesUpdated, this, readLayout);
+  // Steam's desktop layout: keys that repeat a pad press are dropped (7.4). Filters every window's key events.
+  QCoreApplication::instance()->installEventFilter(new DuplicateKeyFilter(this));
   m_worker = new GamepadWorker(this);
   m_worker->moveToThread(&m_thread);
   connect(&m_thread, &QThread::started, m_worker, [this] { m_worker->run(); });

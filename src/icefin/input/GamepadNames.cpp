@@ -44,4 +44,31 @@ QString stickDirection(const QString& axis, int v, int deadzone)
   if (v < -deadzone) return stick + (x ? "LEFT" : "UP");
   return QString();
 }
+
+bool isSteamVirtualGamepad(quint16 vendor, quint16 product) { return vendor == 0x28de && product == 0x11ff; }
+
+static QString familyForIds(quint16 vendor, quint16 product)
+{
+  if (vendor == 0x054c) return "playstation";  // Sony
+  if (vendor == 0x057e) return "nintendo";
+  if (vendor == 0x28de) return "steamdeck";    // Valve: the Deck's own controls, the Steam Controller
+  Q_UNUSED(product);
+  return "xbox";                               // Microsoft, and XInput-mode pads (8BitDo and others)
+}
+
+QString familyBehindSteam(const QString& ignoreDevices)
+{
+  QString family;
+  for (const QString& entry : ignoreDevices.split(',', Qt::SkipEmptyParts)) {
+    const QStringList ids = entry.trimmed().split('/');
+    if (ids.size() != 2) continue;
+    bool okV = false, okP = false;
+    const quint16 v = ids[0].toUShort(&okV, 0), pr = ids[1].toUShort(&okP, 0);
+    if (!okV || !okP || isSteamVirtualGamepad(v, pr)) continue;
+    const QString f = familyForIds(v, pr);
+    if (!family.isEmpty() && family != f) return "xbox";  // several kinds behind several virtual pads
+    family = f;
+  }
+  return family.isEmpty() ? QString("xbox") : family;
+}
 }

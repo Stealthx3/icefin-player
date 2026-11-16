@@ -1,0 +1,71 @@
+{
+  "description": "Samsung EPSON PJ (tv), from the linuxhw EDID collection: Digital/Samsung/SECA519/F258A76DB24D (CC BY 4.0); 1 EDIDs share this audio capability set",
+  "monitor_name": "EPSON PJ",
+  "speakers": "0x01",
+  "sads": [
+    {
+      "codec": "lpcm",
+      "channels": 2,
+      "rates": [
+        32000,
+        44100,
+        48000
+      ]
+    },
+    {
+      "codec": "mp3",
+      "channels": 1,
+      "rates": [],
+      "byte3": 144,
+      "max_kbps": 1152
+    },
+    {
+      "codec": "eac3",
+      "channels": 2,
+      "rates": [
+        176400
+      ],
+      "byte3": 31
+    },
+    {
+      "codec": "aac",
+      "channels": 1,
+      "rates": [
+        88200,
+        192000
+      ],
+      "byte3": 128,
+      "max_kbps": 1024
+    },
+    {
+      "codec": "aac",
+      "channels": 7,
+      "rates": [],
+      "byte3": 64,
+      "max_kbps": 1024
+    },
+    {
+      "codec": "dts",
+      "channels": 3,
+      "rates": [],
+      "max_kbps": 1664
+    },
+    {
+      "codec": "wma",
+      "channels": 3,
+      "rates": [
+        88200,
+        96000,
+        176400
+      ],
+      "byte3": 45
+    }
+  ],
+  "expect": {
+    "ac3": "pcm",
+    "dts": "bitstream",
+    "eac3": "bitstream",
+    "truehd": "pcm"
+  },
+  "source": "Digital/Samsung/SECA519/F258A76DB24D"
+}
