@@ -18,6 +18,8 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 /* The persistent main menu: 462 px wide, items 95 px tall from y 240, text at x 104. */
 [data-hb] .icefin-siderail { position: relative; overflow: hidden;
   background: linear-gradient(180deg, var(--icefin-color-railEdge) 0%, var(--icefin-color-rail) 16%, var(--icefin-color-rail) 86%, var(--icefin-color-railEdge) 100%); }
+.hb-brand-banner { height: 100%; width: auto; max-width: 14vw; object-fit: contain; }
+.hb-brand-icon { height: 80%; aspect-ratio: 1; object-fit: contain; margin-right: 0.8vw; border-radius: 18%; }
 .hb-brand { position: absolute; left: 4.9vw; top: 3.3vh; height: 7.4vh; display: flex; align-items: center;
   font-size: 2.7vw; font-weight: 300; letter-spacing: 0.04em; color: var(--icefin-color-text); }
 .hb-rail-view { position: absolute; left: 0; right: 0; top: 22.22vh; bottom: 0; overflow: hidden; }
@@ -111,7 +113,7 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .hr-server { border: 0; padding: 0; background: none; color: inherit; font: inherit; font-size: 0.86vw; opacity: 0.85; cursor: pointer; }
 .hr-server.down { color: var(--icefin-color-error); }
 .hr-mark { position: absolute; right: 2.34vw; bottom: 3.3vh; width: 2.34vw; aspect-ratio: 1; z-index: 3; pointer-events: none;
-  background: var(--hr-mark) center / contain no-repeat; filter: drop-shadow(0 0.3vh 0.6vh rgb(0 0 0 / 0.4)); }
+  background: var(--hr-brand, var(--hr-mark)) center / contain no-repeat; border-radius: 18%; filter: drop-shadow(0 0.3vh 0.6vh rgb(0 0 0 / 0.4)); }
 .hr-song { display: flex; align-items: center; gap: 0.6vw; margin-top: 0.6vh; justify-content: flex-end; }
 .hr-song-label { border: 0; background: none; color: inherit; font: inherit; font-size: 0.86vw; cursor: pointer; padding: 0; max-width: 18vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hr-song-bar { width: 6vw; height: 0.6vh; border-radius: 0.4vh; background: rgb(0 0 0 / 0.35); overflow: hidden; cursor: pointer; }
