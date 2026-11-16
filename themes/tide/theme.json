@@ -138,5 +138,12 @@
     }
    }
   }
- }
+ },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "goodbye": "music/goodbye.ogg"
+    }
+  }
 }
