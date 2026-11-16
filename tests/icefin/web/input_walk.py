@@ -948,6 +948,17 @@ class Walker:
                 self.stop_play()
             self.drv.back(i)
             kk = self.screen_key(self.settle(prev=opened, t=3.0))
+            # a dialog or sheet closing animates: wait until what is on screen holds for 400 ms before deciding to press
+            # again, or the next Back lands on the page underneath and leaves it (QA 1: Back chains out of /list)
+            end, last, since = time.time() + 2.5, kk, time.time()
+            while time.time() < end:
+                time.sleep(0.15)
+                now = self.screen_key(self.screen())
+                if now != last:
+                    last, since = now, time.time()
+                elif time.time() - since >= 0.4:
+                    break
+            kk = last
             self.stop_play()
             if kk == k:
                 return "ok", kk
