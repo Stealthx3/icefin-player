@@ -2,6 +2,7 @@
 // Pure helpers, no SDL here, so they build and test anywhere.
 #pragma once
 #include <QString>
+#include <QtGlobal>
 
 namespace Icefin::Input
 {
@@ -20,4 +21,12 @@ QString applyNintendoLayout(const QString& keycode, const QString& family, bool 
 
 // Stick and trigger thresholds -> direction keycodes; "" while centered. value in [-32768, 32767].
 QString stickDirection(const QString& axis, int value, int deadzone = 16000);
+
+// Steam Input (7.4, SPEC "Steam Input"). A game Steam launches sees one Steam Virtual Gamepad (28de:11ff) per physical
+// pad Steam took over. SDL learns the pad behind it from the file named in SteamVirtualGamepadInfo, under /tmp, which
+// the Flatpak's private /tmp hides, so SDL reports a generic pad there. Steam also lists the physical pads it hid in
+// SDL_GAMECONTROLLER_IGNORE_DEVICES ("0x054c/0x0ce6,0x045e/0x0b13", which does reach the sandbox): their family is the
+// virtual pad's. Mixed families or an empty list: "xbox", the layout Steam's virtual pad has.
+bool isSteamVirtualGamepad(quint16 vendor, quint16 product);
+QString familyBehindSteam(const QString& ignoreDevices);
 }

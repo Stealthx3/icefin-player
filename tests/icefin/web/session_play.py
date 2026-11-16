@@ -38,7 +38,12 @@ def start_weston(sock="wl-icefin"):
     return p
 
 
-def start_x(display=":99"):
+# ICEFIN_LAB_DISPLAY: a display of the test's own, so another lab session's Xvfb on :99 going away can't take it down.
+LAB_DISPLAY = os.environ.get("ICEFIN_LAB_DISPLAY", ":99")
+
+
+def start_x(display=None):
+    display = display or LAB_DISPLAY
     if subprocess.run(["xdpyinfo", "-display", display], capture_output=True).returncode == 0:
         return None
     p = subprocess.Popen(["Xvfb", display, "-screen", "0", "1920x1080x24", "-nolisten", "tcp"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -58,7 +63,7 @@ def launch(app, port, cfgdir, logf, qpa="xcb", extra=(), gpu=False):
         else:
             cmd = [os.path.expanduser(app), f"--config-dir={cfgdir}"] + args
         return subprocess.Popen(cmd, env=env, stdout=logf, stderr=subprocess.STDOUT, start_new_session=True)
-    env = dict(os.environ, DISPLAY=":99", QT_QPA_PLATFORM=qpa, LC_ALL="C.UTF-8")
+    env = dict(os.environ, DISPLAY=LAB_DISPLAY, QT_QPA_PLATFORM=qpa, LC_ALL="C.UTF-8")
     if qpa == "wayland":
         env.pop("DISPLAY", None)
         env["WAYLAND_DISPLAY"] = "wl-icefin"
