@@ -338,9 +338,11 @@
                 // jellyfin-web builds the page a moment after the route changes, and the page it leaves stays shown for a
                 // moment: the form is on a page that is new since this screen came up, or was hidden then and isn't now
                 const before = new Map([...document.querySelectorAll('.page')].map((p) => [p, p.classList.contains('hide')]));
-                const findForm = () => {
-                    const pages = [...document.querySelectorAll('.page')].filter((p) => !p.classList.contains('hide') && !root.contains(p)
-                        && (!before.has(p) || before.get(p)) && p.querySelector('form'));
+                // (after 2.5 s with none, the page already shown when this screen came up is the one, if it's the only one:
+                // a theme switch or a reload on this route)
+                const findForm = (relaxed) => {
+                    const shown = [...document.querySelectorAll('.page')].filter((p) => !p.classList.contains('hide') && !root.contains(p) && p.querySelector('form'));
+                    const pages = relaxed && shown.length === 1 ? shown : shown.filter((p) => !before.has(p) || before.get(p));
                     const pg = pages.pop();
                     return pg ? pg.querySelector('form') : null;
                 };
@@ -349,13 +351,13 @@
                 const fields = (f) => f ? f.querySelectorAll('input:not([type=hidden]), select, textarea').length : 0;
                 let form = null, last = -1, still = 0;
                 for (let i = 0; i < 160 && state.up; i++) {
-                    const f = findForm();
+                    const f = findForm(i >= 25);
                     const n = fields(f);
                     if (f && n >= 2 && n === last) { if (++still >= 3) { form = f; break; } } else still = 0;
                     last = n;
                     await new Promise((r) => setTimeout(r, 100));
                 }
-                if (!form && state.up) form = findForm();
+                if (!form && state.up) form = findForm(true);
                 if (!state.up) return;
                 if (!form) { host.append(el('p', 'icefin-s-note', 'This page is not available here.')); root.setAttribute('data-icefin-prefs-ready', '0'); return; }
                 state.form = form;
