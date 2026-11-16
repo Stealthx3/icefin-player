@@ -38,6 +38,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
 - Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
+- Harbor, Orbit and Mosaic show your server's icon (Harbor its banner or icon and name) where the interface they follow shows its own brand.
 
 ### Fixed
 - A crash when a new item started while the last one's cover art was still downloading (for the desktop's media controls). The same mistake could crash Icefin when the server address check or a URL lookup was replaced by a newer one.
