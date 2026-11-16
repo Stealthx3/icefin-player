@@ -117,7 +117,7 @@ def main():
                 t0 = js("(document.querySelector('#icefin-wallpaper video') || {}).currentTime || 0")
                 time.sleep(1.5)
                 t1 = js("(document.querySelector('#icefin-wallpaper video') || {}).currentTime || 0")
-                check("video: it plays, muted", t1 > t0 and js("document.querySelector('#icefin-wallpaper video').muted"), f"{t0} -> {t1}")
+                check("video: it plays (the time moves; a loop may wrap it), muted", abs(t1 - t0) > 0.2 and js("document.querySelector('#icefin-wallpaper video').muted"), f"{t0} -> {t1}")
             open(os.path.join(a.out, f"{tid}-{kind}.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
         js("new Promise(r => window.api.theme.clearWallpaper ? (window.api.theme.clearWallpaper(), r(true)) : r(false))")
         time.sleep(2)
