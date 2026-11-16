@@ -24,9 +24,9 @@ from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 import hostmode  # noqa: E402
 
-THEMES = ["media-center", "harbor", "spark", "plum", "plaza", "orbit", "mosaic", "lumen", "marquee", "almanac", "arcade", "tide"]
-LAYOUT = {"media-center": "poster", "harbor": "poster", "spark": "hero", "plum": "poster", "plaza": "banner", "orbit": "poster",
-          "mosaic": "panel", "lumen": "hero", "marquee": "hero", "almanac": "panel", "arcade": "banner", "tide": "panel"}
+THEMES = ["media-center", "harbor", "plaza", "orbit", "mosaic", "lumen", "almanac", "arcade", "tide"]  # Spark, Plum, Marquee: themes-later/
+LAYOUT = {"media-center": "poster", "harbor": "poster", "plaza": "banner", "orbit": "poster",
+          "mosaic": "panel", "lumen": "hero", "almanac": "panel", "arcade": "banner", "tide": "panel"}
 ROOT = "document.querySelector('#icefin-theme-root')"
 
 
