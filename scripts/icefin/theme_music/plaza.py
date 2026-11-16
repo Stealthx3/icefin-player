@@ -219,7 +219,7 @@ def ambient():
            (56, 1.5, "F5"), (57.5, .5, "A5"), (58, 2, "C6"), (61, 1, "Bb5"), (62, 2, "G5")]
     for b, ln, n in mel:
         m.add(vibes(hz(n), ln * bt, 0.5), b * bt, 0.3, 0.28, 0.45, wrap=True)
-    return m.render(2.4, peak_db=-6.0, loop=True)
+    return m.render(2.4, peak_db=-7.4, loop=True)  # 15 % under its first level (the user, 2026-11-13)
 
 
 STARTUP = "startup"

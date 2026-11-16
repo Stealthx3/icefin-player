@@ -1,4 +1,9 @@
-# Icefin Player
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/readme-banner-dark.png">
+    <img alt="Icefin Player" src="docs/brand/readme-banner-light.png" width="100%">
+  </picture>
+</h1>
 
 [![Icefin Player 1.0 progress. Click for the full tracker.](docs/progress/progress-bar.svg)](https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU)
 
@@ -57,7 +62,7 @@ These are design mock-ups of the 1.0 goals, not screenshots. Titles and artwork 
 
 ## Planned features
 
-**Theme engine**
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/brand/feature-icons/themes.svg"><img src="docs/brand/feature-icons/themes-on-light.svg" alt="" width="28" height="28" align="absmiddle"></picture> **Theme engine**
 - Theme packages with design tokens, screen templates, motion presets, sounds and GPU shader backdrops
 - Per-user theme, preset and color overrides synced through Jellyfin
 - Settings screens generated from each theme's token schema
@@ -72,7 +77,7 @@ These are design mock-ups of the 1.0 goals, not screenshots. Titles and artwork 
   - **Orbit**: 3D tile carousel, modeled on the Xbox 360 NXE layout
   - **Pivot**: pivot headers and live tiles, modeled on the Xbox 360 Metro layout
 
-**Video and HDR**
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/brand/feature-icons/hdr.svg"><img src="docs/brand/feature-icons/hdr-on-light.svg" alt="" width="28" height="28" align="absmiddle"></picture> **Video and HDR**
 - Single-surface Vulkan renderer for UI and video
 - HDR10 and HLG output on KDE Plasma 6.4+, GNOME 48+ and Gamescope, windowed or full screen
 - libplacebo tone mapping and Dolby Vision profile 5/8 handling
@@ -80,7 +85,7 @@ These are design mock-ups of the 1.0 goals, not screenshots. Titles and artwork 
 - Capability prompt when the current system can't show a source correctly
 - Smarter device profile: direct play whenever the client can decode or tone-map locally
 
-**Audio**
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/brand/feature-icons/audio.svg"><img src="docs/brand/feature-icons/audio-on-light.svg" alt="" width="28" height="28" align="absmiddle"></picture> **Audio**
 - Choice of PipeWire, PulseAudio, JACK or ALSA output
 - Receiver capability detection from HDMI ELD
 - Per-track passthrough decisions with sensible fallbacks
@@ -88,14 +93,14 @@ These are design mock-ups of the 1.0 goals, not screenshots. Titles and artwork 
 - "Never silent" fallback, per-device audio delay, receiver volume over HDMI-CEC
 - Audio test page for confirming formats on the receiver
 
-**Controllers and input**
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/brand/feature-icons/controller.svg"><img src="docs/brand/feature-icons/controller-on-light.svg" alt="" width="28" height="28" align="absmiddle"></picture> **Controllers and input**
 - SDL3 gamepad support with standard mappings for current controllers
 - Steam Input cooperation and a recommended Steam layout
 - Correct on-screen button prompts per controller family
 - Per-controller remapping and a Nintendo-layout option
 - Keyboard, HDMI-CEC, LIRC and five-way remote navigation throughout
 
-**Performance and platform**
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/brand/feature-icons/quality.svg"><img src="docs/brand/feature-icons/quality-on-light.svg" alt="" width="28" height="28" align="absmiddle"></picture> **Performance and platform**
 - Hardware decode self-test (VA-API, NVDEC, Vulkan Video) with a Hardware settings page
 - GPU-rendered UI and GPU-accelerated web layer
 - Gamescope mode for couch and Steam Deck use

@@ -10,6 +10,7 @@
 
     function tile(client, item, wide) {
         const t = el('div', 'mc-tile' + (wide ? ' wide' : ''));
+        t.mcItem = item;  // ≡ opens its menu (itemmenu.js)
         t.setAttribute('data-icefin-focus', '');
         t.tabIndex = -1;
         const tag = wide ? (item.ImageTags || {}).Thumb || (item.ImageTags || {}).Primary : (item.ImageTags || {}).Primary;
@@ -46,6 +47,9 @@
             ['settings', () => { location.hash = '#/mypreferencesmenu'; }],
             ['search', () => { location.hash = '#/search'; }],
             ['favourites', () => { location.hash = '#/favorites'; }],
+            // Play on and Watch together (the PlayOn board, 9.60): the side panel, from the start strip as from the player
+            ['play on', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('play'); }],
+            ['watch together', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('together'); }],
             ['classic home', () => { location.hash = '#/home?icefin=stock'; }],
             ['close', () => askExit()]
         ] });
@@ -69,7 +73,7 @@
         }).then(() => { const f = document.querySelector('#icefin-theme-root .mc-cat.current .mc-tile'); if (f && !T.ctx.focused()) T.ctx.focus(f); });
     }
 
-    T.registerScreen('#/home', {
+    window.icefinMediaCenter.register('#/home', {
         onBack() {
             if (M.band.open) { M.band.open.close(); return true; }
             askExit();
@@ -114,6 +118,9 @@
             now.hidden = true;
             // The corner mark is the server's own brand (ui.brand: its icon and name), never an image from this package.
             start.append(M.brandMark(el('div', 'mc-brand'), { name: true }), clock, strip, now);
+            // Play on and Watch together, as on every frame (9.60); the strip keeps the arrows, so here they are the
+            // pointer's (the pad has them on the Tasks row)
+            if (M.extras) M.extras(start, false);
             root.append(field, start);
             root.setAttribute('data-mc', 'start');
 

@@ -22,7 +22,9 @@ if hits="$(grep -rnE -- '#[0-9a-fA-F]{3,8}\b|(rgba?|hsla?)\(\s*[0-9]' "${ENGINE[
   echo "theme-lint: color literals in engine code (themes hold values; the engine uses tokens):"; echo "$hits"; bad=1
 fi
 PRODUCTS='xbox|wii|nintendo|microsoft|roku|fire ?tv|amazon|kodi|estuary|apple|tvos|plex|emby|playstation|ps3|xmb|sony|android tv|google tv|webos|tizen|netflix|tivo|valve|steam ?big ?picture|steam ?deck'
-if hits="$(grep -rniE -- "\\b($PRODUCTS)\\b" themes/ || true)" && [ -n "$hits" ]; then
+# The one exception is an API identifier, not branding: jellyfin-web keeps the home's sections in the display
+# preferences of its legacy client key, so a theme that reads them (Baseline's home) names that key in the call.
+if hits="$(grep -rniE -- "\\b($PRODUCTS)\\b" themes/ | grep -v "getDisplayPreferences('usersettings'" || true)" && [ -n "$hits" ]; then
   echo "theme-lint: product names in shipped theme files (name targets in docs/PLAN.md, not in themes/):"; echo "$hits"; bad=1
 fi
 RULE4="${RULE4:-error}"

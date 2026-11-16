@@ -2,7 +2,7 @@
 
 What a bundled theme has to do before it counts as **complete**: every change Plaza makes to stock jellyfin-web,
 written so a new theme can follow it item by item (the user, 2026-11-12, remade 2026-11-13 after the host walk of
-every Plaza element). It covers the themed elements, the input changes, the animations, the special effects and the
+every Plaza element; three items added 2026-11-14 from Plaza 0.9.0's last changes). It covers the themed elements, the input changes, the animations, the special effects and the
 sounds. Plaza is the first theme taken all the way (PLAN 9.32, 9.33, 9.37, 9.41–9.44, 9.59); Media Center followed
 (9.46).
 
@@ -84,6 +84,9 @@ Three rules run through every section:
       and counts appear where they help (filmography, "More by <artist>").
 - [ ] **Placeholders**: a picture-less person or artist shows initials; a chapter shows its start time on the picture.
 - [ ] **Pickers** (version, audio, subtitles) as the theme's cards.
+- [ ] **Back to the top** when focus returns to the actions or the pickers (a picker closed, Up from a list), so the
+      title isn't left under the frame's band; smooth, at once in low motion, and only when the focused control
+      still shows there. Plaza: `details.js`.
 
 ### 1.5 The item menu and its dialogs
 - [ ] **The theme's own item menu** (≡ on any item, More on details) in the engine's overlay, with every action the user
@@ -104,7 +107,8 @@ Three rules run through every section:
 - [ ] A programme's sheet: Watch, Record, Record the series, Cancel, Details, with steppers for start early, stop late
       and keep N.
 - [ ] Previews that fall back when pictures are missing: programme picture, then channel logo, then the channel's
-      number and name.
+      number and name. A logo that can't be seen on the theme's card counts as missing (Plaza: a white logo on its
+      white screen, average brightness over 200, falls through to the number and name).
 - [ ] The themed connecting dialog while a channel starts, and its error notice with Try again (PLAN 9.35).
 
 ### 1.7 Music
@@ -197,10 +201,14 @@ Three rules run through every section:
       steps back while a sheet is up. Plaza: `P.caption`.
 - [ ] **A name pill under the focused item** where the target has one, kept 16 px inside the window and flipped above
       on the bottom row.
-- [ ] **Controller hints** (PLAN 9.28) in the theme's style, drawn A/B/X/Y keys, that change with the mode (move mode,
-      guide vs grid, a lifted queue entry, Client Settings) and per framed route. Shown for a pad or remote, gone for
-      the mouse or keyboard, always on in Couch Mode (`html[data-icefin-couch]`). Plaza tracks the input in
-      `html[data-pz-input]`. Every hint must match what the key does.
+- [ ] **Page-aware controller hints** (PLAN 9.28; a requirement for every theme, the user, 2026-11-14) in the theme's
+      style (drawn keys, or the remote's words where the target's own key marks aren't ours to use). Page-aware: each
+      screen, panel and framed route shows only the keys that do something there, for what is focused now (no ≡ where
+      there are no options, no ▶ on an entry that can't play), and the hints change with the mode (move mode, guide vs
+      grid, a lifted queue entry, an open panel, Client Settings). Shown for a pad or remote, gone for the mouse or
+      keyboard, always on in Couch Mode (`html[data-icefin-couch]`). Plaza tracks the input in `html[data-pz-input]`,
+      Media Center in `html[data-mc-input]`. Every hint must match what the key does, and a test checks that on each
+      kind of screen.
 
 ### 2.4 Keys and buttons
 - [ ] **Back, innermost first**: drag, then a card or panel, then the screen; in the player, a card, then the
@@ -360,5 +368,8 @@ clarity). Plaza's timings, for reference:
 - [ ] The player with the theme's controls (`theme_player.py` for the engine, `<id>_player.py` for the theme), the
       item menu and its dialogs, music and its jingles (`<id>_jingles.py`), sign-in, and the framed pages
       (`<id>_everywhere.py`).
+- [ ] **The polish tests on the user's own Icefin** (`--host`, `tests/icefin/web/hostmode.py`): their profile and
+      server, nothing written to it, their theme put back after; Icefin's window kept uncovered for the run (a
+      covered Wayland window stops drawing, and the tests' screenshots wait).
 - [ ] **A host walk** of the finished theme on the user's server (screenshots, transition films and the cut-off audit
       of every element) and the user's review against the mock-ups (the pipeline's Gate 2).

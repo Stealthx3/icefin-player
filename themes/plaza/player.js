@@ -110,7 +110,8 @@
         bar.addEventListener('pointerdown', (e) => { const s = st(); if (!s.canSeek) return; drag = true; bar.setPointerCapture(e.pointerId); show(st(), at(e)); e.preventDefault(); });
         bar.addEventListener('pointermove', (e) => { if (drag) show(st(), at(e)); poke(); });
         bar.addEventListener('pointerup', (e) => { if (!drag) return; drag = false; const s = st(); player.seek(at(e) * s.duration); S.preview = null; ctx.sound('select'); });
-        box.addEventListener('pointermove', () => poke());
+        // the pointer brings the controls back, as a key or a button does (the user, 2026-11-12)
+        box.addEventListener('pointermove', () => { if (S && !S.shown) showControls(); else poke(); });
         S = { root, player, ctx, box, shade, name, leave, nameText, ends, cap, bar, fill, knob, ticks, pos, dur, prev, back10, pp, fwd30, next, audio, subs, chapters, together, playon, more,
             archive, archiveKey: '', ticksKey: '', shown: false, timer: 0, card: null, preview: null, off: null, kind: '' };
         function show(s, frac) { S.preview = frac; draw(s); }
@@ -209,7 +210,10 @@
     // ---- pickers: Plaza cards over the video ----
     function closeCard() {
         if (!S || !S.card) return false;
-        S.card.host.remove();
+        // closing reverses the rise (150 ms); a new card opening at once replaces it without waiting
+        const h = S.card.host;
+        if (document.documentElement.getAttribute('data-icefin-motion') === 'low') h.remove();
+        else { h.classList.add('pz-sheet-out'); h.style.pointerEvents = 'none'; setTimeout(() => h.remove(), 150); }
         const back = S.card.back;
         S.card = null;
         S.box.classList.remove('pz-pl-carded');

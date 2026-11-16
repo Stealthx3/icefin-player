@@ -163,7 +163,7 @@
         }
     }
 
-    T.registerScreen('#/mypreferencesmenu', {
+    window.icefinMediaCenter.register('#/mypreferencesmenu', {
         onAction(action, ctx) {
             if (M.band.open && ['up', 'down', 'left', 'right'].includes(action)) { ctx.move(action, M.band.open.el); return true; }
             if (C && (action === 'left' || action === 'right')) {

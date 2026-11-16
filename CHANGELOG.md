@@ -20,12 +20,18 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
+- New app icon: the Progress ring mark from the IceSuite art kit (the fin and wave inside a playback ring), installed as a full hicolor set (16–512 px, scalable and symbolic). The README has the kit's banner and feature icons.
+- Plaza 0.9.0, from a walk of every element: tabs slide toward the tab you pick; menus and pickers rise in and fall out; the sort and filter panel slides from its edge; a poster grows into its details and Back shrinks it home; settings tiles grow into their pages; the bar's caption cross-fades; details fade under the frame; the focused name stays inside the window; sheets end above the bar; Display's tick boxes are switch rows and the bar names the focused setting.
+- Plaza's details page goes back to its top when focus returns to the actions or pickers (after a picker closes, or Up from a list), so the title isn't left under the band.
+- Plaza's background music is 15% quieter and waits while a channel's preview is open.
 - Plaza has its own details page: the name pill and clock, tabs for each section, the framed art, one row of action pills, and Back and Home in the bar; albums and playlists show their tracks beside the art.
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
 - Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
 
 ### Fixed
+- A crash when a new item started while the last one's cover art was still downloading (for the desktop's media controls). The same mistake could crash Icefin when the server address check or a URL lookup was replaced by a newer one.
+- Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
 - Nintendo controllers (Switch Pro, Joy-Cons) show Nintendo button prompts again, and the Nintendo Button Layout option applies to them; they were treated as generic pads.
 - A controller unplugged after connecting is let go of properly; one announced twice stayed open in the background.
 - Escape on an open drop-down in Client Settings closes just the list again, instead of the whole Client Settings page.

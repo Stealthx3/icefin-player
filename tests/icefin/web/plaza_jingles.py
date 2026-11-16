@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "servers"))
 from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
+import hostmode  # noqa: E402
 
 THEMES = os.path.abspath(os.path.join(HERE, "..", "..", "..", "themes"))
 KINDS = ["resume", "nextup", "movies", "tvshows", "music", "livetv", "homevideos", "photos", "books", "boxsets", "playlists", "folder"]
@@ -30,17 +31,21 @@ def main():
     ap.add_argument("--server", default="jf12")
     ap.add_argument("--port", type=int, default=9273)
     ap.add_argument("--out", required=True)
+    hostmode.add_args(ap)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    os.environ["ICEFIN_THEME_PATH"] = THEMES
-    cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-    cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
-    srv = Server(cfg)
-    srv.wait()
-    xv = start_x()
-    log = open(os.path.join(a.out, "app.log"), "w")
-    app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-plaza-jingles-"), log, "xcb")
+    app = xv = stop = None
+    if not a.host:
+        os.environ["ICEFIN_THEME_PATH"] = THEMES
+        cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
+        cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        srv = Server(cfg)
+        srv.wait()
+        xv = start_x()
+        log = open(os.path.join(a.out, "app.log"), "w")
+        app = launch(a.app, a.port, tempfile.mkdtemp(prefix="icefin-plaza-jingles-"), log, "xcb")
     fails = []
+    saved = None  # the user's own music settings (host), put back at the end
 
     def check(label, ok, detail=""):
         print(f"plaza_jingles: {'ok  ' if ok else 'FAIL'} {label} {detail}", flush=True)
@@ -49,17 +54,21 @@ def main():
 
     page = None
     try:
-        page = Page(a.port, timeout=90)
-        page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
-        page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
-        time.sleep(5)
-        page.reconnect()
-        page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
-        page.eval(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
-        page.eval("location.hash = '#/home'; location.reload(); true", await_promise=False)
-        time.sleep(8)
-        page.reconnect()
-        page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.musicState && !!window.ApiClient.getCurrentUserId()", timeout=90)
+        if a.host:
+            page, stop = hostmode.start(a, a.out)
+            # a fresh start, as in the lab, so the startup jingle plays when the theme comes up
+        else:
+            page = Page(a.port, timeout=90)
+            page.wait_for("typeof tryConnect === 'function' && document.getElementById('address') !== null", timeout=60)
+            page.eval(f"document.getElementById('address').value = '{srv.base}'; document.getElementById('connect-form').requestSubmit(); true")
+            time.sleep(5)
+            page.reconnect()
+            page.wait_for("typeof window.ApiClient !== 'undefined' && !!window.ApiClient.serverAddress() && !!window.api", timeout=90)
+            page.eval(f"window.ApiClient.authenticateUserByName({json.dumps(cred['user'])}, {json.dumps(cred['password'])}).then(r => !!r.AccessToken)")
+            page.eval("location.hash = '#/home'; location.reload(); true", await_promise=False)
+            time.sleep(8)
+            page.reconnect()
+            page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.musicState && !!window.ApiClient.getCurrentUserId()", timeout=90)
         js = page.eval
         st = lambda: js("window.icefinTheme.musicState()")
         setv = lambda k, v: js(f"new Promise(r => window.api.settings.setValue('theme', {json.dumps(k)}, {json.dumps(v)}, () => r(true)))")
@@ -73,6 +82,9 @@ def main():
                 time.sleep(step)
             return st()
 
+        if a.host:
+            saved = {k: js(f"new Promise(r => window.api.settings.value('theme', {json.dumps(k)}, r))") for k in ("jingles", "ambientMusic", "musicVolume")}
+            print("host: your music settings (put back at the end):", json.dumps(saved), flush=True)
         for k, v in (("jingles", True), ("ambientMusic", True), ("musicVolume", "60")):
             setv(k, v)
         js("new Promise(r => window.api.theme.setActiveTheme('plaza', '', r))")
@@ -104,8 +116,8 @@ def main():
             js(f"{tile(kind)}.click(); true")
 
         open_tile(first)
-        s = until(lambda s: s["jingle"] == first and s["ducked"], 5)
-        check(f"opening the {first} card plays its jingle with the ambient loop ducked", s["jingle"] == first and s["ducked"], json.dumps(s))
+        s = until(lambda s: s["jingle"] == first and s["held"], 5)
+        check(f"opening the {first} card plays its jingle with the ambient loop held off (the user, 2026-11-13)", s["jingle"] == first and s["held"] and s["ducked"], json.dumps(s))
         # the card swallows actions while it opens: wait until it's shown
         shown = "!!document.querySelector('.pz-card.pz-shown')"
         page.wait_for(shown, timeout=10)
@@ -125,14 +137,15 @@ def main():
         page.wait_for(shown, timeout=10)
         time.sleep(0.3)
         js("window.icefinTheme.handleAction('back')")
-        s = until(lambda s: s["jingle"] is None and not s["ducked"], 5)
-        check("closing the card stops the jingle and brings the loop back up", s["jingle"] is None and not s["ducked"] and s["ambient"], json.dumps(s))
+        s = until(lambda s: s["jingle"] is None and not s["ducked"] and not s["held"], 5)
+        check("closing the card stops the jingle and brings the loop back up", s["jingle"] is None and not s["ducked"] and not s["held"] and s["ambient"], json.dumps(s))
         if "favourite" in kinds:
             open_tile("favourite")
             page.wait_for(shown, timeout=10)
             time.sleep(0.5)
             s = st()
             check("a favourite's card plays no jingle", s["jingle"] is None, json.dumps(s))
+            check("a favourite's card holds the ambient loop off too", s["held"] and s["ducked"], json.dumps(s))
             js("window.icefinTheme.handleAction('back')")
             page.wait_for(idle, timeout=10)
 
@@ -146,7 +159,8 @@ def main():
         check("after a reload the startup jingle doesn't play again; the loop does", not s["startupPlayed"] and "startup" not in s["played"] and s["ambient"], json.dumps(s))
 
         # ---- playback ----
-        clip = js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, searchTerm: 'H264 AAC', Limit: 1}).then(r => (r.Items[0] || {}).Id || '')")
+        # (not on the host: playing reports to the user's server, which keeps their watch data; the lab covers it)
+        clip = None if a.host else js("window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {IncludeItemTypes: 'Movie', Recursive: true, searchTerm: 'H264 AAC', Limit: 1}).then(r => (r.Items[0] || {}).Id || '')")
         sid = js("window.ApiClient.serverId()")
         if clip:
             js(f"window.icefinTheme.ctx.play({{ids: ['{clip}'], serverId: '{sid}'}}); true")
@@ -163,7 +177,7 @@ def main():
             # the engine waits 3 s after the last tick (1 s apart) that saw playback, so at least 2 s after stop()
             check("the loop comes back a few seconds after playback ends", s["ambient"] and not early and time.time() - t0 >= 2.0,
                   f"{time.time() - t0:.1f} s after stop(); back at once: {early}")
-        else:
+        elif not a.host:
             check("a test clip exists", False)
 
         # ---- settings ----
@@ -186,17 +200,23 @@ def main():
     finally:
         try:
             if page:
-                for k, v in (("jingles", True), ("ambientMusic", True), ("musicVolume", "60")):
+                back = saved if a.host and saved else {"jingles": True, "ambientMusic": True, "musicVolume": "60"}
+                for k, v in back.items():
                     page.eval(f"new Promise(r => window.api.settings.setValue('theme', {json.dumps(k)}, {json.dumps(v)}, () => r(true)))")
-        except Exception:  # noqa: BLE001
-            pass
-        app.terminate()
-        try:
-            app.wait(15)
-        except Exception:  # noqa: BLE001
-            app.kill()
-        if xv:
-            xv.terminate()
+                if a.host:
+                    print("host: your music settings are back:", json.dumps({k: page.eval(f"new Promise(r => window.api.settings.value('theme', {json.dumps(k)}, r))") for k in back}), flush=True)
+        except Exception as e:  # noqa: BLE001
+            print("plaza_jingles: couldn't put the music settings back:", repr(e), flush=True)
+        if stop:
+            stop()
+        else:
+            app.terminate()
+            try:
+                app.wait(15)
+            except Exception:  # noqa: BLE001
+                app.kill()
+            if xv:
+                xv.terminate()
     print(f"plaza_jingles: {'PASS' if not fails else 'FAIL ' + str(len(fails))}", flush=True)
     return 1 if fails else 0
 

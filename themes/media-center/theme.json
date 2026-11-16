@@ -2,20 +2,26 @@
   "schema": 1,
   "id": "media-center",
   "name": "Media Center",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Icefin's reference theme: a ten-foot start strip of your libraries on a deep blue field with drifting ribbons, a poster wall per library and a details screen with a full backdrop, a glass focus lens and gentle sounds. Original art, sounds and type; no third-party assets.",
   "styles": "styles.css",
   "scripts": [
     "kit.js",
+    "panel.js",
+    "motion.js",
+    "itemmenu.js",
+    "hints.js",
     "account.js",
     "start.js",
     "wall.js",
     "library.js",
     "browse.js",
     "tv.js",
+    "programme.js",
     "np.js",
     "details.js",
     "settings.js",
+    "you.js",
     "viewers.js",
     "player.js"
   ],
@@ -25,6 +31,10 @@
     "back": "sounds/back.wav",
     "navigate": "sounds/navigate.wav",
     "error": "sounds/error.wav"
+  },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg"
   },
   "presets": {
     "teal": {

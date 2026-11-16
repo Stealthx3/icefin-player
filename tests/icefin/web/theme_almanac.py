@@ -2,14 +2,15 @@
 """theme_almanac.py — the Almanac benchmark theme in the running app (PLAN 9.15; target a TiVo / cable guide). Lab guests only.
 
   - needs Live TV on the server: run tests/icefin/servers/livetv.py first (it also moves the guide to now);
-  - Almanac is a built-in theme, offered in Client Settings → Theme; Home and Live TV open the guide;
+  - Almanac is a built-in theme, offered in Client Settings → Theme; the Guide tab (Live TV, #/livetv) opens the guide
+    (since the 9.49 pass the home is rows of what to watch: almanac_pass.py);
   - the guide: channels by number down the side, a time axis, programme cells sized by duration (ui.guideGrid), a now
     line, the live programme focused first; left/right through a channel's programmes and pages of time, up/down
     keeping the time and scrolling by channel;
   - the info pane follows the focused programme; after a dwell the focused channel plays live and muted in the corner
     (the page's own <video>, never mpv); changing channel stops it and closes its live stream;
-  - up from the first channel and Back go to the menu row; down returns to the guide where it was;
-  - Enter on a future programme opens its details; turning the theme off restores the stock UI.
+  - up from the first channel and Back go to the tab strip; down returns to the guide where it was;
+  - Enter on a future programme opens its card (the list box); turning the theme off restores the stock UI.
 Layout positions and motion timings against reference captures stay with 9.1. Screenshots go to --out.
 Usage: python3 theme_almanac.py --app ~/build/src/icefin-player --server jf12 --out ~/r915/jf12
 """
@@ -70,6 +71,8 @@ def main():
         check("Almanac offered as a built-in theme, usable", al.get("ok") is True and al.get("source") == "bundled", json.dumps(al)[:160])
         js("new Promise(r => window.api.theme.setActiveTheme('almanac', '', r))")
         page.wait_for("!!document.querySelector('#icefin-theme-root[data-al-ready]')", timeout=40)
+        js("window.icefinTheme.ctx.navigate('#/livetv'); true")
+        page.wait_for("window.icefinTheme.active().route === '#/livetv' && document.querySelector('#icefin-theme-root').dataset.al === 'guide' && !!document.querySelector('#icefin-theme-root[data-al-ready]')", timeout=40)
         nch = int(js("document.querySelector('#icefin-theme-root').dataset.alReady"))
         check("Live TV channels listed", nch >= 20, f"{nch} channels (run tests/icefin/servers/livetv.py)")
         page.wait_for("[...document.querySelectorAll('.icefin-guide-cell')].some(c => !c.classList.contains('icefin-guide-gap'))", timeout=30)
@@ -116,24 +119,28 @@ def main():
         fut = json.loads(gf())
         act("enter")
         try:
-            page.wait_for("location.hash.startsWith('#/details')", timeout=15)
+            page.wait_for("!!document.querySelector('.al-panel .al-row') && /Record|Remind/.test(document.querySelector('.al-panel').textContent)", timeout=15)
             det = True
+            act("back")
+            time.sleep(0.8)
         except Exception:  # noqa: BLE001
             det = False
-        check("Enter on a future programme opens its details", det and fut["s"] > now, f"{fut} hash={js('location.hash')}")
+        check("Enter on a future programme opens its card (Record, the steppers)", det and fut["s"] > now, f"{fut} hash={js('location.hash')}")
+        time.sleep(2)
+        js("location.hash = '#/home'; true")
         time.sleep(2)
         js("location.hash = '#/livetv'; true")
-        page.wait_for("!!document.querySelector('#icefin-theme-root[data-al-ready]') && window.icefinTheme.active().route === '#/livetv'", timeout=30)
+        page.wait_for("!!document.querySelector('#icefin-theme-root[data-al-ready]') && window.icefinTheme.active().route === '#/livetv' && document.querySelector('#icefin-theme-root').dataset.al === 'guide'", timeout=30)
         page.wait_for("[...document.querySelectorAll('.icefin-guide-cell')].some(c => !c.classList.contains('icefin-guide-gap'))", timeout=30)
         time.sleep(0.5)
-        check("Live TV opens the guide too", json.loads(gf()).get("row") == 0, gf())
+        check("the Guide tab opens the guide again on the first channel", json.loads(gf()).get("row") == 0, gf())
         act("up")
-        check("up from the first channel goes to the menu row", json.loads(gf()).get("menu") == "Guide", gf())
+        check("up from the first channel goes to the tab strip, at Guide", json.loads(gf()).get("menu") == "Guide", gf())
         act("right")
         act("down")
         check("down returns to the guide where it was", json.loads(gf()).get("row") == 0, gf())
         act("back")
-        check("Back goes to the menu row, where it was left", json.loads(gf()).get("menu") == js("document.querySelectorAll('.al-menu-item')[1].textContent"), gf())
+        check("Back goes to the tab strip, where it was left", json.loads(gf()).get("menu") == js("(() => { const m = [...document.querySelectorAll('.al-menu-item')]; return m[m.findIndex((x) => x.textContent === 'Guide') + 1].textContent; })()"), gf())
         js("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
         time.sleep(1.5)
         check("turning the theme off restores the stock UI", js("new Promise(r => window.api.theme.activeTheme(r))") == "" and js("document.documentElement.hasAttribute('data-icefin-theme')") is False)

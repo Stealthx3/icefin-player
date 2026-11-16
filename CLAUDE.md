@@ -20,10 +20,11 @@ Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If t
 ## Working setup
 - Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).
 - Agents: `.claude/agents/` (scout, runner, implementer, reviewer). The usage plan is dropped (D20).
+- Theme passes (D29, D31): `docs/themes/PIPELINE.md`, driven by `scripts/icefin/theme-pass.sh` (one theme at a time; walks and theme tests on the workstation's installed Icefin, updated first).
 - Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, republish to the same URL after each task).
 - Hardware (D28): no automated HTPC testing (the HTPC tier of D16 is retired; `scripts/icefin/htpc.sh` stays as history). Simulated hardware: `docs/dev/HARDWARE-SIMULATION.md`; real hardware: beta testers with `docs/BETA-CHECKLIST.md`.
 - Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
-- Branding assets: `/mnt/FileDrive/Personal/Projects/IceSuite/IceFin` (D15). App icon is the fin mark.
+- Branding assets: the art kit `/mnt/FileDrive/Personal/Projects/IceSuite/IceFin-Player/brand` (D35, masters; don't edit in place). App icon is the Progress ring mark; repo copies are listed in `docs/brand/README.md`. Re-sync metadata to the kit with `python3 -I scripts/icefin/export-brand-metadata.py <kit>/brand` after metainfo, README or theme changes.
 - Git workflow (D17, D29, `docs/BRANCHING.md`): trunk-based, plus a long-lived `theme/<id>` branch per bundled theme for its completeness pass (merge commits into `main`; engine work stays on `feat/` branches). Branch `feat/<task>-<topic>` (or `fix/`, `docs/`, `ci/`, `chore/`) from `main`, push, open a PR, squash-merge when `icefin-hooks` and `icefin-flatpak` pass. Upstream merges use `sync/upstream-<ver>` and a merge commit. Never force-push `main`; never commit to `upstream/master`.
 - Repo: `origin` = github.com/Stealthx3/icefin-player (public), `upstream` = jellyfin/jellyfin-desktop (push disabled). App ID `io.github.stealthx3.IcefinPlayer` (D13).
 
