@@ -567,6 +567,14 @@
     const startDialogWatch = () => dialogWatch.observe(document.body, { childList: true, subtree: true });
     if (document.body) startDialogWatch(); else document.addEventListener('DOMContentLoaded', startDialogWatch);
 
+    // jellyfin-web's own home opened from a theme ("Classic home": #/home?icefin=stock) is jellyfin-web's root page,
+    // where its Back does nothing; reached from the theme's settings, Back returns there (QA 1, every theme).
+    function stockRootBack() {
+        if (!pkg || !/^#\/home\b/.test(location.hash) || !/[?&]icefin=stock\b/.test(location.hash) || history.length < 2) return false;
+        history.back();
+        sound('back');
+        return true;
+    }
     function handleAction(action) {
         lastInput = 'pad';
         for (const h of actionHooks.slice()) {
@@ -581,6 +589,7 @@
             if (!dlg.contains(document.activeElement) && action !== 'back' && focusInto(dlg)) { sound('focus'); return true; }
             return false;
         }
+        if (action === 'back' && !current && stockRootBack()) return true;
         if (!current) return false;
         // A screen may own its navigation (rows, strips): it sees every action first and returns true when it used it.
         if (current.screen.onAction) {
@@ -617,7 +626,12 @@
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }
-        if (!current) return;
+        if (!current) {
+            const t0 = e.target;
+            const typing = t0 && (t0.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t0.tagName));
+            if (action === 'back' && !typing && !foreignDialog() && stockRootBack()) { e.preventDefault(); e.stopImmediatePropagation(); }
+            return;
+        }
         // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
         // screen) are that thing's: only keys on the theme's own UI, or on nothing in particular, drive the screen.
         const t = e.target;
