@@ -45,7 +45,7 @@
         music: [['Albums', 0], ['Album artists', 2], ['Artists', 3], ['Playlists', 4], ['Songs', 5], ['Genres', 6]]
     };
     function categoriesFor(client, section, views) {
-        if (!section.view) {  // Home: each library, then Play on and Watch together (9.52; Kodi keeps such actions in the home's rows)
+        if (!section.view) {  // Home: each library, then Play on and Watch together (9.52; the target keeps such actions in the home's rows)
             const D = window.icefinHarbor;
             const out = views.map((v) => ({ label: v.Name, hash: libraryHash(client, v) }));
             if (D && D.playOn) out.push({ label: 'Play on…', run: () => D.playOn('play', null) }, { label: 'Watch together…', run: () => D.playOn('together', null) });
