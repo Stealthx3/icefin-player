@@ -844,7 +844,7 @@ html[data-icefin-motion="low"] .lm-t.icefin-focused, html[data-icefin-motion="lo
 :root { --lm-x: 4.17vw; --lm-y: 5.56vh; --lm-band: #ffffff; --lm-ring: 0 1.8vh 3.4vh rgb(0 0 0 / 0.6); --lm-dim: rgb(0 0 0 / 0.5);
   --lm-glass: rgba(64, 64, 72, 0.46); --lm-edge: inset 0 1px 0 rgb(255 255 255 / 0.22), inset 0 0 0 1px rgb(255 255 255 / 0.08);
   --lm-pw: 13.54vw; --lm-ph: 36.1vh; --lm-ww: 21.35vw; --lm-wh: 21.39vh; --lm-gap: 2.083vw; --lm-out: cubic-bezier(0.16, 1, 0.3, 1); --lm-in: cubic-bezier(0.5, 0, 0.75, 0); }
-html[data-icefin-theme] body, .lm-screen, [data-lm="home"], #icefin-theme-overlay.lm-ov-host, .lm-panel-host, .lm-hints, .lm-notice, #icefin-osk {
+html[data-icefin-theme] body, .lm-screen, [data-lm="home"], #icefin-theme-overlay.lm-ov-host, .lm-panel-host, .lm-hints, .lm-notice, #icefin-osk, .lm-pl, .lm-pl * {
   font-family: Inter, "Noto Sans", system-ui, sans-serif; font-feature-settings: "cv11", "ss01"; }
 .lm-screen, [data-lm-x] { background: #000; }
 .lm-glassy { background: var(--lm-glass); -webkit-backdrop-filter: blur(26px) saturate(1.7); backdrop-filter: blur(26px) saturate(1.7); box-shadow: var(--lm-edge), 0 1.2vh 4vh rgb(0 0 0 / 0.45); }
@@ -1107,7 +1107,7 @@ html[data-icefin-theme] body, .lm-screen, [data-lm="home"], #icefin-theme-overla
    right, a thin white time line with the times under its ends ---- */
 .lm-pl-shade-top { height: 16vh; background: linear-gradient(180deg, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0)); }
 .lm-pl-shade-bottom { height: 40vh; background: linear-gradient(0deg, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0)); }
-.lm-pl-top { left: var(--lm-x); right: var(--lm-x); bottom: 17vh; }
+.lm-pl-top { left: var(--lm-x); right: var(--lm-x); bottom: 26vh; }
 .lm-pl-back { background: var(--lm-glass); }
 .lm-pl-back.icefin-focused, .lm-pl-back:hover { background: #fff; color: #111; }
 .lm-pl-title { font-size: 3.2vh; font-weight: 700; }
