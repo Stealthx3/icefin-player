@@ -4,6 +4,9 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 
 ## [Unreleased]
 
+### Removed
+- Spark, Marquee and Plum are left out of the built-in themes for now; they return in a later update. A device that used one of them shows the stock look until another theme is chosen.
+
 ### Added
 - Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
 - Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).

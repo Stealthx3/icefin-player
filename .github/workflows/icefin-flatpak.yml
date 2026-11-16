@@ -20,6 +20,11 @@ jobs:
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11
       options: --privileged
+      # The image ships its runtimes in /var/lib/flatpak. When Flathub has a newer one, flatpak-builder updates it, and
+      # moving the old deploy out of an image layer fails on overlayfs ("Invalid cross-device link"). A volume there
+      # gets a copy of the image's runtimes on one plain filesystem, so the update can move them.
+      volumes:
+        - /var/lib/flatpak
     steps:
       - uses: actions/checkout@v4
         with:

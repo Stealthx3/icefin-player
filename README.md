@@ -68,11 +68,9 @@ These are design mock-ups of the 1.0 goals, not screenshots. Titles and artwork 
 - Settings screens generated from each theme's token schema
 - Trust levels for themes: user-installed themes are declarative-only unless explicitly trusted
 - Media Center reference theme inspired by the classic 10-foot media center look, with original art and sounds
-- Seven clone themes that double as engine benchmarks, all Icefin-branded with original assets:
+- Clone themes that double as engine benchmarks, all Icefin-branded with original assets (Spark, Plum and Marquee return in a later update):
   - **Baseline**: the stock Jellyfin look, used as the control for plugin-compatibility testing
   - **Harbor**: side menu with content rows, modeled on Kodi's Estuary layout
-  - **Spark**: top bar and hero carousel, modeled on the Fire TV layout
-  - **Plum**: menu column beside a tile grid, modeled on the Roku TV layout
   - **Plaza**: paged tile grid with pointer navigation, modeled on the Wii Menu layout
   - **Orbit**: 3D tile carousel, modeled on the Xbox 360 NXE layout
   - **Pivot**: pivot headers and live tiles, modeled on the Xbox 360 Metro layout
