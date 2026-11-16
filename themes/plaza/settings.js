@@ -131,6 +131,8 @@
         new MutationObserver(() => { for (const t of entries.querySelectorAll('.icefin-s-entry:not(.pz-s-tile)')) tile(t); }).observe(entries, { childList: true });
     }
 
+    // the preference pages, drawn as Client Settings is (PLAN 9.62, D39); Home stays Plaza's own (prefs.js)
+    if (T.ui.settings.prefs) for (const r of T.ui.settings.prefsRoutes) T.registerScreen(r, T.ui.settings.prefs());
     const base = T.ui.settings.screen({ layout: 'tiles' });
     T.registerScreen('#/mypreferencesmenu', {
         mount(root, ctx) {
