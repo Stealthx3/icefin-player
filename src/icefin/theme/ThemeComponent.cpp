@@ -533,6 +533,54 @@ void ThemeComponent::pickPackage()
   d->open();
 }
 
+void ThemeComponent::pickWallpaper()
+{
+  auto* d = new QFileDialog(nullptr, "Choose a wallpaper", QDir::homePath(),
+                            "Wallpapers (*.svg *.mp4 *.webm *.png *.jpg *.jpeg *.webp *.gif);;All files (*)");
+  d->setFileMode(QFileDialog::ExistingFile);
+  d->setAttribute(Qt::WA_DeleteOnClose);
+  connect(d, &QFileDialog::fileSelected, this, [this](const QString& path) {
+    const QFileInfo src(path);
+    const QString ext = src.suffix().toLower();
+    static const QStringList allowed{"svg", "mp4", "webm", "png", "jpg", "jpeg", "webp", "gif"};
+    if (!src.isFile() || !allowed.contains(ext)) return;
+    const QString dir = Paths::globalDataDir("wallpapers");
+    QDir().mkpath(dir);
+    const QString name = QString("wallpaper-%1.%2").arg(QDateTime::currentMSecsSinceEpoch()).arg(ext);
+    if (!QFile::copy(path, dir + '/' + name)) {
+      qWarning().noquote() << "Icefin wallpaper: could not copy" << src.fileName();
+      return;
+    }
+    for (const QFileInfo& old : QDir(dir).entryInfoList(QDir::Files))
+      if (old.fileName() != name) QFile::remove(old.absoluteFilePath());
+    SettingsComponent::Get().setValue(kSection, "wallpaperName", src.fileName());
+    SettingsComponent::Get().setValue(kSection, "wallpaper", name);
+    emit wallpaperChanged();
+  });
+  d->open();
+}
+
+void ThemeComponent::clearWallpaper()
+{
+  const QString dir = Paths::globalDataDir("wallpapers");
+  for (const QFileInfo& old : QDir(dir).entryInfoList(QDir::Files)) QFile::remove(old.absoluteFilePath());
+  SettingsComponent::Get().setValue(kSection, "wallpaperName", "");
+  SettingsComponent::Get().setValue(kSection, "wallpaper", "");
+  emit wallpaperChanged();
+}
+
+QVariantMap ThemeComponent::wallpaper() const
+{
+  const QString name = SettingsComponent::Get().value(kSection, "wallpaper").toString();
+  if (name.isEmpty() || name.contains('/') || name.contains("..")) return {};
+  if (!QFileInfo::exists(Paths::globalDataDir("wallpapers") + '/' + name)) return {};
+  const QString ext = QFileInfo(name).suffix().toLower();
+  const QString kind = (ext == "mp4" || ext == "webm") ? "video" : ext == "svg" ? "svg" : "image";
+  QString orig = SettingsComponent::Get().value(kSection, "wallpaperName").toString();
+  if (orig.isEmpty()) orig = name;
+  return {{"url", "icefin-theme://wallpaper/" + name}, {"kind", kind}, {"name", orig}};
+}
+
 QVariantMap ThemeComponent::installFile(const QString& path)
 {
   QSet<QString> reserved;

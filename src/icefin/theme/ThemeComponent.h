@@ -82,6 +82,10 @@ public:
   // user picks; the result comes with installFinished. installFile() installs a path directly (tests, drag and drop).
   // Result: {ok, id, name, replaced, hasScripts, errors[]} (ThemeInstall.h).
   Q_INVOKABLE void pickPackage();
+  // Device wallpaper (one per device, behind any theme): chosen by file, copied into the wallpapers folder.
+  Q_INVOKABLE void pickWallpaper();
+  Q_INVOKABLE void clearWallpaper();
+  Q_INVOKABLE QVariantMap wallpaper() const;  // {} when none; else {url, kind, name}
   Q_INVOKABLE QVariantMap installFile(const QString& path);
   // Remove a user-installed theme (not the active one). {ok, errors[]}
   Q_INVOKABLE QVariantMap removePackage(const QString& id);
@@ -122,6 +126,7 @@ Q_SIGNALS:
   void packagesChanged();
   void classicChanged(bool on);
   void musicStateChanged();
+  void wallpaperChanged();
 
 private:
   ThemeComponent() = default;
