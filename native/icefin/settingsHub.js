@@ -62,6 +62,8 @@
   border-radius: var(--icefin-shape-cardRadius, 0.6em); background: var(--icefin-color-surface); color: var(--icefin-color-text); }
 .icefin-settings .icefin-pp-host form { max-width: none !important; margin: 0 !important; }
 .icefin-settings .icefin-pp-host button[type=submit] { display: none !important; }
+.icefin-settings .icefin-pp-host select, .icefin-settings .icefin-pp-host input:not([type=checkbox]):not([type=radio]):not([type=range]), .icefin-settings .icefin-pp-host textarea {
+  background-color: color-mix(in srgb, var(--icefin-color-surface) 82%, black) !important; color: var(--icefin-color-text) !important; }
 .icefin-settings .icefin-pp-host .icefin-focused { outline: 0.18em solid var(--icefin-color-focus); outline-offset: 0.18em; border-radius: 0.3em; }
 /* Instant scrolling: a drop-down closes on a page scroll, and a smooth scroll after a focus move outlasted the OK press. */
 .icefin-settings .icefin-cs-host .smoothScrollY { scroll-behavior: auto !important; }
