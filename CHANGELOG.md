@@ -25,6 +25,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
 
 ### Changed
+- The themes' own text says IceFin Player (exit prompts, server notices, Media Center's description and the rest).
 - The app is now written IceFin Player (window title, app menus and stores, the client name your server shows, the diagnostics report). Servers that list devices show the new name for this client; nothing else changes.
 - Store listings get the suite's brand colours (light #80e5ff, dark #06445e).
 - New app icon: the Progress ring mark from the IceSuite art kit (the fin and wave inside a playback ring), installed as a full hicolor set (16–512 px, scalable and symbolic). The README has the kit's banner and feature icons.

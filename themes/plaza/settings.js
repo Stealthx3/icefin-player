@@ -90,7 +90,7 @@
             entries.append(t);
         };
         extra('Classic home', 'Jellyfin’s own home, with any plugin home sections', 'boxsets', 'classic', () => T.ctx.navigate('#/home?icefin=stock'));
-        if (T.ctx.exit) extra('Exit Icefin', 'Quit the app', 'exit', 'power', () => T.ctx.exit());
+        if (T.ctx.exit) extra('Exit IceFin Player', 'Quit the app', 'exit', 'power', () => T.ctx.exit());
         const tile = (t) => {
             if (t.classList.contains('pz-s-tile')) return;
             const [kind, icon] = look(t);

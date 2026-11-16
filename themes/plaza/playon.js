@@ -32,7 +32,7 @@
                 };
                 devices.textContent = '';
                 for (const t of targets) {
-                    devices.append(row(BADGE[t.kind] || '··', t.kind === 'this' ? `${t.name || 'This Icefin'}` : t.name, t.kind === 'this' ? 'This device' : t.app, t.current ? 'Playing here' : '', async () => {
+                    devices.append(row(BADGE[t.kind] || '··', t.kind === 'this' ? `${t.name || 'This IceFin Player'}` : t.name, t.kind === 'this' ? 'This device' : t.app, t.current ? 'Playing here' : '', async () => {
                         if (t.current) { P.sheet.close(); return; }
                         const ok = await T.ctx.setPlayTarget(t.id);
                         P.sheet.close();

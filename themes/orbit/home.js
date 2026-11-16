@@ -123,7 +123,7 @@
 
     // ---- Settings (Settings board) ----
     const go = (hash) => () => T.ctx.navigate(hash);
-    D.exitAsk = () => D.panel.ask({ title: 'Exit Icefin?', path: 'Icefin', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => D.farewell(() => T.ctx.exit()) }] });
+    D.exitAsk = () => D.panel.ask({ title: 'Exit IceFin Player?', path: 'IceFin Player', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => D.farewell(() => T.ctx.exit()) }] });
     D.signOutAsk = (user) => D.panel.ask({ title: 'Sign out?', path: user ? `${user.Name} on ${D.serverName || 'this server'}` : '', choices: [{ label: 'Stay signed in', safe: true }, { label: 'Sign out', run: () => D.farewell(() => T.ctx.signOut()) }] });
     D.settingsEntries = async () => {
         let user = null;
@@ -148,7 +148,7 @@
             a('Server', `${D.serverName || 'This server'}`, `${D.serverUp === false ? '○ not answering' : '● reachable'} · change server`, () => T.ctx.selectServer(), { okLabel: 'choose' })
         ];
         if (admin) out.push(a('Server', 'Dashboard', 'administration (jellyfin-web’s)', go('#/dashboard')));
-        out.push(a('Leave', 'Exit Icefin…', '', () => D.exitAsk(), { okLabel: 'choose' }));
+        out.push(a('Leave', 'Exit IceFin Player…', '', () => D.exitAsk(), { okLabel: 'choose' }));
         return out;
     };
 

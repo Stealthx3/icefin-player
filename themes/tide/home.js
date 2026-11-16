@@ -65,12 +65,12 @@
             { name: 'Classic home', sub: 'jellyfin-web’s home, once', icon: 'home', shape: 'icon', go: go('#/home?icefin=stock') }
         ];
         if (admin) out.push({ name: 'Server dashboard', sub: 'administration (jellyfin-web’s)', icon: 'dashboard', shape: 'icon', go: go('#/dashboard') });
-        out.push({ name: 'Exit Icefin', icon: 'exit', shape: 'icon', go: () => D.exitAsk() });
+        out.push({ name: 'Exit IceFin Player', icon: 'exit', shape: 'icon', go: () => D.exitAsk() });
         return out;
     };
 
     // ---- the exit question (ExitPanel board) ----
-    D.exitAsk = () => D.panel.ask({ title: 'Exit Icefin?', path: 'Icefin', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => T.ctx.exit() }] });
+    D.exitAsk = () => D.panel.ask({ title: 'Exit IceFin Player?', path: 'IceFin Player', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => T.ctx.exit() }] });
 
     // ---- the server's status: pinged every 60 s ----
     async function ping() {
