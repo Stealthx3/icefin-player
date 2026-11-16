@@ -129,7 +129,7 @@ html[data-icefin-wallpaper] { --icefin-color-background: transparent !important;
         }
     }
     const scheduleClear = () => { clearTimeout(clearTimer); clearTimer = setTimeout(clearBackgrounds, 250); };
-    new MutationObserver(scheduleClear).observe(document.documentElement, { childList: true, subtree: true });
+    const watchPage = () => new MutationObserver(scheduleClear).observe(document.documentElement, { childList: true, subtree: true });
 
     async function build() {
         const mine = ++token;
@@ -181,6 +181,7 @@ html[data-icefin-wallpaper] { --icefin-color-background: transparent !important;
         };
         const start = () => {
             ensureStyle();
+            watchPage();
             new MutationObserver(react).observe(root(), { attributes: true,
                 attributeFilter: ['class', 'data-icefin-osd-playing', 'data-icefin-motion', 'data-icefin-backdrop'] });
             window.addEventListener('hashchange', react);
