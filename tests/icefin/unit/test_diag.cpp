@@ -82,7 +82,7 @@ private slots:
     in.home = "/home/bob";
     in.hostName = "bobpc";
     const QString r = Icefin::Diag::build(in);
-    for (const char* want : {"# Icefin Player diagnostics report", "## Summary", "Vulkan (compositor, HDR10 output)", "HDR (pq, bt2020, peak 1000 nits",
+    for (const char* want : {"# IceFin Player diagnostics report", "## Summary", "Vulkan (compositor, HDR10 output)", "HDR (pq, bt2020, peak 1000 nits",
                              "hevc vaapi", "the server converts av1", "GPU-accelerated", "hdr10: hdr10", "receiver AVR (ac3, eac3, 8 ch)",
                              "passthrough ac3 eac3", "bitstreaming now", "Flatpak org.kde.Platform/x86_64/6.10", "mpv v0.42.0, FFmpeg", "libass 0x01703000", "HDMI-A-1: 3840x2160 @ 60.00 Hz",
                              "## Now playing", "## Recent log", "Icefin router: HDR10 -> hdr10", "## Capability model", "## Settings",
