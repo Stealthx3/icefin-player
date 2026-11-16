@@ -212,7 +212,9 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   `summary.md` / `summary.json` after each test, with each test's output in `<name>.log` (`--out`, default
   `~/lab-matrix/<date-time>`). Groups: `unit` (ctest), `app` (the app's own tests), `theme` (engine, every theme,
   and `clone_layout.py` for each reference spec), `av` (the Virtual AV lab rows and Icefin's rows), `hdr` (the virtual
-  HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) runs only when named.
+  HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) and `walk` (the controller
+  walk over every screen, stock and every theme, up to ~2.5 h; 7.6) run only when named. The app group includes the
+  quick controller checks: every pad family (virtual pads, `docs/dev/HARDWARE-SIMULATION.md` option C) and Steam's.
   `--list` prints the tests; `--only` / `--skip` take names. The budget test runs in `lab-icefin-htpcsim` (above).
 - **Tree and builds:** `~/src-matrix` (`git archive` of the commit plus the mpvqt submodule), built twice:
   ```

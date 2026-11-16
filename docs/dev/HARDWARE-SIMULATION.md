@@ -10,19 +10,22 @@ hardware is left to beta testers (`docs/BETA-CHECKLIST.md`).
 | --- | --- | --- | --- |
 | Virtual AV tier, audio (`hda-hdmi-sink`, D18) | AV receiver, soundbar, TV over HDMI | The ELD Icefin reads, the per-track passthrough decision, bit-exact bitstreams, HBR, hotplug | The receiver's display, lip sync, CEC |
 | Virtual HDR display (Weston 16, 5.10) | An HDR10 or SDR display on Wayland | The swapchain, surface tag, mastering metadata and MaxCLL/MaxFALL Icefin sends per routing row | Whether a TV switches to HDR; how it looks |
+| Virtual controllers (option C, 7.6) | Xbox Series, 8BitDo (X-input), DualSense, Switch Pro, Steam Virtual Gamepad | The kernel's own `hid-playstation` and `hid-nintendo` bind (uhid); SDL3 names each as the real pad; Icefin's family and prompts; every control of the action map once; the Nintendo layout; Steam's game environment; the walk over every screen | Bluetooth, Steam Input's own remapping, real latency, rumble felt |
 | VA-API through nvidia-vaapi-driver (option V1) | An AMD or Intel VA-API decoder | `vaapi` decode and zero-copy DMA-BUF import on the shared Vulkan device, 8-bit | 10-bit p010 import (NVIDIA lacks r16 modifiers); real AMD or Intel drivers |
 
 ## Proposed
 
-### C. Virtual controllers (recommended first; PLAN 7.4, 7.6)
-- **How:** in the lab guest, `uinput` devices with the real vendor and product ids and button layouts of an Xbox
-  Series pad, Switch Pro and 8BitDo pad, and `uhid` for the DualSense so the kernel's `hid-playstation` driver
-  binds as it would to the real pad. A Steam Virtual Gamepad (`28de:11ff`) plus a fake `SteamVirtualGamepadInfo`
-  file tests Icefin's Steam detection, glyph family and duplicate-input guard.
-- **Proves:** SDL sees each pad as the real one; glyphs; every screen of every theme reachable by a scripted walk
-  (the 7.6 controller run, automated); the Steam guard logic.
-- **Can't show:** Steam Input's own remapping; Bluetooth quirks; real latency.
-- **Cost:** a day or two; no host changes.
+### C. Virtual controllers: built (PLAN 7.6)
+- **What:** `tests/icefin/web/vpads.py`. Xbox Series (`045e:0b12`), 8BitDo Pro 2 in X-input mode (`2dc8:3106`) and the
+  Steam Virtual Gamepad (`28de:11ff`) are `uinput` devices shaped like the drivers' own. The DualSense (`054c:0ce6`)
+  and Switch Pro (`057e:2009`) are `uhid` devices that answer the kernel drivers' probing (the DualSense's pairing,
+  calibration and firmware feature reports; the Switch Pro's USB handshake, device info, SPI calibration reads and
+  subcommands), so `hid-playstation` and `hid-nintendo` bind, and SDL3's HIDAPI drivers open their hidraw nodes.
+  Access: `scripts/lab/70-icefin-lab-pads.rules` (uhid for the lab user, seat access to the pads' hidraw, as the
+  `steam-devices` rules give real hosts).
+- **Runs:** `tests/icefin/web/controller_run.py`. Every lab matrix run: each pad outside Steam and each behind
+  Steam's virtual pad. On request (`lab-matrix.py --groups walk`): the walk over every screen, stock and each theme.
+- **Can't show:** Steam Input's own remapping; Bluetooth; real latency; rumble felt.
 
 ### M. Synthetic HDR10+ and Dolby Vision media (PLAN 6.6, 5.8's media rows)
 - **Built (6.6):** `make-hdr-media.sh` injects HDR10+ dynamic metadata with `hdr10plus_tool` (Debian's x265 drops
@@ -100,6 +103,6 @@ Three ways to reach it, best fidelity last:
 
 ## Order
 
-C, M, A and R run fully in the lab with no host changes; D needs a short feasibility check; V1 needs your OK
+C (built), M, A and R run fully in the lab with no host changes; D needs a short feasibility check; V1 needs your OK
 for a driver on the workstation; V3 and real displays need hardware. Suggested: C and R, M, A, D, then V1 if you
 approve it.
