@@ -341,6 +341,14 @@ def baseline():
 
 SETS = {"media-center": media_center, "harbor": harbor, "spark": spark, "plum": plum, "plaza": plaza, "orbit": orbit, "mosaic": mosaic,
         "lumen": lumen, "marquee": marquee, "almanac": almanac, "arcade": arcade, "tide": tide, "baseline": baseline}
+
+
+def theme_path(tid, *rest):
+    """themes/<id>, or themes-later/<id> for a theme held back from the bundle (D36)."""
+    later = os.path.join(ROOT, "themes-later", tid)
+    return os.path.join(later if os.path.isdir(later) else os.path.join(ROOT, "themes", tid), *rest)
+
+
 MAX_MS = 2600  # Plaza's hall tails run to about two seconds
 
 
@@ -349,7 +357,7 @@ def build(tid):
 
 
 def write_theme_json(tid):
-    p = os.path.join(ROOT, "themes", tid, "theme.json")
+    p = theme_path(tid, "theme.json")
     s = open(p).read()
     meta = json.loads(s)
     want = {ev: f"sounds/{ev}.wav" for ev in EVENTS}
@@ -377,7 +385,7 @@ def main():
     bad = []
     for tid in SETS:
         sounds = build(tid)
-        d = os.path.join(ROOT, "themes", tid, "sounds")
+        d = theme_path(tid, "sounds")
         for ev, data in sounds.items():
             path = os.path.join(d, f"{ev}.wav")
             if check:
@@ -390,7 +398,7 @@ def main():
                     ms = w.getnframes() * 1000 / w.getframerate()
                     if (w.getnchannels(), w.getsampwidth(), w.getframerate()) != (1, 2, SR) or ms > MAX_MS:
                         bad.append(f"{tid}/{ev}: {w.getnchannels()} ch, {w.getsampwidth() * 8} bit, {w.getframerate()} Hz, {ms:.0f} ms")
-                meta = json.load(open(os.path.join(ROOT, "themes", tid, "theme.json")))
+                meta = json.load(open(theme_path(tid, "theme.json")))
                 if meta.get("sounds", {}).get(ev) != f"sounds/{ev}.wav":
                     bad.append(f"{tid}/{ev}: not in theme.json")
             else:
