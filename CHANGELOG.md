@@ -24,6 +24,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Client Settings -> Hardware -> Copy report: a diagnostics report for bug reports (versions, GPU and decoding, display and HDR, audio and receiver, recent log), with server addresses, sign-in tokens, user, host and home folder names removed. The bug report form asks for it.
 - Audio: Receiver in Standby (Switch When It Wakes, Always PCM, Keep Bitstream). By default a receiver that is in standby gets PCM, and the playing track switches to the bitstream 4 seconds after the receiver wakes.
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
+- Every theme draws the Display, Playback, Subtitles and Controls preference pages in its own style, laid out like its Client Settings; a change saves at once.
 
 ### Changed
 - The themes' own text says IceFin Player (exit prompts, server notices, Media Center's description and the rest).
