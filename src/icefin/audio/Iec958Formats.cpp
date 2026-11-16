@@ -40,7 +40,7 @@ QString wirePlumberRule(const QString& sink, const QStringList& codecs)
   for (const QString& c : codecs) if (wp.contains(c) && !list.contains("\"" + wp[c] + "\"")) list << "\"" + wp[c] + "\"";
   if (codecs.contains("dts-hd") && !list.contains("\"DTS\"")) list << "\"DTS\"";
   return QString(
-    "# ~/.config/wireplumber/wireplumber.conf.d/51-icefin-passthrough.conf  (Icefin Player)\n"
+    "# ~/.config/wireplumber/wireplumber.conf.d/51-icefin-passthrough.conf  (IceFin Player)\n"
     "# Lets the HDMI output accept these bitstream formats. Restart WirePlumber afterwards:\n"
     "#   systemctl --user restart wireplumber\n"
     "monitor.alsa.rules = [\n"
@@ -69,7 +69,7 @@ struct Conn
   {
     ml = pa_threaded_mainloop_new();
     if (!ml) return false;
-    ctx = pa_context_new(pa_threaded_mainloop_get_api(ml), "Icefin Player");
+    ctx = pa_context_new(pa_threaded_mainloop_get_api(ml), "IceFin Player");
     pa_context_set_state_callback(ctx, [](pa_context*, void* ud) { pa_threaded_mainloop_signal(static_cast<pa_threaded_mainloop*>(ud), 0); }, ml);
     if (pa_context_connect(ctx, nullptr, PA_CONTEXT_NOAUTOSPAWN, nullptr) < 0) return false;
     pa_threaded_mainloop_start(ml);

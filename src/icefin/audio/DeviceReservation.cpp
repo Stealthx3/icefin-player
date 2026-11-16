@@ -11,7 +11,7 @@ DeviceReservation::DeviceReservation(int card, QObject* parent) : QObject(parent
 DeviceReservation::~DeviceReservation() { release(); }
 
 QString DeviceReservation::serviceName() const { return QString("org.freedesktop.ReserveDevice1.Audio%1").arg(m_card); }
-QString DeviceReservation::applicationName() const { return "Icefin Player"; }
+QString DeviceReservation::applicationName() const { return "IceFin Player"; }
 QString DeviceReservation::applicationDeviceName() const { return QString("hw:%1").arg(m_card); }
 
 bool DeviceReservation::RequestRelease(int priority)

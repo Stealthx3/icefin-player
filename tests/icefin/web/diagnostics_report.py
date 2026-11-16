@@ -17,7 +17,7 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-SECTIONS = ["# Icefin Player diagnostics report", "## Summary", "- **Renderer**:", "- **Decode**:", "- **Display**:", "- **Audio**:",
+SECTIONS = ["# IceFin Player diagnostics report", "## Summary", "- **Renderer**:", "- **Decode**:", "- **Display**:", "- **Audio**:",
             "- **Versions**:", "## Screens", "## Now playing", "## Recent log", "## Capability model", "## Audio", "## Web layer", "## Settings"]
 
 
@@ -82,7 +82,7 @@ def main():
         page.eval("document.querySelector('#icefin-hardware-section .icefin-hw-report').click(); true")
         page.wait_for("(document.querySelector('#icefin-hardware-section .icefin-hw-report-text') || {}).value", timeout=20)
         ui_report = page.eval("document.querySelector('#icefin-hardware-section .icefin-hw-report-text').value")
-        check("the button shows the report", ui_report.startswith("# Icefin Player diagnostics report"), ui_report[:60])
+        check("the button shows the report", ui_report.startswith("# IceFin Player diagnostics report"), ui_report[:60])
         check("the button's note says it was copied",
               "Copied" in page.eval("document.querySelector('#icefin-hardware-section .icefin-hw-report-note').textContent"))
     except Exception as e:  # noqa: BLE001

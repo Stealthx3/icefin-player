@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in Icefin Player doesn't work as expected
+description: Something in IceFin Player doesn't work as expected
 labels: ["bug"]
 body:
   - type: markdown
@@ -23,8 +23,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Icefin version or commit
-      description: Settings → About shows both the Icefin version and the upstream base.
+      label: IceFin Player version or commit
+      description: Settings → About shows both the IceFin Player version and the upstream base.
     validations:
       required: true
   - type: dropdown
@@ -66,7 +66,7 @@ body:
     id: diagnostics
     attributes:
       label: Diagnostics report
-      description: Client Settings → Hardware → Copy report, then paste. It shows the renderer, decoding, display, audio and recent log lines, with tokens, passwords, server addresses and your home folder left out. Copy it right after the problem happens, before restarting Icefin.
+      description: Client Settings → Hardware → Copy report, then paste. It shows the renderer, decoding, display, audio and recent log lines, with tokens, passwords, server addresses and your home folder left out. Copy it right after the problem happens, before restarting IceFin Player.
       render: markdown
   - type: textarea
     id: logs
