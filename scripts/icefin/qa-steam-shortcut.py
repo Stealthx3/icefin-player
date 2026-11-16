@@ -86,9 +86,13 @@ def recent_account():
         txt = open(os.path.expanduser("~/.steam/steam/config/loginusers.vdf"), errors="replace").read()
     except OSError:
         return None
-    for m in re.finditer(r'"(\d{17})"\s*\{(.*?)\n\s*\}', txt, re.S):
+    users = list(re.finditer(r'"(\d{17})"\s*\{(.*?)\n\s*\}', txt, re.S))
+    for m in users:
         if re.search(r'"MostRecent"\s+"1"', m.group(2)):
             return str(int(m.group(1)) - 76561197960265728)
+    # one signed-in account and no MostRecent flag (Steam leaves it out then): that account
+    if len(users) == 1:
+        return str(int(users[0].group(1)) - 76561197960265728)
     return None
 
 
