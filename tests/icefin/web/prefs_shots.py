@@ -90,6 +90,7 @@ def main():
             if not switch(tid):
                 check(f"{tid}: theme loads", False)
                 continue
+            seen = {}
             for pg in pages:
                 js(f"location.hash = '#/{pg}?userId={uid}'; true")
                 ok = False
@@ -99,7 +100,10 @@ def main():
                     time.sleep(0.5)
                 time.sleep(1.2)
                 n = js("document.querySelectorAll('#icefin-theme-root .icefin-pp-host [data-icefin-focus]').length")
-                check(f"{tid}: {pg} drawn by the theme ({n} controls)", bool(ok) and n > 0)
+                txt = js("((document.querySelector('#icefin-theme-root .icefin-pp-host form') || {}).textContent || '').replace(/\\s+/g, ' ').slice(0, 400)")
+                dup = [o for o, t in seen.items() if t == txt]
+                seen[pg] = txt
+                check(f"{tid}: {pg} drawn by the theme ({n} controls)", bool(ok) and n > 0 and not dup, f"same form as {dup}" if dup else "")
                 open(os.path.join(a.out, f"{tid}-{pg}.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
     finally:
         if stop:
