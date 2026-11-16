@@ -6,6 +6,8 @@
     'use strict';
     const T = window.icefinTheme;
     if (!T || !T.ui) return;
+    // the preference pages, drawn as Client Settings is (PLAN 9.62, D39)
+    if (T.ui.settings && T.ui.settings.prefs) for (const r of T.ui.settings.prefsRoutes) T.registerScreen(r, T.ui.settings.prefs());
     const D = window.icefinHarbor;
     if (T.ui.details && !(D && D.ownDetails)) T.registerScreen('#/details', T.ui.details.screen({ layout: 'panel' }));
     // jellyfin-web's own controls, when the user picks them or a plugin needs them (the web fallback)

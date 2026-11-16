@@ -54,6 +54,17 @@
 .icefin-settings .icefin-cs-host .formDialogContent { position: relative !important; inset: auto !important; flex: 1; min-height: 0; margin: 0 !important;
   padding: 2vh 2vw 6vh !important; overflow-y: auto; scrollbar-width: thin; scroll-behavior: auto !important; }
 .icefin-settings .icefin-cs-host .formDialogFooter { display: none !important; }
+/* the preference pages (9.62): jellyfin-web's form in the host, scrolled there; its Save button is not needed (a change
+   saves at once) */
+.icefin-settings .icefin-pp-tabs { display: flex; gap: 0.8em; flex-wrap: wrap; }
+.icefin-settings .icefin-pp-tab.icefin-pp-here { box-shadow: inset 0 -0.2em 0 var(--icefin-color-accent); }
+.icefin-settings .icefin-pp-host { overflow-y: auto; scrollbar-width: thin; padding: 2vh 2vw 6vh; box-sizing: border-box;
+  border-radius: var(--icefin-shape-cardRadius, 0.6em); background: var(--icefin-color-surface); color: var(--icefin-color-text); }
+.icefin-settings .icefin-pp-host form { max-width: none !important; margin: 0 !important; }
+.icefin-settings .icefin-pp-host button[type=submit] { display: none !important; }
+.icefin-settings .icefin-pp-host select, .icefin-settings .icefin-pp-host input:not([type=checkbox]):not([type=radio]):not([type=range]), .icefin-settings .icefin-pp-host textarea {
+  background-color: color-mix(in srgb, var(--icefin-color-surface) 82%, black) !important; color: var(--icefin-color-text) !important; }
+.icefin-settings .icefin-pp-host .icefin-focused { outline: 0.18em solid var(--icefin-color-focus); outline-offset: 0.18em; border-radius: 0.3em; }
 /* Instant scrolling: a drop-down closes on a page scroll, and a smooth scroll after a focus move outlasted the OK press. */
 .icefin-settings .icefin-cs-host .smoothScrollY { scroll-behavior: auto !important; }
 .icefin-settings .icefin-cs-host .icefin-focused { outline: 0.18em solid var(--icefin-color-focus); outline-offset: 0.18em; border-radius: 0.3em; }
@@ -252,9 +263,157 @@
         };
     }
 
+    // ---- the preference pages, drawn by the theme (PLAN 9.62, D39) ----
+    // T.registerScreen('#/mypreferencesdisplay', T.ui.settings.prefs()) and the same for playback, subtitles and
+    // controls: jellyfin-web's own form for the page, moved into the themed settings layout (the page's sections in a
+    // list beside it, the five preference pages as tabs above), so a theme draws these pages as it draws Client Settings
+    // and every value still saves where jellyfin-web keeps it. A change saves at once (the form's own submit, half a
+    // second after the last change), as Client Settings applies at once; the form goes back to jellyfin-web's page on
+    // the way out. Home stays the theme's own page when it has one.
+    const PREFS = [['mypreferencesdisplay', 'Display'], ['mypreferenceshome', 'Home'], ['mypreferencesplayback', 'Playback'],
+        ['mypreferencessubtitles', 'Subtitles'], ['mypreferencescontrols', 'Controls']];
+    const prefsRoute = () => (location.hash.split('?')[0] || '').replace(/^#\//, '');
+    function prefs() {
+        const state = { up: false };
+        const back = () => { if (history.length > 1) history.back(); else T.ctx.navigate('#/mypreferencesmenu'); };
+        const restore = () => {
+            if (state.observer) state.observer.disconnect();
+            state.observer = null;
+            clearTimeout(state.save);
+            if (state.form && state.home && state.home.parent && state.home.parent.isConnected) state.home.parent.insertBefore(state.form, state.home.next && state.home.next.parentNode === state.home.parent ? state.home.next : null);
+            else if (state.form) state.form.remove();
+            state.form = null;
+        };
+        return {
+            onAction(action) {
+                const dd = window.icefinDropdown;
+                if (dd && dd.isOpen && dd.isOpen() && document.querySelector('#icefin-theme-root .icefin-dd-list')) {
+                    const key = { up: 'ArrowUp', down: 'ArrowDown', enter: 'Enter', select: 'Enter', back: 'Escape' }[action];
+                    if (key) dd.key(key);
+                    return true;
+                }
+                return false;
+            },
+            onBack() {
+                const ev = window.event;
+                if (ev && ev.key === 'Backspace' && isText(document.activeElement)) return false;
+                back();
+                return true;
+            },
+            unmount() { state.up = false; restore(); },
+            async mount(root) {
+                state.up = true;
+                if (T.ui.details && T.ui.details.ensureStyle) T.ui.details.ensureStyle();
+                ensureStyle();
+                const route = prefsRoute();
+                const wrap = el('div', 'icefin-details icefin-settings icefin-prefs');
+                wrap.dataset.hub = 'list';
+                const nav = el('div', 'icefin-d-nav');
+                for (const [action, label, go] of [['back', '‹ Back', back], ['home', 'Home', () => T.ctx.navigate('#/home')]]) {
+                    const b = focusable(el('div', 'icefin-d-btn icefin-d-navbtn', label));
+                    b.dataset.action = action;
+                    b.addEventListener('click', go);
+                    nav.append(b);
+                }
+                const body = el('div', 'icefin-s-body');
+                const name = (PREFS.find(([id]) => id === route) || [route, 'Preferences'])[1];
+                body.append(el('h1', 'icefin-s-title', name));
+                const tabs = el('div', 'icefin-pp-tabs');
+                tabs.setAttribute('role', 'tablist');
+                for (const [id, label] of PREFS) {
+                    const t = focusable(el('div', 'icefin-d-btn icefin-pp-tab' + (id === route ? ' icefin-pp-here' : ''), label));
+                    t.setAttribute('role', 'tab');
+                    t.setAttribute('aria-selected', String(id === route));
+                    t.dataset.page = id;
+                    t.addEventListener('click', () => { if (id !== route) T.ctx.navigate(`#/${id}` + (location.hash.includes('?') ? '?' + location.hash.split('?')[1] : '')); });
+                    tabs.append(t);
+                }
+                const page = el('div', 'icefin-cs-page');
+                const rail = el('div', 'icefin-cs-rail');
+                rail.setAttribute('role', 'navigation');
+                const host = el('div', 'icefin-cs-host icefin-pp-host');
+                page.append(rail, host);
+                body.append(tabs, page);
+                wrap.append(nav, body);
+                root.append(wrap);
+                root.setAttribute('data-icefin-settings', 'prefs');
+                // jellyfin-web builds the page a moment after the route changes, and the page it leaves stays shown for a
+                // moment: the form is on a page that is new since this screen came up, or was hidden then and isn't now
+                const before = new Map([...document.querySelectorAll('.page')].map((p) => [p, p.classList.contains('hide')]));
+                // (after 2.5 s with none, the page already shown when this screen came up is the one, if it's the only one:
+                // a theme switch or a reload on this route)
+                const findForm = (relaxed) => {
+                    const shown = [...document.querySelectorAll('.page')].filter((p) => !p.classList.contains('hide') && !root.contains(p) && p.querySelector('form'));
+                    const pages = relaxed && shown.length === 1 ? shown : shown.filter((p) => !before.has(p) || before.get(p));
+                    const pg = pages.pop();
+                    return pg ? pg.querySelector('form') : null;
+                };
+                // ...and has its fields: jellyfin-web fills the form after loading the user's settings (the Display page
+                // renders in steps), so wait until it has two or more fields and their count holds for a moment
+                const fields = (f) => f ? f.querySelectorAll('input:not([type=hidden]), select, textarea').length : 0;
+                let form = null, last = -1, still = 0;
+                for (let i = 0; i < 160 && state.up; i++) {
+                    const f = findForm(i >= 25);
+                    const n = fields(f);
+                    if (f && n >= 2 && n === last) { if (++still >= 3) { form = f; break; } } else still = 0;
+                    last = n;
+                    await new Promise((r) => setTimeout(r, 100));
+                }
+                if (!form && state.up) form = findForm(true);
+                if (!state.up) return;
+                if (!form) { host.append(el('p', 'icefin-s-note', 'This page is not available here.')); root.setAttribute('data-icefin-prefs-ready', '0'); return; }
+                state.form = form;
+                state.home = { parent: form.parentNode, next: form.nextSibling };
+                host.append(form);
+                form.classList.add('icefin-pp-form');
+                form.querySelectorAll('select').forEach((sel) => { if (window.icefinDropdown) window.icefinDropdown(sel); });
+                // a change saves through the form's own submit, as jellyfin-web's Save button would
+                const save = () => { clearTimeout(state.save); state.save = setTimeout(() => { if (state.form && state.form.isConnected) { const b = state.form.querySelector('button[type=submit]'); if (state.form.requestSubmit) state.form.requestSubmit(b || undefined); else if (b) b.click(); } }, 500); };
+                form.addEventListener('change', save);
+                const sections = () => [...form.querySelectorAll('h2.sectionTitle, legend h2, h2')].filter((h) => h.offsetParent !== null && (h.textContent || '').trim());
+                const refresh = () => {
+                    for (const c of form.querySelectorAll(CONTROLS)) {
+                        if (c.closest('.icefin-dd-list') || c.disabled || c.matches('button[type=submit]')) continue;
+                        if (c.tagName === 'INPUT' && c.type === 'checkbox' && c.offsetParent === null) continue;
+                        if (!c.hasAttribute('data-icefin-focus')) focusable(c);
+                    }
+                    const hs = sections();
+                    const names = hs.map((h) => h.textContent.trim());
+                    if (rail.dataset.names === names.join('|')) return;
+                    rail.dataset.names = names.join('|');
+                    rail.textContent = '';
+                    hs.forEach((h, i) => {
+                        const b = focusable(el('div', 'icefin-d-btn', names[i]));
+                        b.dataset.section = names[i];
+                        b.addEventListener('click', () => {
+                            const sec = h.closest('.verticalSection, fieldset') || h;
+                            sec.scrollIntoView({ block: 'start' });
+                            const first = [...sec.querySelectorAll(FOCUS)].find((c) => c.offsetParent !== null && !rail.contains(c));
+                            if (first) T.ctx.focus(first);
+                        });
+                        rail.append(b);
+                    });
+                };
+                let timer = null;
+                state.observer = new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(refresh, 120); });
+                state.observer.observe(form, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'disabled', 'hidden'] });
+                host.addEventListener('scroll', () => {
+                    const top = host.getBoundingClientRect().top + 8;
+                    let here = null;
+                    for (const h of sections()) if (h.getBoundingClientRect().top <= top + 40) here = h.textContent.trim();
+                    for (const b of rail.children) b.classList.toggle('icefin-cs-here', b.dataset.section === here);
+                }, { passive: true });
+                refresh();
+                const first = [...form.querySelectorAll(FOCUS)].find((c) => c.offsetParent !== null) || rail.firstChild;
+                if (first) T.ctx.focus(first);
+                root.setAttribute('data-icefin-prefs-ready', route);
+            }
+        };
+    }
+
     // Classic View on its own, for a theme that draws its own settings area around the same entries (9.46): the stock
     // look now, for this session; the saved theme comes back at the next start or from Client Settings -> Theme.
     const classic = () => api().then((a) => new Promise((resolve) => a.theme.setClassic(true, () => { location.hash = '#/home'; resolve(true); })));
 
-    T.ui.settings = { screen, classic };
+    T.ui.settings = { screen, classic, prefs, prefsRoutes: PREFS.map(([id]) => '#/' + id).filter((r) => r !== '#/mypreferenceshome') };
 })();
