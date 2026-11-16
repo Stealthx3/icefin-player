@@ -17,6 +17,7 @@ html[data-icefin-wallpaper], html[data-icefin-wallpaper] body, html[data-icefin-
 html[data-icefin-wallpaper] { --icefin-color-background: transparent !important; }
 .icefin-wp-clear, .icefin-wp-clear::before, .icefin-wp-clear::after { background: transparent !important; }
 .icefin-wp-hide { visibility: hidden !important; }
+html #${ID}, html #${ID} * { visibility: visible !important; }  /* the engine hides <body>'s other children under a themed screen */
 #${ID} { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: #000; overflow: hidden; }
 #${ID} video, #${ID} img, #${ID} canvas { width: 100%; height: 100%; object-fit: cover; display: block; }`;
 

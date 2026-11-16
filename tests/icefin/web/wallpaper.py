@@ -23,6 +23,7 @@ def main():
     ap.add_argument("--port", type=int, default=9266)
     ap.add_argument("--out", required=True)
     ap.add_argument("--themes", default=",".join(THEMES))
+    ap.add_argument("--z0", action="store_true", help="debug: the layer at z-index 0 before the screenshot")
     hostmode.add_args(ap)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -130,6 +131,9 @@ def main():
                 time.sleep(1.5)
                 t1 = js("(document.querySelector('#icefin-wallpaper video') || {}).currentTime || 0")
                 check("video: it plays (the time moves; a loop may wrap it), muted", abs(t1 - t0) > 0.2 and js("document.querySelector('#icefin-wallpaper video').muted"), f"{t0} -> {t1}")
+            if a.z0:
+                js("document.getElementById('icefin-wallpaper').style.zIndex = '0'; true")
+                time.sleep(1)
             open(os.path.join(a.out, f"{tid}-{kind}.png"), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
         js("new Promise(r => window.api.theme.clearWallpaper ? (window.api.theme.clearWallpaper(), r(true)) : r(false))")
         time.sleep(2)
