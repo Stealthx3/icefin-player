@@ -8,6 +8,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Spark, Marquee and Plum are left out of the built-in themes for now; they return in a later update. A device that used one of them shows the stock look until another theme is chosen.
 
 ### Added
+- A device wallpaper (animated SVG, looping MP4 or WebM, or a picture) behind any theme, chosen in Client Settings under Theme.
 - Almanac and Tide have their own music: a startup jingle, a background loop and a goodbye (Almanac an easy lounge groove, Tide a still, wave-like wash).
 - Steam artwork for adding IceFin Player as a non-Steam game, with steps in docs/INSTALL.md.
 - Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
