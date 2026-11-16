@@ -38,6 +38,8 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 ### Fixed
 - A crash when a new item started while the last one's cover art was still downloading (for the desktop's media controls). The same mistake could crash Icefin when the server address check or a URL lookup was replaced by a newer one.
 - Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
+- Nintendo controllers (Switch Pro, Joy-Cons) show Nintendo button prompts again, and the Nintendo Button Layout option applies to them; they were treated as generic pads.
+- A controller unplugged after connecting is let go of properly; one announced twice stayed open in the background.
 - Escape on an open drop-down in Client Settings closes just the list again, instead of the whole Client Settings page.
 - A theme's startup jingle plays when Icefin starts with that theme already chosen; something briefly in its way at launch used to skip it for the whole run. The log says why it waits.
 - Client Settings -> Controllers: Remap is reachable with a controller (it sat out of line with the switches, so Down skipped it).
