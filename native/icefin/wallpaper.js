@@ -15,6 +15,8 @@
     const css = `
 html[data-icefin-wallpaper], html[data-icefin-wallpaper] body, html[data-icefin-wallpaper] #icefin-theme-root { background: transparent !important; background-color: transparent !important; }
 html[data-icefin-wallpaper] { --icefin-color-background: transparent !important; }
+.icefin-wp-clear, .icefin-wp-clear::before, .icefin-wp-clear::after { background: transparent !important; }
+.icefin-wp-hide { visibility: hidden !important; }
 #${ID} { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: #000; overflow: hidden; }
 #${ID} video, #${ID} img, #${ID} canvas { width: 100%; height: 100%; object-fit: cover; display: block; }`;
 
@@ -91,9 +93,48 @@ html[data-icefin-wallpaper] { --icefin-color-background: transparent !important;
         applyMotion();
     }
 
+    // A theme that paints its background on its own elements (a sky, a gradient, a picture) rather than with
+    // --icefin-color-background would cover the wallpaper. While one is up, the elements that cover the whole window and
+    // paint an opaque colour, a gradient or a picture are cleared (full-window canvases and pictures with no pointer
+    // events hidden): page backgrounds by nature. Translucent layers (dims, scrims) and dialogs keep theirs.
+    const AREA = '#icefin-theme-root, #icefin-stock-chrome';
+    let clearTimer = null;
+    function opaque(cs) {
+        if (cs.backgroundImage && cs.backgroundImage !== 'none') return true;
+        const m = /rgba?\(([^)]+)\)/.exec(cs.backgroundColor || '');
+        if (!m) return false;
+        const p = m[1].split(/[ ,/]+/).filter(Boolean);
+        return p.length < 4 || parseFloat(p[3]) >= 0.95;
+    }
+    function covers(el) {
+        const r = el.getBoundingClientRect();
+        return r.width >= innerWidth * 0.95 && r.height >= innerHeight * 0.95;
+    }
+    function clearBackgrounds() {
+        const on = !!layer && root().hasAttribute('data-icefin-wallpaper');
+        if (!on) {
+            document.querySelectorAll('.icefin-wp-clear, .icefin-wp-hide').forEach((e) => e.classList.remove('icefin-wp-clear', 'icefin-wp-hide'));
+            return;
+        }
+        for (const area of document.querySelectorAll(AREA)) {
+            for (const el of [area, ...area.querySelectorAll('*')]) {
+                if (el.classList.contains('icefin-wp-clear') || el.classList.contains('icefin-wp-hide')) continue;
+                if (el.closest('[role="dialog"], .dialog, .dialogContainer')) continue;
+                if (!el.getClientRects().length || !covers(el)) continue;
+                const cs = getComputedStyle(el);
+                if ((el.tagName === 'CANVAS' || el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'svg') && cs.pointerEvents === 'none') { el.classList.add('icefin-wp-hide'); continue; }
+                const before = getComputedStyle(el, '::before'), after = getComputedStyle(el, '::after');
+                if (opaque(cs) || (before.content !== 'none' && opaque(before)) || (after.content !== 'none' && opaque(after))) el.classList.add('icefin-wp-clear');
+            }
+        }
+    }
+    const scheduleClear = () => { clearTimeout(clearTimer); clearTimer = setTimeout(clearBackgrounds, 250); };
+    new MutationObserver(scheduleClear).observe(document.documentElement, { childList: true, subtree: true });
+
     async function build() {
         const mine = ++token;
         drop();
+        scheduleClear();
         const on = !!info && engineOn();
         if (root()) root().toggleAttribute('data-icefin-wallpaper', on);
         syncBackdrop(on);
@@ -117,7 +158,7 @@ html[data-icefin-wallpaper] { --icefin-color-background: transparent !important;
         } else {
             layer.append(Object.assign(document.createElement('img'), { src: objectUrl, alt: '' }));
         }
-        const mount = () => { (document.body || root()).prepend(layer); applyVisibility(); };
+        const mount = () => { (document.body || root()).prepend(layer); applyVisibility(); scheduleClear(); };
         if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount, { once: true });
     }
 

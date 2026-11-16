@@ -111,6 +111,12 @@ def main():
                 ok = js("document.documentElement.hasAttribute('data-icefin-wallpaper') && !!document.querySelector('#icefin-wallpaper video, #icefin-wallpaper img, #icefin-wallpaper canvas')")
                 time.sleep(0.5)
             check(f"{kind}: the layer is up", bool(ok))
+            time.sleep(1)
+            left = js("""(() => { const out = []; for (const a of document.querySelectorAll('#icefin-theme-root, #icefin-stock-chrome')) for (const el of [a, ...a.querySelectorAll('*')]) {
+                if (!el.getClientRects().length || el.closest('.dialog, [role=dialog]')) continue; const r = el.getBoundingClientRect(); if (r.width < innerWidth * 0.95 || r.height < innerHeight * 0.95) continue;
+                if (getComputedStyle(el).visibility === 'hidden') continue; const cs = getComputedStyle(el); const m = /rgba?\\(([^)]+)\\)/.exec(cs.backgroundColor || ''); const p = m ? m[1].split(/[ ,\\/]+/).filter(Boolean) : [];
+                if ((cs.backgroundImage !== 'none') || (m && (p.length < 4 || parseFloat(p[3]) >= 0.95))) out.push(el.tagName + '.' + el.className); } return out.slice(0, 5); })()""")
+            check(f"{kind}: nothing opaque covers it", not left, json.dumps(left))
             bg = js("getComputedStyle(document.documentElement).getPropertyValue('--icefin-color-background').trim()")
             check(f"{kind}: the theme background token is transparent", bg == "transparent", bg)
             if kind == "video":
