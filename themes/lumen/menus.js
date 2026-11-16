@@ -150,7 +150,7 @@
             rb('search', 'Search', go('#/search'));
             rb('settings', 'Settings', go('#/mypreferencesmenu'));
             rb('home', 'Classic home', go('#/home?icefin=stock'));
-            rb('exit', 'Exit Icefin', () => D.exitAsk());
+            rb('exit', 'Exit IceFin Player', () => D.exitAsk());
             p.append(round);
             setTimeout(() => ofocus(host, tiles[0]), 0);
             D.hints([['OK', 'select'], ['Back', 'close']]);
@@ -196,7 +196,7 @@
         const b = ui.material(el('button', 'lm-mini'), 'bar');
         b.type = 'button';
         b.setAttribute('aria-label', 'Open the sidebar');
-        b.append(D.svg('menu'), el('span', 'lm-mini-name', label || here() || 'Icefin'));
+        b.append(D.svg('menu'), el('span', 'lm-mini-name', label || here() || 'IceFin Player'));
         b.addEventListener('click', () => { T.ctx.sound('select'); D.sidebar(); });
         root.append(b);
         return b;

@@ -211,7 +211,7 @@
             ['Subtitles', go('#/mypreferencessubtitles')], ['Controls', go('#/mypreferencescontrols')],
             ['Classic View', () => { if (ui.settings && ui.settings.classic) ui.settings.classic(); else T.ctx.navigate('#/home?icefin=stock'); }]];
         if (admin) settings.push(['Server dashboard', go('#/dashboard')]);
-        settings.push(['Exit Icefin…', () => D.exitAsk()]);
+        settings.push(['Exit IceFin Player…', () => D.exitAsk()]);
         return [{ name: 'Media', rows: media }, { name: 'Library', rows: library }, { name: 'You', rows: you }, { name: 'Settings', rows: settings }];
     }
     const GUIDE = {

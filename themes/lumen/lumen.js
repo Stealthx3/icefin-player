@@ -300,7 +300,7 @@
                 }
             }
             for (let k = 0; k < S.heroItems.length; k++) { const d = el('i'); dots.append(d); S.hero.dots.push(d); }
-            if (!S.heroItems.length) { hero.classList.add('empty'); S.hero.title.textContent = 'Icefin'; S.hero.over.textContent = '◀ opens the sidebar: Search, your libraries and Settings.'; S.heroButtons = []; btns.textContent = ''; }
+            if (!S.heroItems.length) { hero.classList.add('empty'); S.hero.title.textContent = 'IceFin Player'; S.hero.over.textContent = '◀ opens the sidebar: Search, your libraries and Settings.'; S.heroButtons = []; btns.textContent = ''; }
             S.rows = loaded.filter((x) => x.list.length).map((x) => drawRow({ id: x.id, name: x.title || x.name }, x.list));
             S.rowsBox.append(...S.rows.map((r) => r.sec));
             S.parallax = ui.parallax(S.rowsBox);  // the engine's lift (tokens parallax.lift) and tilt
