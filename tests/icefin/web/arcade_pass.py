@@ -127,7 +127,7 @@ def main():
             act("back"); settle(0.5); act("back")
             page.wait_for("!!document.querySelector('.ac-panel .ac-row')", timeout=10)
             settle(0.4)
-            check("Back on the home asks to exit, Cancel focused", "Exit Icefin?" in js("document.querySelector('.ac-panel-title').textContent") and focused() == "Cancel", str(focused()))
+            check("Back on the home asks to exit, Cancel focused", "Exit IceFin Player?" in js("document.querySelector('.ac-panel-title').textContent") and focused() == "Cancel", str(focused()))
             shot("exit.png")
             act("back"); settle(0.6)
             check("Back again keeps you on the home", js("!document.querySelector('.ac-panel')") is True and "#/home" in js("location.hash"))
@@ -141,7 +141,7 @@ def main():
                 pass
             settle(0.6)
             rows = texts(".ac-mm .ac-li-name")
-            check("the main menu from the left: Home focused, Search, the libraries, Settings, Exit", focused() == "Home" and "Settings" in rows and "Exit Icefin" in rows, str(rows))
+            check("the main menu from the left: Home focused, Search, the libraries, Settings, Exit", focused() == "Home" and "Settings" in rows and "Exit IceFin Player" in rows, str(rows))
             shot("guide.png")
             act("back"); settle(0.6)
             check("Back closes it", js("!document.querySelector('.ac-mm')") is True)

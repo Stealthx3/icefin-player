@@ -31,7 +31,7 @@
     ui.chrome.set('topBar', {
         height: '10.65vh',  // 115 of 1080 lines; the bar floats over the full-bleed hero (styles.css)
         async mount(bar) {
-            bar.append(el('div', 'sp-brand', 'Icefin'));
+            bar.append(el('div', 'sp-brand', 'IceFin Player'));
             const nav = el('div', 'sp-nav');
             bar.append(nav);
             const views = await T.ui.userViews();
