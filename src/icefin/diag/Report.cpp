@@ -97,10 +97,10 @@ QString build(const ReportInputs& in)
 
   QString t;
   QTextStream o(&t);
-  o << "# Icefin Player diagnostics report\n\n";
+  o << "# IceFin Player diagnostics report\n\n";
   o << "Generated " << in.generated << ". Redacted: tokens, passwords, server addresses, home directory and host name.\n\n";
   o << "## Summary\n\n";
-  o << "- **Icefin**: " << orUnknown(in.app.value("version")) << " (jellyfin-desktop " << orUnknown(in.app.value("base")) << " base, jellyfin-web "
+  o << "- **IceFin Player**: " << orUnknown(in.app.value("version")) << " (jellyfin-desktop " << orUnknown(in.app.value("base")) << " base, jellyfin-web "
     << orUnknown(in.app.value("web")) << ", built " << orUnknown(in.app.value("build")) << ")"
     << (in.app.value("flatpak").toBool() ? ", Flatpak " + orUnknown(in.app.value("runtime")) : QString(", not a Flatpak")) << "\n";
   o << "- **System**: " << orUnknown(in.system.value("os")) << ", kernel " << orUnknown(in.system.value("kernel")) << ", "
@@ -134,13 +134,13 @@ QString build(const ReportInputs& in)
   for (const QVariant& v : in.screens) {
     const QVariantMap s = v.toMap();
     o << "- " << orUnknown(s.value("name")) << ": " << orUnknown(s.value("size")) << " @ " << orUnknown(s.value("refresh")) << " Hz, scale "
-      << orUnknown(s.value("dpr")) << (s.value("primary").toBool() ? " (primary)" : "") << (s.value("window").toBool() ? " (Icefin's window)" : "")
+      << orUnknown(s.value("dpr")) << (s.value("primary").toBool() ? " (primary)" : "") << (s.value("window").toBool() ? " (IceFin Player's window)" : "")
       << "\n";
   }
   o << "\n## Now playing\n\n";
   if (in.nowPlaying.trimmed().isEmpty()) o << "Nothing.\n";
   else o << "```\n" << in.nowPlaying.trimmed() << "\n```\n";
-  o << "\n## Recent log\n\nIcefin's lines, the player's state changes and every warning (newest last, up to " << in.recentLog.size() << " lines).\n\n";
+  o << "\n## Recent log\n\nIceFin Player's lines, the player's state changes and every warning (newest last, up to " << in.recentLog.size() << " lines).\n\n";
   o << "```\n" << (in.recentLog.isEmpty() ? QString("(none)") : in.recentLog.join('\n')) << "\n```\n";
   o << "\n## Capability model\n\n```json\n" << json(caps) << "\n```\n";
   o << "\n## Audio\n\n```json\n" << json(in.audio) << "\n```\n";
