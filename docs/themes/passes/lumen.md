@@ -542,3 +542,30 @@ The design for the pass: 26 boards on the "Lumen Screens" canvas, https://claude
 | 8 | Player, menu, music, sign-in, framed pages | tests | lumen_pass.py |
 | 8 | Polish tests on the user's own Icefin | not in this pass | the user chose the lab for Lumen's walks and tests |
 | 8 | A host walk and Gate 2 | board | Gate 2 on this canvas's Built page |
+
+## Build notes (2026-11-16, after Gate 1 "Approved, build it" with every pick as drawn)
+
+- **How it's built (decision 9a).** Lumen is the shared modules (as in Orbit, Mosaic, Arcade and Harbor) under its
+  own names (`window.icefinLumen`, `lm-` classes, `?lm=`), with `menus.js` (the sidebar over any screen and quick
+  settings, decision 1a) and `lumen.js` (the home: the paging hero and the rows, decision 2a). ◀ from the first column
+  of any screen, the guide button, a long press of View or F1 open the sidebar; ▶ or Back close it. The collapsed
+  sidebar is a glass pill top left on every shared screen.
+- **The look.** Arcade's stylesheet for the shared structure, then Lumen's own section: black under the focused item's
+  art, frosted glass (`ui.material`, opaque under 50 fps) for everything that floats, white pills for focus on words,
+  cards that lift 10 % and tilt with a moving highlight (`ui.parallax`, the `parallax.lift` token), the grids on the
+  published sizes (posters 260 × 390, 40 apart, six across; 16:9 cards 410 × 231). Inter (OFL, `fonts/OFL.txt`)
+  ships with the theme (decision 4a).
+- **Search (decision 8a).** The engine's keyboard is laid out as the target's letter row across the top (a to z, then
+  the digits and symbols, then space, delete and Done), the results under it.
+- **Sounds and music (decision 5a).** Lumen's five sounds from 0.2.0 kept; new music (`theme_music/lumen.py`, D-flat
+  major, bells and e-piano over a pad, no drums), rendered in the lab; soundboard
+  https://claude.ai/artifact/6YC6vCCznSQEB4dRHp4RsC for your ear before the merge.
+- **Tests.** `lumen_pass.py` passes (0 failing); `theme_lumen.py` rewritten for the new home and passing;
+  `clone_layout.py --theme lumen` passes against the updated reference (the sidebar pill, the hero's title, posters
+  and 16:9 cards on the published grids). Walk 2: 57 of 69 drawn, the same 5 gaps as the other passes (4 framed
+  preference pages, `player-settings`), 0 failing.
+- **Not as drawn.** The item menu and pickers open centred (the shared panel), not beside the item; Live TV's top card
+  is the shared guide's programme panel (no Watch and Record pills on it); Settings' left half is the shared side
+  panel (the entry's glyph and what it does) rather than a large picture; sign-in keeps the shared screens in Lumen's
+  glass rather than a row of round portraits; the hero falls back to an item's other art when it has no backdrop (the
+  lab's test media has none); Client settings is the engine's page.
