@@ -24,7 +24,7 @@ html[data-icefin-wallpaper] { --icefin-color-background: transparent !important;
     let token = 0;          // guards a slow load against a newer change
     let backdropHidden = false;
 
-    const engineOn = () => !!root() && root().hasAttribute('data-icefin-theme');
+    const engineOn = () => !!root() && root().classList.contains('icefin-themed');
     const playing = () => !!root() && (root().hasAttribute('data-icefin-osd-playing') || /^#\/video\b/.test(location.hash));
     const reduced = () => {
         try { return !!(window.icefinTheme && window.icefinTheme.ui && window.icefinTheme.ui.motion.reduced()); }
@@ -141,7 +141,7 @@ html[data-icefin-wallpaper] { --icefin-color-background: transparent !important;
         const start = () => {
             ensureStyle();
             new MutationObserver(react).observe(root(), { attributes: true,
-                attributeFilter: ['data-icefin-theme', 'data-icefin-osd-playing', 'data-icefin-motion', 'data-icefin-backdrop'] });
+                attributeFilter: ['class', 'data-icefin-osd-playing', 'data-icefin-motion', 'data-icefin-backdrop'] });
             window.addEventListener('hashchange', react);
             if (window.matchMedia) {
                 const mq = window.matchMedia('(prefers-reduced-motion: reduce)');

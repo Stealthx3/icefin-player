@@ -94,7 +94,7 @@ def main():
             js("location.hash = '#/home'; location.reload(); true")
             time.sleep(8)
             page.reconnect()
-            page.wait_for("!!window.icefinTheme && !!window.icefinTheme.ui && !!document.documentElement.getAttribute('data-icefin-theme')", timeout=90)
+            page.wait_for("!!window.icefinTheme && !!window.icefinTheme.ui && document.documentElement.classList.contains('icefin-themed')", timeout=90)
             time.sleep(3)
         tid = a.themes.split(",")[0]
         check(f"{tid} loads", switch(tid))
