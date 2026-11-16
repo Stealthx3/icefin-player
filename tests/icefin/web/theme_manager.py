@@ -38,8 +38,12 @@ def make_package(work, name, theme_id, scripts=False, top=True, extra=None):
     json.dump(meta, open(os.path.join(d, "theme.json"), "w"))
     z = os.path.join(work, f"{theme_id}{'-s' if scripts else ''}.zip")
     with zipfile.ZipFile(z, "w") as f:
-        for fn in sorted(os.listdir(d)):
-            f.write(os.path.join(d, fn), (theme_id + "/" if top else "") + fn)
+        # every file, folders too (Baseline's sounds/ and music/, 9.51)
+        for dp, dns, fns in os.walk(d):
+            dns.sort()
+            for fn in sorted(fns):
+                rel = os.path.relpath(os.path.join(dp, fn), d).replace(os.sep, "/")
+                f.write(os.path.join(dp, fn), (theme_id + "/" if top else "") + rel)
         if extra:
             f.writestr(extra, "x")
     return z
