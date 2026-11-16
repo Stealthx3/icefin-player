@@ -8,7 +8,6 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Spark, Marquee and Plum are left out of the built-in themes for now; they return in a later update. A device that used one of them shows the stock look until another theme is chosen.
 
 ### Added
-- Every theme draws the Display, Playback, Subtitles and Controls preference pages in its own style, laid out like its Client Settings; a change saves at once.
 - A device wallpaper (animated SVG, looping MP4 or WebM, or a picture) behind any theme, chosen in Client Settings under Theme.
 - Steam artwork for adding IceFin Player as a non-Steam game, with steps in docs/INSTALL.md.
 - Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
@@ -24,6 +23,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Client Settings -> Hardware -> Copy report: a diagnostics report for bug reports (versions, GPU and decoding, display and HDR, audio and receiver, recent log), with server addresses, sign-in tokens, user, host and home folder names removed. The bug report form asks for it.
 - Audio: Receiver in Standby (Switch When It Wakes, Always PCM, Keep Bitstream). By default a receiver that is in standby gets PCM, and the playing track switches to the bitstream 4 seconds after the receiver wakes.
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
+- Every theme draws the Display, Playback, Subtitles and Controls preference pages in its own style, laid out like its Client Settings; a change saves at once.
 
 ### Changed
 - The app is now written IceFin Player (window title, app menus and stores, the client name your server shows, the diagnostics report). Servers that list devices show the new name for this client; nothing else changes.
