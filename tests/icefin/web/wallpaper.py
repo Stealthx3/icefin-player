@@ -111,6 +111,12 @@ def main():
                 ok = js("document.documentElement.hasAttribute('data-icefin-wallpaper') && !!document.querySelector('#icefin-wallpaper video, #icefin-wallpaper img, #icefin-wallpaper canvas')")
                 time.sleep(0.5)
             check(f"{kind}: the layer is up", bool(ok))
+            time.sleep(2)
+            diag = js("""(() => { const l = document.getElementById('icefin-wallpaper'); if (!l) return {}; const c = l.firstElementChild; const r = l.getBoundingClientRect();
+                return { display: getComputedStyle(l).display, z: getComputedStyle(l).zIndex, rect: [r.width, r.height], parent: l.parentNode && l.parentNode.tagName, child: c && c.tagName,
+                  src: c && (c.currentSrc || c.src || '').slice(0, 40), natural: c && (c.naturalWidth || c.videoWidth || c.width || 0), ready: c && (c.readyState !== undefined ? c.readyState : c.complete),
+                  err: c && c.error ? c.error.code : null, playing: document.documentElement.hasAttribute('data-icefin-osd-playing') }; })()""")
+            check(f"{kind}: the picture loads and shows", isinstance(diag, dict) and diag.get("display") != "none" and (diag.get("natural") or 0) > 0, json.dumps(diag))
             time.sleep(1)
             left = js("""(() => { const out = []; for (const a of document.querySelectorAll('#icefin-theme-root, #icefin-stock-chrome')) for (const el of [a, ...a.querySelectorAll('*')]) {
                 if (!el.getClientRects().length || el.closest('.dialog, [role=dialog]')) continue; const r = el.getBoundingClientRect(); if (r.width < innerWidth * 0.95 || r.height < innerHeight * 0.95) continue;
