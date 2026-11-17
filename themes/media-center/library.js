@@ -357,7 +357,9 @@
                 await more();
                 if (!L || L.root !== root) return;
                 const home = M.flyHome ? M.flyHome((id) => L.tiles.find((x) => x.mcItem && x.mcItem.Id === id) || null) : null;
-                if (home || L.tiles[0]) T.ctx.focus(home || L.tiles[0]);
+                // no flight (an item without art, a tab or Sort): Back still lands on what opened the next screen (kit.js)
+                const back = home || (M.returnTo ? M.returnTo(root) : null);
+                if (back || L.tiles[0]) T.ctx.focus(back || L.tiles[0]);
                 root.setAttribute('data-mc-ready', '1');
             },
             onBack() {

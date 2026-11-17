@@ -24,6 +24,108 @@
     M.client = () => T.ctx.apiClient();
     M.sid = () => { const c = M.client(); return c ? c.serverId() : ''; };
     M.details = (id) => T.ctx.navigate(`#/details?id=${id}&serverId=${M.sid()}`);
+    // ---- Back lands on the control that opened the next screen (QA pre-pass) ----
+    // Each history entry (the Navigation API's key for it, with the hash) remembers the last control focused or clicked
+    // on it. Back to that entry, the screen that mounts gets that control back once it is drawn: within 4 s, and never
+    // after the user has moved. A screen that lays out its own focus asks first (M.returnTo(root): the start strip,
+    // which would otherwise slide twice). A new visit to a route is a new entry and starts fresh. Back and Home
+    // themselves are not remembered; the side panel and dialogs return focus themselves (the engine's overlay).
+    M.backFocus = (() => {
+        const memo = new Map();
+        const here = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key + ' ' : '') + location.hash;
+        const mine = () => { const K = window.icefinMediaCenter; return K === M && T.active() && T.active().id === 'media-center'; };
+        let cur = null, prev = null, pending = null, lastHash = here(), obs = null, timer = null, raf = 0;
+        const rootEl = () => document.getElementById('icefin-theme-root');
+        const idOf = (e) => (e.dataset && (e.dataset.id || e.dataset.itemId)) || (e.mcItem && e.mcItem.Id) || '';
+        const labelOf = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+        const groupOf = (e) => { const g = e.closest('[data-mc-group]'); return g ? g.getAttribute('data-mc-group') : ''; };
+        const NAV = '.mc-round-back, .mc-round-home, [data-action=back], [data-action=home]';
+        const describe = (e) => ({ id: idOf(e), action: e.getAttribute('data-action') || '', tab: (e.dataset && e.dataset.tab) || '', label: labelOf(e), group: groupOf(e) });
+        function record(e) {
+            const r = rootEl();
+            const t = e && e.closest && e.closest('[data-icefin-focus]');
+            if (!mine() || !r || !t || !r.contains(t) || t.matches(NAV)) return;
+            const h = here();
+            if (cur && cur.hash !== h) prev = cur;
+            cur = { hash: h, d: describe(t) };
+        }
+        function find(r, d) {
+            const all = [...r.querySelectorAll('[data-icefin-focus]')].filter((e) => e.getClientRects().length && groupOf(e) === d.group && !e.matches(NAV));
+            return (d.id && all.find((e) => idOf(e) === d.id))
+                || (d.action && all.find((e) => e.getAttribute('data-action') === d.action))
+                || (d.tab && all.find((e) => e.dataset && e.dataset.tab === d.tab))
+                || (!d.id && d.label && all.find((e) => labelOf(e) === d.label)) || null;
+        }
+        function stop() {
+            pending = null;
+            if (obs) obs.disconnect();
+            obs = null;
+            clearTimeout(timer);
+            if (raf) cancelAnimationFrame(raf);
+            raf = 0;
+        }
+        function attempt() {
+            raf = 0;
+            const p = pending, r = rootEl();
+            if (!p || here() !== p.hash) { stop(); return; }
+            if (!r || r.hidden) return;
+            const e = find(r, p.d);
+            if (!e) return;
+            if (T.ctx.focused() !== e) T.ctx.focus(e);
+            stop();
+        }
+        const soon = () => { if (!raf) raf = requestAnimationFrame(attempt); };
+        // the route changed: file the control used on the one left, and look up the one arrived at
+        function routed() {
+            const h = here();
+            if (h === lastHash) return;
+            const old = lastHash;
+            lastHash = h;
+            const c = cur && cur.hash === old ? cur : prev && prev.hash === old ? prev : null;
+            if (c) {
+                memo.delete(old);
+                memo.set(old, c);
+                if (memo.size > 200) memo.delete(memo.keys().next().value);
+            }
+            stop();
+            const entry = memo.get(h);
+            if (!entry || !mine()) return;
+            pending = { hash: h, d: entry.d };
+            const r = rootEl();
+            if (r) { obs = new MutationObserver(soon); obs.observe(r, { childList: true, subtree: true }); }
+            timer = setTimeout(stop, 4000);
+            setTimeout(soon, 0);
+        }
+        const onFocus = (e) => record(e.target);
+        const onInput = (e) => { if (e.type !== 'mousemove' || e.movementX || e.movementY) stop(); };
+        const INPUT = ['keydown', 'mousedown', 'wheel', 'mousemove'];
+        const off = () => {
+            window.removeEventListener('popstate', routed, true);
+            window.removeEventListener('hashchange', routed, true);
+            document.removeEventListener('icefin-focus', onFocus, true);
+            document.removeEventListener('click', onFocus, true);
+            for (const t of INPUT) window.removeEventListener(t, onInput, true);
+            stop();
+        };
+        if (window.icefinMediaCenterBackFocusOff) window.icefinMediaCenterBackFocusOff();  // the theme loaded again: one set of listeners
+        window.icefinMediaCenterBackFocusOff = off;
+        window.addEventListener('popstate', routed, true);
+        window.addEventListener('hashchange', routed, true);
+        document.addEventListener('icefin-focus', onFocus, true);
+        document.addEventListener('click', onFocus, true);
+        for (const t of INPUT) window.addEventListener(t, onInput, true);
+        return {
+            stop,
+            // the control to give the focus back to on this screen as it mounts (and the generic pass stands down), or null
+            take(r) {
+                if (!pending || pending.hash !== here() || !r) return null;
+                const e = find(r, pending.d);
+                if (e) stop();
+                return e;
+            }
+        };
+    })();
+    M.returnTo = (r) => M.backFocus.take(r);
     M.time = (d) => (d || new Date()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     M.clock = (el) => { const tick = () => { el.textContent = M.time(); }; tick(); return setInterval(tick, 15000); };
     M.svg = (path, cls) => {
