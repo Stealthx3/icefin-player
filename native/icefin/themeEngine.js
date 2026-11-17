@@ -626,6 +626,19 @@
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }
+        // The theme's overlay over jellyfin-web's own page (a sheet opened from a framed page's Play on) is modal there
+        // too, so the keys drive it as the remote does. They went to the page underneath: Escape left the page with the
+        // sheet still up, and the arrows moved a focus inside the page that nobody could see (QA, the keyboard walk).
+        const ov = !current && window.icefinTheme && window.icefinTheme.ui && window.icefinTheme.ui.overlay;
+        if (ov && ov.isOpen && ov.isOpen()) {
+            const t1 = e.target;
+            if (t1 && t1 !== document.body && t1 !== document.documentElement && t1.closest && !t1.closest('#icefin-theme-overlay, #icefin-osk')) return;
+            if (foreignDialog()) return;
+            if (t1 && (t1.isContentEditable || (t1.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit)$/i.test(t1.type || '')) || t1.tagName === 'TEXTAREA')
+                && (action === 'left' || action === 'right' || e.key === 'Backspace')) return;
+            if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            return;
+        }
         if (!current) {
             const t0 = e.target;
             const typing = t0 && (t0.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t0.tagName));
