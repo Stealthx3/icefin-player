@@ -979,6 +979,9 @@ class Walker:
         """Back until the screen is `k` again with nothing open (a dialog, sheet or the on-screen keyboard on the same
         route counts: keep pressing). 'ok' | 'root' (the home, where Back asks to exit) | 'fail'."""
         kk = opened
+        # already there (a dialog pass closed the dialog itself): pressing Back now would leave the screen (QA 1)
+        if self.screen_key(self.screen()) == k:
+            return "ok", k
         for i in range(6):
             if self.late() and i > 2:
                 break
