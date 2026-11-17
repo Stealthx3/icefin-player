@@ -1247,7 +1247,11 @@ class Walker:
 
 # ---------------------------------------------------------------- merging the inputs of one theme
 def rt(screen):
-    return base(screen).split(" ")[0]
+    """A screen's route for matching against the control: jellyfin-web's own page inside a theme (?icefin=stock, a
+    theme's Classic home and the rest) is the same page as stock's, so the marker is dropped (QA 1)."""
+    r = base(screen).split(" ")[0]
+    r = re.sub(r"([?&])icefin=stock(&|$)", lambda m: m.group(1) if m.group(2) else "", r)
+    return r.rstrip("?&")
 
 
 def merge(theme, reps):
