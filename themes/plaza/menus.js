@@ -531,7 +531,11 @@
 
     // ---- Live TV: channels, the guide, recordings, the schedule ----
     function liveTv() {
-        let F = null, grid = null, guide = null, guideEl = null;
+        let F = null, grid = null, guide = null, guideEl = null, tabNow = 'channels';
+        // Back from a channel's video (or a programme's details) returns to the tab it was opened from, the guide too
+        // (QA 1): the tab is kept when the screen is left for #/video or #/details, and taken back only by a return to the
+        // same history entry (Back leaves history.length as it was; a fresh visit from the home adds entries).
+        let comeBack = null;
         const c = () => P.client(), uid = () => P.uid();
         const playChannel = (ch) => P.play(ch, true);
         // each channel on the page with what comes on next (one request for the page)
@@ -623,6 +627,7 @@
             if (head) new MutationObserver(dayOf).observe(head, { attributes: true, attributeFilter: ['data-start'] });
         }
         function show(id, focus) {
+            tabNow = id;
             if (grid) { grid.destroy(); grid = null; }
             if (guide) { guide.stop(); guide = null; }
             if (guideEl) { guideEl.remove(); guideEl = null; }
@@ -636,7 +641,10 @@
             mount(root) {
                 ui.pointerFirst(true);
                 F = frame(root, { view: 'livetv', kind: 'livetv', name: 'Live TV' });
-                const first = P.params().get('pztab') === 'guide' ? 'guide' : 'channels';
+                F.hash = location.hash;
+                const back = comeBack && comeBack.at === history.length && comeBack.hash === location.hash ? comeBack.tab : null;
+                comeBack = null;
+                const first = P.params().get('pztab') === 'guide' ? 'guide' : back || 'channels';
                 F.setTabs([{ id: 'channels', label: 'Channels' }, { id: 'guide', label: 'Guide' }, { id: 'recordings', label: 'Recordings' }, { id: 'schedule', label: 'Schedule' }], first, (id) => show(id, false));
                 show(first, true);
             },
@@ -649,7 +657,11 @@
                 return common(a, ctx);
             },
             onBack() { goBack(); return true; },
-            unmount() { if (guide) guide.stop(); if (F) F.stop(); ui.pointerFirst(false); F = null; grid = null; guide = null; guideEl = null; }
+            unmount() {
+                // the route has changed already: leaving for a video or a details page keeps the tab for the way back
+                comeBack = F && /^#\/(video|details)\b/.test(location.hash) ? { tab: tabNow, at: history.length, hash: F.hash } : null;
+                if (guide) guide.stop(); if (F) F.stop(); ui.pointerFirst(false); F = null; grid = null; guide = null; guideEl = null;
+            }
         };
         return screen;
     }

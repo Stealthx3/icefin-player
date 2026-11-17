@@ -401,7 +401,8 @@
         S.root.removeAttribute('data-pz-channel');
         if (T.ctx.music) T.ctx.music.stopJingle(leaving ? 150 : 350);
         if (T.ctx.music && T.ctx.music.hold) T.ctx.music.hold(false);
-        if (leaving) { card.remove(); dim.remove(); return true; }
+        // leaving (Open, Play) can come while the card still zooms open: its end never clears busy then (QA 1)
+        if (leaving) { card.remove(); dim.remove(); S.busy = false; return true; }
         const page = t ? Number(t.getAttribute('data-pz-page')) : S.page;
         if (t && page !== S.page) show(page, false);
         const ms = ui.motion.duration(CLOSE_MS);
@@ -650,7 +651,9 @@
             if (!S) return false;
             P.sawAction();
             if (action === 'search') { ctx.navigate('#/search'); return true; }
-            if (S.busy) return true;
+            // While a card zooms open or closes the arrows wait; OK still presses what has focus (the card's Open or
+            // Play, a bar button), else a quick Enter or Ⓐ after opening a channel did nothing (QA 1)
+            if (S.busy && action !== 'enter' && action !== 'select') return true;
             if (S.drag) {
                 const d = S.drag;
                 if (action === 'enter' || action === 'select' || action === 'menu') { drop(d.mode === 'pad' ? S.tiles.indexOf(ctx.focused()) : d.over); return true; }
