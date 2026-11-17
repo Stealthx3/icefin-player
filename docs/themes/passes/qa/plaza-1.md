@@ -12,6 +12,18 @@ From the lab smoke walk of input_walk.py (keys, mouse, pad-xbox, 4 min each; the
       screen. The home now refocuses the bar control that opened it (plaza.js, `P.homeReturn`).
 - [x] Back on Choose a server, opened from the home's server button while signed in, stayed there. It now goes back
       (signin.js); while signing in, Back still has nowhere to go.
+- [x] Live TV playback dropped the theme's player for jellyfin-web's (a list the idle player snapshot lacked):
+      engine #201 (playerControls.js) and player.js guard every list; Back returns to the Live TV tab it left (menus.js).
+- [x] Enter and A were swallowed while a channel card zoomed open (plaza.js `S.busy`), and a card closed mid-zoom
+      left it set; the keyboard ignored the theme's screen whenever a jellyfin-web form dialog was left in the page,
+      even closed (engine #201).
+- [x] Back on Classic home (jellyfin-web's home opened from Settings) went nowhere: engine #200.
+- [ ] Pad A on the list screen's All / Play all / Shuffle reported dead in the lab; no cause found in the code
+      ("All" is the tab already showing). Recheck on the host walk.
+- [ ] A book's "Add to favorites" (jellyfin-web's details page in Plaza's frame) not reached by the pad in the lab;
+      no exclusion rule matches. Recheck on the host walk with the focus trace.
+- [ ] jellyfin-web's own pages (?icefin=stock): focus after Back and focus rings; the host walk's stock control
+      says which are jellyfin-web's own behaviour.
 
 ## 1. Themed elements: screens and surfaces
 
