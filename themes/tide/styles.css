@@ -3,7 +3,7 @@
    entry centred on (29.22vw, 46.76vh), about 11.6vh tall, its name from x 39.53vw; the next entry 16.3vh lower, then a
    7.22vh pitch. Colours come from tokens (the month's palette, dimmed by the hour). Motion: MotionTimings board. */
 html[data-icefin-theme] body { background: var(--icefin-color-background); font-family: "Noto Sans", "Open Sans", sans-serif; }
-:root { --td-x: 29.22vw; --td-cy: 46.76vh; --td-pitch: 7.22vh; --td-bar-y: 26.39vh; --td-step: 10.99vw; --td-name: 39.53vw;
+:root { --td-x: 29.22vw; --td-cy: 46.76vh; --td-pitch: 7.22vh; --td-bar-y: 26.39vh; --td-step: 10.99vw; --td-name: 39.53vw; --td-e-l: calc(var(--td-x) - 11vh);
   --td-ease: cubic-bezier(0.25, 0.8, 0.3, 1); --td-light: var(--icefin-color-waveLine, #cfe6ff);
   --td-glow: color-mix(in srgb, var(--td-light) 70%, transparent); }
 
@@ -11,7 +11,8 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 [data-td-screen] [hidden], .td-panel-host [hidden], .td-clock [hidden] { display: none !important; }
 
 /* ---- the ground ---- */
-[data-td-screen] { position: absolute; inset: 0; overflow: hidden !important; color: var(--icefin-color-text); font-weight: 300;
+/* clip, not hidden: nothing (a scrollIntoView, a focus) can scroll the screen; entries below the fold stay below it */
+[data-td-screen] { position: absolute; inset: 0; overflow: clip !important; color: var(--icefin-color-text); font-weight: 300;
   background: linear-gradient(180deg, var(--icefin-color-waveTop) 0%, var(--icefin-color-waveBottom) 100%); }
 .td-wave { position: absolute; inset: 0; width: 100%; height: 100%; }
 .td-shade { position: absolute; inset: 0; background: var(--icefin-color-shade); pointer-events: none; }
@@ -42,24 +43,30 @@ html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { disp
 .td-cat.current svg { width: 7.2vh; height: 7.2vh; filter: drop-shadow(0 0 0.5vh var(--td-glow)); }
 .td-cat.current .td-cat-label { opacity: 1; }
 .td-cat:hover { opacity: 0.8; }
+/* the current category with focus (▲ from the column's first entry): its glow and name lit, the column's entry quieter */
+.td-cat.current.icefin-focused { filter: drop-shadow(0 0 1.2vh var(--td-glow)); }
+.td-cat.current.icefin-focused .td-cat-label { font-weight: 400; text-shadow: 0 0 0.6em var(--td-glow); }
+[data-td-at="cat"] .td-e.focused, [data-td-at="aside"] .td-e.focused { opacity: 0.7; }
+[data-td-at="cat"] .td-e.focused .td-e-thumb, [data-td-at="aside"] .td-e.focused .td-e-thumb { animation: none; }
+.td-server.icefin-focused { color: var(--icefin-color-text); text-shadow: 0 0 0.6em var(--td-glow); }
 
 /* ---- the column ---- */
 .td-col { position: absolute; inset: 0; z-index: 1;
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 8vh, #000 92vh, transparent 100vh); mask-image: linear-gradient(180deg, transparent 0, #000 8vh, #000 92vh, transparent 100vh); }
-.td-e { position: absolute; left: 0; right: 0; height: 0; top: var(--td-cy); opacity: 0.7; transition: top 180ms var(--td-ease), opacity 180ms; cursor: pointer;
-  --w: 6vh; --h: 6vh; }
+.td-e { position: absolute; left: var(--td-e-l); right: 3vw; height: var(--td-pitch); margin-top: calc(var(--td-pitch) / -2); top: var(--td-cy); opacity: 0.7;
+  transition: top 180ms var(--td-ease), opacity 180ms; cursor: pointer; --w: 6vh; --h: 6vh; }
 .td-e.td-fresh, .td-e.td-fresh .td-e-thumb, .td-e.td-fresh .td-e-text { transition: none !important; }
 .td-e:not(.focused):not(.above) { top: calc(var(--td-cy) + var(--td-off) * var(--td-pitch) + 9.08vh); }
 .td-nested .td-e.above { top: calc(var(--td-cy) + var(--td-off) * var(--td-pitch) - 9.08vh); opacity: 0.5; }
 .td-in-bar .td-e.above { top: calc(var(--td-cy) + var(--td-off) * var(--td-pitch) - 28.44vh); opacity: 0.45; }
 .td-e.far { opacity: 0.3; }
-.td-e.focused { opacity: 1; --w: 11.6vh; --h: 11.6vh; }
+.td-e.focused { opacity: 1; --w: 11.6vh; --h: 11.6vh; height: 11.6vh; margin-top: -5.8vh; }
 .td-e:hover:not(.focused) { opacity: 0.9; }
 .td-e.shape-poster { --w: 4vh; }
 .td-e.shape-poster.focused { --w: 7.7vh; }
 .td-e.shape-wide { --w: 10.7vh; }
 .td-e.shape-wide.focused { --w: 20.6vh; }
-.td-e-thumb { position: absolute; left: var(--td-x); top: 0; width: var(--w); height: var(--h); transform: translate(-50%, -50%); border-radius: var(--icefin-shape-cardRadius, 0.3vh);
+.td-e-thumb { position: absolute; left: calc(var(--td-x) - var(--td-e-l)); top: 50%; width: var(--w); height: var(--h); transform: translate(-50%, -50%); border-radius: var(--icefin-shape-cardRadius, 0.3vh);
   display: flex; align-items: center; justify-content: center; background: center / cover no-repeat; transition: width 180ms var(--td-ease), height 180ms var(--td-ease), box-shadow 180ms; }
 .td-e-thumb.has-art { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18); background-color: var(--icefin-color-surface); }
 .td-e.shape-round .td-e-thumb { border-radius: 50%; }
@@ -72,11 +79,11 @@ html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { disp
 .td-e-prog { position: absolute; left: 8%; right: 8%; bottom: 6%; height: 0.35vh; min-height: 2px; background: rgb(255 255 255 / 0.25); }
 .td-e-prog b { display: block; height: 100%; background: var(--td-light); }
 .td-e-played { position: absolute; right: 5%; top: 5%; font-style: normal; font-size: calc(var(--h) * 0.16); color: var(--td-light); text-shadow: 0 0 0.4em #000; }
-.td-e-text { position: absolute; left: 33.4vw; top: 0; transform: translateY(-50%); max-width: 46vw; white-space: nowrap; transition: left 180ms var(--td-ease); }
+.td-e-text { position: absolute; left: calc(33.4vw - var(--td-e-l)); top: 50%; transform: translateY(-50%); max-width: 46vw; white-space: nowrap; transition: left 180ms var(--td-ease); }
 .td-e-name { font-size: 1.33vw; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; }
 .td-e-sub { font-size: 0.9vw; color: var(--icefin-color-textSecondary); margin-top: 0.2vh; overflow: hidden; text-overflow: ellipsis; }
 .td-e-line { display: none; }
-.td-e.focused .td-e-text { left: var(--td-name); top: -4.4vh; transform: none; white-space: normal; max-width: 40vw; }
+.td-e.focused .td-e-text { left: calc(var(--td-name) - var(--td-e-l)); top: calc(50% - 4.4vh); transform: none; white-space: normal; max-width: 40vw; }
 .td-e.focused .td-e-name { font-size: 1.72vw; font-weight: 400; text-shadow: 0 0 0.6em var(--td-glow); white-space: nowrap; }
 .td-e.focused .td-e-line { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.95vw; line-height: 1.5;
   color: rgb(255 255 255 / 0.78); margin-top: 1vh; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); }
@@ -407,7 +414,7 @@ html[data-icefin-theme] .toast { background: rgb(2 6 14 / 0.8) !important; borde
 .td-qc-show { font-size: 3.4vw; letter-spacing: 0.4em; margin: 2vh 0; text-shadow: 0 0 0.5em var(--td-glow); font-variant-numeric: tabular-nums; }
 
 /* entries are buttons (reachable by the pointer and the walk): no button look of their own */
-button.td-e { display: block; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; width: 100%; outline: none; }
+button.td-e { display: block; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; outline: none; }
 
 /* ---- the on-screen keyboard (Search board): a dark band across the bottom, keys as light words ---- */
 html[data-icefin-theme] #icefin-osk { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; padding: 2.6vh 19.5vw 3vh; box-sizing: border-box;

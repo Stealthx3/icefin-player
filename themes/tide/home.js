@@ -91,7 +91,9 @@
         name: 'home',
         key: () => '#/home',
         root() {
-            const bar = [{ label: 'Settings', icon: 'settings', count: false, load: D.settingsEntries }];
+            // each category opens its own screen too (OK on the category, ▲ from its first entry, or a click on it): the
+            // preferences, the library's own route, search (QA pre-pass: every screen from the home, by every input)
+            const bar = [{ label: 'Settings', icon: 'settings', count: false, load: D.settingsEntries, go: go('#/mypreferencesmenu') }];
             const R = { bar, at: 1, deferred: true, onBack: () => { D.exitAsk(); return true; } };
             // the libraries arrive after mount (ui.userViews waits for the session)
             R.loadViews = async () => {
@@ -99,18 +101,19 @@
                 const prefs = D.homePrefs();
                 for (const v of D.orderedViews(views, prefs)) {
                     if ((prefs.hidden || []).includes(v.Id)) continue;
-                    bar.push({ label: v.Name, icon: D.kindIcon(v.CollectionType), view: v, count: false, load: () => D.libraryEntries(v, { peek: prefs.peek !== false }) });
+                    bar.push({ label: v.Name, icon: D.kindIcon(v.CollectionType), view: v, count: false, load: () => D.libraryEntries(v, { peek: prefs.peek !== false }),
+                        go: () => T.ctx.navigate(D.libraryHash ? D.libraryHash(v) : '#/home') });
                 }
-                bar.push({ label: 'Search', icon: 'search', count: false, load: async () => [{ name: 'Search', sub: 'films, shows, music and people', icon: 'search', shape: 'icon', go: go('#/search') }] });
+                bar.push({ label: 'Search', icon: 'search', count: false, go: go('#/search'), load: async () => [{ name: 'Search', sub: 'films, shows, music and people', icon: 'search', shape: 'icon', go: go('#/search') }] });
             };
             return R;
         },
         async mounted(C, root) {
             const r = C.S.stack[0];
             const box = root.querySelector('.td-clock');
-            const srv = el('button', 'td-server', '● …');
+            const srv = D.focusable(el('button', 'td-server', '● …'));  // a hover focuses it; Back from Choose a server lands on it
             srv.type = 'button';
-            srv.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.selectServer(); });
+            srv.addEventListener('click', () => { T.ctx.focus(srv); T.ctx.sound('select'); T.ctx.selectServer(); });
             box.insertBefore(srv, box.querySelector('.td-clock-extra'));
             ping();
             clearInterval(timer);

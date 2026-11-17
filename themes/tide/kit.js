@@ -307,6 +307,13 @@
     D.keys = (e) => {
         if (!T.active() || T.active().id !== 'tide' || window.icefinTide !== D) return;
         if (D.framedKeys && D.framedKeys(e)) return;  // the arrows on a framed jellyfin-web page (settings.js)
+        // Tab and Shift+Tab on a column screen step the column as ▼ and ▲ (only its focused entry is a focus target)
+        const C = D.currentColumn;
+        if (e.key === 'Tab' && C && C.S.alive && !isText(e.target) && !(D.panel && D.panel.isOpen()) && T.handleAction) {
+            e.preventDefault();
+            T.handleAction(e.shiftKey ? 'up' : 'down');
+            return;
+        }
         if (e.key !== 'Backspace' && e.key !== 'Escape') return;
         if ((e.key === 'Backspace' && isText(e.target)) || (D.panel && D.panel.isOpen())) return;
         if (document.documentElement.hasAttribute('data-icefin-dashboard') || /^#\/video\b/.test(location.hash)) return;

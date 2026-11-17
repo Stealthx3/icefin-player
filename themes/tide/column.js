@@ -12,6 +12,12 @@
 //           item, open() -> level, go(), play(), menu(), letter, focusFirst}
 // The stack lives in memory per route (D.memory), so Back from a details screen lands on the same entry.
 //
+// Where focus is (QA pre-pass): the column's entry at the fixed point (S.at 'col'), the current category of the cross
+// bar ('cat': ▲ from the column's first entry; ◀ ▶ step along the bar, ▼ goes back down, OK or a click opens the
+// category's own screen: a library, the preferences, search), or another control of the screen ('aside': the server
+// under the clock). It is kept with the stack, so Back lands on the control that opened the next screen. A focus
+// asked for from outside (an entry off the fixed point, another category) brings it to the fixed point.
+//
 // Motion (MotionColumns, MotionTimings; the six principles): a column step 180 ms, a category step 240 ms, opening a
 // level 280 ms (the folder's icon flies to the trail; the new column slides in 40 px from the right, fading up; its
 // facts 80 ms late), back 240 ms the other way, all on cubic-bezier(0.25, 0.8, 0.3, 1). Low motion: 120 ms
@@ -63,6 +69,7 @@
         d.append(thumb(e), text);
         d.setAttribute('role', 'button');
         d.setAttribute('aria-label', [e.name, e.sub].filter(Boolean).join(', '));
+        d.tabIndex = -1;  // only the entry at the fixed point is a focus target; Tab steps the column (kit.js)
         d.tdEntry = e;
         return d;
     }
@@ -75,9 +82,11 @@
         const saved = opts.fresh ? null : D.memory.get(key);
         const S = {
             key, rootEl, stack: saved ? saved.stack : [opts.root], drawn: new Map(), entries: [], loading: 0, alive: true,
-            barIndex: saved ? saved.barIndex : (opts.root.at || 0), backdropTimer: 0
+            barIndex: saved ? saved.barIndex : (opts.root.at || 0), backdropTimer: 0,
+            at: (saved && saved.at) || 'col', aside: (saved && saved.aside) || '', hints: []
         };
         rootEl.setAttribute('data-td-screen', opts.name || 'columns');
+        rootEl.setAttribute('data-td-at', S.at);
         const wave = D.ground(rootEl);
         const back = el('div', 'td-backdrop');
         rootEl.prepend(back);
@@ -99,23 +108,49 @@
         const curIndex = () => { const c = cur(); return c.focus || 0; };
         const setIndex = (i) => { cur().focus = i; };
 
-        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex }); }
+        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex, at: S.at, aside: S.aside }); }
+        const setAt = (v) => { S.at = v; rootEl.setAttribute('data-td-at', v); };
+        // the hints: the column's (or the empty state's), or the category's while it has focus
+        function applyHints() {
+            const hs = S.at === 'cat' ? [['OK', 'open']].concat(top().onBack ? [['Back', '']] : []) : S.hints;
+            D.screenHints = () => D.hints(hs);
+            if (!(D.panel && D.panel.isOpen())) D.hints(hs);
+        }
+        const fixedEntry = () => S.drawn.get(curIndex()) || (!empty.hidden && empty.querySelector('.td-empty-way')) || null;
 
-        // the cross bar: categories through the fixed point
+        // the cross bar: categories through the fixed point. The elements stay while the bar does, so a step slides
+        // them (240 ms) and a category keeps its element; only the current one is a focus target, and only when it
+        // opens something (a category with go()).
+        let cats = [], catsOf = null;
         function drawBar() {
-            bar.textContent = '';
             bar.hidden = !isBar();
-            if (!isBar()) return;
-            top().bar.forEach((c, i) => {
-                const b = el('div', 'td-cat' + (i === S.barIndex ? ' current' : ''));
+            if (!isBar()) { if (S.at === 'cat') setAt('col'); return; }
+            const list = top().bar;
+            if (catsOf !== list || cats.length !== list.length) {
+                bar.textContent = '';
+                cats = list.map((c, i) => {
+                    const b = el('div', 'td-cat');
+                    b.append(D.svg(c.icon || 'folder'), el('div', 'td-cat-label', c.label));
+                    b.setAttribute('role', 'button');
+                    b.setAttribute('aria-label', c.label);
+                    b.addEventListener('click', () => { if (i !== S.barIndex) C.category(i); else C.openCategory(); });
+                    bar.append(b);
+                    return b;
+                });
+                catsOf = list;
+            }
+            cats.forEach((b, i) => {
+                const on = i === S.barIndex;
+                b.classList.toggle('current', on);
                 b.style.setProperty('--td-i', String(i - S.barIndex));
-                b.append(D.svg(c.icon || 'folder'), el('div', 'td-cat-label', c.label));
-                b.setAttribute('role', 'button');
-                b.setAttribute('aria-label', c.label);
-                b.addEventListener('click', () => { if (i !== S.barIndex) C.category(i); });
-                bar.append(b);
+                if (on && list[i].go) D.focusable(b);
+                else { b.removeAttribute('data-icefin-focus'); if (S.at !== 'cat') b.classList.remove('icefin-focused'); }
             });
             rootEl.setAttribute('data-td-cat', cur().label || '');
+            if (S.at === 'cat') {
+                const b = cats[S.barIndex];
+                if (b && cur().go) T.ctx.focus(b); else setAt('col');
+            }
         }
         // the trail: the levels below the top, as icons on the left, the nearest with its name
         function drawTrail() {
@@ -162,6 +197,7 @@
                     // a click (the pointer, or OK on the focused one) brings the entry to the fixed point and opens it
                     d.addEventListener('click', () => {
                         const at = S.entries.indexOf(d.tdEntry);
+                        setAt('col');
                         if (at !== curIndex()) { setIndex(at); drawColumn(); }
                         C.activate(d.tdEntry, S.drawn.get(at) || d);
                     });
@@ -179,7 +215,7 @@
             for (const [k, d] of S.drawn) if (!keep.has(k)) { d.remove(); S.drawn.delete(k); }
             requestAnimationFrame(() => { for (const d of S.drawn.values()) d.classList.remove('td-fresh'); });
             const f = S.drawn.get(i);
-            if (f) T.ctx.focus(f);
+            if (f && S.at === 'col') T.ctx.focus(f);  // the category or the server keeps focus while the column redraws
             // back from an item's details: its poster flies home from the trail to its place here (MotionDetails)
             const home = D.flightHome;
             if (home && f && f.tdEntry && f.tdEntry.item && f.tdEntry.item.Id === home.id && Date.now() - home.at < 3000) {
@@ -208,8 +244,8 @@
             if (e && (e.menu || e.item)) h.push(['≡', 'options']);
             if (c.letters && list.length > 12) h.push(['L1 R1', 'letter']);
             if (S.stack.length > 1 || (c.onBack)) h.push(['Back', '']);
-            D.screenHints = () => D.hints(h);
-            if (!(D.panel && D.panel.isOpen())) D.hints(h);
+            S.hints = h;
+            applyHints();
             // the backdrop after a rest (Decisions board), never in low motion
             clearTimeout(S.backdropTimer);
             back.classList.remove('on');
@@ -236,7 +272,7 @@
             for (const e of S.entries) { const l = letterOf(e); if (seen[seen.length - 1] !== l) seen.push(l); }
             for (const l of seen) {
                 const b = el('div', 'td-letter' + (l === at ? ' on' : ''), l);
-                b.addEventListener('click', () => { const k = S.entries.findIndex((e) => letterOf(e) === l); if (k >= 0) { setIndex(k); T.ctx.sound('navigate'); drawColumn(); } });
+                b.addEventListener('click', () => { const k = S.entries.findIndex((e) => letterOf(e) === l); if (k >= 0) { setIndex(k); setAt('col'); T.ctx.sound('navigate'); drawColumn(); } });
                 letters.append(b);
             }
         }
@@ -258,29 +294,61 @@
                 w.type = 'button';
                 w.addEventListener('click', () => { T.ctx.sound('select'); em.way.go(); });
                 empty.append(w);
-                T.ctx.focus(w);
+                if (S.at === 'col') T.ctx.focus(w);
             }
             clock.extra.textContent = '';
-            D.screenHints = () => D.hints(em.way ? [['OK', em.way.label.toLowerCase()], ['Back', '']] : [['Back', '']]);
-            D.screenHints();
+            S.hints = em.way ? [['OK', em.way.label.toLowerCase()], ['Back', '']] : [['Back', '']];
+            applyHints();
         }
-        // loads the current column's entries (cached on the level until it is reopened)
+        // loads the current column's entries (cached on the level until it is reopened). A level kept in memory
+        // (c.refresh: back on a screen) shows what it showed at once, focus on it, then the fresh list replaces it only
+        // when something changed (progress, watched marks), the same entry focused (QA pre-pass: no blank column, no
+        // lost focus after Back). S.loading is set only while a column waits with nothing drawn.
+        let loads = 0;
+        const idOf = (e) => (e && ((e.item && e.item.Id) || e.name)) || '';
+        const sigOf = (e) => [idOf(e), e.name, e.sub, e.line, e.art, e.progress, e.played].join('|');
         async function load(how) {
             const c = cur();
-            const ticket = ++S.loading;
-            if (!c.entries || c.reload) {
-                for (const d of S.drawn.values()) d.remove();
-                S.drawn.clear();
-                S.entries = [];
-                empty.hidden = true;
-                rootEl.setAttribute('data-td-loading', '1');
+            const ticket = ++loads;
+            S.loading = 0;
+            if (!c.entries || c.reload || c.refresh) {
+                const keep = !!(c.refresh && !c.reload && c.entries);
+                c.refresh = false;
+                if (keep) show(c, how);
+                else {
+                    for (const d of S.drawn.values()) d.remove();
+                    S.drawn.clear();
+                    S.entries = [];
+                    empty.hidden = true;
+                    S.loading = ticket;
+                    rootEl.setAttribute('data-td-loading', '1');
+                }
                 let list = [];
-                try { list = (await c.load()) || []; } catch (e) { console.error('tide: load', e); list = []; }
-                if (!S.alive || ticket !== S.loading || cur() !== c) return;
+                try { list = (await c.load()) || []; } catch (e) { console.error('tide: load', e); if (keep) return; list = []; }
+                if (!S.alive || ticket !== loads || cur() !== c) return;
+                if (keep) {
+                    const old = c.entries;
+                    if (old.length === list.length && old.every((e, k) => sigOf(e) === sigOf(list[k]))) {
+                        // the same on screen: the fresh entries take over quietly (their folders load anew when opened)
+                        c.entries = S.entries = list;
+                        for (const [k, d] of S.drawn) d.tdEntry = list[k];
+                        save();
+                        return;
+                    }
+                    const was = old[curIndex()];
+                    const k = was ? list.findIndex((e) => idOf(e) === idOf(was)) : -1;
+                    c.entries = list;
+                    c.focus = k >= 0 ? k : Math.max(0, Math.min(curIndex(), list.length - 1));
+                    show(c, null);
+                    return;
+                }
                 c.entries = list;
                 c.reload = false;
                 if (c.focus == null) { const f = list.findIndex((x) => x.focusFirst); c.focus = f >= 0 ? f : 0; }
             }
+            show(c, how);
+        }
+        function show(c, how) {
             S.loading = 0;
             rootEl.removeAttribute('data-td-loading');
             S.entries = c.entries;
@@ -313,6 +381,7 @@
                 if (S.loading || !S.entries.length) return false;
                 const i = curIndex() + dir;
                 if (i < 0 || i >= S.entries.length) { T.ctx.sound('error'); return true; }
+                setAt('col');
                 setIndex(i);
                 T.ctx.sound('focus');
                 drawColumn();
@@ -329,6 +398,7 @@
                     else { let k = i - 1; while (k > 0 && letterOf(S.entries[k]) === l) k--; const pl = letterOf(S.entries[Math.max(0, k)]); while (k > 0 && letterOf(S.entries[k - 1]) === pl) k--; n = Math.max(0, k); }
                 } else n = Math.max(0, Math.min(S.entries.length - 1, i + dir * 10));
                 if (n === i) { T.ctx.sound('error'); return true; }
+                setAt('col');
                 setIndex(n);
                 T.ctx.sound('navigate');
                 drawColumn();
@@ -339,10 +409,50 @@
                 if (!isBar()) return false;
                 const n = top().bar.length;
                 if (i < 0 || i >= n) { T.ctx.sound('error'); return true; }
+                if (S.at === 'aside') setAt('col');
                 S.barIndex = i;
                 T.ctx.sound('navigate');
                 C.redraw('cat');
                 return true;
+            },
+            // the current category takes focus (▲ from the column's first entry), gives it back (▼), opens (OK, a click)
+            toCat() {
+                const b = cats[S.barIndex];
+                if (!isBar() || !b || !cur().go) return false;
+                setAt('cat');
+                T.ctx.sound('focus');
+                T.ctx.focus(b);
+                applyHints();
+                save();
+                return true;
+            },
+            toColumn() {
+                setAt('col');
+                if (S.entries.length) drawColumn();
+                else { const w = fixedEntry(); if (w) T.ctx.focus(w); applyHints(); }
+                T.ctx.sound('focus');
+                save();
+                return true;
+            },
+            openCategory() {
+                const c = cur();
+                if (!isBar() || !c.go) return false;
+                setAt('cat');
+                save();
+                T.ctx.sound('select');
+                c.go(C);
+                return true;
+            },
+            // back on a screen whose focus was on another control (the server under the clock): it again, once the
+            // screen has drawn it (columnScreen calls this after mounted())
+            restoreAside() {
+                if (S.at !== 'aside') return;
+                const a = S.aside && rootEl.querySelector(`.${CSS.escape(S.aside)}[data-icefin-focus]`);
+                if (a) { T.ctx.focus(a); return; }
+                setAt('col');
+                const f = fixedEntry();
+                if (f) T.ctx.focus(f);
+                applyHints();
             },
             async push(level, fromEl) {
                 if (!level) return;
@@ -350,6 +460,7 @@
                 if (!lv || !S.alive) return;
                 // the folder's icon flies to the trail's nearest slot (visual continuity)
                 const thumbEl = fromEl && fromEl.querySelector('.td-e-thumb');
+                setAt('col');
                 S.stack.push(lv);
                 T.ctx.sound('select');
                 C.redraw('in');
@@ -361,6 +472,7 @@
             },
             back(sound, quiet) {
                 if (S.stack.length <= 1) return false;
+                setAt('col');
                 S.stack.pop();
                 if (sound !== false) T.ctx.sound('back');
                 if (!quiet) C.redraw('back');
@@ -375,7 +487,17 @@
                 if (e.item) { T.ctx.sound('select'); D.openItem(e.item, d); }
             },
             onAction(a) {
-                if (a === 'up') return C.step(-1);
+                const dir = a === 'up' || a === 'down' || a === 'left' || a === 'right';
+                if (dir && S.at === 'aside') return C.toColumn();  // from the server under the clock: back to the column
+                if (S.at === 'cat') {
+                    if (a === 'up') { T.ctx.sound('error'); return true; }
+                    if (a === 'down') return C.toColumn();
+                    if (a === 'menu' || a === 'play_pause' || a === 'playpause' || a === 'step_backward' || a === 'step_forward') return true;
+                }
+                if (a === 'up') {
+                    if (isBar() && cur().go && (curIndex() === 0 || !S.entries.length)) return C.toCat();
+                    return C.step(-1);
+                }
                 if (a === 'down') return C.step(1);
                 if (a === 'step_backward') return C.jump(-1);
                 if (a === 'step_forward') return C.jump(1);
@@ -396,7 +518,8 @@
                     if (cur().onBack) return cur().onBack(C) !== false;
                     if (top().onBack) return top().onBack(C) !== false;
                     // the root of a screen: Back leaves it, to where you came from
-                    if (opts.leave !== false) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
+                    const leave = typeof opts.leave === 'function' ? opts.leave() : opts.leave !== false;  // a function: leave only when it says so
+                    if (leave) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
                     return false;
                 }
                 if (a === 'menu') {
@@ -425,8 +548,34 @@
                 save();
             }
         };
-        // back on a screen kept in memory: its column again, refreshed (progress, watched marks), the same entry focused
-        if (saved) { const c0 = cur(); if (c0) c0.reload = true; }
+        // focus from anywhere (the engine, a hover, a tool asking for an element): where it went is where Tide is, and an
+        // entry off the fixed point or another category comes to the fixed point (QA pre-pass)
+        rootEl.addEventListener('icefin-focus', (ev) => {
+            const t = ev.target;
+            if (!S.alive || !t || !t.classList) return;
+            if (t.parentElement === bar) {
+                const i = cats.indexOf(t);
+                if (i < 0 || !isBar() || !top().bar[i] || !top().bar[i].go) return;
+                if (i !== S.barIndex) { setAt('cat'); C.category(i); return; }
+                if (S.at !== 'cat') { setAt('cat'); applyHints(); save(); }
+                return;
+            }
+            if (t.parentElement === col && t.tdEntry) {
+                const i = S.entries.indexOf(t.tdEntry);
+                const was = S.at;
+                setAt('col');
+                if (i >= 0 && i !== curIndex()) { setIndex(i); drawColumn(); save(); }
+                else if (was !== 'col') { applyHints(); save(); }
+                return;
+            }
+            if (empty.contains(t)) { setAt('col'); return; }
+            if (t.matches('input, textarea, [contenteditable=true]') || !t.matches('[data-icefin-focus]')) return;
+            setAt('aside');
+            S.aside = t.classList[0] || '';
+            save();
+        });
+        // back on a screen kept in memory: its column again at once, then refreshed (progress, watched marks)
+        if (saved) { const c0 = cur(); if (c0) c0.refresh = true; }
         D.currentColumn = C;
         D.goLevel = (lv) => { if (D.currentColumn && D.currentColumn.S.alive) D.currentColumn.push(lv); };
         if (saved || !opts.root.deferred) C.redraw(saved ? null : 'first');
@@ -442,6 +591,7 @@
                 C = D.columns(root, { root: r, name: spec.name, key: spec.key ? spec.key(D.params()) : location.hash, fresh: spec.fresh, onFocus: spec.onFocus, onLevel: spec.onLevel, backdrops: spec.backdrops,
                     selfInTrail: spec.selfInTrail, leave: spec.leave, nav: spec.nav ? spec.nav() : null });
                 if (spec.mounted) spec.mounted(C, root);
+                C.restoreAside();
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },
             onAction(a) { return C ? C.onAction(a) : false; },

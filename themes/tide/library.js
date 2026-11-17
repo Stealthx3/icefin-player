@@ -22,6 +22,10 @@
         const views = await ui.userViews();
         return views.find((v) => v.CollectionType === TYPES[kind]) || { Id: '', Name: kind, CollectionType: TYPES[kind] };
     }
+    // a library's own screen from the home's cross bar (its category: OK or a click). Playlists and plain folder
+    // libraries are lists of a folder's contents (#/list), as jellyfin-web links them.
+    const ROUTE = { movies: 'movies', tvshows: 'tv', music: 'music', livetv: 'livetv', homevideos: 'homevideos', photos: 'photos', books: 'books', musicvideos: 'musicvideos', boxsets: 'boxsets' };
+    D.libraryHash = (v) => (ROUTE[v.CollectionType] ? `#/${ROUTE[v.CollectionType]}?topParentId=${v.Id}` : `#/list?parentId=${v.Id}`) + `&serverId=${D.sid()}`;
     for (const kind of Object.keys(TYPES)) {
         if (kind === 'livetv' && D.liveScreen) continue;  // Live TV has its own screen (tv.js)
         D.columnScreen(`#/${kind}`, {
