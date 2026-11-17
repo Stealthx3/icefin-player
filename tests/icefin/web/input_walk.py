@@ -1411,6 +1411,10 @@ class LabApp(App):
 
     def reopen(self):
         self.close()
+        # the lab's X server can go down with the app (QA 1: every reopen then failed on the xcb plugin): start it again
+        if getattr(self, "xv", None) is not None and self.xv.poll() is not None:
+            print("input_walk: the lab's X server had stopped; starting it again", flush=True)
+            self.xv = start_x()
         self.open(getattr(self, "steam", False))
 
     def open(self, steam=False):
