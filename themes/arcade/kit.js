@@ -293,23 +293,6 @@
             K.keys(e);
         });
     }
-    // ---- a step back in history while a panel or a menu is up (the mouse's Back button goes straight to history) ----
-    // The panel closes and the screen under it stays, when the browser lets the step be cancelled; otherwise the panel
-    // closes with the step, never left open over another screen (QA pre: an item's options stayed up over the screen before).
-    if (window.navigation && !window.icefinArcadeTraverse) {
-        window.icefinArcadeTraverse = true;
-        window.navigation.addEventListener('navigate', (e) => { const K = window.icefinArcade; if (K && K.traverse) K.traverse(e); });
-    }
-    D.traverse = (e) => {
-        if (e.navigationType !== 'traverse' || !T.active() || T.active().id !== 'arcade' || window.icefinArcade !== D || !ui.overlay.isOpen()) return;
-        if (e.cancelable) {
-            e.preventDefault();
-            T.ctx.sound('back');
-            if (D.panel && D.panel.isOpen() && D.panel.depth() > 1) D.panel.pop(); else ui.overlay.close();
-            return;
-        }
-        ui.overlay.close();
-    };
     D.keys = (e) => {
         if (!T.active() || T.active().id !== 'arcade' || window.icefinArcade !== D) return;
         if (D.framedKeys && D.framedKeys(e)) return;  // the arrows on a framed jellyfin-web page (settings.js)

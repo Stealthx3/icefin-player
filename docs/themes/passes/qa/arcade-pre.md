@@ -28,9 +28,9 @@ therefore "required-missing" (61 findings with one cause).
       Icefin Test Book, 2026-05-02, 2026-06-14, SDR AV1 Opus): the rows move by transform, but scrollIntoView could
       still scroll their boxes, which the theme then snapped back. They clip now and never scroll (styles.css).
 - [x] **The mouse's Back left an options panel open over the screen before** (broken-back ×3: Book and PhotoAlbum
-      options, Add a server). The mouse's Back button goes straight to history; a step back while a panel or menu is
-      up now closes it (cancelling the step where the browser allows it), never leaving it over another screen
-      (kit.js `D.traverse`).
+      options, Add a server). The mouse's Back button goes straight to history. Fixed by the engine, #204
+      (capabilities.js): while ui.overlay is up, a history step is the overlay's Back (Arcade's panel steps back a
+      level or closes), cancelled where the Navigation API allows, else the overlay closes with it.
 - [x] **Back stayed on Choose a server** opened from the home's server button (pad broken-back). Signed in, Back
       returns; signed out there is still nowhere to go (account.js, views.js `leave` may be a function).
 - [x] **The pointer's Back did nothing on a screen's first level** (found while checking the above: libraries,
@@ -55,7 +55,7 @@ therefore "required-missing" (61 findings with one cause).
 
 ## Needs the host walk
 
-- Whether the mouse's Back is cancellable there (Qt's goBack): the panel closes either way, and the screen stays only
-  when it is.
+- Whether the mouse's Back is cancellable there (Qt's goBack, engine #204): the panel closes either way, and the
+  screen stays only when it is.
 - Home after Back from playback: drawn at once from what it showed; confirm no flicker when the fresh data redraws it.
 - Low: shift-tab ×2, obscured ×3 (the deck's pivot heads), hover-no-focus on the pointer's line, not worked here.
