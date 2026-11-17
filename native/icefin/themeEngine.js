@@ -637,7 +637,10 @@
         const t = e.target;
         if (t && t !== document.body && t !== document.documentElement && t.closest
             && !t.closest(`#${ROOT_ID}, #icefin-theme-overlay, #icefin-osk`)) return;
-        if (document.querySelector('.dialogContainer .dialog.opened, .dialogContainer .formDialog')) return;
+        // A jellyfin-web dialog that shows (or the capability prompt) keeps its keys, the same test as the controller's
+        // (foreignDialog). Only one that shows: the old test matched any .formDialog left in the page, open or not, and
+        // the keyboard then did nothing on the theme's screen while a controller still worked (QA 1).
+        if (foreignDialog()) return;
         if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
 
