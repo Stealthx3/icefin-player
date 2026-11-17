@@ -251,7 +251,9 @@
         return {
             beforeSignIn: true,
             mount(root) {
-                C = D.columns(root, { name: 'signin', key: '#/signin', fresh: true, leave: false, root: { bar: [usersCat(), serversCat()], at } });
+                // signed in (the top bar's server button brought you here), Back returns to where you were; signed out there is
+                // nowhere to go back to (QA pre: Back stayed on the Servers screen)
+                C = D.columns(root, { name: 'signin', key: '#/signin', fresh: true, leave: () => D.signedIn(), root: { bar: [usersCat(), serversCat()], at } });
                 if (location.hash.startsWith('#/addserver')) setTimeout(() => addServer(C), 400);
             },
             unmount() { if (C) C.stop(); C = null; },

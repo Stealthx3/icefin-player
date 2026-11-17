@@ -346,7 +346,8 @@
         const mark = el('div', 'ac-mark');
         rootEl.append(ttl, tabs, stage, mark);
         const clock = D.clock(rootEl);
-        D.pointerNav(rootEl, () => C.back(true), opts.nav);
+        // the pointer's Back is the pad's: a level back, else the screen's own way out (QA pre: at a screen's first level it did nothing)
+        D.pointerNav(rootEl, () => C.onAction('back'), opts.nav);
         stage.addEventListener('wheel', (ev) => { ev.preventDefault(); C.onAction(ev.deltaY > 0 ? 'down' : 'up'); }, { passive: false });
 
         const top = () => S.stack[S.stack.length - 1];
@@ -463,7 +464,7 @@
                 if (bd) g.style.backgroundImage = `url("${bd}")`;
                 stage.append(g);
             }
-            deck = { panels: deckPanels(lv, entries).map((p) => Object.assign(p, { el: null, view: null })), at: Math.min(lv.deckAt || 0, 99) };
+            deck = { panels: deckPanels(lv, entries).map((p, i) => Object.assign(p, { el: null, view: null, memo: lv.memos && lv.memos[i] != null ? lv.memos[i] : null })), at: Math.min(lv.deckAt || 0, 99) };
             deck.at = Math.max(0, Math.min(deck.panels.length - 1, deck.at));
             deck.panels.forEach((p, i) => {
                 const pe = el('div', 'ac-p ac-dp' + (p.front ? ' front' : ''));
@@ -599,6 +600,7 @@
             if (!deck || i < 0 || i >= deck.panels.length) return false;
             const p0 = deck.panels[deck.at];
             if (p0.view) p0.memo = p0.view.at;
+            remember();
             if (i === deck.at) return true;
             deck.at = i;
             place();
@@ -676,7 +678,12 @@
             }
             if (V && V.sync(f)) S.zone = 'main';
         }
-        function remember() { if (V && content && !deck) content.pos = V.at; }
+        // where focus is: a list's place on its level; on an item's deck, each panel's place, kept on the level so a redraw
+        // (a track picked, favourite toggled) and Back from a screen opened here land on the same entry (QA pre: Play)
+        function remember() {
+            if (V && content && !deck) content.pos = V.at;
+            if (deck) { const p = deck.panels[deck.at]; if (p && p.view) { const lv = cur(); (lv.memos = lv.memos || [])[deck.at] = p.view.at; } }
+        }
 
         const C = {
             S, rootEl,
@@ -725,7 +732,8 @@
             },
             replaceTop(level) {
                 const old = top();
-                level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt;
+                remember();
+                level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt; level.memos = old.memos;
                 S.stack[S.stack.length - 1] = level;
                 return C.redraw('none');
             },
@@ -757,7 +765,7 @@
                     if (deck) {
                         const p = deck.panels[deck.at];
                         const r = p.view ? p.view.move(a) : a;
-                        if (r === true) { p.memo = p.view.at; return true; }
+                        if (r === true) { p.memo = p.view.at; remember(); return true; }
                         if (r === 'left' || r === 'right') { if (!deckGo(deck.at + (r === 'right' ? 1 : -1))) T.ctx.sound('error'); return true; }
                         if (r === 'up' && p.tabsEl) { T.ctx.sound('error'); return true; }
                         T.ctx.sound('error');
@@ -788,7 +796,7 @@
                     const lv = cur();
                     if (lv.onBack) return lv.onBack(C) !== false;
                     if (top().onBack) return top().onBack(C) !== false;
-                    if (opts.leave !== false) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
+                    if (typeof opts.leave === 'function' ? opts.leave() : opts.leave !== false) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
                     return false;
                 }
                 if (a === 'menu') {

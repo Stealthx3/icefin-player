@@ -626,7 +626,15 @@ html[data-icefin-motion="low"] .ac-notice, html[data-icefin-motion="low"] .ac-hi
 .ar-btn svg { width: 2.2vh; height: 2.2vh; }
 .ar-who { width: 3.2vh; height: 3.2vh; padding: 0; border-radius: 0.4vh; background: var(--icefin-color-accent) center / cover no-repeat; color: #ffffff; font-weight: 700; font-size: 1.3vh; }
 .ar-btn:hover { background: var(--icefin-color-hover); }
+/* the top bar's focus: the pill's light fill (search, quick access); your picture keeps its face in a light ring (QA pre:
+   they had no focus look) */
+.ar-btn.icefin-focused { background-color: var(--icefin-color-focusRing); color: var(--icefin-color-background); }
+.ar-who.icefin-focused { background-color: var(--icefin-color-accent); color: #ffffff; box-shadow: 0 0 0 0.16vw var(--icefin-color-focusRing), 0 0.4em 1em var(--icefin-color-scrim); }
 .ar-pill { border: 0; font-family: inherit; cursor: pointer; background: none; }
+/* the home's rows move by their own transform: nothing scrolls them (a scrolled row put the pointer on the wrong capsule) */
+[data-ar=home], [data-ar=home] .ar-body, [data-ar=home] .ar-scroll, [data-ar=home] .ar-recent, [data-ar=home] .ar-feed { overflow: clip !important; }
+/* the pointer's line on the home sits at the top left, clear of the top bar's buttons (QA pre: it covered Search and quick access) */
+[data-ar=home] > .ac-pnav { left: var(--ac-x); right: auto; }
 .ac-empty { position: absolute; left: var(--ac-x); top: 20vh; }
 .ac-empty-title { font-size: 2.4vh; font-weight: 700; }
 .ac-empty-text { font-size: 1.6vh; color: var(--icefin-color-textSecondary); margin-top: 0.6vh; }

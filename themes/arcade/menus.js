@@ -2,8 +2,9 @@
 // Guide, Dialogs). The home follows the reference (docs/themes/references/arcade.json): the top bar (search, quick
 // access, the clock, you), a recent row of capsules led by a wide hero (Continue watching and Next up together, newest
 // first), the focused capsule's name and state under it, a centred row of pills choosing a feed (what's new, next up,
-// each library's new, favourites, live tv), the chosen feed's cards, and the bottom bar of hints. Back asks to exit.
-// The main menu (Gate 1, decision 3a) slides in from the left on the guide button, F1 or a long press of View; quick
+// each library's new, favourites, live tv; OK on the chosen one opens all of it), the chosen feed's cards, and the bottom
+// bar of hints. Back asks to exit. The main menu (Gate 1, decision 3a) slides in from the left on the guide button, F1, a
+// long press of View or the pointer's Menu; quick
 // access (now playing, volume, switches, Play on, Watch together) from the right, from the main menu or the top bar.
 (function () {
     'use strict';
@@ -86,9 +87,15 @@
         D.screenHints = () => D.hints(h);
         if (!(D.panel && D.panel.isOpen()) && !Mn.open) D.hints(h);
     }
+    function pillHints() {
+        const f = S.feeds[S.pill];
+        const h = [['OK', f && f[3] ? 'open' : 'select'], ['L1 R1', 'feeds'], ['View', 'menu']];
+        D.screenHints = () => D.hints(h);
+        if (!(D.panel && D.panel.isOpen()) && !Mn.open) D.hints(h);
+    }
     function choosePill(k) {
         S.pill = k;
-        S.pills.forEach((p, i) => p.classList.toggle('current', i === k));
+        S.pills.forEach((p, i) => { p.classList.toggle('current', i === k); p.setAttribute('aria-selected', String(i === k)); });
         const [, items, when] = S.feeds[k];
         S.cardLabel.textContent = when;
         const caps = items.map((it) => cardEl(S.client, it));
@@ -100,12 +107,18 @@
         S.shelves[1].index = 0;
         S.root.setAttribute('data-ar-pill', String(k));
     }
+    // OK on the chosen pill: the whole of its feed (the library, the guide, the full list); What's new has none, so its cards
+    function openPill(k) {
+        const f = S.feeds[k];
+        if (f && f[3]) { T.ctx.sound('select'); f[3](); return; }
+        if (S.shelves[1].caps.length) { focusCap(1, 0); T.ctx.sound('focus'); }
+    }
     // Focus walks the visible slots; the row scrolls only when the next capsule would leave the screen.
-    function focusCap(r, i) {
+    function shiftTo(r, i) {
         const sh = S.shelves[r];
-        sh.index = i;
         const cap = sh.caps[i];
-        E.focus(cap);
+        if (!cap) return;
+        sh.index = i;
         const view = sh.track.parentElement.offsetWidth, first = sh.caps[0].offsetLeft;
         let shift = sh.shift || 0;
         const left = cap.offsetLeft - first, right = cap.offsetLeft + cap.offsetWidth;
@@ -113,10 +126,35 @@
         else if (right - shift > view - first) shift = right - (view - first);
         sh.shift = Math.max(0, shift);
         sh.track.style.transform = sh.shift ? `translateX(${-Math.round(sh.shift)}px)` : '';
-        const it = r === 0 ? cap.arcadeItem : (S.shelves[0].caps[S.shelves[0].index] || {}).arcadeItem;
-        showFocused(it);
-        hintsFor(cap.arcadeItem);
-        D.memory.set('#/home:arcade', { r, i, pill: S.pill });
+    }
+    function focusCap(r, i) {
+        const sh = S.shelves[r];
+        if (!sh.caps[i]) return;
+        sh.index = i;
+        E.focus(sh.caps[i]);  // onFocused brings the row along and remembers the place
+    }
+    // Whatever moved the focus (the pad, the keys, or a hover: Arcade is pointer-first), the home follows it: a capsule
+    // brings its row along so it is wholly in view (the mouse reaches the capsules past the edge this way), a pill chooses
+    // its feed, the hints and the backdrop follow, and the place is remembered, so Back to the home lands on the control
+    // that opened the screen left: a capsule by its item, a pill, a top-bar button (QA pre).
+    const remember = (m) => D.memory.set('#/home:arcade', Object.assign({ pill: S.pill, i0: S.shelves[0].index }, m));
+    function onFocused(ev) {
+        if (!S || !S.ready) return;
+        const t = ev.target;
+        const ti = S.top.items.indexOf(t);
+        if (ti >= 0) { hintsFor(null); remember({ zone: 'top', i: ti }); return; }
+        const pi = S.pills.indexOf(t);
+        if (pi >= 0) { if (pi !== S.pill) choosePill(pi); pillHints(); remember({ zone: 'pill', i: pi }); return; }
+        for (let r = 0; r < S.shelves.length; r++) {
+            const i = S.shelves[r].caps.indexOf(t);
+            if (i < 0) continue;
+            shiftTo(r, i);
+            const it = r === 0 ? t.arcadeItem : (S.shelves[0].caps[S.shelves[0].index] || {}).arcadeItem;
+            showFocused(it);
+            hintsFor(t.arcadeItem);
+            remember({ zone: 'cap', r, i, id: t.arcadeItem && t.arcadeItem.Id });
+            return;
+        }
     }
     const pin = (view) => view.addEventListener('scroll', () => { if (view.scrollTop || view.scrollLeft) { view.scrollTop = 0; view.scrollLeft = 0; } });
 
@@ -145,25 +183,32 @@
     }
 
     // ---- the home's feeds (Gate 1, decision 8): the pills, each a row of cards ----
+    // [title, items, label, open]: OK on the chosen pill opens the whole of it (a library, the guide, the full list), so
+    // every library is a press away from the home for a pad, the keys and the mouse alike (QA pre). The server is asked
+    // for every feed at once: the home is back sooner after Back (QA pre: focus was lost while it loaded one by one).
     async function feeds(c, uid, views) {
         const get = (p) => Promise.resolve(p).then((x) => (x && (x.Items || x)) || [], () => []);
         const prefs = D.homePrefs ? D.homePrefs() : { hidden: [] };
-        const out = [];
-        const all = await get(c.getLatestItems({ UserId: uid, Limit: 24, Fields: FIELDS }));
-        if (all.length) out.push(["What's new", all, 'Recently added everywhere']);
-        const next = await get(c.getNextUpEpisodes({ UserId: uid, Limit: 24, Fields: FIELDS }));
-        if (next.length) out.push(['Next up', next, 'The next episode of what you watch']);
-        for (const v of (D.orderedViews ? D.orderedViews(views, prefs) : views).filter((x) => !['livetv', 'playlists', 'boxsets', 'folders'].includes(x.CollectionType) && !(prefs.hidden || []).includes(x.Id))) {
+        const go = (h) => () => T.ctx.navigate(h);
+        // every library has its pill, an empty one too (its OK still opens it); playlists and collections show their newest
+        const libs = (D.orderedViews ? D.orderedViews(views, prefs) : views).filter((x) => !['livetv', 'folders'].includes(x.CollectionType) && !(prefs.hidden || []).includes(x.Id));
+        const live = views.some((v) => v.CollectionType === 'livetv');
+        const [all, next, fav, ch, ...perLib] = await Promise.all([
+            get(c.getLatestItems({ UserId: uid, Limit: 24, Fields: FIELDS })),
+            get(c.getNextUpEpisodes({ UserId: uid, Limit: 24, Fields: FIELDS })),
+            get(c.getItems(uid, { Filters: 'IsFavorite', Recursive: true, SortBy: 'SortName', IncludeItemTypes: 'Movie,Series,MusicAlbum,Episode,BoxSet,Playlist', Limit: 40, Fields: FIELDS })),
+            live ? get(c.getLiveTvChannels({ UserId: uid, AddCurrentProgram: true, EnableImages: true, Limit: 30 })) : Promise.resolve([])
+        ].concat(libs.map((v) => {
+            if (v.CollectionType === 'playlists' || v.CollectionType === 'boxsets') return get(c.getItems(uid, { ParentId: v.Id, SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 24, Fields: FIELDS }));
             const types = { tvshows: 'Episode', music: 'MusicAlbum' }[v.CollectionType];
-            const items = await get(c.getLatestItems(Object.assign({ UserId: uid, ParentId: v.Id, Limit: 24, Fields: FIELDS }, types ? { IncludeItemTypes: types } : {})));
-            if (items.length) out.push([v.Name, items, `New in ${v.Name}`]);
-        }
-        const fav = await get(c.getItems(uid, { Filters: 'IsFavorite', Recursive: true, SortBy: 'SortName', IncludeItemTypes: 'Movie,Series,MusicAlbum,Episode,BoxSet,Playlist', Limit: 40, Fields: FIELDS }));
-        if (fav.length) out.push(['Favourites', fav, 'Your favourites']);
-        if (views.some((v) => v.CollectionType === 'livetv')) {
-            const ch = await get(c.getLiveTvChannels({ UserId: uid, AddCurrentProgram: true, EnableImages: true, Limit: 30 }));
-            if (ch.length) out.push(['Live TV', ch, 'On now']);
-        }
+            return get(c.getLatestItems(Object.assign({ UserId: uid, ParentId: v.Id, Limit: 24, Fields: FIELDS }, types ? { IncludeItemTypes: types } : {})));
+        })));
+        const out = [];
+        if (all.length) out.push(["What's new", all, 'Recently added everywhere', null]);
+        if (next.length) out.push(['Next up', next, 'The next episode of what you watch', go('#/home?ac=nextup')]);
+        libs.forEach((v, i) => out.push([v.Name, perLib[i], perLib[i].length ? `New in ${v.Name}` : `Nothing new in ${v.Name}`, go(D.viewRoute(v))]));
+        if (fav.length) out.push(['Favourites', fav, 'Your favourites', go('#/home?ac=favourites')]);
+        if (live) out.push(['Live TV', ch, ch.length ? 'On now' : 'No channels on now', go('#/livetv')]);
         return out;
     }
 
@@ -243,17 +288,20 @@
                 add(panelRow('Play or pause', 'pause', () => { const c = P(); if (c) c.playPause(); }));
             }
             body.append(el('div', 'ac-qa-h', 'This player'));
+            // a switch says so (role and state), for a screen reader and for what reads the page
             const sw = (text, on, flip) => {
-                const b = panelRow(text, null, () => { flip(); b.querySelector('.ac-switch').classList.toggle('on', on()); });
+                const b = panelRow(text, null, () => { flip(); b.querySelector('.ac-switch').classList.toggle('on', on()); b.setAttribute('aria-checked', String(on())); });
                 const s = el('span', 'ac-switch' + (on() ? ' on' : ''));
                 s.append(el('i'));
                 b.append(s);
+                b.setAttribute('role', 'switch');
+                b.setAttribute('aria-checked', String(on()));
                 return add(b);
             };
             sw('Low motion', () => ui.motion.level() === 'low', () => ui.motion.cap(ui.motion.level() === 'low' ? 'normal' : 'low'));
+            add(panelRow('Settings', 'settings', () => T.ctx.navigate('#/mypreferencesmenu'), () => ctx.close()));
             add(panelRow('Play on…', 'cast', () => D.playOn && D.playOn('play', null), () => ctx.close()));
             add(panelRow('Watch together…', 'together', () => D.playOn && D.playOn('together', null), () => ctx.close()));
-            add(panelRow('Settings', 'settings', () => T.ctx.navigate('#/mypreferencesmenu'), () => ctx.close()));
             setTimeout(() => { if (rows[0]) T.ctx.focus(rows[0]); }, 0);
             D.hints([['OK', 'select'], ['Back', 'close']]);
         },
@@ -262,6 +310,11 @@
     };
     D.quickAccess = () => {
         const open = () => { ui.overlay.set(QUICK); ui.overlay.open(); };
+        if (ui.overlay.isOpen()) { ui.overlay.close(); setTimeout(open, ui.motion.duration(200)); } else open();
+    };
+    // the main menu from a control (the pointer's Menu, kit.js), as the guide button opens it
+    D.openMenu = () => {
+        const open = () => { ui.overlay.set(MENU); ui.overlay.open(); };
         if (ui.overlay.isOpen()) { ui.overlay.close(); setTimeout(open, ui.motion.duration(200)); } else open();
     };
     ui.overlay.set(MENU);
@@ -288,6 +341,64 @@
         return { stop: () => clearInterval(t) };
     };
 
+    // what the home shows, as text: the same text, nothing to draw again
+    const sig = (d) => JSON.stringify([d.resume, d.nextUp].concat(d.f.map((x) => x[1])).map((list) => list.map((it) => [it.Id, (it.UserData || {}).PlaybackPositionTicks || 0, (it.UserData || {}).Played ? 1 : 0, it.CurrentProgram ? it.CurrentProgram.Id : ''].join(':')))
+        .concat(d.f.map((x) => x[0])));
+    // the home's rows from its data: the recent row, the pills and the chosen feed, then focus back where it was
+    function build({ resume, nextUp, f }) {
+        const c = S.client || T.ctx.apiClient();
+        S.ready = false;
+        S.scroll.textContent = '';
+        // the recent row: what's in progress and up next together, the most recently watched first
+        const when = (it) => Date.parse((it.UserData && it.UserData.LastPlayedDate) || it.DateCreated || 0) || 0;
+        let recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id))).sort((a, b) => when(b) - when(a));
+        // like the target's, the row fills up from what's new when little is in progress
+        if (recent.length < 6 && f.length) recent = recent.concat(f[0][1].filter((x) => !recent.some((y) => y.Id === x.Id))).slice(0, 12);
+        const sec0 = el('section', 'ar-shelf ar-recent');
+        const track0 = el('div', 'ar-track');
+        const caps0 = recent.slice(0, 20).map((it, i) => capsule(c, it, i === 0));
+        track0.append(...caps0);
+        S.name = el('div', 'ar-focus-name');
+        S.sub = el('div', 'ar-focus-sub');
+        sec0.append(track0, S.name, S.sub);
+        const pills = el('div', 'ar-pills');
+        S.feeds = f;
+        S.pills = f.map(([title], k) => {
+            const p = D.focusable(el('button', 'ar-pill', title));
+            p.type = 'button';
+            p.setAttribute('role', 'tab');
+            // focus (a hover too) chooses the pill; OK or a click on the chosen one opens it
+            p.addEventListener('click', () => { if (k !== S.pill) { choosePill(k); T.ctx.sound('navigate'); return; } openPill(k); });
+            pills.append(p);
+            return p;
+        });
+        const sec1 = el('section', 'ar-shelf ar-feed');
+        S.cardLabel = el('div', 'ar-card-label');
+        const track1 = el('div', 'ar-track ar-cards');
+        sec1.append(S.cardLabel, track1);
+        S.scroll.append(sec0, pills, sec1);
+        [sec0, sec1].forEach(pin);
+        S.shelves = [{ sec: sec0, track: track0, caps: caps0, index: 0 }, { sec: sec1, track: track1, caps: [], index: 0 }];
+        const mem = D.memory.get('#/home:arcade');
+        if (f.length) choosePill(mem && mem.pill < f.length ? mem.pill : 0);
+        S.ready = true;
+        S.root.setAttribute('data-ar-ready', String(S.shelves.filter((x) => x.caps.length).length));
+        if (!caps0.length && !f.length) {
+            const empty = el('div', 'ac-empty');
+            empty.append(el('div', 'ac-empty-title', 'Nothing here yet'), el('div', 'ac-empty-text', 'Your libraries show here once the server has something in them.'));
+            S.scroll.append(empty);
+        }
+        // back on the home: the control last used here (its capsule by the item, else by the place)
+        const zone = mem ? (mem.zone || 'cap') : '';
+        const at = (list, m) => { const j = m.id ? list.findIndex((x) => x.arcadeItem && x.arcadeItem.Id === m.id) : -1; return j >= 0 ? j : Math.max(0, Math.min(m.i || 0, list.length - 1)); };
+        if (caps0.length) shiftTo(0, mem && mem.i0 != null ? Math.min(mem.i0, caps0.length - 1) : 0);
+        if (zone === 'top') E.focus(S.top.items[Math.max(0, Math.min(mem.i, S.top.items.length - 1))]);
+        else if (zone === 'pill' && S.pills.length) E.focus(S.pills[S.pill]);
+        else if (zone === 'cap' && mem.r === 1 && S.shelves[1].caps.length) focusCap(1, at(S.shelves[1].caps, mem));
+        else if (caps0.length) focusCap(0, zone === 'cap' && mem.r === 0 ? at(caps0, mem) : S.shelves[0].index);
+        else E.focus(S.top.items[0]);
+    }
+
     // ---- #/home: the home, Settings (?ac=settings) and the home's own lists (?ac=resume|nextup|favourites) ----
     const LISTS = { resume: 'Continue watching', nextup: 'Next up', favourites: 'Favourites' };
     let H = null;
@@ -308,7 +419,7 @@
             if (pi >= 0) {
                 if (action === 'left' || action === 'right') {
                     const n = pi + (action === 'right' ? 1 : -1);
-                    if (n >= 0 && n < S.pills.length) { E.focus(S.pills[n]); choosePill(n); ctx.sound('navigate'); }
+                    if (n >= 0 && n < S.pills.length) { E.focus(S.pills[n]); ctx.sound('navigate'); }  // onFocused chooses its feed
                     return true;
                 }
                 if (action === 'down') { if (S.shelves[1].caps.length) { focusCap(1, 0); ctx.sound('focus'); } return true; }
@@ -320,7 +431,7 @@
             if (r >= 0) {
                 const sh = S.shelves[r], i = sh.caps.indexOf(f);
                 if (action === 'left' || action === 'right') { const n = i + (action === 'right' ? 1 : -1); if (n >= 0 && n < sh.caps.length) { focusCap(r, n); ctx.sound('focus'); } else ctx.sound('error'); return true; }
-                if (action === 'down') { if (r === 0 && S.pills.length) { E.focus(S.pills[S.pill]); hintsFor(null); ctx.sound('focus'); } return true; }
+                if (action === 'down') { if (r === 0 && S.pills.length) { E.focus(S.pills[S.pill]); ctx.sound('focus'); } return true; }
                 if (action === 'up') { if (r === 1) E.focus(S.pills[S.pill]); else E.focus(S.top.items[0]); ctx.sound('focus'); return true; }
                 if (action === 'back') { if (r === 1) { focusCap(0, S.shelves[0].index); ctx.sound('back'); } else D.exitAsk(); return true; }
                 return false;
@@ -350,8 +461,12 @@
             root.setAttribute('data-ac-screen', 'home');
             S = { client: T.ctx.apiClient(), root, shelves: [], ready: false, pills: [], feeds: [], pill: 0 };
             const me = S;
-            const views = await D.loadViews();
-            if (S !== me) return;
+            // Back to the home draws what it showed last at once (this user's, kept for the session) while the server is
+            // asked again; it is drawn anew only when something changed, focus kept on the same control (QA pre: after a
+            // film the home took seconds to come back, with nothing focused)
+            const who = (cl) => (cl && cl.getCurrentUserId() ? `${cl.serverId()}|${cl.getCurrentUserId()}` : '');
+            const hit = who(S.client) && D.homeCache && D.homeCache.who === who(S.client) ? D.homeCache : null;
+            if (!hit) { await D.loadViews(); if (S !== me) return; }
             S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after the views
             S.backdrop = el('div', 'ar-backdrop');
             root.append(S.backdrop);
@@ -360,60 +475,31 @@
             S.scroll = el('div', 'ar-scroll');
             body.append(S.scroll);
             root.append(body);
+            [body, S.scroll].forEach(pin);
             D.pointerNav(root, () => D.exitAsk());
             H.extra = [];
             if (D.ping) D.ping();
             H.ping = setInterval(() => D.ping && D.ping(), 60000);
+            H.onFocused = onFocused;
+            root.addEventListener('icefin-focus', onFocused);
+            if (hit) build(hit);
+            const views = hit ? await D.loadViews() : D.views;
+            if (S !== me) return;
             const c = S.client, uid = c.getCurrentUserId();
             const get = (p) => Promise.resolve(p).then((x) => (x && (x.Items || x)) || [], () => []);
-            const [resume, nextUp] = await Promise.all([
+            const [resume, nextUp, f] = await Promise.all([
                 get(c.getResumableItems(uid, { Limit: 20, MediaTypes: 'Video', Fields: FIELDS })),
-                get(c.getNextUpEpisodes({ UserId: uid, Limit: 20, Fields: FIELDS }))
+                get(c.getNextUpEpisodes({ UserId: uid, Limit: 20, Fields: FIELDS })),
+                feeds(c, uid, views)
             ]);
-            const f = await feeds(c, uid, views);
             if (S !== me) return;
-            // the recent row: what's in progress and up next together, the most recently watched first
-            const when = (it) => Date.parse((it.UserData && it.UserData.LastPlayedDate) || it.DateCreated || 0) || 0;
-            let recent = resume.concat(nextUp.filter((n) => !resume.some((x) => x.Id === n.Id))).sort((a, b) => when(b) - when(a));
-            // like the target's, the row fills up from what's new when little is in progress
-            if (recent.length < 6 && f.length) recent = recent.concat(f[0][1].filter((x) => !recent.some((y) => y.Id === x.Id))).slice(0, 12);
-            const sec0 = el('section', 'ar-shelf ar-recent');
-            const track0 = el('div', 'ar-track');
-            const caps0 = recent.slice(0, 20).map((it, i) => capsule(c, it, i === 0));
-            track0.append(...caps0);
-            S.name = el('div', 'ar-focus-name');
-            S.sub = el('div', 'ar-focus-sub');
-            sec0.append(track0, S.name, S.sub);
-            const pills = el('div', 'ar-pills');
-            S.feeds = f;
-            S.pills = f.map(([title], k) => {
-                const p = D.focusable(el('button', 'ar-pill', title));
-                p.type = 'button';
-                p.addEventListener('click', () => { choosePill(k); T.ctx.sound('navigate'); });
-                pills.append(p);
-                return p;
-            });
-            const sec1 = el('section', 'ar-shelf ar-feed');
-            S.cardLabel = el('div', 'ar-card-label');
-            const track1 = el('div', 'ar-track ar-cards');
-            sec1.append(S.cardLabel, track1);
-            S.scroll.append(sec0, pills, sec1);
-            [body, S.scroll, sec0, sec1].forEach(pin);
-            S.shelves = [{ sec: sec0, track: track0, caps: caps0, index: 0 }, { sec: sec1, track: track1, caps: [], index: 0 }];
-            const mem = D.memory.get('#/home:arcade');
-            if (f.length) choosePill(mem && mem.pill < f.length ? mem.pill : 0);
-            S.ready = true;
-            root.setAttribute('data-ar-ready', String(S.shelves.filter((x) => x.caps.length).length));
-            if (!caps0.length && !f.length) {
-                const empty = el('div', 'ac-empty');
-                empty.append(el('div', 'ac-empty-title', 'Nothing here yet'), el('div', 'ac-empty-text', 'Your libraries show here once the server has something in them.'));
-                S.scroll.append(empty);
-            }
-            if (caps0.length) focusCap(0, mem && mem.r === 0 ? Math.min(mem.i, caps0.length - 1) : 0);
-            else E.focus(S.top.items[0]);
+            const fresh = { who: who(c), resume, nextUp, f };
+            D.homeCache = fresh;
+            // an options panel or a menu over the home keeps the home as it is; the next visit has the new one
+            if (!hit || (sig(hit) !== sig(fresh) && !ui.overlay.isOpen())) build(fresh);
         },
         unmount() {
-            if (H) { if (H.C) H.C.stop(); for (const x of H.extra || []) x.stop(); clearInterval(H.ping); }
+            if (H) { if (H.C) H.C.stop(); for (const x of H.extra || []) x.stop(); clearInterval(H.ping); if (H.onFocused) H.root.removeEventListener('icefin-focus', H.onFocused); }
             S = null; H = null;
             D.screenHints = null;
             D.hintsOff();
