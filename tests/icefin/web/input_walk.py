@@ -706,7 +706,10 @@ class Walker:
         on now, restored after the measurement."""
         if not before:
             return
-        self.js(f"window.inputWalk.off({json.dumps(before['key'])})")
+        # off() is false when the element still has focus (a press at a row's edge that moved nothing) or is gone: no
+        # fresh unfocused look to compare, so no verdict (stale snapshots gave false no-focus-indicator, QA pre)
+        if not self.js(f"window.inputWalk.off({json.dumps(before['key'])})"):
+            return
         v = self.js(f"window.inputWalk.vis({json.dumps(before['key'])})")
         if v is None:
             return
