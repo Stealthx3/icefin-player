@@ -272,12 +272,66 @@
         nav.append(b, h);
         // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
         const add = (icon, label, go) => { const x = D.el('button', 'lm-pnav-btn'); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
-        add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
+        // Options acts on the focused entry; where that has none, it says so (QA pre: it did nothing on Settings, Shows)
+        add('reorder', 'Options', () => { if (!(T.handleAction && T.handleAction('menu')) && D.notice) D.notice('No options here: point at an item first', true); });
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));
         for (const x of (extra || [])) add(x.icon || 'item', x.label, x.go);
         root.append(nav);
         return nav;
+    };
+
+    // ---- Back returns where you were (QA pre) ----
+    // What a screen keeps for the way back, per history entry: the Navigation API's key for the entry (Back returns to
+    // the same key; a new visit to the same address is a new entry and starts fresh), with the address. An entry an
+    // overlay added (below) counts as the one under it.
+    const OV = window.icefinLumenOv || (window.icefinLumenOv = { n: 0, self: 0, base: new Map(), at: null, from: null });
+    const MEMO = window.icefinLumenMemo || (window.icefinLumenMemo = new Map());
+    const navEntry = () => (window.navigation && navigation.currentEntry) || null;
+    D.entryKey = () => { const e = navEntry(); return `${e ? (OV.base.get(e.key) || e.key) : ''} ${location.hash}`; };
+    D.keep = (key, value) => { MEMO.delete(key); MEMO.set(key, value); if (MEMO.size > 300) MEMO.delete(MEMO.keys().next().value); };
+    D.kept = (key) => MEMO.get(key) || null;
+
+    // ---- Back closes what is open over the screen (QA pre: the mouse's Back button) ----
+    // The mouse's Back button is the browser's Back (the app's goBack), which a page can't refuse: an open sidebar,
+    // quick settings or options panel stayed up over the page Back went to. Each now holds a history entry of its own
+    // while it is up (the address unchanged, as jellyfin-web's dialogs do): Back takes that entry and closes it (a
+    // panel's next level first). Closed another way, it gives its entry back; one a row left behind (it went to
+    // another page) is stepped over when Back or Forward reaches it.
+    const ovHere = () => !!(history.state && history.state.lumenOverlay);
+    D.overlayEntry = () => {
+        // not over the player: its page is jellyfin-web's, which leaves playback when its entry changes under it;
+        // there Back leaves the player as before and the overlay closes with it (D.onPop)
+        if (ovHere() || /^#\/video\b/.test(location.hash)) return;
+        const e0 = navEntry();
+        try { history.pushState({ lumenOverlay: ++OV.n, navigate: false }, '', location.href); } catch (e) { return; }
+        const e1 = navEntry();
+        if (e0 && e1) { OV.base.set(e1.key, OV.base.get(e0.key) || e0.key); if (OV.base.size > 200) OV.base.delete(OV.base.keys().next().value); }
+    };
+    D.overlayGone = () => setTimeout(() => {
+        if (ovHere() && !ui.overlay.isOpen()) { OV.self = Date.now(); history.back(); }
+    }, 80);
+    if (!window.icefinLumenPop) {
+        window.icefinLumenPop = true;
+        if (window.navigation) navigation.addEventListener('currententrychange', (ev) => { OV.from = ev.from ? ev.from.index : null; OV.at = navigation.currentEntry ? navigation.currentEntry.index : null; });
+        window.addEventListener('popstate', () => { const K = window.icefinLumen; if (K && K.onPop) K.onPop(); }, true);
+    }
+    D.onPop = () => {
+        const e = navEntry();
+        const from = e && OV.at === e.index ? OV.from : OV.at;  // whichever ran first, the entry change or popstate
+        if (OV.self && Date.now() - OV.self < 1000) { OV.self = 0; return; }  // our own step
+        OV.self = 0;
+        if (!T.active() || T.active().id !== 'lumen' || window.icefinLumen !== D) return;
+        if (ui.overlay.isOpen()) {
+            if (ovHere()) return;
+            if (D.panel && D.panel.isOpen() && D.panel.depth() > 1) { D.panel.pop(); D.overlayEntry(); return; }
+            ui.overlay.close();
+            return;
+        }
+        if (ovHere()) {
+            OV.self = Date.now();
+            if (e && from != null && e.index > from && navigation.canGoForward) history.forward(); else history.back();
+        }
     };
 
     // ---- the keyboard in desktop mode: Backspace and Escape go back where nothing else used them (as Media Center) ----

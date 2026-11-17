@@ -194,7 +194,9 @@
                 lastRow = e.row;
                 const b = o.mode === 'grid' ? tileEl(e, o.kind) : rowEl(e);
                 b.addEventListener('click', () => { V.at = k; o.activate(e, b); });
-                b.addEventListener('mouseenter', () => { if (document.documentElement.getAttribute('data-lm-input') !== 'pointer' || V.at === k) return; V.at = k; V.focus(true); });
+                // only a pointer that moved takes focus: a list drawn again under a resting pointer (Back with the mouse's
+                // Back button, pressed mid-window) gets mouse events too, and those took focus off the row kept for Back (QA pre)
+                b.addEventListener('mousemove', (ev) => { if (!(ev.movementX || ev.movementY) || document.documentElement.getAttribute('data-lm-input') !== 'pointer' || V.at === k) return; V.at = k; V.focus(true); });
                 inner.append(b);
                 els.push(b);
             }
@@ -334,7 +336,9 @@
     // D.columns(root, {root: level | {bar: [levels], at, onBack}, key, name, fresh, leave, nav, onFocus, onLevel})
     D.columns = function (rootEl, opts) {
         const key = opts.key || location.hash.split('?')[0];
-        const saved = opts.fresh ? null : D.memory.get(key);
+        // what this screen showed last (its levels and entries), only for the user who saw it
+        const saved0 = opts.fresh ? null : D.memory.get(key);
+        const saved = saved0 && saved0.uid === D.uid() ? saved0 : null;
         const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0), zone: 'main', tabAt: 0 };
         rootEl.setAttribute('data-lm-screen', opts.name || 'browse');
         rootEl.classList.add('lm-screen');
@@ -355,7 +359,7 @@
         const top = () => S.stack[S.stack.length - 1];
         const isBar = () => !!top().bar;
         const cur = () => (isBar() ? top().bar[Math.max(0, Math.min(S.barIndex, top().bar.length - 1))] : top());
-        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex }); }
+        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex, uid: D.uid() }); }
 
         // the level shown in the panels: a level marked tabs (a library's root) whose entries are all folders shows the
         // chosen folder's level under its tabs
@@ -538,8 +542,8 @@
                 try { entries = (await lvS.load()) || []; } catch (e) { entries = []; }
                 p.focusAt = Math.max(0, entries.findIndex((e) => e.focusFirst));
             } else if (p.entry) {
-                let lvP = null;
-                try { lvP = await p.entry.open(); } catch (e) { lvP = null; }
+                let lvP = p.entry.lmLevel || null;  // drawn again (Back): the section's level as it was, at once
+                if (!lvP) { try { lvP = await p.entry.open(); } catch (e) { lvP = null; } p.entry.lmLevel = lvP; }
                 p.level = lvP;
                 try { entries = lvP ? ((lvP.entries && !lvP.reload ? lvP.entries : await lvP.load(C)) || []) : []; } catch (e) { entries = []; }
                 if (lvP) lvP.entries = entries;
@@ -567,7 +571,8 @@
             p.view = makeView(p.body, entries, { mode: season ? 'list' : 'grid', kind: p.front ? 'action' : (season ? undefined : 'card'), rowH: season ? 8.6 : undefined, letters: false, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
                 onFocus: (e) => { hintsFor(e); if (opts.onFocus) opts.onFocus(e, C); } });
             const ff = p.front ? Math.max(0, entries.findIndex((e) => e.focusFirst)) : (p.focusAt || 0);
-            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : ff));
+            const kept = (cur().deckMemo || {})[p.title || deck.panels.indexOf(p)];
+            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : kept != null ? kept : ff));
             p.view.draw();
         }
         function place(how) {
@@ -615,6 +620,10 @@
             const lv = cur();
             const ticket = ++S.loading;
             rootEl.setAttribute('data-lm-loading', '1');
+            // drawn again (Back, or the address visited again): what it showed draws at once, its entry focused, and
+            // the level is read again behind it, drawn again only if it changed (QA pre: nothing had focus while a
+            // screen came back, and Back's focus waited on the server)
+            if (lv.stale) { lv.stale = false; if (lv.entries && lv.entries.length) refreshLater(lv); else lv.reload = true; }
             if (!lv.entries || lv.reload) {
                 let list = [];
                 try { list = (await lv.load(C)) || []; } catch (e) { console.error('lumen: load', e); list = []; }
@@ -659,6 +668,17 @@
             rootEl.setAttribute('data-lm-count', String(entries.length));
             save();
         }
+        const sigOf = (list) => (list || []).map((e) => [e.item ? e.item.Id : '', e.name || '', e.sub || '', e.cellSub || '', e.progress || 0].join('|')).join('\n');
+        function refreshLater(lv) {
+            Promise.resolve().then(() => lv.load(C)).then((list) => {
+                list = list || [];
+                if (!S.alive || cur() !== lv || sigOf(list) === sigOf(lv.entries)) return;
+                remember();
+                lv.entries = list;
+                if (lv.pos != null) lv.pos = Math.min(lv.pos, Math.max(0, list.length - 1));
+                show('none');
+            }, (e) => console.error('lumen: refresh', e));
+        }
         function focusTab(i, quiet) {
             if (!tabEls.length) return false;
             S.tabAt = Math.max(0, Math.min(tabEls.length - 1, i));
@@ -675,11 +695,20 @@
             if (ti >= 0) { S.zone = 'tabs'; S.tabAt = ti; return; }
             if (deck) {
                 const i = deck.panels.findIndex((p) => p.el && p.el.contains(f));
-                if (i >= 0 && i !== deck.at) { deck.at = i; place(); V = deck.panels[i].view; }
+                if (i >= 0 && i !== deck.at) { deck.at = i; place(); V = deck.panels[i].view; cur().deckAt = i; }
             }
             if (V && V.sync(f)) S.zone = 'main';
         }
-        function remember() { if (V && content && !deck) content.pos = V.at; }
+        // the focused entry, kept on its level for Back: a list's position, or a details deck's section and, per
+        // section, its entry (QA pre: Back to an item's details went to the first card of the section)
+        function remember() {
+            if (V && content && !deck) content.pos = V.at;
+            if (deck) {
+                const p = deck.panels[deck.at], lv = cur();
+                lv.deckAt = deck.at;
+                if (p && p.view) { p.memo = p.view.at; (lv.deckMemo || (lv.deckMemo = {}))[p.title || deck.at] = p.view.at; }
+            }
+        }
 
         const C = {
             S, rootEl,
@@ -728,7 +757,8 @@
             },
             replaceTop(level) {
                 const old = top();
-                level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt;
+                remember();
+                level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt; level.deckMemo = old.deckMemo;
                 S.stack[S.stack.length - 1] = level;
                 return C.redraw('none');
             },
@@ -760,7 +790,7 @@
                     if (deck) {
                         const p = deck.panels[deck.at];
                         const r = p.view ? p.view.move(a) : a;
-                        if (r === true) { p.memo = p.view.at; return true; }
+                        if (r === true) { remember(); return true; }
                         if (r === 'left' || r === 'right') { if (!deckGo(deck.at + (r === 'right' ? 1 : -1))) T.ctx.sound('error'); return true; }
                         if (r === 'up' && p.tabsEl) { T.ctx.sound('error'); return true; }
                         T.ctx.sound('error');
@@ -822,7 +852,7 @@
                 save();
             }
         };
-        if (saved) { const c0 = cur(); if (c0) c0.reload = true; }
+        if (saved) { const c0 = cur(); if (c0) c0.stale = true; }
         D.currentColumn = C;
         D.goLevel = (lv) => { if (D.currentColumn && D.currentColumn.S.alive) D.currentColumn.push(lv); };
         C.redraw(saved ? 'none' : 'first');

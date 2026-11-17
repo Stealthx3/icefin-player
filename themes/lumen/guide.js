@@ -83,7 +83,9 @@
                 root.setAttribute('data-al', 'guide');
                 root.setAttribute('data-lm-screen', 'guide');
                 D.pointerNav(root);
-                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0 };
+                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0, entryKey: D.entryKey ? D.entryKey() : '' };
+                // Back from a tab's page (Channels, Schedule, Series) returns to that tab, not the grid (QA pre)
+                const back = D.kept ? D.kept(`guide ${S.entryKey}`) : null;
                 const top = el('div', 'lm-top');
                 const inf = el('div', 'lm-info');
                 S.clock = el('div', 'lm-clock');
@@ -124,6 +126,7 @@
                 const chans = ((res && res.Items) || []).sort((a, b) => (parseFloat(a.ChannelNumber) || 1e9) - (parseFloat(b.ChannelNumber) || 1e9) || String(a.Name).localeCompare(b.Name));
                 S.ready = true;
                 root.setAttribute('data-lm-ready', String(chans.length));
+                if (back && back.menu != null && S.menu[back.menu]) { S.menuIndex = back.menu; focusMenu(); }
                 if (!chans.length) {
                     S.guideEl.append(el('div', 'lm-empty', 'This server has no Live TV channels.'));
                     focusMenu();
@@ -134,6 +137,7 @@
                     channels: S.channels,
                     rows: ROWS,
                     span: SPAN,
+                    focus: !(back && back.menu != null && S.menu[back.menu]),
                     async fetch(ids, a, b) {
                         const r = await c.getLiveTvPrograms({ UserId: uid, ChannelIds: ids.join(','), MinEndDate: iso(a), MaxStartDate: iso(b), Fields: 'Overview',
                             EnableImages: false, EnableUserData: false, SortBy: 'StartDate', EnableTotalRecordCount: false, Limit: 2000 });
@@ -149,8 +153,18 @@
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
                 });
+                // a time with nothing listed (a channel without guide data): OK on it now watches the channel, as
+                // it plays whatever the guide knows; a later one says there is nothing listed (QA pre: it did nothing)
+                S.guideEl.addEventListener('click', (ev) => {
+                    const cell = ev.target.closest && ev.target.closest('.icefin-guide-gap');
+                    if (!cell || !cell.guideProgramme || !cell.guideChannel) return;
+                    const p = cell.guideProgramme, ch = cell.guideChannel;
+                    if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { T.ctx.sound('select'); stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
+                    else D.notice(`Nothing is listed on ${ch.name} then`, true);
+                });
             },
             unmount() {
+                if (S && S.entryKey && D.keep) { const mi = S.menu.indexOf(E.focused()); D.keep(`guide ${S.entryKey}`, mi >= 0 ? { menu: mi } : null); }
                 D.screenHints = null;
                 D.hintsOff();
                 clearTimeout(previewTimer);

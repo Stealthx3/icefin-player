@@ -186,6 +186,7 @@
     function rootLevel(S) {
         const it = S.item;
         return {
+            S,  // the state its entries act on (the item, the chosen version and tracks), for the way back (mount)
             title: it.Name, art: D.artOf(it, 300), round: it.Type === 'Person' || it.Type === 'MusicArtist', initials: (it.Type === 'Person' || it.Type === 'MusicArtist') && !(it.ImageTags || {}).Primary ? it.Name : null,
             icon: D.kindIcon(it.Type), count: false, details: true, pane: it,
             itemsLabel: { MusicAlbum: 'Songs', BoxSet: 'In this collection', Playlist: 'In this playlist', Season: 'Episodes', Folder: 'In this folder', PhotoAlbum: 'In this album', CollectionFolder: 'In this folder' }[it.Type] || 'More', poster: D.artOf(it, 300), headTitle: it.Name,
@@ -212,8 +213,29 @@
     D.register('#/details', {
         async mount(root) {
             const id = D.params().get('id');
-            const me = S = { item: null, C: null, root };
+            const key = `#/details?id=${id}`;
             root.setAttribute('data-lm-screen', 'details');
+            // Back to an item drawn before: it draws at once as it was (the version and tracks chosen, the entry that
+            // opened the next screen focused), and the item is read again behind it (QA pre: nothing had focus while
+            // the item loaded, and Back's focus waited on the server)
+            const saved = D.memory.get(key) && D.memory.get(key).uid === D.uid() ? D.memory.get(key) : null;
+            const was = saved && saved.stack && saved.stack[0] && saved.stack[0].S;
+            if (was && was.item && was.item.Id === id && !['TvChannel', 'Program'].includes(was.item.Type)) {
+                const me = S = was;
+                me.root = root;
+                D.flight = null;
+                me.C = D.columns(root, { root: rootLevel(me), name: 'details', key });
+                root.setAttribute('data-icefin-details-ready', '1');
+                fetchItem(id).then((it) => {
+                    if (S !== me || !it || !me.C) return;
+                    const sig = (x) => JSON.stringify([x.Name, x.UserData, x.ImageTags, x.ChildCount, x.RunTimeTicks]);
+                    const changed = sig(it) !== sig(me.item);
+                    me.item = it;
+                    if (changed && me.C.depth() === 1) me.C.replaceTop(rootLevel(me));
+                }, () => {});
+                return;
+            }
+            const me = S = { item: null, C: null, root };
             let it;
             try { it = await fetchItem(id); } catch (e) { it = null; }
             if (S !== me) return;

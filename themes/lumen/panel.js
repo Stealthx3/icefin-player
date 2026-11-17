@@ -29,8 +29,9 @@
 
     let host = null, stack = [], pendingSpec = null;
     const HOST = {
-        mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
+        mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; if (D.overlayEntry) D.overlayEntry(); },  // Back closes it (kit.js)
         unmount() { host = null; stack = []; ui.overlay.set(D.guideOverlay || null);  // the guide is the overlay again (channels.js)
+            if (D.overlayGone) D.overlayGone();
             setTimeout(() => { if (!host && D.currentColumn && D.currentColumn.refocus) D.currentColumn.refocus(); }, ui.motion.duration(280));  // after the 220 ms leave, when the overlay has let go of focus
             if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260)); },
         leave(h) { h.classList.add('lm-panel-leave'); return ui.motion.duration(220); },
@@ -60,6 +61,13 @@
         dim.addEventListener('click', () => D.panel.close());  // a click outside closes it (checklist 2.5)
         const box = el('div', 'lm-panel');
         box.setAttribute('role', 'dialog');
+        // a row of a level under the top one, where it shows past the top's edge, takes the pointer: that level comes
+        // back to the top and the row does what it does (QA pre: those rows were drawn but took no click)
+        box.addEventListener('click', (ev) => {
+            const lv = ev.target.closest && ev.target.closest('.lm-panel-level.lm-level-under');
+            if (!lv || !ev.target.closest('[data-icefin-focus]')) return;
+            while (stack.length > 1 && stack[stack.length - 1].el !== lv) D.panel.pop();
+        }, true);
         host.append(dim, box);
     }
     function draw(spec, how) {

@@ -185,6 +185,32 @@
         const it = row.cards[row.index].lumenItem;
         D.hints(it ? [['OK', 'open'], ['▶', 'play'], ['≡', 'options'], ['◀', 'sidebar']] : [['OK', 'open'], ['◀', 'sidebar']]);
     }
+    // ---- the way back: the focused entry as the home keeps it, and focus put back on it ----
+    let homeCache = null;  // the rows as last loaded, and for whom: Back draws them at once
+    function describe(e) {
+        if (!S || !e) return S ? S.last : null;
+        const hi = S.heroButtons.indexOf(e);
+        if (hi >= 0) return { hero: hi, heroAt: S.heroAt };
+        const r = S.rows.findIndex((row) => row.track.contains(e));
+        if (r < 0) return S.last;
+        const row = S.rows[r];
+        return { row: row.id, id: e.lumenItem ? e.lumenItem.Id : '', label: e.getAttribute('aria-label') || '', index: row.cards.indexOf(e), heroAt: S.heroAt };
+    }
+    function restore(want) {
+        if (!want || !S) return false;
+        if (want.hero != null) {
+            if (!S.heroButtons.length) return false;
+            focusHero(Math.min(want.hero, S.heroButtons.length - 1));
+            return true;
+        }
+        const r = S.rows.findIndex((row) => row.id === want.row);
+        if (r < 0) return false;
+        const cards = S.rows[r].cards;
+        let i = cards.findIndex((c) => (want.id ? c.lumenItem && c.lumenItem.Id === want.id : !c.lumenItem && c.getAttribute('aria-label') === want.label));
+        if (i < 0) i = Math.min(Math.max(0, want.index), cards.length - 1);
+        focusRow(r, i);
+        return true;
+    }
     D.homeHints = () => { if (S && S.ready) { if (S.zone === 'hero') focusHero(S.heroIndex); else focusRow(S.rowAt, S.rows[S.rowAt].index); } };
 
     D.register('#/home', {
@@ -262,7 +288,8 @@
             info.setAttribute('aria-label', 'Details');
             const next = heroButton('lm-hb-round lm-hb-next', '', 'next', () => { drawHero(S.heroAt + 1, 1); heroTick(); });
             next.setAttribute('aria-label', 'Next');
-            S.heroButtons = [S.hero.play, S.hero.fav, info, next];
+            const heroAll = [S.hero.play, S.hero.fav, info, next];
+            S.heroButtons = heroAll.slice();
             btns.append(...S.heroButtons);
             box.append(S.hero.title, S.hero.meta, S.hero.over, btns);
             const dots = el('div', 'lm-dots');
@@ -281,38 +308,67 @@
             S.ping = setInterval(() => D.ping && D.ping(), 60000);
             if (D.loadMe) D.loadMe();
 
-            const entries = await D.homeEntries();
-            if (S !== me) return;
-            const loaded = await Promise.all(entries.map(async (e) => {
-                try { const lv = await e.open(); return { id: e.homeRow, name: e.name, title: lv && lv.title, list: lv ? await lv.load() : [] }; } catch (err) { return { id: e.homeRow, name: e.name, list: [] }; }
-            }));
-            if (S !== me) return;
-            // the hero: what's in progress, then up next, then new (with a backdrop), five at most
-            const seen = new Set();
-            for (const x of loaded) {
-                if (x.id === 'system' || x.id === 'onnow' || S.heroItems.length >= 5) continue;
-                for (const e of x.list) {
-                    const it = e.item;
-                    if (!it || seen.has(it.Id) || !(backdrop(it, 1280) || wideArt(it, 1280))) continue;  // a backdrop first; else its other art
-                    if (!['Movie', 'Episode', 'Series', 'Video', 'MusicVideo'].includes(it.Type)) continue;
-                    seen.add(it.Id); S.heroItems.push(it);
-                    if (S.heroItems.length >= 5) break;
+            // Back to the home returns to the entry that left it (the hero's button, or a row's card by its item): what
+            // the home showed draws at once from the last load, and the rows are read again behind it, drawn again
+            // only if they changed (QA pre: Back always landed on the hero's Play, or on nothing while the rows loaded)
+            S.entryKey = D.entryKey();
+            const back = D.kept(S.entryKey);
+            for (const x of [hero, S.rowsBox]) x.addEventListener('icefin-focus', (ev) => { if (S === me) S.last = describe(ev.target); });
+            const build = (loaded, want) => {
+                S.heroItems = [];
+                S.hero.dots = [];
+                dots.textContent = '';
+                hero.classList.remove('empty');
+                // the hero: what's in progress, then up next, then new (with a backdrop), five at most
+                const seen = new Set();
+                for (const x of loaded) {
+                    if (x.id === 'system' || x.id === 'onnow' || S.heroItems.length >= 5) continue;
+                    for (const e of x.list) {
+                        const it = e.item;
+                        if (!it || seen.has(it.Id) || !(backdrop(it, 1280) || wideArt(it, 1280))) continue;  // a backdrop first; else its other art
+                        if (!['Movie', 'Episode', 'Series', 'Video', 'MusicVideo'].includes(it.Type)) continue;
+                        seen.add(it.Id); S.heroItems.push(it);
+                        if (S.heroItems.length >= 5) break;
+                    }
                 }
-            }
-            for (let k = 0; k < S.heroItems.length; k++) { const d = el('i'); dots.append(d); S.hero.dots.push(d); }
-            if (!S.heroItems.length) { hero.classList.add('empty'); S.hero.title.textContent = 'IceFin Player'; S.hero.over.textContent = '◀ opens the sidebar: Search, your libraries and Settings.'; S.heroButtons = []; btns.textContent = ''; }
-            S.rows = loaded.filter((x) => x.list.length).map((x) => drawRow({ id: x.id, name: x.title || x.name }, x.list));
-            S.rowsBox.append(...S.rows.map((r) => r.sec));
-            S.parallax = ui.parallax(S.rowsBox);  // the engine's lift (tokens parallax.lift) and tilt
-            S.ready = true;
-            root.setAttribute('data-lm-ready', String(S.rows.length || 1));
-            if (S.heroItems.length) { drawHero(0, 1); heroTick(); focusHero(0); }
-            else if (S.rows.length) focusRow(0, 0);
+                for (let k = 0; k < S.heroItems.length; k++) { const d = el('i'); dots.append(d); S.hero.dots.push(d); }
+                // Next only when there is a next one to page to (QA pre: with one featured item it did nothing)
+                S.heroButtons = S.heroItems.length ? heroAll.filter((b) => b !== next || S.heroItems.length > 1) : [];
+                btns.textContent = '';
+                btns.append(...S.heroButtons);
+                if (!S.heroItems.length) { hero.classList.add('empty'); S.hero.title.textContent = 'IceFin Player'; S.hero.meta.textContent = ''; S.hero.over.textContent = '◀ opens the sidebar: Search, your libraries and Settings.'; }
+                if (S.parallax) S.parallax.stop();
+                S.rowsBox.textContent = '';
+                S.rows = loaded.filter((x) => x.list.length).map((x) => drawRow({ id: x.id, name: x.title || x.name }, x.list));
+                S.rowsBox.append(...S.rows.map((r) => r.sec));
+                S.parallax = ui.parallax(S.rowsBox);  // the engine's lift (tokens parallax.lift) and tilt
+                S.ready = true;
+                root.setAttribute('data-lm-ready', String(S.rows.length || 1));
+                if (S.heroItems.length) { drawHero(want && want.heroAt < S.heroItems.length ? want.heroAt : 0, 1); heroTick(); }
+                if (restore(want)) return;
+                if (S.heroItems.length) focusHero(0);
+                else if (S.rows.length) focusRow(0, 0);
+            };
+            const sig = (loaded) => JSON.stringify(loaded.map((x) => [x.id, x.title || x.name, x.list.map((e) => [e.name, e.sub, e.cellSub, e.item ? e.item.Id : '', e.progress || 0])]));
+            const load = async () => {
+                const entries = await D.homeEntries();
+                return Promise.all(entries.map(async (e) => {
+                    try { const lv = await e.open(); return { id: e.homeRow, name: e.name, title: lv && lv.title, list: lv ? await lv.load() : [] }; } catch (err) { return { id: e.homeRow, name: e.name, list: [] }; }
+                }));
+            };
+            const cached = homeCache && homeCache.uid === D.uid() ? homeCache.loaded : null;
+            if (cached) build(cached, back);
+            const loaded = await load();
+            if (S !== me) return;
+            homeCache = { uid: D.uid(), loaded };
+            if (cached && sig(cached) === sig(loaded)) return;
+            build(loaded, cached ? S.last : back);
         },
         unmount() {
             clearTimeout(bgTimer);
             if (H) { if (H.C) H.C.stop(); for (const x of H.extra) if (x && x.stop) x.stop(); }
             if (S) { clearInterval(S.heroTimer); clearInterval(S.clockTimer); clearInterval(S.ping); for (const x of S.extra) if (x && x.stop) x.stop(); if (S.parallax) S.parallax.stop(); }
+            if (S && S.entryKey && S.last) D.keep(S.entryKey, S.last);  // for Back to this entry (mount)
             S = null; H = null;
             D.hintsOff();
         }
