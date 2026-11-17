@@ -876,7 +876,7 @@ class Walker:
         if kk.split(" (dialog)")[0] == k:
             self.tr("moving opened", kk)
             self.add_screen(kk, s, here["reached_by"] + [d], queue=False)
-            if not self.screens[kk].get("explored"):
+            if not self.dialog_done(kk):
                 pth = list(path)
                 reopen = lambda: self.restore(k, pth) and (self.drv.move(d), self.settle(t=1.0))[1] and self.screen_key(self.screen()) == kk
                 self.dialog_pass(k, kk, reopen, here["reached_by"] + [d])
@@ -961,7 +961,7 @@ class Walker:
                 self.video(pk)
         else:   # a dialog, sheet, menu or keyboard
             self.add_screen(pk, s, here["reached_by"] + [label], queue=False)
-            if not self.screens[pk].get("explored") and not self.late():
+            if not self.dialog_done(pk) and not self.late():
                 cc = dict(c)
                 reopen = lambda: self.position(k, cc) and (self.drv.activate(), self.settle(prev=k))[1] and self.screen_key(self.screen()) == pk
                 self.dialog_pass(k, pk, reopen, here["reached_by"] + [label])
@@ -1054,8 +1054,21 @@ class Walker:
             self.stop_play()
 
     # -------------------------------------------------------------- dialogs (one level)
+    def dialog_id(self, dk):
+        """A dialog's identity on its screen: its title, else the label of what has focus in it (a channel card's
+        first button); every channel card, menu or sheet is then its own dialog to explore."""
+        title = self.js("window.inputWalk.title()") or ""
+        if not title:
+            f = self.focus_now()
+            title = "focus:" + ((f or {}).get("label") or "")
+        return dk + "|" + title
+
+    def dialog_done(self, dk):
+        return self.dialog_id(dk) in self.screens[dk].setdefault("explored_titles", [])
+
     def dialog_pass(self, k, dk, reopen, via):
         self.screens[dk]["explored"] = True
+        self.screens[dk].setdefault("explored_titles", []).append(self.dialog_id(dk))
         title = self.js("window.inputWalk.title()") or ""
         rows = []
         if self.mouse:
