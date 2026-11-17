@@ -151,7 +151,7 @@ IW_JS = r"""
       const r = e.getBoundingClientRect();
       const x = Math.min(innerWidth - 1, Math.max(1, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(1, r.top + r.height / 2));
       const t = document.elementFromPoint(x, y);
-      return { ok: true, x, y, top: !!t && (t === e || e.contains(t) || t.contains(e)) };
+      return { ok: true, x, y, top: !!t && (t === e || e.contains(t)) };  // an ancestor on top means e is clipped away (QA pre)
     },
     offscreen(key) {
       // true only when the element exists, is rendered, and even scrolled into view stays entirely outside the viewport
