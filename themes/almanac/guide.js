@@ -17,6 +17,8 @@
     const hm = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
     let S = null;
+    // the tab that opened the next screen, filed under this history entry: Back to the guide focuses it again (QA pre)
+    let opener = null;
 
     function info(p, ch) {
         if (!S) return;
@@ -57,13 +59,39 @@
         E.focus(S.menu[S.menuIndex || 0]);
     }
 
+    // A channel with no guide information here (a "No information" cell): OK watches it when the gap is now, else its
+    // options offer watching it and its own programmes (QA pre: those cells did nothing)
+    function channelOptions(ch) {
+        D.panel.show({
+            title: ch.Name || 'Channel', path: `${ch.ChannelNumber ? `${ch.ChannelNumber} · ` : ''}no guide information`,
+            render(body) {
+                body.append(D.row('Watch', { icon: 'play', go: () => { D.panel.close(); stopPreview(); T.ctx.play({ ids: [ch.Id], serverId: S.client.serverId() }); } }),
+                    D.row('Its programmes', { icon: 'schedule', go: () => { D.panel.close(); D.details(ch.Id); } }));
+            }
+        });
+    }
+    function selectGap(p, ch) {
+        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: S.client.serverId() }); }
+        else channelOptions(ch.ch);
+    }
+
     function screen() {
         return {
             onAction(action, ctx) {
                 if (!S || !S.ready) return false;
                 D.sawAction && D.sawAction(action);
                 const f = ctx.focused();
-                if (action === 'menu') { if (S.at && S.at.p && S.at.p.item && !S.at.p.gap && D.liveOptions) { D.liveOptions(S.at.p.item); return true; } return false; }
+                if (action === 'menu') {
+                    if (S.at && S.at.p && S.at.p.item && !S.at.p.gap && D.liveOptions) { D.liveOptions(S.at.p.item); return true; }
+                    if (S.at && S.at.ch && S.at.ch.ch) { channelOptions(S.at.ch.ch); return true; }
+                    return false;
+                }
+                // the pointer's line (focused by the pointer): an arrow goes back to where the screen was
+                if (f && f.closest && f.closest('.al-pnav') && ['up', 'down', 'left', 'right'].includes(action)) {
+                    if (S.zone === 'menu' || !S.guide) focusMenu(); else S.guide.refocus();
+                    ctx.sound('focus');
+                    return true;
+                }
                 const mi = S.menu.indexOf(f);
                 if (mi >= 0) {
                     if (action === 'left' || action === 'right') { const n = mi + (action === 'right' ? 1 : -1); if (n >= 0 && n < S.menu.length) { S.menuIndex = n; E.focus(S.menu[n]); ctx.sound('focus'); } return true; }
@@ -82,7 +110,9 @@
                 root.setAttribute('data-al', 'guide');
                 root.setAttribute('data-al-screen', 'guide');
                 D.pointerNav(root);
-                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0 };
+                const entry = D.entryKey ? D.entryKey() : '';
+                const back = opener && D.isReturn && D.isReturn(opener.entry) ? opener.label : null;
+                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0, entry };
                 const top = el('div', 'al-top');
                 const inf = el('div', 'al-info');
                 S.clock = el('div', 'al-clock');
@@ -112,8 +142,9 @@
                     const b = el('div', 'al-menu-item al-tab' + (x.current ? ' current' : ''), x.label);
                     b.setAttribute('data-icefin-focus', '');
                     b.tabIndex = -1;
-                    b.addEventListener('click', () => { if (!x.current) x.go(); else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
+                    b.addEventListener('click', () => { if (!x.current) { opener = { entry, label: x.label }; x.go(); } else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
                     if (x.current) S.menuIndex = i;
+                    if (back === x.label) S.menuIndex = i;
                     menu.append(b);
                     return b;
                 });
@@ -141,6 +172,7 @@
                     renderChannel(ch, cell) { cell.append(el('span', 'al-chno', ch.ch.ChannelNumber || ''), el('span', 'al-chname', ch.name)); },
                     renderProgram(p, cell) { cell.textContent = p.title; if (p.item && p.item.TimerId) cell.append(el('span', 'al-rec', ' ●')); },
                     emptyLabel: 'No information',
+                    focus: back ? false : undefined,  // Back from a tab's screen: the tab, not the grid
                     onFocus(p, ch) { info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
                     onSelect(p, ch) {
                         if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
@@ -148,6 +180,12 @@
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
                 });
+                // the grid's "No information" cells (the engine's click skips them): watch the channel, or its options
+                S.guideEl.addEventListener('click', (ev) => {
+                    const cell = ev.target && ev.target.closest ? ev.target.closest('.icefin-guide-gap') : null;
+                    if (cell && cell.guideProgramme && cell.guideChannel) { T.ctx.sound('select'); selectGap(cell.guideProgramme, cell.guideChannel); }
+                });
+                if (back) focusMenu();
             },
             unmount() {
                 D.screenHints = null;

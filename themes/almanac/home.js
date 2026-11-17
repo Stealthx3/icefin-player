@@ -159,7 +159,7 @@
         mounted(C, root) {
             const box = root.querySelector('.al-clock');
             if (box) {
-                const srv = el('button', 'al-server', `● ${D.serverName || '…'}`);
+                const srv = D.pointerFocus(el('button', 'al-server', `● ${D.serverName || '…'}`));
                 srv.type = 'button';
                 srv.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.selectServer(); });
                 box.append(srv);

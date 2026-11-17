@@ -197,6 +197,23 @@
         }, true);
     }
     ui.pointerFirst(true);  // hover moves focus on every screen (checklist 2.5)
+
+    // ---- Back lands on the control that opened the next screen (QA pre) ----
+    // A screen files what opened the next one (a tab, a button on the pointer's line) under its history entry: the
+    // Navigation API's key, which Back returns to. Without the API, a mount within 2 s of a popstate counts as Back.
+    if (!window.icefinAlmanacPop) {
+        window.icefinAlmanacPop = true;
+        window.addEventListener('popstate', () => { window.icefinAlmanacPopAt = Date.now(); }, true);
+    }
+    D.entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '');
+    D.isReturn = (key) => (window.navigation && navigation.currentEntry ? !!key && key === navigation.currentEntry.key : Date.now() - (window.icefinAlmanacPopAt || 0) < 2000);
+    // A control outside a screen's own rows (the pointer's line, the server button): the pointer that moves over it
+    // focuses it, as on every other control, without making it a stop for the arrows (it shows for the pointer only).
+    // Content moving under a resting cursor sends events without movement: those never take focus.
+    D.pointerFocus = (b) => {
+        b.addEventListener('mousemove', (e) => { if ((e.movementX || e.movementY) && T.ctx.focused && T.ctx.focused() !== b) T.ctx.focus(b); });
+        return b;
+    };
     if (ui.keyboard) ui.keyboard.enable();  // the on-screen keyboard for every text field (checklist 1.12)
 
     // ---- hints (the Hints board, option A: the remote's words, bottom right, page-aware) ----
@@ -241,9 +258,9 @@
         h.type = 'button';
         h.append(D.svg('home'), document.createTextNode(' Home'));
         h.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/home'); });
-        nav.append(b, h);
+        nav.append(D.pointerFocus(b), D.pointerFocus(h));
         // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
-        const add = (icon, label, go) => { const x = D.el('button', 'al-pnav-btn'); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
+        const add = (icon, label, go) => { const x = D.pointerFocus(D.el('button', 'al-pnav-btn')); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
         add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));

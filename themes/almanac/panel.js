@@ -27,10 +27,19 @@
     const ui = T.ui;
     const el = D.el;
 
-    let host = null, stack = [], pendingSpec = null;
+    let host = null, stack = [], pendingSpec = null, openedOn = '';
     const HOST = {
         mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
-        unmount() { host = null; stack = []; ui.overlay.set(null); if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260)); },
+        unmount() {
+            host = null; stack = []; ui.overlay.set(null); if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260));
+            // the engine gives focus back to the control the panel opened from; when the screen redrew that control
+            // meanwhile (a row that loaded, a mark that changed), the screen's own lit place takes it (QA pre)
+            setTimeout(() => {
+                if (host || (T.ctx.focused && T.ctx.focused())) return;
+                const C = D.currentColumn;
+                if (C && C.S.alive && C.refocus) C.refocus();
+            }, 0);
+        },
         leave(h) { h.classList.add('al-panel-leave'); return ui.motion.duration(220); },
         onAction(a, f0) {
             D.sawAction(a);
@@ -65,6 +74,11 @@
         box.classList.toggle('al-panel-wide', !!spec.wide || stack.some((s) => s.wide));
         box.setAttribute('aria-label', spec.title || '');
         const level = el('div', 'al-panel-level' + (how === 'push' ? ' al-level-in' : ''));
+        // the level under the top one shows as a faint trail at the panel's edge: the pointer clicks it to go back to it
+        level.addEventListener('click', (ev) => {
+            if (!level.classList.contains('al-level-under') || ev.target !== level) return;
+            while (host && stack.length > 1 && stack[stack.length - 1].el !== level) D.panel.pop();
+        });
         const head = el('div', 'al-panel-head');
         if (spec.path) head.append(el('div', 'al-panel-path', spec.path));
         head.append(el('div', 'al-panel-title', spec.title || ''));
@@ -93,6 +107,7 @@
             // an overlay still playing its closing animation is not open: the engine finishes it and opens ours anew
             if (host && ui.overlay.isOpen()) { stack.length ? draw(spec, 'replace') : draw(spec, 'open'); return; }
             pendingSpec = spec;
+            openedOn = location.hash;
             ui.overlay.set(HOST);
             ui.overlay.open();
         },
@@ -114,6 +129,7 @@
         },
         close() { if (host) ui.overlay.close(); },
         isOpen: () => !!host && ui.overlay.isOpen(),
+        openedOn: () => openedOn,
         depth: () => stack.length,
         // A question in the panel (ExitPanel board): the safe choice is focused, so a second Back or a stray OK keeps you
         ask({ title, path, text, choices, push }) {
@@ -132,6 +148,16 @@
             if (push && host) D.panel.push(spec); else D.panel.show(spec);
         }
     };
+
+    // A panel belongs to the screen it opened over: when the route changes under it (Back, a link), it closes (QA pre:
+    // it stayed open over the screen history went back to)
+    if (!window.icefinAlmanacPanelRoute) {
+        window.icefinAlmanacPanelRoute = true;
+        window.addEventListener('hashchange', () => {
+            const K = window.icefinAlmanac;
+            if (K && K.panel && K.panel.isOpen() && K.panel.openedOn() !== location.hash && T.active() && T.active().id === 'almanac') K.panel.close();
+        });
+    }
 
     // ---- the notice (Notices board): under the clock, a thin light line on its left, 3 s ----
     D.notice = (text, bad) => {

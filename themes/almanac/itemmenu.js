@@ -255,7 +255,11 @@
                 if (tab === 'together') {
                     const cur = ctx.syncPlay && ctx.syncPlay.current();
                     if (cur) {
-                        body.append(D.sec('You are in'), D.row(cur.name, { on: true }), D.row('Leave the group', { go: async () => { try { await ctx.syncPlay.leave(); D.panel.close(); D.notice(`Left ${cur.name}`); } catch (e) { fail(e); } } }));
+                        // the group's name is a line to read, not a control (QA pre: a row that did nothing)
+                        const inGroup = D.row(cur.name, { on: true });
+                        for (const a of ['data-icefin-focus', 'tabindex', 'role']) inGroup.removeAttribute(a);
+                        inGroup.classList.add('al-row-static');
+                        body.append(D.sec('You are in'), inGroup, D.row('Leave the group', { go: async () => { try { await ctx.syncPlay.leave(); D.panel.close(); D.notice(`Left ${cur.name}`); } catch (e) { fail(e); } } }));
                         return;
                     }
                     body.append(D.sec('Groups on this server'));

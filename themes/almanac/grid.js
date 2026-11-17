@@ -94,7 +94,12 @@
     D.columns = function (rootEl, opts) {
         const key = opts.key || location.hash.split('?')[0];
         const saved = opts.fresh ? null : D.memory.get(key);
-        const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0), zone: 'rows', tabAt: 0, timers: [] };
+        const entry = D.entryKey ? D.entryKey() : '';
+        // Back to this history entry: the control that opened the next screen gets focus again (a tab, or a button on
+        // the pointer's line; a cell is the lit cell already). A new visit starts on the rows.
+        const back = saved && saved.opener && D.isReturn && D.isReturn(saved.entry) ? saved.opener : null;
+        const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0),
+            zone: back && back.zone === 'tabs' ? 'tabs' : 'rows', tabAt: 0, timers: [], entry, opener: null, back };
         rootEl.setAttribute('data-al-screen', opts.name || 'rows');
         rootEl.classList.add('al-screen');
         const pane = el('div', 'al-pane');
@@ -121,24 +126,41 @@
         const cur = () => (isBar() ? top().bar[Math.max(0, Math.min(S.barIndex, top().bar.length - 1))] : top());
         const rows = () => cur().rows || [];
         const pos = () => { const c = cur(); if (!c.pos) c.pos = { r: 0, c: 0 }; return c.pos; };
-        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex }); }
+        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex, entry: S.entry, opener: S.opener }); }
+        // what opened the next screen, filed as it is clicked (the engine's OK clicks too)
+        const labelOf = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim();
+        rootEl.addEventListener('click', (ev) => {
+            const t = ev.target && ev.target.closest ? ev.target.closest('button, [data-icefin-focus]') : null;
+            if (!t || !rootEl.contains(t)) return;
+            if (tabEls.includes(t)) S.opener = { zone: 'tabs', label: labelOf(t) };
+            else if (t.matches('.al-pnav-btn, .al-server') && !/^(Back|Home)$/.test(labelOf(t))) S.opener = { zone: 'extra', cls: t.classList[0], label: labelOf(t) };
+            else S.opener = null;
+            save();
+        }, true);
 
         // ---- the tab strip: the bar's categories, or the app's places (D.navTabs) ----
         let tabEls = [];
         function drawTabs() {
             tabs.textContent = '';
-            tabEls = [];
+            const had = tabEls.includes(T.ctx.focused && T.ctx.focused());
             const list = isBar() ? top().bar.map((b, i) => ({ label: b.label, current: i === S.barIndex, go: () => C.category(i) })) : (D.navTabs ? D.navTabs() : []);
+            tabEls = [];
             list.forEach((t, i) => {
                 const b = D.focusable(el('button', 'al-tab al-menu-item' + (t.current ? ' current' : ''), t.label));
                 b.type = 'button';
-                b.addEventListener('click', () => { T.ctx.sound('select'); t.go(); });
-                b.addEventListener('mouseenter', () => { S.tabAt = i; });
+                // the tab you are on: OK goes into its rows (to the top level from a nested one), not nowhere
+                b.addEventListener('click', () => { T.ctx.sound('select'); if (t.current && !isBar()) C.home(); else t.go(); });
+                // a pointer that moves onto a tab takes the strip (a row that loads late then leaves it focused)
+                b.addEventListener('mousemove', (ev) => { if ((ev.movementX || ev.movementY) && (S.zone !== 'tabs' || S.tabAt !== i)) focusTab(i); });
                 tabs.append(b);
                 tabEls.push(b);
                 if (t.current) S.tabAt = i;
             });
+            // Back to this screen: the tab that opened the next one (the list grows when the libraries arrive)
+            if (S.back && S.back.zone === 'tabs') { const i = list.findIndex((t) => t.label === S.back.label); if (i >= 0) S.tabAt = i; }
             tabs.hidden = !tabEls.length;
+            // the strip redrawn under a focused tab: the same place keeps focus
+            if (had && S.zone === 'tabs' && tabEls.length) focusTab(S.tabAt);
         }
         D.redrawTabs = () => { if (S.alive) drawTabs(); };
 
@@ -204,7 +226,8 @@
             b.setAttribute('aria-label', [e.name, e.sub].filter(Boolean).join(', '));
             b.alEntry = e;
             b.addEventListener('click', () => { const at = whereIs(b); if (at) setPos(at.r, at.c, true); C.activate(b.alEntry, b); });
-            b.addEventListener('mouseenter', () => { if (document.documentElement.getAttribute('data-al-input') !== 'pointer') return; const at = whereIs(b); if (at && (at.r !== pos().r || at.c !== pos().c)) setPos(at.r, at.c, false); });
+            // a pointer that moves lights the cell; a screen drawn under a resting pointer (Back) keeps its own cell (QA pre)
+            b.addEventListener('mousemove', (ev) => { if (!(ev.movementX || ev.movementY) || document.documentElement.getAttribute('data-al-input') !== 'pointer') return; const at = whereIs(b); if (at && (at.r !== pos().r || at.c !== pos().c || S.zone !== 'rows')) setPos(at.r, at.c, false); });
             return b;
         }
         const cellSubOf = (e) => {
@@ -273,6 +296,8 @@
                 x.d.classList.toggle('out', r < lv.top || r >= lv.top + VIS);
                 x.d.classList.toggle('lit', r === p.r && S.zone === 'rows');
                 const list = cellsOf(row);
+                // a folder row still loading shows one placeholder: the position kept for it waits for its cells
+                const waiting = row.kind === 'folder' && !row.cells;
                 // the cells: rebuilt when the row's list changes, else moved
                 const sig = `${list.length}:${list.map((e) => e.name).join('|').length}:${row.cells ? 1 : 0}`;
                 if (x.sig !== sig || x.list !== list) {
@@ -283,21 +308,22 @@
                     x.list = list;
                     x.from = 0;
                 }
-                if (r === p.r) {
+                if (r === p.r && !waiting) {
                     p.c = Math.max(0, Math.min(p.c, list.length - 1));
                     if (p.c < row.offset) row.offset = p.c;
                     if (p.c > row.offset + COLS - 1) row.offset = p.c - COLS + 1;
                 }
-                row.offset = Math.max(0, Math.min(row.offset, Math.max(0, list.length - COLS)));
-                x.lane.classList.toggle('has-more-right', list.length > row.offset + COLS);
-                x.lane.classList.toggle('has-more-left', row.offset > 0);
+                if (!waiting) row.offset = Math.max(0, Math.min(row.offset, Math.max(0, list.length - COLS)));
+                const from = waiting ? 0 : row.offset;
+                x.lane.classList.toggle('has-more-right', list.length > from + COLS);
+                x.lane.classList.toggle('has-more-left', from > 0);
                 x.cells.forEach((b, k) => {
-                    const off = k - row.offset;
+                    const off = k - from;
                     b.style.setProperty('--al-x', String(off));
                     const span = list[k] && list[k].wide ? COLS : 1;
                     b.style.setProperty('--al-w', String(span));
                     b.classList.toggle('gone', off < 0 || off >= COLS);
-                    const lit = r === p.r && k === p.c && S.zone === 'rows';
+                    const lit = r === p.r && k === (waiting ? 0 : p.c) && S.zone === 'rows';
                     b.classList.toggle('lit', lit);
                     if (!lit) b.classList.remove('icefin-focused');
                 });
@@ -309,22 +335,26 @@
             if (how) { rowsEl.classList.remove('al-in', 'al-back', 'al-first'); void rowsEl.offsetWidth; rowsEl.classList.add(`al-${how === 'in' ? 'in' : how === 'back' ? 'back' : 'first'}`); }
             if (S.zone === 'rows') focusLit();
         }
+        const colIn = (row, p) => (row && row.kind === 'folder' && !row.cells ? 0 : p.c);
         function litEntry() {
             const rs = rows();
             const p = pos();
             const row = rs[p.r];
             if (!row) return null;
-            return cellsOf(row)[p.c] || null;
+            return cellsOf(row)[colIn(row, p)] || null;
         }
         function focusLit() {
             const rs = rows();
             const p = pos();
             const row = rs[p.r];
             const x = row && rowEls.get(row);
-            const b = x && x.cells[p.c];
+            const b = x && x.cells[colIn(row, p)];
             // never take focus from the list box or the keyboard (a row that loads late redraws under them)
             const busy = (D.panel && D.panel.isOpen()) || (ui.keyboard && ui.keyboard.isOpen && ui.keyboard.isOpen());
-            if (b && !busy) T.ctx.focus(b);
+            // nor from a button on the pointer's line the pointer rests on (a row that loads late redraws)
+            const f = T.ctx.focused && T.ctx.focused();
+            const onLine = !!(f && f.closest && f.closest('.al-pnav, .al-server')) && document.documentElement.getAttribute('data-al-input') === 'pointer';
+            if (b && !busy && !onLine) T.ctx.focus(b);
             const e = litEntry();
             drawPane(e);
             hintsFor(e, row);
@@ -347,6 +377,7 @@
             const p = pos();
             p.r = r; p.c = c;
             S.zone = 'rows';
+            S.opener = null;
             if (!quiet) T.ctx.sound('focus');
             drawRows();
             save();
@@ -417,8 +448,14 @@
             drawHeader();
             drawTabs();
             if (opts.onLevel) opts.onLevel(lv, C);
-            if (S.zone === 'tabs' && tabEls.length) { drawRows(how); focusTab(S.tabAt); } else { S.zone = 'rows'; drawRows(how); }
+            if (S.zone === 'tabs' && tabEls.length) { drawRows(how); drawPane(litEntry()); focusTab(S.tabAt); } else { S.zone = 'rows'; drawRows(how); }
             drawEmpty();
+            // Back to this screen from what a button on the pointer's line or the server button opened: that button again
+            if (S.back && S.back.zone === 'extra') {
+                const b = [...rootEl.querySelectorAll(`.${S.back.cls}`)].find((x) => labelOf(x) === S.back.label);
+                if (b && !(D.panel && D.panel.isOpen())) T.ctx.focus(b);
+            }
+            S.back = null;
             rootEl.setAttribute('data-al-ready', String(S.stack.length));
             save();
         }
@@ -525,6 +562,18 @@
                 if (sound !== false) T.ctx.sound('back');
                 if (!quiet) C.redraw('back');
                 return true;
+            },
+            // the current tab's OK: the rows of its top level, the lit cell focused
+            home() {
+                S.opener = null;
+                if (S.stack.length > 1) { S.stack.length = 1; S.zone = 'rows'; return C.redraw('back'); }
+                if (rows().length) { S.zone = 'rows'; T.ctx.sound('focus'); drawRows(); }
+                return null;
+            },
+            // focus back where the screen has it (a panel closed after the cell it left from was redrawn)
+            refocus() {
+                if (!S.alive) return;
+                if (S.zone === 'tabs' && tabEls.length) focusTab(S.tabAt); else if (rows().length) { S.zone = 'rows'; focusLit(); }
             },
             replaceTop(level) { const old = top(); level.pos = old.pos; level.top = old.top; S.stack[S.stack.length - 1] = level; return C.redraw(); },
             reload() { cur().reload = true; return load(); },
