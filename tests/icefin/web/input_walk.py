@@ -111,7 +111,7 @@ IW_JS = r"""
       const s = (snaps[n.key] = snaps[n.key] || {}); s.on = snap(e); s.ring = ring(e);
       return Object.assign(info(e), { key: n.key });
     },
-    off(key) { const e = els.get(key); if (!e || !e.isConnected || !shown(e) || L.cur() === e) return false; (snaps[key] = snaps[key] || {}).off = snap(e); return true; },
+    off(key) { const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e) || L.cur() === e) return false; (snaps[key] = snaps[key] || {}).off = snap(e); return true; },
     vis(key) { const s = snaps[key]; if (!s || s.on === undefined || s.off === undefined) return null; return s.on !== s.off || !!s.ring; },
     enumerate(scope) {
       let rs = roots();
@@ -134,18 +134,18 @@ IW_JS = r"""
       return out;
     },
     box(key) {
-      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return null;
+      const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e)) return null;
       e.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       const r = e.getBoundingClientRect();
       return { x: r.left, y: r.top, w: r.width, h: r.height, vw: innerWidth, vh: innerHeight };
     },
     centers(key) {
-      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return null;
+      const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e)) return null;
       const c = L.cur(), f = (n) => { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       return { t: f(e), c: c ? f(c) : null };
     },
     rect(key) {
-      const e = els.get(key); if (!e || !e.isConnected) return null;
+      const e = window.inputWalk.live(key); if (!e || !e.isConnected) return null;
       if (!vis(e)) return { ok: false, why: 'hidden' };
       e.scrollIntoView({ block: 'center', inline: 'center' });
       const r = e.getBoundingClientRect();
@@ -155,13 +155,28 @@ IW_JS = r"""
     },
     offscreen(key) {
       // true only when the element exists, is rendered, and even scrolled into view stays entirely outside the viewport
-      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return false;
+      const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e)) return false;
       try { e.scrollIntoView({ block: 'center', inline: 'center' }); } catch (_) { /* ignore */ }
       const r = e.getBoundingClientRect();
       return r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight;
     },
+    // the element for a key on the page as it is now: a screen that redrew (a theme's home after Back) has new elements,
+    // so look again by the same path and label, then by the label alone when only one control carries it (QA 1)
+    live(key) {
+      let e = els.get(key);
+      if (e && e.isConnected && shown(e)) return e;
+      const cands = [...document.querySelectorAll('[data-icefin-focus], button, a[href], input, select, textarea, [role=button], [role=tab], [role=menuitem], [role=option], [role=link], [role=switch], [tabindex]')].filter((x) => shown(x));
+      e = cands.find((x) => L.key(x) === key);
+      if (!e) {
+        const lab = key.split('|').slice(1).join('|');
+        const same = lab ? cands.filter((x) => L.key(x).split('|').slice(1).join('|') === lab) : [];
+        if (same.length === 1) e = same[0];
+      }
+      if (e) els.set(key, e);
+      return e || null;
+    },
     focusKey(key) {
-      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return false;
+      const e = this.live(key); if (!e) return false;
       const g = window.icefinTheme && window.icefinTheme._engine;
       if (g && g.hasScreen() && g.root() && g.root().contains(e)) g.focus(e); else e.focus({ preventScroll: false });
       return L.cur() === e;
