@@ -432,6 +432,7 @@ class Walker:
         self.hovered = [0, 0]
         self.present = present            # {"libraries": [regex...], "types": [...]}
         self.errs_seen = set()
+        self.subs = {}                    # route key -> keys of its in-place sub-screens
 
     # -------------------------------------------------------------- plumbing
     def tr(self, *x):
@@ -489,7 +490,54 @@ class Walker:
         k = s["route"]
         if k.startswith("/details") and s.get("item"):
             k += f" [{self.item_type(s['item'])}]"
+        # a sub-screen (a folder or section a theme opens in place on the same route): the level whose control set is on screen
+        if self.subs.get(k):
+            cur, best, bo = self.ckeys(), None, 0.4999
+            for sk in self.subs[k]:
+                ks = set(self.screens[sk]["sub"]["keys"])
+                o = len(cur & ks) / len(ks) if ks else 0
+                if o > bo:
+                    best, bo = sk, o
+            k = best or k
         return k + (" (dialog)" if s.get("dialog") else "")
+
+    def ckeys(self):
+        """The keys of every visible interactive element now (the control set of the level on screen)."""
+        try:
+            return {c["key"] for c in (self.js("window.inputWalk.enumerate('base')") or [])}
+        except Exception:  # noqa: BLE001
+            return set()
+
+    def sub_level(self, k, here, c, label, s, f, pre, iid):
+        """The activation changed the page in place. A new level (under half of the previous control keys remain, focus is on a
+        control that was not there) becomes a sub-screen `<k> > <label>`, queued for exploration; its key, or None."""
+        sup = here.get("sub")
+        depth = (sup["depth"] if sup else 0) + 1
+        if depth > 4 or not pre or not f:
+            return None
+        post = self.ckeys()
+        if len(pre & post) * 2 >= len(pre) or f["key"] not in post or f["key"] in pre:
+            return None
+        rk = sup["rkey"] if sup else k
+        for other in self.subs.get(rk, []):         # the way back to a level already known is not a new level
+            st = self.screens[other]["sub"]
+            for ref in (set(st["pre"]), set(st["keys"])):
+                if ref and len(post & ref) * 2 >= len(ref):
+                    return None
+        sk = f"{k} > {label}"
+        if sk in self.screens:
+            return None
+        m = re.search(r"[?&]id=([0-9a-fA-F-]{32,36})", c.get("href") or "")
+        iid = m.group(1) if m else iid
+        try:
+            itype = self.item_type(iid) if iid else ""
+        except Exception:  # noqa: BLE001
+            itype = ""
+        self.add_screen(sk, s, here["reached_by"] + [label], queue=False)
+        self.screens[sk]["sub"] = {"parent": k, "opener": dict(c), "depth": depth, "rkey": rk, "keys": sorted(post), "pre": sorted(pre), "itype": itype}
+        self.subs.setdefault(rk, []).append(sk)
+        self.queue.append(sk)
+        return sk
 
     def focus_now(self):
         self.ensure()
@@ -644,14 +692,40 @@ class Walker:
         if self.screen()["dialog"]:
             self.dismiss()
         s = self.screen()
-        if self.screen_key(s) == k:
+        cur = self.screen_key(s)
+        if cur == k:
             return True
+        if here.get("sub"):
+            return self.enter_sub(k, here)
+        # standing in a sub-level of this route (same hash): Back out of it first
+        for _ in range(4):
+            if not (self.screens.get(cur, {}).get("sub") and self.screens[cur]["sub"]["rkey"] == k):
+                break
+            self.drv.back(0)
+            cur = self.screen_key(self.settle(prev=cur, t=3.0))
+            if cur == k:
+                return True
         self.js(f"location.hash = {json.dumps(here['hash'])}; true")
         s = self.settle()
         if self.screen_key(s) != k:
             self.tr("could not return to", k, "got", self.screen_key(s))
             return False
         return True
+
+    def enter_sub(self, k, here):
+        """Go to the sub-screen's parent, position on the opener, activate it, and confirm the sub-level is on screen (the same
+        control-set check as when it was found). If not, the sub-screen is unreachable: a trace line, no finding."""
+        if here.get("unreachable"):
+            return False
+        sub = here["sub"]
+        ok = self.go_here(sub["parent"]) and self.position(sub["parent"], sub["opener"])
+        if ok:
+            self.drv.activate()
+            ok = self.screen_key(self.settle(prev=sub["parent"])) == k
+        if not ok:
+            here["unreachable"] = True
+            self.tr("sub-screen unreachable", k)
+        return ok
 
     def replay(self, k, path):
         if self.mouse:
@@ -927,6 +1001,13 @@ class Walker:
         time.sleep(0.5)
         d1 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})")
         noisy = d0["dom"] != d1["dom"]
+        pre_keys, iid = set(), ""
+        if not self.mouse:      # for the in-place new-level check (a folder opened on the same route)
+            pre_keys = self.ckeys()
+            try:
+                iid = self.js("(() => { const e = window.inputWalk.live(" + json.dumps(c["key"]) + "); const n = e && e.closest('[data-id], [data-itemid]'); return n ? (n.getAttribute('data-id') || n.getAttribute('data-itemid') || '') : ''; })()") or ""
+            except Exception:  # noqa: BLE001
+                iid = ""
         self.drv.activate()
         s = self.settle(prev=k)
         self.errors(k, label)
@@ -950,9 +1031,15 @@ class Walker:
             self.finding("dead-control", k, label, "no screen, dialog or visible change", plugin=c.get("plugin", False))
             return
         if outcome == "in-place":
-            if not self.mouse and not self.stable_focus():
+            f2 = None if self.mouse else self.stable_focus()
+            if not self.mouse and not f2:
                 self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
-            return
+            sk = None if self.mouse else self.sub_level(k, here, c, label, s, f2, pre_keys, iid)
+            if not sk:
+                return
+            outcome, pk = "sub", sk       # a new level on the same route: Back is tested now, the level is explored later
+            el["outcome"] = f"sub-screen: {sk}"
+            self.tr("sub-screen", sk)
         if outcome == "screen":
             route = s["route"]
             if "dashboard" in route or "configurationpage" in route:
@@ -962,7 +1049,7 @@ class Walker:
             self.add_screen(pk, s, here["reached_by"] + [label])
             if route.startswith("/video"):
                 self.video(pk)
-        else:   # a dialog, sheet, menu or keyboard
+        elif outcome == "dialog":   # a dialog, sheet, menu or keyboard
             self.add_screen(pk, s, here["reached_by"] + [label], queue=False)
             if not self.dialog_done(pk) and not self.late():
                 cc = dict(c)
@@ -1027,6 +1114,10 @@ class Walker:
             self.stop_play()
             if kk == k:
                 return "ok", kk
+            if self.screens.get(k, {}).get("sub") and k.startswith(base(kk) + " > "):
+                # Back from a route opened inside a sub-level lands on a parent level (the page redrew): not a failure of this walk
+                self.tr("back landed on the parent level", kk, "of", k)
+                return "root", kk
             if base(kk) not in (base(k), base(opened)):
                 if base(opened) == base(self.root) and kk == base(self.root) + " (dialog)":
                     self.drv.back(i + 1)
@@ -1237,7 +1328,8 @@ class Walker:
         routes = [base(k).split(" ")[0] for k in self.screens]
         missing = [n for n, rx in cw.REQUIRED if not any(re.search(rx, r) for r in routes)]
         missing += [f"a {lib} library" for lib, rx in self.present["libraries"] if not any(re.search(rx, r) for r in routes)]
-        missing += [f"details of a {t}" for t in self.present["types"] if not any(f"/details" in k and f"[{t}]" in k for k in self.screens)]
+        missing += [f"details of a {t}" for t in self.present["types"] if not any(f"/details" in k and f"[{t}]" in k for k in self.screens)
+                                                      and not any(sc["route"].startswith("/details") and (sc.get("sub") or {}).get("itype") == t for sc in self.screens.values())]
         missing += [n for n, rx in PRIORITY_ROUTES[6:] if not any(re.search(rx, r) for r in routes)]
         budget_out = self.late()
         if missing and budget_out:
