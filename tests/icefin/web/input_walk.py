@@ -153,6 +153,13 @@ IW_JS = r"""
       const t = document.elementFromPoint(x, y);
       return { ok: true, x, y, top: !!t && (t === e || e.contains(t) || t.contains(e)) };
     },
+    offscreen(key) {
+      // true only when the element exists, is rendered, and even scrolled into view stays entirely outside the viewport
+      const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return false;
+      try { e.scrollIntoView({ block: 'center', inline: 'center' }); } catch (_) { /* ignore */ }
+      const r = e.getBoundingClientRect();
+      return r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight;
+    },
     focusKey(key) {
       const e = els.get(key); if (!e || !e.isConnected || !shown(e)) return false;
       const g = window.icefinTheme && window.icefinTheme._engine;
@@ -360,14 +367,38 @@ class MouseDriver(Driver):
         raise ValueError("the mouse has no D-pad")
 
     def back(self, attempt=0):
-        """The theme's own Back control when there is one and nothing is open over the page, else Escape (then Backspace)."""
+        """What a mouse user does: the mouse's Back button (XButton1, which IceFin maps to back), sent as a CDP back-button event at
+        the window's centre. If that changes nothing within 1.5 s: the theme's own Back control (nothing open over the page), then
+        history.back() (first attempt) or Escape / Backspace (later ones)."""
+        state = "(() => { const s = window.inputWalk.screen() || {}; return location.href + '|' + (s.dialog ? 1 : 0) + '|' + (s.route || ''); })()"
+        before = self.js(state)
+        self.x, self.y = int(self.js("innerWidth") / 2), int(self.js("innerHeight") / 2)
+        self.tr("mouse back button")
+        self._mouse("mouseMoved")
+        self._mouse("mousePressed", button="back", buttons=8, clickCount=1)
+        time.sleep(0.06)
+        self._mouse("mouseReleased", button="back", buttons=0, clickCount=1)
+        end = time.time() + 1.5
+        while time.time() < end:
+            time.sleep(0.15)
+            try:
+                if self.js(state) != before:
+                    time.sleep(0.25)
+                    return
+            except Exception:  # noqa: BLE001
+                return      # the page is navigating: that was a change
         if attempt == 0 and not self.js("window.inputWalk.screen().dialog"):
             k = self.js("window.inputWalk.backKey()")
             if k and self.focus(k):
                 self.tr("back control")
                 self.activate()
                 return
-        self.key("escape" if attempt % 2 == 0 else "backspace")
+        if attempt == 0:
+            self.tr("history.back()")
+            self.js("history.back(); true")
+            time.sleep(0.4)
+            return
+        self.key("escape" if attempt % 2 == 1 else "backspace")
 
 
 # ---------------------------------------------------------------- the walker
@@ -848,24 +879,29 @@ class Walker:
         el = self.element(k, c)
         label = c.get("label") or c["key"]
         if not self.position(k, c):
+            # per-screen data (the element's outcome); a finding only when it lies wholly outside the viewport with no way to scroll it in
             el["outcome"] = "unpositioned"
-            self.finding("unpositioned", k, label, "could not put the input on it again (screen reloaded or moved)", shot=False)
+            try:
+                off = bool(self.js(f"window.inputWalk.offscreen({json.dumps(c['key'])})"))
+            except Exception:  # noqa: BLE001
+                off = False
+            if off:
+                self.finding("unpositioned", k, label, "entirely outside the viewport and scrolling does not bring it in", shot=False)
             return
         pre = self.screen()
         prek = self.screen_key(pre)
+        obscured = False
         if self.mouse:
             r = self.drv.last or {}
-            if not r.get("top"):
-                el["outcome"] = "obscured"
-                self.finding("obscured", k, label, "another element covers its centre")
-                return
-            self.hovered[1] += 1
+            obscured = not r.get("top")     # elementFromPoint at its centre is something else: try anyway, report only if the click did nothing
             f = self.focus_now()
-            hovered = bool(f and f["key"] == c["key"])
-            self.hovered[0] += hovered
-            el["hover_focus"] = hovered
-            if hovered:
-                self.mark_off(k, None)
+            if not obscured:
+                self.hovered[1] += 1
+                hovered = bool(f and f["key"] == c["key"])
+                self.hovered[0] += hovered
+                el["hover_focus"] = hovered
+                if hovered:
+                    self.mark_off(k, None)
             pf = f
         else:
             pf = self.focus_now()
@@ -889,6 +925,10 @@ class Walker:
         if outcome == "nothing":
             if not self.mouse and not self.stable_focus():
                 self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
+            if obscured:
+                el["outcome"] = "obscured"
+                self.finding("obscured", k, label, "another element covers its centre and the click did nothing")
+                return
             self.finding("dead-control", k, label, "no screen, dialog or visible change", plugin=c.get("plugin", False))
             return
         if outcome == "in-place":
@@ -1227,16 +1267,16 @@ def mark_control(m, control):
         f["also_in_control"] = (f["input"], f["kind"], rt(f["screen"]), f["element"]) in have
 
 
-def markdown(m, reps):
+def markdown(m, reps, prefix=""):
     L = [f"# {m['theme']}: runs {', '.join(m['runs'])}" + (f" (pad families {m['family']})" if m["family"] else ""), ""]
     if any("also_in_control" in f for f in m["findings"]):
         new = sum(1 for f in m["findings"] if not f.get("also_in_control"))
         L += [f"Compared with the same walks on stock jellyfin-web: {new} of {len(m['findings'])} findings are not in the control (also_in_control marks the rest).", ""]
     for inp, r in reps.items():
         els = sum(len(s["elements"]) for s in r["screens"].values())
-        L.append(f"- {inp}: {len(r['screens'])} screens, {els} elements, {len(r['findings'])} findings; required missing: {', '.join(r['required_missing']) or 'none'}"
-                 + (f"; queue left {r['queue_left']}" if r["queue_left"] else "") + f"; {budget_text(r)}")
-    L += [""] + findings_md(m["findings"], "")
+        L.append(f"- {inp}: {len(r['screens'])} screens, {els} elements, {len(r['findings'])} findings; required missing: {', '.join(r.get('required_missing', [])) or 'none'}"
+                 + (f"; queue left {r['queue_left']}" if r.get("queue_left") else "") + f"; {budget_text(r)}")
+    L += [""] + findings_md(m["findings"], prefix)
     return "\n".join(L) + "\n"
 
 
@@ -1447,7 +1487,9 @@ class HostApp(App):
         if scenario == "steam-env":
             flat.append("--env=SDL_GAMECONTROLLER_IGNORE_DEVICES=0x054c/0x0ce6")
         if scenario == "gamescope":
-            flat.append("--env=ENABLE_GAMESCOPE_WSI=1")
+            # gamescope 3.16 starts Xwayland (DISPLAY=:N for its child) and a Wayland socket named gamescope-N, which the sandbox
+            # doesn't map: run the app through X11 (the first run died with "no Qt platform plugin could be initialized")
+            flat += ["--env=ENABLE_GAMESCOPE_WSI=1", "--socket=x11", "--nosocket=wayland", "--env=QT_QPA_PLATFORM=xcb"]
         tail = [host.APP, f"--remote-debugging-port={a.port}"]
         log = open(os.path.join(a.out, f"app-{scenario}.log"), "w")
         if scenario == "shortcut":
@@ -1462,17 +1504,21 @@ class HostApp(App):
             subprocess.Popen(["xdg-open", f"steam://rungameid/{st['rungameid']}"], stdout=log, stderr=subprocess.STDOUT)
             self.proc = _Attached()
         else:
-            cmd = (["/usr/games/gamescope", "-W", "1920", "-H", "1080", "--"] if scenario == "gamescope" else []) + flat + tail
+            cmd = (["/usr/games/gamescope", "-W", "1920", "-H", "1080", "-w", "1920", "-h", "1080", "--"] if scenario == "gamescope" else []) + flat + tail
             if scenario == "gamescope" and not os.path.exists(cmd[0]):
                 raise Skip("gamescope not installed at /usr/games/gamescope")
             self.proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
         self.log = log
         try:
-            self.page = Page(a.port, timeout=180 if scenario == "shortcut" else 120)
+            self.page = Page(a.port, timeout=180 if scenario in ("shortcut", "gamescope") else 120)
             self.page.wait_for("!!window.api && !!window.icefinTheme && !!window.icefinTheme.ctx && !!window.ApiClient && !!window.ApiClient.getCurrentUserId && !!window.ApiClient.getCurrentUserId()", timeout=150)
         except Exception as ex:  # noqa: BLE001
+            try:
+                tail_lines = [l.strip() for l in open(log.name, errors="replace").read().splitlines() if l.strip()][-3:]
+            except OSError:
+                tail_lines = []
             self.close(leave=False)
-            raise Skip(f"IceFin did not come up in the {scenario} scenario: {ex}") from ex
+            raise Skip(f"IceFin did not come up in the {scenario} scenario: {ex}" + (f" (app log ends: {' | '.join(tail_lines)})" if tail_lines else "")) from ex
         time.sleep(2)
         self.original = self.page.eval("new Promise(r => window.api.theme.selection(r))") or {}
         print("input_walk: your theme choice (replaced by stock jellyfin-web at the end):", json.dumps(self.original), flush=True)
@@ -1485,6 +1531,8 @@ class HostApp(App):
         """D41: the run ends with IceFin on stock jellyfin-web, not the theme the user had (host.Host.close still restores for other tests)."""
         try:
             if leave:
+                if not self.alive():        # a stale or closed devtools socket (EBADF): attach again before leaving stock
+                    self.page = Page(self.a.port, timeout=30)
                 self.page.eval("new Promise(r => window.api.theme.setActiveTheme('', '', r))")
                 time.sleep(2)
                 print("input_walk: IceFin left on stock jellyfin-web (your previous choice was", json.dumps(self.original) + ")", flush=True)
@@ -1578,6 +1626,8 @@ def main():
                     help="pad family; all (default) runs the pad input once per family: xbox, dualsense, switchpro, 8bitdo, steam")
     ap.add_argument("--steam", default="shortcut,gamescope", help="host: extra steam-family pad runs: shortcut (through the non-Steam shortcut, "
                     "scripts/icefin/qa-steam-shortcut.py) and/or gamescope (nested 1920x1080 Gamescope); empty for none")
+    ap.add_argument("--steam-inputs", default="pad", help="inputs run in the steam scenarios (steam-env, shortcut, gamescope); keys and mouse are "
+                    "the same as the plain run, so pad only by default")
     ap.add_argument("--budget-min", type=float, default=25, help="per theme and input (per pad family)")
     ap.add_argument("--play-seconds", type=float, default=5, help="how long the player plays before Back")
     ap.add_argument("--mode", default="tv", choices=["tv", "desktop"], help="lab: the app's window mode")
@@ -1596,21 +1646,30 @@ def main():
     families = FAMILIES + ["steam"] if a.family == "all" else [a.family]
     # scenarios: (name, pad families, inputs). One app per scenario; steam families need their own launch.
     scenarios = [("plain", [f for f in families if f != "steam"], inputs)]
-    if "steam" in families and "pad" in inputs:
-        scenarios.append(("steam-env", ["steam"], ["pad"]))
+    steam_inputs = [i for i in a.steam_inputs.split(",") if i in ("pad", "keys", "mouse")]
+    if "steam" in families and steam_inputs:
+        scenarios.append(("steam-env", ["steam"], steam_inputs))
         if a.host:
-            scenarios += [(s, ["steam"], ["pad"]) for s in a.steam.split(",") if s in ("gamescope", "shortcut")]
+            scenarios += [(s, ["steam"], steam_inputs) for s in a.steam.split(",") if s in ("gamescope", "shortcut")]
     summary = [f"# input_walk {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} ({'host' if a.host else 'lab'}, budget {a.budget_min} min per theme and run)", ""]
-    fails, all_reps, sized = 0, {}, [False]
+    fails, all_reps, sized = 0, {}, [False]      # all_reps: scenario -> theme -> run label -> report
     a.hostrun = HostRun(a) if a.host else None
 
-    def write_theme(theme):
-        tdir = os.path.join(a.out, theme)
-        m = merge(theme, all_reps[theme])
-        if theme != "stock" and "stock" in all_reps:
-            mark_control(m, merge("stock", all_reps["stock"]))
-        json.dump(m, open(os.path.join(tdir, "report.json"), "w"), indent=1)
-        open(os.path.join(tdir, "report.md"), "w").write(markdown(m, all_reps[theme]))
+    def sdir_of(theme, scenario):
+        """The folder of a scenario's own report: the theme's for plain, <theme>/<scenario> for the steam scenarios."""
+        d = os.path.join(a.out, theme) if scenario == "plain" else os.path.join(a.out, theme, scenario)
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def write_theme(theme, scenario):
+        sdir = sdir_of(theme, scenario)
+        reps_s = all_reps[scenario]
+        m = merge(theme, reps_s[theme])
+        m["scenario"] = scenario
+        if theme != "stock" and "stock" in reps_s:
+            mark_control(m, merge("stock", reps_s["stock"]))
+        json.dump(m, open(os.path.join(sdir, "report.json"), "w"), indent=1)
+        open(os.path.join(sdir, "report.md"), "w").write(markdown(m, reps_s[theme], "" if scenario == "plain" else "../"))
         return m
 
     try:
@@ -1632,8 +1691,15 @@ def main():
                 for theme in themes:
                     tdir = os.path.join(a.out, theme)
                     os.makedirs(tdir, exist_ok=True)
-                    reps = all_reps.setdefault(theme, {})
+                    reps = all_reps.setdefault(scenario, {}).setdefault(theme, {})
                     try:
+                        if not app.alive():
+                            msg = f"{theme} ({scenario}): the app had quit or stopped answering before the theme; reopened"
+                            print("input_walk:", msg, flush=True)
+                            summary.append(f"- {msg}")
+                            reps.setdefault("_app", {"input": "app", "family": "", "screens": {}, "findings": []})["findings"].append(
+                                {"severity": "high", "kind": "app-quit", "screen": "", "element": "", "run": scenario, "detail": msg})
+                            app.reopen()
                         app.use_theme(theme)
                         page = app.page
                         if a.host:
@@ -1646,7 +1712,7 @@ def main():
                         runs = []
                         for inp in scen_inputs:
                             if inp != "pad":
-                                runs.append((inp, inp, ""))
+                                runs.append((inp if scenario == "plain" else f"{inp}-{scenario}", inp, ""))
                             else:
                                 for fam in fams:
                                     runs.append((f"pad-{fam}" + ("" if scenario in ("plain", "steam-env") else f"-{scenario}"), "pad", fam))
@@ -1703,15 +1769,16 @@ def main():
                                 page.reconnect()
                             except Exception:  # noqa: BLE001
                                 pass
-                            write_theme(theme)
+                            write_theme(theme, scenario)
                     except Exception as ex:  # noqa: BLE001
                         fails += 1
                         summary.append(f"- {theme} ({scenario}): the run failed: {type(ex).__name__}: {ex}"[:300])
                         print("input_walk:", summary[-1], flush=True)
                     if reps:
-                        m = write_theme(theme)
+                        m = write_theme(theme, scenario)
                         high = sum(1 for f in m["findings"] if f["severity"] == "high" and not f.get("also_in_control"))
-                        summary.append(f"- {theme} ({scenario}): {len(m['findings'])} findings, {high} high not in the control; runs {', '.join(m['runs'])}: {tdir}/report.md")
+                        sd = sdir_of(theme, scenario)
+                        summary.append(f"- {theme} ({scenario}): {len(m['findings'])} findings, {high} high not in the control; runs {', '.join(m['runs'])}: {sd}/report.md")
                         summary += [f"  - {lab}: {budget_text(r)}" for lab, r in reps.items()]
                         summary += ["", f"### {theme} ({scenario})", ""] + findings_md(m["findings"], theme + "/") + [""]
                     open(os.path.join(a.out, "summary.md"), "w").write("\n".join(summary) + "\n")
