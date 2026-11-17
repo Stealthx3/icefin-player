@@ -284,6 +284,20 @@
         }
         return true;  // the overlay is modal
     };
+    // Back from the web view's own history while the overlay is up (the mouse's Back button goes there, not through the
+    // actions): the overlay takes it as its Back (the theme's own first: a panel's level, else it closes) and the screen
+    // stays, where the Navigation API can cancel the traversal; where it can't, the overlay closes with the screen under
+    // it, so no panel is left over the next screen (QA pre: a theme's item options stayed open on the home). A
+    // jellyfin-web dialog that is up keeps its own history steps.
+    const webDialogUp = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden');
+    if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+        window.navigation.addEventListener('navigate', (e) => {
+            if (e.navigationType !== 'traverse' || !overlayEl || overlayClosing || webDialogUp()) return;
+            if (e.cancelable) { e.preventDefault(); overlayHook('back'); } else overlay.close();
+        });
+    } else {
+        window.addEventListener('popstate', () => { if (overlayEl && !overlayClosing && !webDialogUp()) overlay.close(); }, true);
+    }
 
     // ---- paged grid (9.2) ----
     function pagedGrid(el, items, opts) {
