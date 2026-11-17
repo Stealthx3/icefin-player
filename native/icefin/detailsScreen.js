@@ -644,7 +644,14 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 if (action === 'left' || action === 'right') return true;  // a list: nothing beside it
                 return false;  // enter clicks the option; back closes the picker (onBack)
             },
-            onBack() { if (S && S.moving && S.reorder) return S.reorder('back'); return closePicker(); },
+            // a picker or a move first; then Back leaves the page as its Back button does. A screen that returned false
+            // here left the keyboard's Escape and Backspace with nothing to do in desktop mode (QA 1, the Plaza walk)
+            onBack() {
+                if (S && S.moving && S.reorder) return S.reorder('back');
+                if (closePicker()) return true;
+                if (history.length > 1) history.back(); else T.ctx.navigate('#/home');
+                return true;
+            },
             async mount(root) {
                 ensureStyle();
                 const params = new URLSearchParams(location.hash.split('?')[1] || '');
