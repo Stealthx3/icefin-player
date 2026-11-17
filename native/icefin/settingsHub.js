@@ -182,7 +182,9 @@
                 return false;
             },
             onBack() {
-                if (pane() !== 'client') return false;
+                // the hub: Back leaves as its Back button does (returning false left the keyboard's Escape and Backspace
+                // with nothing to do in desktop mode: QA 1, the Plaza walk)
+                if (pane() !== 'client') { if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
                 const ev = window.event;
                 if (ev && ev.key === 'Backspace' && isText(document.activeElement)) return false;
                 if (history.length > 1) history.back(); else T.ctx.navigate('#/mypreferencesmenu');
