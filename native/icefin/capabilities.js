@@ -1132,7 +1132,7 @@
         if (act && act !== document.body && all.includes(act)) return;
         const first = all.find((el) => !(stockEl && stockEl.contains(el)) && !isText(el) && !el.matches('select, [role="combobox"]'))
             || all.find((el) => !(stockEl && stockEl.contains(el)));
-        if (first) first.focus({ preventScroll: true });
+        if (first) stockFocus(first);
     }
     const stockChrome = {
         // spec: {mount(el, info, ctx), update?(info, ctx)}; info: {route, hash, title, back(), home()}
@@ -1154,6 +1154,14 @@
         const cs = getComputedStyle(b), r = b.getBoundingClientRect();
         return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0 && r.width >= 4 && r.height >= 4;
     };
+    // What .focus() can land on. A matched element that can't (jellyfin-web's .cardBox, a [role=button] div without a
+    // tabindex) is a dead end: focusing it did nothing, so the move stopped there (QA 1: on the classic home a pad reached
+    // 2 controls, every card behind a .cardBox that had swallowed the card's own links).
+    const stockFocusable = (el) => el.matches('button, a[href], input, select, textarea, [tabindex]');
+    const stockFocus = (el) => {
+        if (!stockFocusable(el)) el.setAttribute('tabindex', '-1');  // focusable from here, still out of the Tab order
+        el.focus({ preventScroll: true });
+    };
     function stockControls() {
         const page = [...document.querySelectorAll('.page:not(.hide)')].filter((x) => x.getClientRects().length).pop();
         const out = [];
@@ -1164,8 +1172,11 @@
                 out.push(el);
             }
         }
-        // the outermost of nested controls (a button inside a card is the card), but a switch's input over its label
-        return out.filter((el) => !out.some((o) => o !== el && o.contains(el)));
+        // the outermost of nested controls (a button inside a card is the card), but a switch's input over its label. Only
+        // a focusable control stands for what it holds: a wrapper that can't take focus (a desktop card's .cardBox) gives
+        // way to the controls inside it (the card's picture and its title links), and stands only when it holds none.
+        return out.filter((el) => !out.some((o) => o !== el && o.contains(el) && stockFocusable(o))
+            && (stockFocusable(el) || !out.some((o) => o !== el && el.contains(o))));
     }
     const stockDialog = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length
         && getComputedStyle(d).display !== 'none' && !d.closest('#icefin-theme-root'));
@@ -1186,8 +1197,10 @@
             next = hit ? others[others.map(stockBox).indexOf(hit)] : null;
         }
         if (next) {
-            next.focus({ preventScroll: true });
-            if (!(stockEl && stockEl.contains(next))) stockBox(next).scrollIntoView({ block: 'center', behavior: 'smooth' });
+            stockFocus(next);
+            // a card past the edge of a scrolled row (the classic home's rows) is a candidate like any other: its box lies
+            // beyond the row's clip, so Right from the last card in view picks it, and this brings it (and the row) in
+            if (!(stockEl && stockEl.contains(next))) stockBox(next).scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
             E.sound('focus');
         }
         return true;  // a framed page keeps the arrows even at its edge
