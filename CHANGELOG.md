@@ -41,6 +41,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Harbor, Orbit and Mosaic show your server's icon (Harbor its banner or icon and name) where the interface they follow shows its own brand.
 
 ### Fixed
+- On jellyfin-web's own pages inside a theme (Classic home and the rest), the controller and the arrow keys reach every card's picture and title and the rows' scroll buttons; moving onto a card used to stop dead.
 - Playing a Live TV channel no longer drops the theme's player controls for jellyfin-web's.
 - The keyboard works on a theme's screens after a jellyfin-web dialog has been opened and closed.
 - Back on Jellyfin's own home opened from a theme (Classic home) returns to where it was opened from, with a controller, a remote or the keyboard.
