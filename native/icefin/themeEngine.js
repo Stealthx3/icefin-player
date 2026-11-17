@@ -641,6 +641,10 @@
         // (foreignDialog). Only one that shows: the old test matched any .formDialog left in the page, open or not, and
         // the keyboard then did nothing on the theme's screen while a controller still worked (QA 1).
         if (foreignDialog()) return;
+        // Left, Right and Backspace in a text field (Client Settings' fields, the preference pages') edit it, here too
+        const tf = e.target;
+        if (tf && (tf.isContentEditable || (tf.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit)$/i.test(tf.type || '')) || tf.tagName === 'TEXTAREA')
+            && (action === 'left' || action === 'right' || e.key === 'Backspace')) return;
         if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
 
