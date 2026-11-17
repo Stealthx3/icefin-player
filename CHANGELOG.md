@@ -41,6 +41,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Harbor, Orbit and Mosaic show your server's icon (Harbor its banner or icon and name) where the interface they follow shows its own brand.
 
 ### Fixed
+- Back from an episode to its series shows the season that episode is in, so the episode keeps the focus.
 - Back to one of jellyfin-web's own pages inside a theme (Classic home and the rest) lands on the card or control that opened the next screen, not the page's first control; the arrow keys there move over the page and the theme's frame (its Back, Home, Play on and Watch together) as a controller does.
 - The mouse's Back button with a theme's panel open (item options, a menu) closes the panel instead of leaving it over the previous screen.
 - Over jellyfin-web's own pages inside a theme, the arrow keys, Enter and Escape work inside the theme's side panel or sheet; Escape left the page with the panel still up.
