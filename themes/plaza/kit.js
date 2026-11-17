@@ -107,7 +107,112 @@
     P.inputMode = (mode) => { const h = document.documentElement; if (h && h.getAttribute('data-pz-input') !== mode) h.setAttribute('data-pz-input', mode); };
     window.addEventListener('keydown', () => { lastKey = Date.now(); P.inputMode('keys'); }, true);
     window.addEventListener('mousemove', (e) => { if (e.movementX || e.movementY) P.inputMode('pointer'); }, true);
-    P.sawAction = () => { if (Date.now() - lastKey > 120) P.inputMode('pad'); };
+    P.sawAction = () => { P.backFocus.stop(); if (Date.now() - lastKey > 120) P.inputMode('pad'); };
+
+    // ---- Back lands on the control that opened the next screen (QA 1) ----
+    // Every history entry (its key and hash: an item's details, a library's wall) remembers the last control focused or
+    // clicked on it, and what its screen asks to keep (P.keep: the tab, the grid's page, the chosen disc). Back to that
+    // entry, the screen reads that state from P.returning() as it mounts, and the control is focused once it is drawn:
+    // within 4 s, and never after the user has moved. A new visit to the same route is a new entry and starts fresh.
+    // Back and Home themselves are not remembered. The home keeps its own (P.homeReturn).
+    P.backFocus = (() => {
+        const memo = new Map();
+        // the entry: the Navigation API's key for this history entry (Back returns to the same key), with the hash
+        const here = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key + ' ' : '') + location.hash;
+        let cur = null, prev = null, pending = null, keep = null, lastHash = here(), obs = null, timer = null, raf = 0;
+        const rootEl = () => document.getElementById('icefin-theme-root');
+        const idOf = (e) => (e.dataset && e.dataset.id) || (e.plazaItem && (e.plazaItem.Id || e.plazaItem.ItemId)) || (e.plazaChannel && e.plazaChannel.id) || '';
+        const labelOf = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+        const clsOf = (e) => e.classList[0] || '';
+        const NAV = '[data-action=back], [data-action=home], .pz-mround-back, .pz-mround-home';
+        const describe = (e) => ({ id: idOf(e), action: e.getAttribute('data-action') || '', tab: e.getAttribute('data-pz-tab') || '', label: labelOf(e), cls: clsOf(e) });
+        const keepNow = (h) => { if (!keep || keep.hash !== h) return null; try { return keep.fn(); } catch (err) { return null; } };
+        function record(e) {
+            const r = rootEl();
+            const t = e && e.closest && e.closest('[data-icefin-focus]');
+            if (!r || !t || !r.contains(t) || t.matches(NAV)) return;
+            const h = here();
+            if (cur && cur.hash !== h) prev = cur;
+            cur = { hash: h, d: describe(t), state: keepNow(h) };
+        }
+        function find(r, d) {
+            const all = [...r.querySelectorAll('[data-icefin-focus]')].filter((e) => e.getClientRects().length && clsOf(e) === d.cls);
+            return (d.id && all.find((e) => idOf(e) === d.id))
+                || (d.action && all.find((e) => e.getAttribute('data-action') === d.action))
+                || (d.tab && all.find((e) => e.getAttribute('data-pz-tab') === d.tab))
+                || (!d.id && d.label && all.find((e) => labelOf(e) === d.label)) || null;
+        }
+        function stop() {
+            pending = null;
+            if (obs) obs.disconnect();
+            obs = null;
+            clearTimeout(timer);
+            if (raf) cancelAnimationFrame(raf);
+            raf = 0;
+        }
+        function attempt() {
+            raf = 0;
+            const p = pending, r = rootEl();
+            if (!p || here() !== p.hash) { stop(); return; }
+            if (!r || r.hidden) return;
+            const e = find(r, p.entry.d);
+            if (!e) return;
+            if (T.ctx.focused() !== e) T.ctx.focus(e);
+            stop();
+        }
+        const soon = () => { if (!raf) raf = requestAnimationFrame(attempt); };
+        // the route changed: file the control used on the one left, and look up the one arrived at
+        function routed() {
+            const h = here();
+            if (h === lastHash) return;
+            const old = lastHash;
+            lastHash = h;
+            const c = cur && cur.hash === old ? cur : prev && prev.hash === old ? prev : null;
+            if (c) {
+                const st = keepNow(old);
+                memo.delete(old);
+                memo.set(old, Object.assign({}, c, st ? { state: st } : {}));
+                if (memo.size > 200) memo.delete(memo.keys().next().value);
+            }
+            stop();
+            const bareHome = /^#\/home(\.html)?(\?|$)/.test(location.hash) && !/[?&]pz=/.test(location.hash);
+            const entry = memo.get(h);
+            if (!entry || bareHome) return;
+            pending = { hash: h, entry };
+            const r = rootEl();
+            if (r) { obs = new MutationObserver(soon); obs.observe(r, { childList: true, subtree: true }); }
+            timer = setTimeout(stop, 4000);
+            setTimeout(soon, 0);
+        }
+        // capture listeners on window run before the engine's own, so the screen left is still up when it is filed
+        const onFocus = (e) => record(e.target);
+        const onInput = (e) => { if (e.type !== 'mousemove' || e.movementX || e.movementY) stop(); };
+        const INPUT = ['keydown', 'mousedown', 'wheel', 'mousemove'];
+        const off = () => {
+            window.removeEventListener('popstate', routed, true);
+            window.removeEventListener('hashchange', routed, true);
+            document.removeEventListener('icefin-focus', onFocus, true);
+            document.removeEventListener('click', onFocus, true);
+            for (const t of INPUT) window.removeEventListener(t, onInput, true);
+            stop();
+        };
+        if (window.icefinPlazaBackFocusOff) window.icefinPlazaBackFocusOff();  // the theme loaded again: one set of listeners
+        window.icefinPlazaBackFocusOff = off;
+        window.addEventListener('popstate', routed, true);
+        window.addEventListener('hashchange', routed, true);
+        document.addEventListener('icefin-focus', onFocus, true);
+        document.addEventListener('click', onFocus, true);
+        for (const t of INPUT) window.addEventListener(t, onInput, true);
+        return {
+            stop,
+            // the state a screen keeps for Back (asked for as the screen is left), registered as it mounts
+            keep(fn) { keep = { hash: here(), fn }; },
+            // the state kept for this hash when the user comes back to it, else null
+            returning() { return pending && pending.hash === here() ? pending.entry.state || null : null; }
+        };
+    })();
+    P.keep = (fn) => P.backFocus.keep(fn);
+    P.returning = () => P.backFocus.returning();
 
     // ---- a page in a strip of pages: the next one slides in from its side (450 ms, ease-out) ----
     P.slide = (node, dir) => {

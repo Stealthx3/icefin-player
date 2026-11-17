@@ -19,9 +19,32 @@ From the lab smoke walk of input_walk.py (keys, mouse, pad-xbox, 4 min each; the
       even closed (engine #201).
 - [x] Back on Classic home (jellyfin-web's home opened from Settings) went nowhere: engine #200.
 - [ ] Pad A on the list screen's All / Play all / Shuffle reported dead in the lab; no cause found in the code
-      ("All" is the tab already showing). Recheck on the host walk.
+      ("All" is the tab already showing). Recheck on the host walk. The first host walk's pad runs (dualsense,
+      switchpro) stopped at 8 screens and never opened a library, a list or a book: still open.
 - [ ] A book's "Add to favorites" (jellyfin-web's details page in Plaza's frame) not reached by the pad in the lab;
-      no exclusion rule matches. Recheck on the host walk with the focus trace.
+      no exclusion rule matches. Recheck on the host walk with the focus trace. Not reached on the first host walk.
+
+From the host walk (plaza-qa1-20261116-1621; build 7b4c02c, so without engine #200/#201 or the fixes above):
+- [x] Details pages (Person, Season, Episode, Series; 137 focus-lost with the mouse): hovering a control on the
+      details page didn't focus it (the screen never turned pointer-first on), and coming back to a details page
+      always focused its first action, never the cast card, episode or film that opened the next one. Details,
+      Settings and the preference pages are pointer-first now (details.js, settings.js), and every Plaza screen
+      returns to the control that opened the next one, with the tab, sort, page, disc or search words it was left
+      on (kit.js `P.backFocus`, `P.keep`/`P.returning` in menus.js); a sheet already returns focus (the engine's
+      overlay).
+- [x] Keyboard Escape and Backspace did nothing on Settings (and on the details page): the engine's hub and
+      details screens returned false from Back when nothing was open on them. They leave the page now (engine,
+      fix/qa1-plaza-engine).
+- [x] Back from a show's seasons (or any item) to Shows, Movies, a list or Next Up focused the first cell, not the
+      one that opened it; Back to Continue Watching focused the first disc, not Details (the same fix).
+- [x] Connect on Add a server with no address gave only a sound; it says to type the address now (signin.js).
+
+Judged not Plaza's on that walk: broken-back after a dialog on Search, Choose a server and the libraries' A–Z panel
+(the walker presses Back once more after its dialog pass has already closed the dialog); Back from Classic home and
+the keys run after 17:14 (engine #200, #201, not in that build); Play then Back on a season (the walker's stop
+already returns, then it presses Back); "Translation key is missing" (jellyfin-web's own details page under the
+screen, logging a cast member's role); the search keys and "All" (a field value the walker didn't count yet, the tab
+already showing); the home's empty slot (a gap that takes a moved channel, as on the target).
 - [ ] jellyfin-web's own pages (?icefin=stock): focus after Back and focus rings; the host walk's stock control
       says which are jellyfin-web's own behaviour.
 

@@ -205,7 +205,8 @@
                     const go = P.focusable(el('div', 'pz-tab pz-tab-on', 'Connect'));
                     go.addEventListener('click', async () => {
                         const a = i.value.trim();
-                        if (!a) { T.ctx.focus(i); T.ctx.sound('error'); return; }
+                        // nothing typed: say so (QA 1, a Connect that seemed dead), and the field takes focus
+                        if (!a) { T.ctx.focus(i); T.ctx.sound('error'); if (P.toast) P.toast('Type the server’s address first', true); return; }
                         P.sheet.close();
                         connect(a, a);
                     });
