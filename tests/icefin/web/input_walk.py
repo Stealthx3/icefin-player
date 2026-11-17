@@ -163,6 +163,8 @@ IW_JS = r"""
     digest(key) {
       const e = els.get(key); let t = '';
       for (const r of roots()) t += r.childElementCount + ':' + (r.textContent || '').slice(0, 8000) + ';';
+      // field values too: an on-screen keyboard's key types into the field, which changes no text node (QA 1)
+      for (const f of document.querySelectorAll('input:not([type=hidden]), textarea')) t += '|' + (f.value || '');
       const at = (n) => n ? [...n.attributes].map((a) => a.name + '=' + a.value).join(' ') + '#' + (n.textContent || '').trim().slice(0, 80) : '';
       const c = L.cur();
       return { dom: hash(t), el: hash(at(e) + '|' + at(e && e.parentElement)), focus: c ? L.key(c) : '' };
