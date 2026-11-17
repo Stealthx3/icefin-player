@@ -29,9 +29,8 @@
 
     let host = null, stack = [], pendingSpec = null;
     const HOST = {
-        mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; if (D.overlayEntry) D.overlayEntry(); },  // Back closes it (kit.js)
+        mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
         unmount() { host = null; stack = []; ui.overlay.set(D.guideOverlay || null);  // the guide is the overlay again (channels.js)
-            if (D.overlayGone) D.overlayGone();
             setTimeout(() => { if (!host && D.currentColumn && D.currentColumn.refocus) D.currentColumn.refocus(); }, ui.motion.duration(280));  // after the 220 ms leave, when the overlay has let go of focus
             if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260)); },
         leave(h) { h.classList.add('lm-panel-leave'); return ui.motion.duration(220); },

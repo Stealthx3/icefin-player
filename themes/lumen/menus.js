@@ -96,13 +96,12 @@
             };
             if (D.views && D.me) draw(); else Promise.all([D.loadViews(), D.loadMe ? D.loadMe() : null]).then(draw, draw);
             D.hints([['OK', 'select'], ['Back', 'close']]);
-            if (D.overlayEntry) D.overlayEntry();  // Back (the mouse's too) closes it (kit.js)
         },
         onAction(action) {  // the engine passes the focused element; ▶ closes the sidebar (back to the page)
             if (action === 'right' && Sb.ctx) { Sb.ctx.close(); return true; }
             return false;
         },
-        unmount() { Sb.open = false; Sb.ctx = null; if (D.overlayGone) D.overlayGone(); if (D.screenHints) D.screenHints(); else D.hintsOff(); },
+        unmount() { Sb.open = false; Sb.ctx = null; if (D.screenHints) D.screenHints(); else D.hintsOff(); },
         leave(h) { h.classList.add('lm-ov-leave'); return ui.motion.duration(220); }
     };
 
@@ -155,9 +154,8 @@
             p.append(round);
             setTimeout(() => ofocus(host, tiles[0]), 0);
             D.hints([['OK', 'select'], ['Back', 'close']]);
-            if (D.overlayEntry) D.overlayEntry();
         },
-        unmount() { Sb.open = false; ui.overlay.set(SIDEBAR); if (D.overlayGone) D.overlayGone(); if (D.screenHints) D.screenHints(); else D.hintsOff(); },
+        unmount() { Sb.open = false; ui.overlay.set(SIDEBAR); if (D.screenHints) D.screenHints(); else D.hintsOff(); },
         leave(h) { h.classList.add('lm-ov-leave', 'lm-ov-corner'); return ui.motion.duration(200); }
     };
     D.quickAccess = () => {

@@ -2,19 +2,17 @@
 
 From the lab walk of input_walk.py `iwalk-pre3` (keyboard, mouse and an Xbox pad, 15 min each; no stock control in this
 walk, so findings on jellyfin-web's own pages may be jellyfin-web's): 26 high and 72 medium findings (back-focus 51,
-focus-lost 22, dead-control 21, broken-back 3, script-error 1). Engine fixes #200 to #203 were already in main. No
+focus-lost 22, dead-control 21, broken-back 3, script-error 1). Engine fixes #200 to #203 were already in main; broken-back is the engine's #204. No
 engine change was needed for these: every fix is in Lumen's own files.
 
 ## Fixed
 
 - [x] **broken-back (3, mouse)**: Back from the item options ("HDR10 HEVC AC3 (2026)", "Test Tones", "IMG_101") ended
-      on another screen with the panel still drawn over it. The mouse's Back button is the browser's Back (the app's
-      goBack), which a page can't refuse, and Lumen's sidebar, quick settings and options panel left no history entry,
-      so Back left the page and the overlay stayed up. Each now holds an entry of its own while it is up (the address
-      unchanged, as jellyfin-web's dialogs do): Back closes it (a panel's next level first); closed another way it gives
-      the entry back; one a row left behind is stepped over (kit.js `D.overlayEntry`, `D.overlayGone`, `D.onPop`;
-      panel.js, menus.js). The same Back with an overlay up on a framed jellyfin-web page now closes it too. Over the
-      player no entry is added (its page is jellyfin-web's): Back leaves the player as before and the overlay closes.
+      on another screen with the panel still drawn over it: the mouse's Back button is the web view's history Back,
+      which never reached the overlay. Fixed by the engine, #204 (capabilities.js): while ui.overlay is up, a history
+      traversal is cancelled and taken as the overlay's Back (a panel's next level first, through panel.js's own
+      onAction), or the overlay closes where it can't be cancelled. Lumen's sidebar, quick settings and options panel
+      are all ui.overlay, so all three are covered.
 - [x] **focus-lost after Back (22)**: the screens drew again from the server after Back, with nothing focused until
       the data came (the walker found no focus for 250 ms), and the details deck lost its section's entry. Lists,
       libraries, Settings and the home's lists draw at once from what they showed and read the level again behind it,
@@ -70,8 +68,8 @@ engine change was needed for these: every fix is in Lumen's own files.
 
 ## Needs the host walk
 
-- The mouse's Back with the sidebar, quick settings or an options panel open (closes it, stays on the page); Forward
-  and Back across a page left from the sidebar (the entry left behind is stepped over).
+- The mouse's Back with the sidebar, quick settings or an options panel open (closes it, or the panel's next level,
+  and stays on the page; engine #204).
 - Back focus on Home, the libraries, details decks and the guide's tabs with all three inputs.
 - The pad's A on Play, Play all and Shuffle; the first press on a song; the script error with the console open.
 - Low findings not taken here: hover-no-focus on the pointer line and the sidebar pill (they are pointer controls,
