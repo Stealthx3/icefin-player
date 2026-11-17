@@ -201,19 +201,24 @@
                     i.placeholder = 'https://jellyfin.example.com or 192.168.1.20:8096';
                     P.focusable(i);
                     l.append(el('span', 'pz-field-label', 'The server’s address'), i);
+                    // what's missing, said in the card under the field (QA 2: a toast at the foot of the screen, away
+                    // from the card, is easily missed; the walk still saw Connect do nothing)
+                    const note = el('div', 'pz-sheet-note pz-si-need');
+                    note.hidden = true;
+                    i.addEventListener('input', () => { note.hidden = true; });
                     const f = el('div', 'pz-panel-foot');
                     const go = P.focusable(el('div', 'pz-tab pz-tab-on', 'Connect'));
                     go.addEventListener('click', async () => {
                         const a = i.value.trim();
                         // nothing typed: say so (QA 1, a Connect that seemed dead), and the field takes focus
-                        if (!a) { T.ctx.focus(i); T.ctx.sound('error'); if (P.toast) P.toast('Type the server’s address first', true); return; }
+                        if (!a) { note.textContent = 'Type the server’s address first.'; note.hidden = false; T.ctx.focus(i); T.ctx.sound('error'); return; }
                         P.sheet.close();
                         connect(a, a);
                     });
                     const no = P.focusable(el('div', 'pz-tab', 'Cancel'));
                     no.addEventListener('click', () => P.sheet.close());
                     f.append(go, no);
-                    body.append(l, f);
+                    body.append(l, note, f);
                 }
             });
         }

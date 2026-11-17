@@ -895,6 +895,7 @@ html[data-icefin-theme] #icefin-osk .icefin-osk-key.icefin-focused, html[data-ic
 .pz-sheet-row-art { flex: none; width: calc(52 * var(--pz)); height: calc(52 * var(--pz)); border-radius: calc(12 * var(--pz)); background: var(--icefin-color-tileEmpty) center / cover no-repeat; }
 .pz-sheet-row-danger .pz-sheet-row-label { color: var(--icefin-color-error); }
 .pz-sheet-note { font-size: calc(22 * var(--pz)); color: var(--icefin-color-textSecondary); line-height: 1.45; }
+.pz-sheet-note.pz-si-need { margin: calc(6 * var(--pz)) 0 calc(4 * var(--pz)); color: var(--icefin-color-error); font-weight: 700; }
 .pz-sheet-question { font-size: calc(34 * var(--pz)); font-weight: 700; }
 .pz-sheet-foot { margin-top: calc(8 * var(--pz)); }
 .pz-sheet-btn { justify-content: center; }

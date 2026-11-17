@@ -393,6 +393,8 @@
         };
         if (ms) setTimeout(done, ms); else done();
     }
+    // the mouse's Back button closes the card (or drops a channel being moved), as B does, and the home stays (kit.js)
+    P.layer(() => !!(S && (S.card || S.drag)), () => { if (S.drag) drop(null); else if (closeCard()) T.ctx.sound('back'); });
     function closeCard(leaving) {
         if (!S || !S.card) return false;
         const { el: card, dim, tile: t, preview } = S.card;

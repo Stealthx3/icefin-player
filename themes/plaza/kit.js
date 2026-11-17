@@ -126,12 +126,18 @@
         const clsOf = (e) => e.classList[0] || '';
         const NAV = '[data-action=back], [data-action=home], .pz-mround-back, .pz-mround-home';
         const describe = (e) => ({ id: idOf(e), action: e.getAttribute('data-action') || '', tab: e.getAttribute('data-pz-tab') || '', label: labelOf(e), cls: clsOf(e) });
-        const keepNow = (h) => { if (!keep || keep.hash !== h) return null; try { return keep.fn(); } catch (err) { return null; } };
+        // An entry can change under the same address with no event this hears (a history step jellyfin-web takes on its
+        // own: pushState fires neither popstate nor hashchange). The walk (QA 2): a library reached that way kept its
+        // page and its control under the entry it was mounted on, so Back to a card on page 2 found no page (the first
+        // page came back) or no entry at all. The screen up is still the one that registered: the same address is enough.
+        const urlOf = (h) => h.slice(h.indexOf(' ') + 1);
+        const keepNow = (h) => { if (!keep || (keep.hash !== h && urlOf(keep.hash) !== urlOf(h))) return null; try { return keep.fn(); } catch (err) { return null; } };
         function record(e) {
             const r = rootEl();
             const t = e && e.closest && e.closest('[data-icefin-focus]');
             if (!r || !t || !r.contains(t) || t.matches(NAV)) return;
             const h = here();
+            if (h !== lastHash && urlOf(h) === urlOf(lastHash)) { if (cur && cur.hash === lastHash) cur.hash = h; lastHash = h; }
             if (cur && cur.hash !== h) prev = cur;
             cur = { hash: h, d: describe(t), state: keepNow(h) };
         }
@@ -213,6 +219,26 @@
     })();
     P.keep = (fn) => P.backFocus.keep(fn);
     P.returning = () => P.backFocus.returning();
+
+    // ---- the mouse's Back button over a card or panel of Plaza's own (QA 2) ----
+    // That button goes to the web view's history, not through the actions: with a channel's card or the sort panel open
+    // the screen under it went back (the walk: from a card on the home to the menu visited before it). The engine's
+    // overlay (the sheets) has this already; Plaza's own layers register here, and the Back closes the top one while the
+    // screen stays, where the Navigation API can cancel the step; where it can't, they close with the screen.
+    const layers = new Set();
+    P.layer = (isOpen, close) => { const l = { isOpen, close }; layers.add(l); return () => layers.delete(l); };
+    if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+        const webDialog = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden');
+        const onNavigate = (e) => {
+            if (e.navigationType !== 'traverse' || e.defaultPrevented || !layers.size || webDialog()) return;
+            const open = [...layers].filter((l) => { try { return l.isOpen(); } catch (err) { return false; } });
+            if (!open.length) return;
+            if (e.cancelable) { e.preventDefault(); open[open.length - 1].close(); } else open.reverse().forEach((l) => l.close());
+        };
+        if (window.icefinPlazaLayersOff) window.icefinPlazaLayersOff();  // the theme loaded again: one listener
+        window.navigation.addEventListener('navigate', onNavigate);
+        window.icefinPlazaLayersOff = () => window.navigation.removeEventListener('navigate', onNavigate);
+    }
 
     // ---- a page in a strip of pages: the next one slides in from its side (450 ms, ease-out) ----
     P.slide = (node, dir) => {

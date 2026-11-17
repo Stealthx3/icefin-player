@@ -272,7 +272,10 @@
         F.root.setAttribute('data-pz-panel', 'sort');
         T.ctx.focus(sorts.children[state.sort]);
         T.ctx.sound('select');
+        // the mouse's Back button closes the panel too, and the list stays (kit.js)
+        const unlayer = P.layer(() => panel.isConnected && !panel.classList.contains('pz-panel-out'), () => close());
         const close = () => {
+            unlayer();
             if (!panel.isConnected || panel.classList.contains('pz-panel-out')) return;
             const low = document.documentElement.getAttribute('data-icefin-motion') === 'low';
             if (low) panel.remove(); else { panel.classList.add('pz-panel-out'); setTimeout(() => panel.remove(), 220); }
