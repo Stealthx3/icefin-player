@@ -643,6 +643,16 @@
             const t0 = e.target;
             const typing = t0 && (t0.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t0.tagName));
             if (action === 'back' && !typing && !foreignDialog() && stockRootBack()) { e.preventDefault(); e.stopImmediatePropagation(); }
+            // On a theme's frame around jellyfin-web's page the arrows move as the remote does, over the page and the
+            // frame (its Back, Home and tabs take no Tab stop): in desktop layout jellyfin-web's arrows only scrolled, so
+            // the keyboard never reached the frame (QA 2, Plaza's walk: Back, Home, Play on and Watch together on the
+            // classic home). A field, a list or a slider keeps the arrows it edits with; a jellyfin-web dialog keeps all.
+            if (/^(up|down|left|right)$/.test(action) && document.documentElement.hasAttribute('data-icefin-stock') && !foreignDialog()) {
+                const editsAll = t0 && (t0.isContentEditable || /^(TEXTAREA|SELECT)$/.test(t0.tagName) || (t0.tagName === 'INPUT' && t0.type === 'range'));
+                const editsLine = t0 && t0.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit|reset|image|color|file)$/i.test(t0.type || '');
+                if (editsAll || (editsLine && (action === 'left' || action === 'right'))) return;
+                if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            }
             return;
         }
         // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
