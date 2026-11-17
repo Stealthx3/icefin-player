@@ -3,7 +3,7 @@
 The lab walk before pass 1: input_walk.py with keys, mouse and an Xbox pad, 15 min each (iwalk-pre2, no stock control),
 on theme/baseline with main merged in (engine #200 to #203). 213 high and medium findings: back-focus 93, focus-lost
 74, dead-control 26, no-focus-indicator 11, script-error 5, broken-back 4. Most come from a few causes, so each line
-below covers a group. Fixed on theme/baseline in 61ac0100; no engine change was needed. Baseline is stock's look, so
+below covers a group. Fixed on theme/baseline in 61ac0100, except broken-back, which the engine fixes for every theme (#204). Baseline is stock's look, so
 each fix either does what stock's TV layout does or fills a checklist item the Gate 1 map gave a board but the build
 left out.
 
@@ -29,10 +29,10 @@ Fixed:
       `ui.pointerFirst(true)`, `B.page`). The findings themselves are partly the walker's (see below).
 - [x] The mouse's Back with the item menu or the exit question open went back a page and left the panel open over it
       (4 broken-back: /details [Book], [Movie], [BoxSet] More, the settings menu's Exit Application). The app turns the
-      mouse's Back button into the page's Back, which the controller's actions never see. Stock's dialogs have a
-      history entry of their own, so that Back only closes the dialog. Baseline's panel has none, so the step back is
-      undone before the router sees it (both steps' popstate and hashchange are held back) and the panel closes. A new
-      page under an open panel (a row that navigates without closing) closes it too (themes/baseline/panel.js `hold`).
+      mouse's Back button into the page's Back, which the controller's actions never see. Fixed by the engine for every
+      theme (#204, native/icefin/capabilities.js): while ui.overlay is up, a history traversal is cancelled through the
+      Navigation API and taken as the overlay's Back, so Baseline's panel (an ui.overlay) pops a level or closes and
+      the page stays. Baseline's own handling was dropped so the two don't act on the same Back.
 - [x] Music started from a library or an album showed nothing on screen (dead-control: /music Play All on Songs,
       /details [MusicAlbum] Play with the mouse and the pad, the track row 1A4400:15). Stock shows its now playing bar;
       Baseline had none, though the Gate 1 map lists it on the Home board (1.1, 1.2). It now draws stock's bar along
@@ -84,5 +84,5 @@ For the host walk:
       capture), and that the hints and the alpha strip clear it.
 - [ ] Hover moves focus: the rows slide to centre a hovered card as they do for the remote; check this reads well
       with the mouse, and compare with stock in the same shell (the stock control).
-- [ ] The mouse's Back with a panel open in the app itself (Qt's goBack, not the walker's CDP event).
+- [ ] The mouse's Back with a panel open in the app itself (Qt's goBack, not the walker's CDP event), once #204 is in main.
 - Low findings (Shift+Tab) are left for pass 1.
