@@ -64,8 +64,9 @@
         if (e.progress > 0 && e.progress < 1) { const p = el('i', 'or-prog'); const f = el('b'); f.style.width = `${Math.round(e.progress * 100)}%`; p.append(f); face.append(p); }
         c.append(face, el('div', 'ob-reflect'));
         c.setAttribute('aria-label', [e.name, e.sub].filter(Boolean).join(', '));
-        c.addEventListener('click', () => { if (e.go) { T.ctx.sound('select'); e.go(); } else if (e.item) { T.ctx.sound('select'); D.openItem(e.item, c); } });
-        c.addEventListener('icefin-focus', () => setTimeout(showCount, 0));
+        // a click is the home's own focus first, so Back comes back to this tile (QA pre)
+        c.addEventListener('click', () => { if (T.ctx.focused && T.ctx.focused() !== c) T.ctx.focus(c); if (e.go) { T.ctx.sound('select'); e.go(); } else if (e.item) { T.ctx.sound('select'); D.openItem(e.item, c); } });
+        c.addEventListener('icefin-focus', () => { adopt(c); setTimeout(showCount, 0); });
         return c;
     }
 
@@ -76,7 +77,19 @@
         S.rows = channels.filter((ch) => ch.entries.length).map((ch, i) => {
             const row = el('section', 'ob-channel');
             row.setAttribute('data-ob-channel', String(i));
-            row.append(el('div', 'ob-channel-title', ch.title));
+            // the titles are the pointer's way between channels (the pad has ▲ ▼): a channel above comes down to the
+            // front, the current one's title brings its first tile back (QA pre: the mouse reached one channel only)
+            const title = el('div', 'ob-channel-title', ch.title);
+            title.setAttribute('role', 'button');
+            title.setAttribute('aria-label', `${ch.title}: the channel`);
+            title.addEventListener('click', () => {
+                const k = S ? S.rows.findIndex((r) => r.el === row) : -1;
+                if (k < 0) return;
+                T.ctx.sound('navigate');
+                focusChannel(k, k === S.index ? 0 : null);
+                remember();
+            });
+            row.append(title);
             const ring = el('div', 'ob-ring');
             row.append(ring);
             S.stack.append(row);
@@ -91,12 +104,12 @@
         S.index = -1;
         const mem = D.memory.get('#/home:orbit');
         if (S.rows.length) focusChannel(mem ? Math.max(0, S.rows.findIndex((r) => r.id === mem.id)) : 0, mem ? mem.at : 0);
+        if (mem && mem.acct && S.who && S.who.isConnected) { T.ctx.focus(S.who); S.acct = true; }
         // live tiles: illustration and picture take turns every 8 s (still in low motion)
         clearInterval(S.liveTimer);
         S.liveTimer = setInterval(() => { if (!S || D.reduced()) return; for (const t of S.root.querySelectorAll('.ob-live')) t.classList.toggle('ob-live-pic'); }, 8000);
     }
-    function focusChannel(i, at) {
-        i = Math.max(0, Math.min(S.rows.length - 1, i));
+    function markChannel(i) {
         if (S.index >= 0 && S.rows[S.index]) S.rows[S.index].last = S.rows[S.index].carousel.index();
         S.index = i;
         S.rows.forEach((r, k) => {
@@ -104,14 +117,27 @@
             r.el.classList.toggle('near', Math.abs(k - i) === 1);
             r.el.setAttribute('data-ob-rank', k < i ? String(Math.min(i - k, 5)) : k > i ? 'below' : '0');
         });
-        const row = S.rows[i];
         S.count.textContent = '';
         S.backdrop.style.transform = `translateY(${-i * 2.2}vh) scale(1.12)`;  // parallax: the backdrop moves a fraction
         S.root.setAttribute('data-ob-index', String(i));
+    }
+    function focusChannel(i, at) {
+        i = Math.max(0, Math.min(S.rows.length - 1, i));
+        markChannel(i);
+        const row = S.rows[i];
         row.carousel.focus(Math.min(at != null ? at : row.last, row.cells.length - 1));
         showCount();
     }
-    function remember() { if (S && S.rows[S.index]) D.memory.set('#/home:orbit', { id: S.rows[S.index].id, at: S.rows[S.index].carousel.index() }); }
+    // focus given straight to a tile of another channel (the engine giving focus back, a jump, the pointer): that
+    // channel becomes the current one, so Back to the home comes back to it, not to the channel last stepped to (QA pre)
+    function adopt(c) {
+        if (!S || !S.rows.length) return;
+        S.acct = false;
+        const r = S.rows.findIndex((row) => row.cells.includes(c));
+        if (r >= 0 && r !== S.index) { markChannel(r); remember(); }
+    }
+    // the channel and its tile, or the account when it opened the next screen
+    function remember() { if (S && S.rows[S.index]) D.memory.set('#/home:orbit', { id: S.rows[S.index].id, at: S.rows[S.index].carousel.index(), acct: !!S.acct }); }
 
     // ---- the account (top right) and the music capsule (bottom right) ----
     function account(root) {
@@ -124,7 +150,8 @@
         tx.append(name, srv);
         const av = el('span', 'ob-av', '');
         who.append(tx, av);
-        who.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.selectServer(); });
+        who.addEventListener('click', () => { T.ctx.sound('select'); if (S) { S.acct = true; remember(); } T.ctx.selectServer(); });
+        if (S) S.who = who;
         const clock = el('div', 'ob-acct-clock');
         box.append(who, clock);
         root.append(box);
@@ -339,7 +366,33 @@
             S.count = el('div', 'ob-count');
             root.append(S.backdrop, view, S.count, el('div', 'or-mark'));
             H.extra = [account(root), D.capsule(root)];
-            D.pointerNav(root, () => D.exitAsk());
+            // the guide is the pointer's way to the places too (a pad has View for it)
+            D.pointerNav(root, () => D.exitAsk(), [{ icon: 'guide', label: 'Guide', go: () => { if (D.restoreGuide) D.restoreGuide(); ui.overlay.open(); } }]);
+            // the wheel: ▲ ▼ between channels, sideways (or with Shift) along the tiles (QA pre: the mouse had no way
+            // to another channel or back to a channel's first tiles). On the view: the root outlives this screen.
+            let wheelAt = 0;
+            view.addEventListener('wheel', (ev) => {
+                if (!S || !S.rows.length || S.root !== root) return;
+                ev.preventDefault();
+                const now = Date.now();
+                if (now - wheelAt < 220) return;
+                wheelAt = now;
+                const side = ev.shiftKey || Math.abs(ev.deltaX) > Math.abs(ev.deltaY);
+                const d = (side ? (ev.shiftKey ? ev.deltaY : ev.deltaX) : ev.deltaY) > 0 ? 1 : -1;
+                if (side) {
+                    const row = S.rows[S.index];
+                    const n = row.carousel.index() + d;
+                    if (n < 0 || n >= row.cells.length) return;
+                    row.carousel.focus(n);
+                    T.ctx.sound('focus');
+                } else {
+                    const n = S.index + d;
+                    if (n < 0 || n >= S.rows.length) return;
+                    focusChannel(n);
+                    T.ctx.sound('navigate');
+                }
+                remember();
+            }, { passive: false });
             root.orbitFill = (channels) => fill(channels.map((ch, i) => ({ id: `t${i}`, title: ch.title, entries: ch.tiles || ch.entries || [] })));
             if (D.ping) D.ping();
             clearInterval(H.ping);

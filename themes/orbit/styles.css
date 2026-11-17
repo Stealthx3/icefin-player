@@ -207,7 +207,8 @@ html[data-or-input="pointer"] .or-pnav { opacity: 1; pointer-events: auto; }
 .or-panel-leave .or-panel-dim { opacity: 0; transition: opacity 150ms; }
 .or-panel-level { grid-area: 1 / 1; align-self: start; display: flex; flex-direction: column; max-height: 82vh; }
 .or-panel-level.or-level-in { animation: or-level-in 220ms var(--or-ease) both; }
-.or-panel-level.or-level-under { opacity: 0.35; transform: translate(-1.6vw, -1vh) scale(0.97); transition: opacity 180ms, transform 180ms var(--or-ease); pointer-events: none; }
+/* a level under the top one: a click on it goes back to it (panel.js) */
+.or-panel-level.or-level-under { opacity: 0.35; transform: translate(-1.6vw, -1vh) scale(0.97); transition: opacity 180ms, transform 180ms var(--or-ease); cursor: pointer; }
 .or-panel-level.or-level-out { animation: or-level-out 160ms cubic-bezier(0.4, 0, 1, 1) both; pointer-events: none; }
 @keyframes or-level-in { from { transform: translateX(3vw); opacity: 0; } }
 @keyframes or-level-out { to { transform: translateX(3vw); opacity: 0; } }
@@ -275,7 +276,11 @@ textarea.or-input { min-height: 9vh; padding-top: 0.8vh; resize: none; line-heig
 .ob-view { position: absolute; inset: 0; overflow: clip; }
 .ob-stack { position: absolute; inset: 0; }
 .ob-channel { position: absolute; inset: 0; pointer-events: none; clip-path: inset(-50vh -50vw -50vh 6.9vw); }
-.ob-channel.current { pointer-events: auto; }
+/* the pointer: the current channel's tiles, and the titles in view (a click goes to that channel, channels.js); the
+   current channel's section no longer takes the whole screen, so the titles above it can be clicked (QA pre) */
+.ob-channel.current .ob-ring { pointer-events: auto; }
+.ob-channel.current .ob-channel-title, .ob-channel[data-ob-rank="1"] .ob-channel-title, .ob-channel[data-ob-rank="2"] .ob-channel-title,
+.ob-channel[data-ob-rank="3"] .ob-channel-title, .ob-channel[data-ob-rank="4"] .ob-channel-title { pointer-events: auto; cursor: pointer; }
 /* the current channel's title over the front tile (x 149, centred on y 302); those above stack upward (y 237, 188, 146) */
 .ob-channel-title { position: absolute; left: 7.76vw; top: 25.6vh; font-size: 2.7vw; line-height: 1; font-weight: 300; letter-spacing: -0.01em;
   color: var(--icefin-color-text); white-space: nowrap; transform-origin: 0 50%; text-shadow: 0 1px 3px rgb(0 0 0 / 0.35);

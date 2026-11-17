@@ -305,6 +305,23 @@
         const clock = D.clock(rootEl);
         D.pointerNav(rootEl, () => C.back(true), opts.nav);
         stage.addEventListener('wheel', (ev) => { ev.preventDefault(); C.onAction(ev.deltaY > 0 ? 'down' : 'up'); }, { passive: false });
+        // focus put straight on an entry of a panel that isn't in front (the engine giving focus back, a jump): that
+        // panel comes in, so the focus is never on a hidden or receding panel that shows no mark (QA pre). A hover over
+        // a receding panel leaves the deck still (it would run on under the mouse); a click brings it in.
+        stage.addEventListener('icefin-focus', (ev) => {
+            if (!deck) return;
+            const i = deck.panels.findIndex((p) => p.el && p.el.contains(ev.target));
+            if (i < 0 || i === deck.at) return;
+            const p = deck.panels[i];
+            if (!p.el.classList.contains('gone') && document.documentElement.getAttribute('data-or-input') === 'pointer') return;
+            keepAt(deck.panels[deck.at]);
+            deck.at = i;
+            cur().deckAt = i;
+            place();
+            V = p.view;
+            if (V && V.sync(ev.target)) keepAt(p);
+            hintsFor(V ? V.current() : null);
+        });
 
         const top = () => S.stack[S.stack.length - 1];
         const isBar = () => !!top().bar;
@@ -489,13 +506,38 @@
             p.entries = entries;
             if (p.view) p.view.stop();
             p.body.textContent = '';
-            if (!entries.length) { p.body.append(el('div', 'or-empty-text', (p.level && p.level.empty && p.level.empty.title) || 'Nothing here')); p.view = null; return; }
+            if (!entries.length) {
+                p.body.append(el('div', 'or-empty-text', (p.level && p.level.empty && p.level.empty.title) || 'Nothing here'));
+                p.view = null;
+                // an empty panel stays in the deck as a picture but ◀ ▶ pass it, so the deck never rests on a panel with
+                // nothing to focus (QA pre: the deck sat on an empty More like this, the focus on a hidden panel)
+                if (!p.front) {
+                    p.empty = true;
+                    const i = deck.panels.indexOf(p);
+                    if (deck.at === i) { let k = i; while (k > 0 && deck.panels[k].empty) k--; deck.at = k; place(); focusDeck(true); }
+                }
+                return;
+            }
             const mode = p.front ? 'list' : modeOf(entries, Object.assign({}, p.level || {}, { mode: entries.length > 6 && modeOf(entries, {}) === 'grid' ? 'grid' : 'list' }));
-            p.view = makeView(p.body, entries, { mode, tileH: 14, letters: false, sections: !!p.front, scroll: !!p.front, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
+            p.view = makeView(p.body, entries, { mode, tileH: 14, letters: false, sections: !!p.front, scroll: !!p.front, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); keepAt(p); C.activate(e, b); },
                 onFocus: (e) => { hintsFor(e); if (opts.onFocus) opts.onFocus(e, C); } });
             const ff = p.front ? Math.max(0, entries.findIndex((e) => e.focusFirst)) : (p.focusAt || 0);
-            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : ff));
+            const kept = (cur().deckMemo || {})[deck.panels.indexOf(p)];
+            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : kept != null ? kept : ff));
             p.view.draw();
+            // the panel on show loaded after the deck was drawn (Back to details left on Cast and crew, Songs, Albums):
+            // it takes the focus now, or nothing would have it (QA pre, as Harbor)
+            if (deck.panels[deck.at] === p && S.zone !== 'tabs') {
+                const f = T.ctx.focused && T.ctx.focused();
+                if (!f || !f.isConnected || !p.el.contains(f)) focusDeck(true);
+            }
+        }
+        // the entry a panel was left on, kept in its level so Back to these details finds it again (QA pre, as Harbor)
+        function keepAt(p) {
+            if (!p || !p.view || !deck) return;
+            p.memo = p.view.at;
+            const lv = cur();
+            (lv.deckMemo || (lv.deckMemo = {}))[deck.panels.indexOf(p)] = p.view.at;
         }
         function place(how) {
             const n = deck.panels.length;
@@ -519,10 +561,10 @@
             for (const q of deck.panels.slice(Math.max(0, deck.at - 1), deck.at + 4)) if (q && !q.filled) fillPanel(q);
         }
         function deckGo(i, quiet) {
+            if (deck && deck.panels[i] && deck.panels[i].empty) { const d = i > deck.at ? 1 : -1; let k = i; while (deck.panels[k] && deck.panels[k].empty) k += d; i = k; }
             if (!deck || i < 0 || i >= deck.panels.length) return false;
-            const p0 = deck.panels[deck.at];
-            if (p0.view) p0.memo = p0.view.at;
-            if (i === deck.at) return true;
+            keepAt(deck.panels[deck.at]);
+            if (i === deck.at) { cur().deckAt = i; return true; }
             deck.at = i;
             place();
             if (!quiet) T.ctx.sound('navigate');
@@ -595,7 +637,7 @@
             if (ti >= 0) { S.zone = 'tabs'; S.tabAt = ti; return; }
             if (deck) {
                 const i = deck.panels.findIndex((p) => p.el && p.el.contains(f));
-                if (i >= 0 && i !== deck.at) { deck.at = i; place(); V = deck.panels[i].view; }
+                if (i >= 0 && i !== deck.at) { deck.at = i; place(); V = deck.panels[i].view; cur().deckAt = i; }
             }
             if (V && V.sync(f)) S.zone = 'main';
         }
@@ -648,7 +690,7 @@
             },
             replaceTop(level) {
                 const old = top();
-                level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt;
+                level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt; level.deckMemo = old.deckMemo;
                 S.stack[S.stack.length - 1] = level;
                 return C.redraw('none');
             },
@@ -680,7 +722,7 @@
                     if (deck) {
                         const p = deck.panels[deck.at];
                         const r = p.view ? p.view.move(a) : a;
-                        if (r === true) { p.memo = p.view.at; return true; }
+                        if (r === true) { keepAt(p); return true; }
                         if (r === 'left' || r === 'right') { if (!deckGo(deck.at + (r === 'right' ? 1 : -1))) T.ctx.sound('error'); return true; }
                         if (r === 'up' && p.tabsEl) { T.ctx.sound('error'); return true; }
                         T.ctx.sound('error');
