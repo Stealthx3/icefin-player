@@ -567,6 +567,14 @@
     const startDialogWatch = () => dialogWatch.observe(document.body, { childList: true, subtree: true });
     if (document.body) startDialogWatch(); else document.addEventListener('DOMContentLoaded', startDialogWatch);
 
+    // jellyfin-web's own home opened from a theme ("Classic home": #/home?icefin=stock) is jellyfin-web's root page,
+    // where its Back does nothing; reached from the theme's settings, Back returns there (QA 1, every theme).
+    function stockRootBack() {
+        if (!pkg || !/^#\/home\b/.test(location.hash) || !/[?&]icefin=stock\b/.test(location.hash) || history.length < 2) return false;
+        history.back();
+        sound('back');
+        return true;
+    }
     function handleAction(action) {
         lastInput = 'pad';
         for (const h of actionHooks.slice()) {
@@ -581,6 +589,7 @@
             if (!dlg.contains(document.activeElement) && action !== 'back' && focusInto(dlg)) { sound('focus'); return true; }
             return false;
         }
+        if (action === 'back' && !current && stockRootBack()) return true;
         if (!current) return false;
         // A screen may own its navigation (rows, strips): it sees every action first and returns true when it used it.
         if (current.screen.onAction) {
@@ -617,13 +626,25 @@
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }
-        if (!current) return;
+        if (!current) {
+            const t0 = e.target;
+            const typing = t0 && (t0.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t0.tagName));
+            if (action === 'back' && !typing && !foreignDialog() && stockRootBack()) { e.preventDefault(); e.stopImmediatePropagation(); }
+            return;
+        }
         // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
         // screen) are that thing's: only keys on the theme's own UI, or on nothing in particular, drive the screen.
         const t = e.target;
         if (t && t !== document.body && t !== document.documentElement && t.closest
             && !t.closest(`#${ROOT_ID}, #icefin-theme-overlay, #icefin-osk`)) return;
-        if (document.querySelector('.dialogContainer .dialog.opened, .dialogContainer .formDialog')) return;
+        // A jellyfin-web dialog that shows (or the capability prompt) keeps its keys, the same test as the controller's
+        // (foreignDialog). Only one that shows: the old test matched any .formDialog left in the page, open or not, and
+        // the keyboard then did nothing on the theme's screen while a controller still worked (QA 1).
+        if (foreignDialog()) return;
+        // Left, Right and Backspace in a text field (Client Settings' fields, the preference pages') edit it, here too
+        const tf = e.target;
+        if (tf && (tf.isContentEditable || (tf.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit)$/i.test(tf.type || '')) || tf.tagName === 'TEXTAREA')
+            && (action === 'left' || action === 'right' || e.key === 'Backspace')) return;
         if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
 

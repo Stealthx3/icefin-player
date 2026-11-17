@@ -32,7 +32,8 @@ decision D31).
   screens before the merge to `main`.
 - Clone rules hold throughout (CLAUDE.md): layout, proportions, navigation, timing and colours only; no logos, icons,
   artwork, sounds, fonts or product names of the target. The engine stays theme-agnostic (theme lint).
-- **Themes first** (the user, 2026-11-14): other development waits until every theme in the queue is done.
+- **Themes first** (the user, 2026-11-14): other development waits until every theme in the queue is done (satisfied 2026-11-16).
+- **One theme in its stages at a time**, except in QA (D40): while a pass waits at a gate, the next pass's walk may run.
 
 ## The measure
 Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
@@ -76,6 +77,17 @@ Two guides set what "complete" and "good" mean in a pass (the user, 2026-11-14):
 | 9 | **Done** | `theme-pass.sh done <theme>` | the theme off `active`; the next in the queue named to the user | the user starts the next pass |
 
 `theme-pass.sh status` shows the queue and, for every theme, its branch against `main`, its worktree and its last walk.
+
+## QA/QC passes (D40)
+From 2026-11-16 the pipeline is the first part of QA/QC (D38, D40). Each of the 10 themes going to 1.0 gets 3 continuous passes, then 3 overall rounds give each theme one more pass (PLAN 11.8, 11.9). The stages are the same, with full gates every pass. What a QA pass adds:
+- **Every element and path, every input.** Besides the screen walk, the element crawl (PLAN 11.7) operates every control on every screen with the mouse, with the keyboard and with a controller (virtual pads on the host), and records what each one does and how Back returns. A control that does nothing, can't be reached by one of the inputs, or leaves no way back is a gap like a `missing` screen.
+- **Read-only on the user's account.** Saves, creates and deletes are opened and cancelled, never done (playback is the exception, D41); the lab checks the save paths.
+- **Gates (D41).** Phase A (3 continuous passes per theme) runs without gates; the user reviews each theme once after its third pass, audio included (UI sounds, jingles, music). Phase B first brings every outdated document up to date, then runs both gates on every pass.
+- **The control (D41).** Every host walk is paired with the same walk on stock Jellyfin-Web, and IceFin is left on stock afterwards. Walks may play a few seconds.
+- **Inputs (D41).** Mouse and keyboard; all five pad families on every pass; Steam on the host through a non-Steam shortcut and in a nested Gamescope session. The host holds a sleep and screen-lock inhibit while a walk runs; IceFin runs as a 1920x1080 window on the primary display.
+- **Findings (D41).** Every finding is fixed in its pass or carries the user's reason. In plugin UI, IceFin fixes what it draws and logs the plugin's own bugs.
+- **Questions go to the phone** (`docs/dev/HUMAN-DECISIONS.md`): a gate or a choice waits on the IceFin Decisions page while the next theme's walk or other work goes on; one pass's gate never stops the whole queue.
+`theme-pipeline.json` keeps the QA rounds in `qa` (pass number per theme).
 
 ## Plugins
 Plugin UI a themed screen must draw (MediaSegments and Intro Skipper skips, up next, SyncPlay, Home Screen Sections,

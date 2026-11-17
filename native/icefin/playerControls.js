@@ -186,9 +186,16 @@
         }, () => {}));
         return [];
     }
+    // A list from the playback manager, always an array: a Live TV channel or a recording that is still opening (the
+    // route reaches #/video before its player is current) has none yet, and some calls answer null (QA 1).
+    const list = (fn) => { const v = safe(fn, []); return Array.isArray(v) ? v : []; };
+    // Nothing playing (yet): the same shape with empty lists, so a theme's controls and tick() never meet undefined.
+    const idle = () => ({ active: false, item: null, itemId: null, type: '', mediaType: '', title: '', subtitle: '', paused: false, live: false, canSeek: false,
+        position: 0, duration: 0, rate: 1, endsAt: null, chapter: -1, chapters: [], segments: [], audio: [], subtitles: [], subtitleIndex: -1,
+        subtitleOffset: 0, speeds: [], aspects: [], playlistIndex: 0, next: null, archive: [], fallback: session && session.fallback });
     function snapshot() {
         const m = pm(), p = cur();
-        if (!m || !p) return { active: false, archive: [], fallback: session && session.fallback };
+        if (!m || !p) return idle();
         const item = safe(() => m.currentItem(p), null) || {};
         const src = safe(() => m.currentMediaSource(p), null) || {};
         const pos = safe(() => m.currentTime(p), 0) || 0;
@@ -199,7 +206,7 @@
         const live = item.Type === 'TvChannel' || !!src.IsInfiniteStream || !dur;
         const aSel = safe(() => m.getAudioStreamIndex(p), null), sSel = safe(() => m.getSubtitleStreamIndex(p), -1);
         const c = client();
-        const chapters = (item.Chapters || []).map((ch, i) => ({ index: i, name: ch.Name || `Chapter ${i + 1}`, start: ch.StartPositionTicks / TPM,
+        const chapters = (Array.isArray(item.Chapters) ? item.Chapters : []).map((ch, i) => ({ index: i, name: ch.Name || `Chapter ${i + 1}`, start: ch.StartPositionTicks / TPM,
             image: ch.ImageTag ? image(item.Id, 'Chapter', ch.ImageTag, { index: i, maxWidth: 400 }) : null }));
         const ep = item.Type === 'Episode' ? [item.ParentIndexNumber != null ? `S${item.ParentIndexNumber}` : '', item.IndexNumber != null ? `E${item.IndexNumber}` : ''].join(' ').trim() : '';
         const program = item.CurrentProgram || null;
@@ -216,13 +223,13 @@
             chapter: chapters.reduce((k, ch) => (ch.start <= pos + 500 ? ch.index : k), -1),
             chapters,
             segments: segmentsFor(item.Id),
-            audio: safe(() => m.audioTracks(p), []).map((s) => track(s, aSel)),
-            subtitles: safe(() => m.subtitleTracks(p), []).map((s) => track(s, sSel)),
+            audio: list(() => m.audioTracks(p)).map((s) => track(s, aSel)),
+            subtitles: list(() => m.subtitleTracks(p)).map((s) => track(s, sSel)),
             subtitleIndex: sSel == null ? -1 : sSel,
             subtitleOffset: safe(() => m.getPlayerSubtitleOffset(p), 0) || 0,
-            speeds: safe(() => m.getSupportedPlaybackRates(p), []).map((s) => ({ id: s.id, name: s.name })),
+            speeds: list(() => m.getSupportedPlaybackRates(p)).map((s) => ({ id: s.id, name: s.name })),
             aspect: safe(() => m.getAspectRatio(p), ''),
-            aspects: safe(() => m.getSupportedAspectRatios(p), []).map((a) => ({ id: a.id, name: a.name })),
+            aspects: list(() => m.getSupportedAspectRatios(p)).map((a) => ({ id: a.id, name: a.name })),
             volume: safe(() => m.getVolume(p), 100), muted: !!safe(() => m.isMuted(p), false),
             repeat: safe(() => m.getRepeatMode(p), 'RepeatNone'), shuffle: safe(() => m.getQueueShuffleMode(p), 'Sorted'),
             playlistIndex: safe(() => m.getCurrentPlaylistIndex(p), 0),
@@ -301,6 +308,7 @@
     function tick() {
         if (!subs.size) return;
         const s = snapshot();
+        // (an idle snapshot has the same lists, empty: the controls mount over #/video before a channel's player is current)
         const sig = JSON.stringify([s.active, s.paused, Math.round(s.position / 250), s.duration, s.itemId, s.audio.map((t) => t.selected), s.subtitleIndex,
             s.rate, s.aspect, s.volume, s.muted, s.repeat, s.archive.map((x) => x.id + (x.label || x.countdown || '')), s.segments.length, s.subtitleOffset]);
         if (sig === last) return;
@@ -369,7 +377,7 @@
                 if (session) session.fallback = { reason: 'the theme\'s controls failed', at: Date.now() };
                 throw e;
             }
-            tick();
+            safe(() => tick());  // a theme subscriber's failure is not the screen's: tick() runs them guarded too
         },
         unmount() {
             transparent(false);
