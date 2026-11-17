@@ -976,8 +976,10 @@ class Walker:
             self.finding("broken-back", k, label, f"Back from {pk} ended on {kk} (want {k})")
             self.restore(k, c.get("path", []))
             return
-        f = self.stable_focus() if not self.mouse or (pf and pf["key"] == c["key"]) else None
-        want = pf["key"] if pf else None
+        # the mouse: judged only where hovering focused the control (else nothing tells us what Back should focus)
+        judged = not self.mouse or bool(pf and pf["key"] == c["key"])
+        f = self.stable_focus() if judged else None
+        want = pf["key"] if (pf and judged) else None
         if want is not None:
             if not f:
                 el["back_ok"] = False
