@@ -59,3 +59,17 @@ therefore "required-missing" (61 findings with one cause).
   screen stays only when it is.
 - Home after Back from playback: drawn at once from what it showed; confirm no flicker when the fresh data redraws it.
 - Low: shift-tab ×2, obscured ×3 (the deck's pivot heads), hover-no-focus on the pointer's line, not worked here.
+
+## Harbor kit ports
+
+From Harbor's QA pre (a6454c91 on theme/harbor), where Arcade's forked kit had the same flaw:
+
+- [x] **Ported: a deck panel that loads late took no focus** (Back to details left on Cast and crew or Songs: the
+      panel drew after the deck and nothing was focused). The panel on show takes the focus when it loads (views.js
+      `fillPanel`).
+- [x] **Ported: the options panel's lower level took no click** (`pointer-events: none`). A click there brings that
+      level back and runs the row (panel.js, styles.css `.ac-level-under`).
+- Already covered: each deck panel's place kept in the level for Back and redraws (views.js `remember`, `lv.memos`);
+  Back to the home landing on the entry that left it, hover included (menus.js `onFocused`); the home's rows can't be
+  scrolled by a focus, so nothing is snapped back under the pointer (styles.css `overflow: clip`).
+- Not taken: Harbor's pointer-line placement and Live TV route are Harbor's own layout; panel history is the engine's (#204).
