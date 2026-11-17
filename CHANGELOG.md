@@ -41,6 +41,7 @@ All notable changes to IceFin Player are documented here. The format follows [Ke
 - Harbor, Orbit and Mosaic show your server's icon (Harbor its banner or icon and name) where the interface they follow shows its own brand.
 
 ### Fixed
+- Over jellyfin-web's own pages inside a theme, the arrow keys, Enter and Escape work inside the theme's side panel or sheet; Escape left the page with the panel still up.
 - On jellyfin-web's own pages inside a theme (Classic home and the rest), the controller and the arrow keys reach every card's picture and title and the rows' scroll buttons; moving onto a card used to stop dead.
 - Escape and Backspace leave the themed settings area and details screens, as their Back buttons do.
 - Playing a Live TV channel no longer drops the theme's player controls for jellyfin-web's.
