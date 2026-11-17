@@ -13,7 +13,8 @@ engine change was needed for these: every fix is in Lumen's own files.
       so Back left the page and the overlay stayed up. Each now holds an entry of its own while it is up (the address
       unchanged, as jellyfin-web's dialogs do): Back closes it (a panel's next level first); closed another way it gives
       the entry back; one a row left behind is stepped over (kit.js `D.overlayEntry`, `D.overlayGone`, `D.onPop`;
-      panel.js, menus.js). The same Back with an overlay up on a framed jellyfin-web page now closes it too.
+      panel.js, menus.js). The same Back with an overlay up on a framed jellyfin-web page now closes it too. Over the
+      player no entry is added (its page is jellyfin-web's): Back leaves the player as before and the overlay closes.
 - [x] **focus-lost after Back (22)**: the screens drew again from the server after Back, with nothing focused until
       the data came (the walker found no focus for 250 ms), and the details deck lost its section's entry. Lists,
       libraries, Settings and the home's lists draw at once from what they showed and read the level again behind it,
