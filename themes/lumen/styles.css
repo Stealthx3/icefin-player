@@ -852,7 +852,9 @@ html[data-icefin-theme] body, .lm-screen, [data-lm="home"], #icefin-theme-overla
 [data-icefin-material] { box-shadow: var(--lm-edge), 0 1.2vh 4vh rgb(0 0 0 / 0.4); }
 
 /* ---- the home (Home, HomeMore boards) ---- */
-[data-lm="home"] { position: absolute; inset: 0; overflow: hidden; background: #000; color: #fff; }
+/* clip, not hidden: the home moves its hero and rows by transform, and a focus that scrolled it (a hovered card at the
+   edge) shifted everything under the pointer, so the click landed on a neighbour (ported from Harbor's QA pre) */
+[data-lm="home"] { position: absolute; inset: 0; overflow: clip; background: #000; color: #fff; }
 .lm-bg { position: absolute; inset: 0; background: center / cover no-repeat #000; opacity: 0; transition: opacity 400ms ease-in-out; }
 .lm-bg.on { opacity: 1; }
 .lm-shade { position: absolute; inset: 0; pointer-events: none;

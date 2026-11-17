@@ -234,6 +234,7 @@
             const r = S.rows.findIndex((row) => row.track.contains(f));
             if (r >= 0) {
                 const row = S.rows[r];
+                if (row.cards.indexOf(f) >= 0) { row.index = row.cards.indexOf(f); S.rowAt = r; }  // a card the pointer focused is the row's place (ported from Harbor's QA pre)
                 if (action === 'left' || action === 'right') {
                     const n = row.index + (action === 'right' ? 1 : -1);
                     if (n >= 0 && n < row.cards.length) { focusRow(r, n); ctx.sound('focus'); }

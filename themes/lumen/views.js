@@ -574,6 +574,12 @@
             const kept = (cur().deckMemo || {})[p.title || deck.panels.indexOf(p)];
             p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : kept != null ? kept : ff));
             p.view.draw();
+            // the panel on show loaded after the deck was drawn (Back to details left on Cast and crew, Songs): it takes
+            // the focus now, or nothing would have it (ported from Harbor's QA pre)
+            if (deck.panels[deck.at] === p && S.zone !== 'tabs') {
+                const f = T.ctx.focused && T.ctx.focused();
+                if (!f || !f.isConnected || !p.el.contains(f)) focusDeck(true);
+            }
         }
         function place(how) {
             const n = deck.panels.length;

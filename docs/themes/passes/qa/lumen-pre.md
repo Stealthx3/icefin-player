@@ -74,3 +74,18 @@ engine change was needed for these: every fix is in Lumen's own files.
 - The pad's A on Play, Play all and Shuffle; the first press on a song; the script error with the console open.
 - Low findings not taken here: hover-no-focus on the pointer line and the sidebar pill (they are pointer controls,
   not in the pad's focus order), obscured (the details' section heads under their panels), Shift+Tab.
+
+## Harbor kit ports
+
+From Harbor's QA pre (a6454c91 on theme/harbor), where Lumen's forked kit had the same flaw:
+
+- [x] **Ported: a deck panel that loads late took no focus** (Back to details left on Cast and crew or Songs: the
+      panel drew after the deck and nothing was focused). The panel on show takes the focus when it loads (views.js
+      `fillPanel`).
+- [x] **Ported: a focus could scroll the home** (overflow: hidden is still scrollable, so a hovered card at the edge
+      shifted the hero and rows under the pointer and the click hit a neighbour). The home clips now (styles.css
+      `[data-lm="home"]`). A card the pointer focused is the row's place for the arrows (lumen.js).
+- Already covered: each deck section's entry kept for Back and redraws (views.js `remember`, `deckMemo`); the options
+  panel's lower level takes clicks (panel.js, styles.css, this pass); Back to the home returns to the entry that left
+  it (lumen.js `describe`, `restore`).
+- Not taken: Harbor's pointer-line placement and Live TV route are Harbor's own layout; panel history is the engine's (#204).
