@@ -1137,7 +1137,7 @@ class Walker:
                     self.page.reconnect()
                 except Exception:  # noqa: BLE001
                     pass
-        if self.mouse:     # round two: EVERY element, in discovery order, as the budget allows
+        if True:           # round two: EVERY element, in discovery order, as the budget allows (every input: touch every element, D40)
             for k in order:
                 if self.late():
                     break
