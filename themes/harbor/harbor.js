@@ -58,6 +58,7 @@
 
     function libraryHash(client, v) {
         const sid = client.serverId();
+        if (v.CollectionType === 'livetv') return `#/livetv?serverId=${sid}`;  // Harbor's Live TV screen (tv.js), not the folder as a list (QA pre)
         const routes = { movies: 'movies', tvshows: 'tv', music: 'music' };
         return routes[v.CollectionType] ? `#/${routes[v.CollectionType]}?topParentId=${v.Id}&collectionType=${v.CollectionType}&serverId=${sid}` : `#/list?parentId=${v.Id}&serverId=${sid}`;
     }
@@ -90,9 +91,39 @@
     }
 
     // Harbor moves its shelves and menu itself (transforms, timed like the target); the browser's own scroll-into-view on
-    // focus would add a jump on top, so these views stay pinned at 0.
-    function pin(view) {
-        view.addEventListener('scroll', () => { if (view.scrollTop || view.scrollLeft) { view.scrollTop = 0; view.scrollLeft = 0; } });
+    // focus would add a jump on top, so these views stay pinned at 0. A scroll that happens anyway (scrollIntoView from
+    // assistive tech, a pointer reaching for an entry out of view) is folded into the transform at once, so what it
+    // brought into view stays where it was brought (QA pre: the reset slid the menu and the rows back under the pointer
+    // and the click landed on a neighbour).
+    function pin(view, fold) {
+        view.addEventListener('scroll', () => {
+            const x = view.scrollLeft, y = view.scrollTop;
+            if (!x && !y) return;
+            view.scrollTop = 0;
+            view.scrollLeft = 0;
+            if (fold && S) fold(x, y);
+        });
+    }
+    // a transform set without its transition (a fold must not slide)
+    function still(e, tf) {
+        e.style.transition = 'none';
+        e.style.transform = tf;
+        void e.offsetWidth;
+        e.style.transition = '';
+    }
+    // the pointer's wheel steps the menu or the shelves, one step a notch (pointer-first, checklist 2.5)
+    function wheel(view, step) {
+        let acc = 0;
+        view.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (!S || !S.rail) return;
+            const horiz = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+            acc += horiz ? (e.deltaX || e.deltaY) : e.deltaY;
+            if (Math.abs(acc) < 40) return;
+            const d = acc > 0 ? 1 : -1;
+            acc = 0;
+            step(d, horiz);
+        }, { passive: false });
     }
 
     ui.chrome.set('sideRail', {
@@ -107,7 +138,17 @@
                 else if (b.icon || b.name) { brand.replaceChildren(); if (b.icon) { const img = el('img', 'hb-brand-icon'); img.alt = ''; img.src = b.icon; brand.append(img); } brand.append(el('span', 'hb-brand-name', b.name || 'IceFin Player')); }
             }).catch(() => {});
             const view = el('div', 'hb-rail-view');
-            pin(view);
+            pin(view, (x, y) => {
+                if (!y || !S.railList) return;
+                S.railShift = Math.max(0, (S.railShift || 0) + y);
+                still(S.railList, S.railShift ? `translateY(${-S.railShift}px)` : '');
+            });
+            wheel(view, (d) => {
+                const n = S.railIndex + d;
+                if (n < 0 || n >= S.rail.length) return;
+                focusRail(n);
+                T.ctx.sound('focus');
+            });
             const list = el('div', 'hb-rail-list');
             view.append(list);
             rail.append(view);
@@ -195,6 +236,7 @@
         });
         S.lastCol = S.shelves.map(() => 0);
         S.firstCol = S.shelves.map(() => 0);
+        S.rowPx = [];
         if (!shelves.length) S.shelfBox.append(el('div', 'hb-empty', 'Nothing here yet'));
         const first = S.shelves.flat().find((t) => t.harborItem);
         setFanart(first ? first.harborItem : null);
@@ -257,11 +299,58 @@
         const rowEl = t.parentElement, pitch = row.length > 1 ? row[1].offsetLeft - row[0].offsetLeft : t.offsetWidth;
         const slots = Math.max(1, Math.floor((rowEl.parentElement.offsetWidth - rowEl.offsetLeft) / pitch));
         let f = S.firstCol[r] || 0;
+        if (S.rowPx && S.rowPx[r] != null) { f = Math.max(0, Math.round(S.rowPx[r] / pitch)); S.rowPx[r] = null; }  // a folded scroll (pin)
         if (c < f) f = c;
         else if (c >= f + slots) f = c - slots + 1;
         S.firstCol[r] = f;
         rowEl.style.transform = f ? `translateX(${-Math.round(f * pitch)}px)` : '';
         if (t.harborItem) setFanart(t.harborItem);
+    }
+
+    // Focus that arrived another way (the pointer's hover through pointerFirst, a click): the menu and the shelves take
+    // it as their own, without moving anything under the pointer, so Back, the arrows and the wheel go on from there.
+    function adopt(t) {
+        if (!S || !S.rail || !t) return;
+        const ri = S.rail.indexOf(t);
+        if (ri >= 0) {
+            if (S.zone === 'rail' && S.railIndex === ri) return;
+            S.zone = 'rail';
+            S.railIndex = ri;
+            S.rail.forEach((b, k) => b.classList.toggle('current', k === ri));
+            clearTimeout(S.sectionTimer);
+            if (S.section !== t.harbor) S.sectionTimer = setTimeout(() => { if (S && S.rail && S.rail[S.railIndex] === t) renderSection(t.harbor); }, ui.motion.duration(250));
+            return;
+        }
+        const r = S.shelves.findIndex((row) => row.includes(t));
+        if (r < 0) return;
+        S.zone = 'content';
+        S.shelfIndex = r;
+        S.lastCol[r] = S.shelves[r].indexOf(t);
+        if (t.harborItem) setFanart(t.harborItem);
+    }
+
+    // ---- Back to the home lands where you left it (QA pre): the menu entry, and the shelf and poster or category ----
+    // Kept for the session (the theme loading again starts fresh); a library that is gone or a poster no longer on its
+    // shelf falls back to the menu's first entry or the shelf's same place.
+    let homeMemo = null;
+    function rememberHome() {
+        if (!S || !S.rail) return;
+        const r = S.shelfIndex || 0, row = S.shelves[r] || [];
+        const t = S.zone === 'content' ? row[S.lastCol[r] || 0] : null;
+        homeMemo = { label: S.rail[S.railIndex] ? S.rail[S.railIndex].harbor.label : '', zone: S.zone, r, c: S.lastCol[r] || 0, lastCol: S.lastCol.slice(),
+            id: t && t.harborItem ? t.harborItem.Id : '', tile: t && !t.harborItem ? t.getAttribute('aria-label') : '' };
+    }
+    function restoreShelf(m, i) {
+        if (!S || !S.rail || !S.shelves.length || S.section !== S.rail[i].harbor || T.ctx.focused() !== S.rail[i]) return;  // the user moved on
+        S.lastCol = S.shelves.map((row, k) => Math.max(0, Math.min(row.length - 1, (m.lastCol && m.lastCol[k]) || 0)));
+        const find = (pred) => {
+            const order = [Math.min(m.r, S.shelves.length - 1)].concat(S.shelves.map((_, k) => k));
+            for (const k of order) { const j = S.shelves[k].findIndex(pred); if (j >= 0) return [k, j]; }
+            return null;
+        };
+        const hit = (m.id && find((t) => t.harborItem && t.harborItem.Id === m.id)) || (m.tile && find((t) => !t.harborItem && t.getAttribute('aria-label') === m.tile));
+        const [r, c] = hit || [Math.min(m.r, S.shelves.length - 1), m.c];
+        focusPoster(r, c);
     }
 
     function enterContent() {
@@ -370,15 +459,50 @@
                 clockTimer: setInterval(tick, 15000) };
             const content = ui.chrome.frame(root, ctx);
             const shelfView = el('div', 'hb-shelves');
-            pin(shelfView);
+            pin(shelfView, (x, y) => {
+                if (y) {
+                    S.shelfShift = Math.max(0, (S.shelfShift || 0) + y);
+                    still(S.shelfBox, S.shelfShift ? `translateY(${-Math.round(S.shelfShift)}px)` : '');
+                }
+                if (x) S.shelves.forEach((row, r) => {
+                    const rowEl = row[0] && row[0].parentElement;
+                    if (!rowEl) return;
+                    const pitch = row.length > 1 ? row[1].offsetLeft - row[0].offsetLeft : row[0].offsetWidth;
+                    const px = (S.rowPx[r] != null ? S.rowPx[r] : (S.firstCol[r] || 0) * pitch) + x;
+                    S.rowPx[r] = px;
+                    still(rowEl, px ? `translateX(${-Math.round(px)}px)` : '');
+                });
+            });
+            wheel(shelfView, (d, horiz) => {
+                const f = T.ctx.focused();
+                const r = S.shelves.findIndex((row) => row.includes(f));
+                if (r < 0) { if (enterContent()) T.ctx.sound('focus'); return; }
+                const c = S.shelves[r].indexOf(f) + d;
+                if (horiz && c >= 0 && c < S.shelves[r].length) focusPoster(r, c);
+                else if (!horiz && r + d >= 0 && r + d < S.shelves.length) focusPoster(r + d, S.lastCol[r + d] || 0);
+                else return;
+                T.ctx.sound('focus');
+            });
             S.shelfBox = el('div', 'hb-shelf-box');
             shelfView.append(S.shelfBox);
             content.append(clock, shelfView);
             S.content = content;
-            S.ready = () => { root.setAttribute('data-hb-rail', String(S.rail.length)); renderSection(S.rail[0].harbor); focusRail(0); };
+            S.rowPx = [];
+            root.addEventListener('icefin-focus', (e) => adopt(e.target));
+            root.addEventListener('click', (e) => adopt(e.target.closest && e.target.closest('[data-icefin-focus]')), true);
+            S.ready = () => {
+                root.setAttribute('data-hb-rail', String(S.rail.length));
+                const m = homeMemo;
+                homeMemo = null;
+                const i = Math.max(0, m ? S.rail.findIndex((b) => b.harbor.label === m.label) : 0);
+                const drawn = renderSection(S.rail[i].harbor);
+                focusRail(i);
+                if (m && m.zone === 'content') drawn.then(() => restoreShelf(m, i));
+            };
         },
         unmount() {
             if (!S) return;
+            rememberHome();
             clearInterval(S.clockTimer);
             clearTimeout(S.sectionTimer);
             clearTimeout(fanartTimer);

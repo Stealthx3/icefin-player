@@ -561,11 +561,25 @@
             // the overview's actions as white tiles two across; every other section a strip of white cards
             // Harbor: a season's episodes are wide rows (the DetailsSeries board); every other section a row of cards
             const season = !!(p.entry && p.entry.item && p.entry.item.Type === 'Season');
-            p.view = makeView(p.body, entries, { mode: season ? 'list' : 'grid', kind: p.front ? 'action' : (season ? undefined : 'card'), rowH: season ? 8.6 : undefined, letters: false, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
+            p.view = makeView(p.body, entries, { mode: season ? 'list' : 'grid', kind: p.front ? 'action' : (season ? undefined : 'card'), rowH: season ? 8.6 : undefined, letters: false, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); keepAt(p); C.activate(e, b); },
                 onFocus: (e) => { hintsFor(e); if (opts.onFocus) opts.onFocus(e, C); } });
             const ff = p.front ? Math.max(0, entries.findIndex((e) => e.focusFirst)) : (p.focusAt || 0);
-            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : ff));
+            const kept = (cur().deckMemo || {})[deck.panels.indexOf(p)];
+            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : kept != null ? kept : ff));
             p.view.draw();
+            // the panel on show loaded after the deck was drawn (Back to details left on Cast and crew, Songs): it takes
+            // the focus now, or nothing would have it (QA pre)
+            if (deck.panels[deck.at] === p && S.zone !== 'tabs') {
+                const f = T.ctx.focused && T.ctx.focused();
+                if (!f || !f.isConnected || !p.el.contains(f)) focusDeck(true);
+            }
+        }
+        // the entry a panel was left on, kept in its level so Back to these details finds it again (QA pre)
+        function keepAt(p) {
+            if (!p || !p.view || !deck) return;
+            p.memo = p.view.at;
+            const lv = cur();
+            (lv.deckMemo || (lv.deckMemo = {}))[deck.panels.indexOf(p)] = p.view.at;
         }
         function place(how) {
             const n = deck.panels.length;
@@ -597,8 +611,7 @@
         function deckGo(i, quiet) {
             if (deck && deck.panels[i] && deck.panels[i].empty) { const d = i > deck.at ? 1 : -1; let k = i; while (deck.panels[k] && deck.panels[k].empty) k += d; i = k; }
             if (!deck || i < 0 || i >= deck.panels.length) return false;
-            const p0 = deck.panels[deck.at];
-            if (p0.view) p0.memo = p0.view.at;
+            keepAt(deck.panels[deck.at]);
             if (i === deck.at) return true;
             deck.at = i;
             place();
@@ -757,7 +770,7 @@
                     if (deck) {
                         const p = deck.panels[deck.at];
                         const r = p.view ? p.view.move(a) : a;
-                        if (r === true) { p.memo = p.view.at; return true; }
+                        if (r === true) { keepAt(p); return true; }
                         if (r === 'left' || r === 'right') { if (!deckGo(deck.at + (r === 'right' ? 1 : -1))) T.ctx.sound('error'); return true; }
                         if (r === 'up' && p.tabsEl) { T.ctx.sound('error'); return true; }
                         T.ctx.sound('error');
