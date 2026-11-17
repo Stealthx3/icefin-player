@@ -30,9 +30,11 @@
     const ui = T.ui;
     const el = D.el;
 
-    let host = null, stack = [], pendingSpec = null;
+    let host = null, stack = [], pendingSpec = null, openedAt = null;
+    // the history entry the panel opened on: its index (Navigation API) and hash
+    const entry = () => ({ index: window.navigation && navigation.currentEntry ? navigation.currentEntry.index : -1, hash: location.hash });
     const HOST = {
-        mount(h) { host = h; build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
+        mount(h) { host = h; openedAt = entry(); build(); if (pendingSpec) { stack = []; draw(pendingSpec, 'open'); } pendingSpec = null; },
         unmount() { host = null; stack = []; ui.overlay.set(null); if (D.screenHints) D.screenHints(); setTimeout(() => { if (!host && D.screenHints) D.screenHints(); }, ui.motion.duration(260)); },
         leave(h) { h.classList.add('bl-panel-leave'); return ui.motion.duration(220); },
         onAction(a, f0) {
@@ -55,6 +57,37 @@
             return false;
         }
     };
+    // ---- Back from outside the controller (QA pre-pass: the mouse's Back button, which the app turns into the page's
+    // Back, and the browser's): stock's dialogs live in a history entry of their own, so that Back closes the dialog and
+    // the page stays. The panel has no entry, so the step back is undone before the router sees it (the popstate and
+    // hashchange of both steps are held back) and the panel closes: the same page, its focus back on the opener.
+    let undo = null;
+    const hold = (e) => {
+        if (undo) {
+            e.stopImmediatePropagation();
+            if (e.type === 'popstate' && location.hash === undo.hash) setTimeout(() => { undo = null; }, 60);  // back where it was: its hashchange follows
+            return;
+        }
+        if (!host || !ui.overlay.isOpen() || !openedAt) return;
+        if (e.type === 'hashchange') {
+            // a new page while the panel is up (a row that goes somewhere): the panel doesn't stay over it
+            if (location.hash !== openedAt.hash) D.panel.close();
+            return;
+        }
+        const now = entry();
+        const delta = openedAt.index >= 0 && now.index >= 0 ? now.index - openedAt.index : -1;
+        if (!delta || location.hash === openedAt.hash) return;
+        e.stopImmediatePropagation();
+        undo = { hash: openedAt.hash };
+        setTimeout(() => { undo = null; }, 1500);
+        D.panel.close();
+        history.go(-delta);
+    };
+    if (window.icefinBaselinePanelBackOff) window.icefinBaselinePanelBackOff();  // the theme loaded again: one set of listeners
+    window.addEventListener('popstate', hold, true);
+    window.addEventListener('hashchange', hold, true);
+    window.icefinBaselinePanelBackOff = () => { window.removeEventListener('popstate', hold, true); window.removeEventListener('hashchange', hold, true); };
+
     function build() {
         host.className = 'bl-panel-host' + (/^#\/video\b/.test(location.hash) ? ' bl-panel-video' : '');
         const dim = el('div', 'bl-panel-dim');

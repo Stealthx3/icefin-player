@@ -39,7 +39,7 @@
         const prev = ibtn('arrow_back', 'Previous', () => { st.start = Math.max(0, st.start - PAGE); load(); });
         const next = ibtn('arrow_forward', 'Next', () => { st.start += PAGE; load(); });
         const all = () => st.items;
-        const playAll = (shuffle) => { const q = Object.assign({}, query(), { StartIndex: 0, Limit: 300, SortBy: shuffle ? 'Random' : st.sort }); B.items(q).then((r) => { if (r.Items.length) T.ctx.play({ items: r.Items }); }); };
+        const playAll = (shuffle) => { const q = Object.assign({}, query(), { StartIndex: 0, Limit: 300, SortBy: shuffle ? 'Random' : st.sort }); B.items(q).then((r) => { if (r.Items.length) B.playWith({ items: r.Items }); }); };
         const parts = [paging, prev, next];
         if (o.icons) {
             if (o.playAll !== false) parts.push(ibtn('play_arrow', 'Play All', () => playAll(false)), ibtn('shuffle', 'Shuffle', () => playAll(true)));

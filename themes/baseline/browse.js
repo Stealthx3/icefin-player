@@ -84,14 +84,14 @@
         try { prog = await I.programme(p.Id); } catch (e) { prog = p; }
         const s = Date.parse(prog.StartDate), e = Date.parse(prog.EndDate), now = Date.now();
         B.panel.show({ title: prog.Name, path: 'Programme', render(body) {
-            if (s <= now && now < e) body.append(B.row('Play', { icon: 'play_arrow', go: () => { B.panel.close(); T.ctx.play({ ids: [prog.ChannelId], serverId: B.sid() }); } }));
+            if (s <= now && now < e) body.append(B.row('Play', { icon: 'play_arrow', go: () => { B.panel.close(); B.playWith({ ids: [prog.ChannelId], serverId: B.sid() }); } }));
             body.append(B.row('Details', { icon: 'info', go: () => { B.panel.close(); B.details(prog); } }));
             if (prog.TimerId) body.append(B.row('Cancel recording', { icon: 'cancel', go: async () => { try { await I.cancelRecording(prog.TimerId); B.panel.close(); B.notice('Recording cancelled.'); } catch (er) { B.notice('That didn’t work', true); } } }));
             else body.append(B.row('Record', { icon: 'fiber_manual_record', go: async () => { try { await I.record(prog, false, {}); B.panel.close(); B.notice('Recording scheduled.'); } catch (er) { B.notice('That didn’t work', true); } } }));
             if (prog.IsSeries && !prog.SeriesTimerId) body.append(B.row('Record Series', { icon: 'fiber_smart_record', go: async () => { try { await I.record(prog, true, {}); B.panel.close(); B.notice('Series recording scheduled.'); } catch (er) { B.notice('That didn’t work', true); } } }));
         } });
     }
-    B.liveOptions = (it) => (it.Type === 'TvChannel' ? T.ctx.play({ ids: [it.Id], serverId: B.sid() }) : programmeMenu(it));
+    B.liveOptions = (it) => (it.Type === 'TvChannel' ? B.playWith({ ids: [it.Id], serverId: B.sid() }) : programmeMenu(it));
     B.onAction((a, ctx) => {
         if (a !== 'menu') return false;
         const f = ctx.focused && ctx.focused();
@@ -108,7 +108,7 @@
         if (!page.querySelector('.bl-card')) { const e = el('div', 'bl-no-items'); e.append(el('p', '', 'No items found.')); page.append(e); }
     };
     const recommended = (q) => () => Promise.resolve(c().getLiveTvRecommendedPrograms(Object.assign({ userId: uid(), limit: 12, ImageTypeLimit: 1, EnableImageTypes: 'Primary,Thumb,Backdrop', EnableTotalRecordCount: false, Fields: 'ChannelInfo,PrimaryImageAspectRatio' }, q))).then((r) => (r && r.Items) || []);
-    const playChannel = (p) => T.ctx.play({ ids: [p.ChannelId || p.Id], serverId: B.sid() });
+    const playChannel = (p) => B.playWith({ ids: [p.ChannelId || p.Id], serverId: B.sid() });
 
     async function guide(page, me) {
         let chans = [];

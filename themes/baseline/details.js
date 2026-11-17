@@ -89,14 +89,14 @@
         let first = null;
         if (playable) {
             const resume = ud.PlaybackPositionTicks > 0;
-            first = detailBtn(resume ? 'play_arrow' : 'play_arrow', resume ? 'Resume' : 'Play', () => T.ctx.play(opts({ startPositionTicks: resume ? ud.PlaybackPositionTicks : 0 })), { cls: 'main' });
+            first = detailBtn(resume ? 'play_arrow' : 'play_arrow', resume ? 'Resume' : 'Play', () => B.playWith(opts({ startPositionTicks: resume ? ud.PlaybackPositionTicks : 0 })), { cls: 'main' });
             btns.append(first);
-            if (resume) btns.append(detailBtn('replay', 'Play from the beginning', () => T.ctx.play(opts({ startPositionTicks: 0 }))));
+            if (resume) btns.append(detailBtn('replay', 'Play from the beginning', () => B.playWith(opts({ startPositionTicks: 0 }))));
         }
         if (it.CanDownload && ['Book', 'Movie', 'Episode', 'Video', 'Audio'].includes(it.Type) && it.Type === 'Book') btns.append(detailBtn('get_app', 'Download', () => T.ui.items.run('download', it, {}).catch(() => {})));
-        if ((it.LocalTrailerCount || 0) > 0 || (it.RemoteTrailers || []).length) btns.append(detailBtn('theaters', 'Trailer', async () => { try { const t = await Promise.resolve(c().getLocalTrailers(uid(), it.Id)); if (t && t.length) T.ctx.play({ items: t }); } catch (e) { B.notice('No trailer', true); } }));
+        if ((it.LocalTrailerCount || 0) > 0 || (it.RemoteTrailers || []).length) btns.append(detailBtn('theaters', 'Trailer', async () => { try { const t = await Promise.resolve(c().getLocalTrailers(uid(), it.Id)); if (t && t.length) B.playWith({ items: t }); } catch (e) { B.notice('No trailer', true); } }));
         if (it.Type === 'MusicAlbum' || it.Type === 'MusicArtist' || it.Type === 'Audio') btns.append(detailBtn('explore', 'Instant Mix', () => T.ctx.instantMix(it)));
-        if (['Series', 'Season', 'MusicAlbum', 'Playlist', 'BoxSet', 'MusicArtist'].includes(it.Type)) btns.append(detailBtn('shuffle', 'Shuffle', () => T.ctx.play({ ids: [it.Id], serverId: B.sid(), shuffle: true })));
+        if (['Series', 'Season', 'MusicAlbum', 'Playlist', 'BoxSet', 'MusicArtist'].includes(it.Type)) btns.append(detailBtn('shuffle', 'Shuffle', () => B.playWith({ ids: [it.Id], serverId: B.sid(), shuffle: true })));
         if (['Movie', 'Episode', 'Series', 'Season', 'Video', 'MusicVideo', 'Book', 'BoxSet'].includes(it.Type) || (it.Type !== 'Person' && it.Type !== 'TvChannel' && it.Type !== 'MusicAlbum' && it.Type !== 'Playlist' && it.Type !== 'MusicArtist')) {
             const played = detailBtn('check', ud.Played ? 'Watched' : 'Mark played', async (b) => {
                 const now = !(me.item.UserData || {}).Played;
@@ -181,7 +181,7 @@
                 : (await B.items({ ParentId: it.Id, Recursive: false })).Items;
             const s = sec(null);
             kids.forEach((k, n) => s.append(listRow({ index: it.Type === 'MusicAlbum' ? (k.IndexNumber || n + 1) : null, image: it.Type === 'Playlist' ? B.artOf(k, 'square', 120) : undefined, icon: 'music_note',
-                title: k.Name, aside: k.RunTimeTicks ? B.clockTicks(k.RunTimeTicks) : '', item: k, go: () => T.ctx.play({ items: kids, startIndex: n }) })));
+                title: k.Name, aside: k.RunTimeTicks ? B.clockTicks(k.RunTimeTicks) : '', item: k, go: () => B.playWith({ items: kids, startIndex: n }) })));
         } else if (it.Type === 'MusicArtist') {
             const albums = (await B.items({ ArtistIds: it.Id, IncludeItemTypes: 'MusicAlbum', Recursive: true, SortBy: 'ProductionYear,SortName', SortOrder: 'Descending' })).Items;
             if (albums.length) { const s = sec('Albums'); const row = el('div', 'bl-inner-row'); albums.forEach((x) => row.append(B.card(x, { row: true, shape: 'square' }))); s.append(row); }

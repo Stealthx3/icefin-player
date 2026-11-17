@@ -272,4 +272,69 @@
     }
     B.register('#/queue', nowScreen());
     B.register('#/lyrics', lyricsScreen());
+
+    // ---- stock's now playing bar (checklist 1.1 and 1.2, QA pre-pass: music started from a library or an album
+    // showed nothing at all): while music plays, along the bottom of every Baseline screen, not over video and not on
+    // Now Playing or Lyrics. The progress line on top, the picture and the song (OK opens Now Playing), then Previous,
+    // Play/Pause, Stop and Next. Its controls are the screen's, so the D-pad reaches them; when the bar goes while it
+    // has focus, the screen's own arrival takes it back.
+    let bar = null;
+    function buildBar() {
+        const b = el('div', 'bl-npbar');
+        b.setAttribute('role', 'region');
+        b.setAttribute('aria-label', 'Now playing');
+        const line = el('div', 'bl-npbar-line');
+        const fill = el('div', 'bl-npbar-fill');
+        line.append(fill);
+        const info = B.btn('bl-npbar-info', null);
+        const img = el('div', 'bl-npbar-img');
+        const text = el('div', 'bl-npbar-text');
+        const t1 = el('div', 'bl-npbar-title'), t2 = el('div', 'bl-npbar-sub');
+        text.append(t1, t2);
+        info.append(img, text);
+        info.blHints = [['OK', 'now playing'], ['▶', 'play or pause'], ['Back', '']];
+        info.addEventListener('click', () => { ctx.sound('select'); B.go('#/queue'); });
+        const mid = el('div', 'bl-npbar-buttons');
+        const p = () => player() || {};
+        const pp = ib('pause', 'Pause', () => { if (p().playPause) p().playPause(); setTimeout(updateBar, 80); });
+        mid.append(ib('skip_previous', 'Previous Track', () => p().previousItem && p().previousItem()), pp,
+            ib('stop', 'Stop', () => { if (p().stop) p().stop(); setTimeout(updateBar, 300); }), ib('skip_next', 'Next Track', () => p().nextItem && p().nextItem()));
+        b.append(line, info, mid);
+        b.parts = { fill, img, t1, t2, pp, info, id: null };
+        return b;
+    }
+    function updateBar() {
+        const r = document.getElementById('icefin-theme-root');
+        const s = state();
+        const on = !!(r && !r.hidden && r.classList.contains('bl-screen') && s && s.active && s.mediaType === 'Audio'
+            && !/^#\/(queue|lyrics|video)\b/.test(location.hash));
+        document.documentElement.classList.toggle('bl-np-up', on);
+        if (!on) {
+            if (bar && bar.isConnected) {
+                const had = bar.contains(ctx.focused && ctx.focused());
+                bar.remove();
+                if (had && r && !r.hidden) B.arrive(r);
+            }
+            return;
+        }
+        if (!bar) bar = buildBar();
+        if (bar.parentElement !== r) r.append(bar);
+        const q = bar.parts, it = s.item || {};
+        if (q.id !== it.Id) {
+            q.id = it.Id;
+            const art = artFor(it) || s.poster || '';
+            q.img.style.backgroundImage = art ? `url("${art}")` : '';
+            q.img.textContent = '';
+            if (!art) q.img.append(B.icon('audiotrack'));
+            q.t1.textContent = it.Name || '';
+            q.t2.textContent = artistOf(it);
+            q.info.setAttribute('aria-label', [it.Name, artistOf(it)].filter(Boolean).join(', '));
+        }
+        q.fill.style.width = `${s.duration ? Math.min(100, (s.position / s.duration) * 100) : 0}%`;
+        const icon = s.paused ? 'play_arrow' : 'pause';
+        const ic = q.pp.querySelector('.bl-ic');
+        if (ic && ic.textContent !== icon) { ic.textContent = icon; q.pp.title = s.paused ? 'Play' : 'Pause'; q.pp.setAttribute('aria-label', q.pp.title); }
+    }
+    if (window.icefinBaselineNpBar) clearInterval(window.icefinBaselineNpBar);  // the theme loaded again: one timer
+    window.icefinBaselineNpBar = setInterval(() => { try { updateBar(); } catch (e) { console.warn('baseline: now playing bar', e); } }, 500);
 })();

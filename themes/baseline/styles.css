@@ -340,6 +340,24 @@ textarea.bl-input { min-height: 6em; resize: none; }
 .bl-lyric.icefin-focused { background: rgba(255, 255, 255, 0.12); }
 .bl-lyrics-none { padding: 2em; font-size: 1.2em; }
 
+/* ---- the now playing bar (stock's nowPlayingBar: fixed along the bottom on the dark footer colour, the progress line
+   on its top edge, the picture and two lines of text on the left, the transport in the middle) ---- */
+.bl-npbar { position: absolute; left: 0; right: 0; bottom: 0; height: 4.4em; display: flex; align-items: center; gap: 1em; padding: 0 1em 0 0;
+  background: #1c1c1c; color: var(--bl-text); z-index: 20; box-shadow: 0 -0.1em 0.4em rgba(0, 0, 0, 0.4); animation: bl-npbar-in 0.2s ease-out; }
+@keyframes bl-npbar-in { from { transform: translateY(100%); } }
+.bl-npbar-line { position: absolute; left: 0; right: 0; top: 0; height: 0.15em; background: rgba(255, 255, 255, 0.2); }
+.bl-npbar-fill { height: 100%; width: 0; background: var(--bl-accent); }
+.bl-npbar-info { display: flex; align-items: center; gap: 0.8em; flex: 1 1 0; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; color: inherit;
+  font: inherit; text-align: left; cursor: pointer; outline: none; }
+.bl-npbar-info.icefin-focused { background: rgba(255, 255, 255, 0.08); }
+.bl-npbar-img { flex: none; width: 4.4em; height: 4.4em; display: flex; align-items: center; justify-content: center; background: #303030 50% / cover no-repeat; color: rgba(255, 255, 255, 0.7); }
+.bl-npbar-text { min-width: 0; }
+.bl-npbar-title { color: var(--bl-text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bl-npbar-sub { font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bl-npbar-buttons { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 0.4em; }
+html.bl-np-up .bl-page { padding-bottom: 7.4em; }
+html.bl-np-up .bl-hints { bottom: calc(88px + 1.6vh); }  /* the bar is 4.4em of the screen's 20px */
+
 /* ---- the video OSD (stock's videoOsd: Back and title at the top, slider, times and buttons at the bottom) ---- */
 .bl-pl { position: absolute; inset: 0; color: #fff; font: 400 20px/1.35 "Noto Sans", sans-serif; pointer-events: none; }
 .bl-pl > * { pointer-events: auto; }

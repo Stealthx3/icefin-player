@@ -47,13 +47,20 @@
 
     // ---- input mode: the hint line shows for a pad or remote; the mouse keeps stock's hover ----
     const PAD = new Set(['up', 'down', 'left', 'right', 'enter', 'select', 'back', 'menu', 'search', 'home', 'play_pause', 'playpause', 'step_backward', 'step_forward', 'seek_backward', 'seek_forward']);
-    B.sawAction = (a) => { if (PAD.has(a)) document.documentElement.setAttribute('data-bl-input', 'pad'); };
+    B.sawAction = (a) => {
+        if (PAD.has(a)) document.documentElement.setAttribute('data-bl-input', 'pad');
+        if (a !== 'back' && B.backFocus) B.backFocus.stop();  // the user moved on: Back's focus doesn't take it back
+    };
     if (!window.icefinBaselineInput) {
         window.icefinBaselineInput = true;
         window.addEventListener('pointermove', (e) => { if (e.movementX || e.movementY) document.documentElement.setAttribute('data-bl-input', 'pointer'); }, true);
         window.addEventListener('keydown', (e) => { if (/^(Arrow|Enter|Escape|Backspace)/.test(e.key)) document.documentElement.setAttribute('data-bl-input', 'pad'); }, true);
     }
     if (ui.keyboard) ui.keyboard.enable();
+    // hover moves focus (checklist 2.5, covered by the Focus board in the Gate 1 map; the engine's rule: only a pointer
+    // that moves). QA pre-pass: without it the mouse left focus wherever the screen's arrival put it, and Back after a
+    // click had nothing of the mouse's to come back to
+    if (ui.pointerFirst) ui.pointerFirst(true);
 
     // ---- the visible layer: the engine hides the body's other children under a themed screen ----
     B.layer = () => {
@@ -175,13 +182,16 @@
     B.playable = (it) => !!it && (!!it.MediaType || CONTAINER.includes(it.Type) || it.Type === 'TvChannel' || it.Type === 'Program');
     B.play = (it, resume) => {
         const pos = resume && it.UserData && it.UserData.PlaybackPositionTicks ? it.UserData.PlaybackPositionTicks : 0;
-        return T.ctx.play({ ids: [it.Id], serverId: B.sid(), startPositionTicks: pos });
+        return B.playWith({ ids: [it.Id], serverId: B.sid(), startPositionTicks: pos });
     };
+    // every play goes through here: jellyfin-web's playback manager rejects (with nothing) when there is nothing it can
+    // play (a folder of books) or the play is called off; that is no error of the page's (QA pre-pass: rejection: undefined)
+    B.playWith = (o) => Promise.resolve(T.ctx.play(o)).catch((e) => { console.warn('baseline: play', o, e); return false; });
     // where OK on an item goes, as stock's cards do
     B.open = (it) => {
         if (it.Type === 'CollectionFolder' || it.Type === 'UserView') { B.go(B.viewRoute(it)); return; }
-        if (it.Type === 'TvChannel') { T.ctx.play({ ids: [it.Id], serverId: B.sid() }); return; }
-        if (it.Type === 'Photo') { T.ctx.play({ ids: [it.Id], serverId: B.sid() }); return; }
+        if (it.Type === 'TvChannel') { B.playWith({ ids: [it.Id], serverId: B.sid() }); return; }
+        if (it.Type === 'Photo') { B.playWith({ ids: [it.Id], serverId: B.sid() }); return; }
         if (it.Type === 'Genre' || it.Type === 'MusicGenre' || it.Type === 'Studio') { B.go(`#/list?${it.Type === 'Studio' ? 'studioId' : (it.Type === 'MusicGenre' ? 'musicGenreId' : 'genreId')}=${it.Id}&serverId=${B.sid()}`); return; }
         B.details(it);
     };
@@ -310,6 +320,7 @@
     B.raised = (label, go) => { const b = B.btn('bl-raised', label); b.addEventListener('click', () => { T.ctx.sound('select'); go(); }); return b; };
 
     // ---- the page: scrolls itself so focus stays in view (stock centres it on the TV layout) ----
+    let arriving = false;  // B.arrive is focusing: the page scrolls to it whatever the input
     B.page = (root, cls) => {
         root.classList.add('bl-screen');
         const p = B.el('div', 'bl-page' + (cls ? ` ${cls}` : ''));
@@ -322,6 +333,8 @@
             const f = e.target;
             B.hintsFor(f);
             if (!p.contains(f)) return;
+            // focus that followed the mouse: the page stays where the mouse (and its wheel) put it, as stock's does
+            if (!arriving && document.documentElement.getAttribute('data-bl-input') === 'pointer') return;
             if (f.closest('.bl-header')) { p.scrollTo({ top: 0, behavior: B.reduced() ? 'auto' : 'smooth' }); return; }
             const unit = f.closest('.bl-section') || f;
             const r = unit.getBoundingClientRect(), pr = p.getBoundingClientRect();
@@ -332,14 +345,19 @@
         });
         return p;
     };
-    // focus on arrival: the first card, else the first control (stock leaves some pages with nothing focused)
+    // focus on arrival: the first card, else the page's first control, else the tab it is on (an empty tab: stock keeps
+    // focus on the tab, not the header's Back), else the first control (stock leaves some pages with nothing focused).
+    // Back to a page: the control it was left from (B.backFocus), as stock's TV layout does.
     B.arrive = (root, el) => {
-        const f = el || root.querySelector('.bl-page [data-icefin-focus]') || root.querySelector('[data-icefin-focus]');
+        const back = B.backFocus && B.backFocus.target();
+        const f = back || el || [...root.querySelectorAll('.bl-page [data-icefin-focus]')].find((x) => !x.closest('.bl-header'))
+            || root.querySelector('.bl-tab.active') || root.querySelector('.bl-page [data-icefin-focus]') || root.querySelector('[data-icefin-focus]');
         if (!f) return f;
         // the browser's own scroll on focus nudges the page past the header; a page arrives at its top, as stock's does,
         // unless the control is out of sight there
         const p = f.closest('.bl-page'), top = p ? p.scrollTop : 0;
-        T.ctx.focus(f);
+        arriving = true;
+        try { T.ctx.focus(f); } finally { arriving = false; }
         if (p && p.scrollTop !== top) {
             const was = p.scrollTop;
             p.scrollTop = top;
@@ -349,6 +367,91 @@
         B.hintsFor(f);
         return f;
     };
+
+    // ---- Back lands on the control a page was left from (QA pre-pass) ----
+    // Stock's TV layout keeps each page it showed and, on Back, focuses the control that had focus there (its view
+    // manager restores the view's active element). Baseline draws a screen anew on every visit, so each history entry
+    // (the Navigation API's key for it, with the hash) remembers the last control focused or clicked on it; Back to that
+    // entry focuses that control as soon as the screen has drawn it (within 4 s, and not once the user has moved). A new
+    // visit to the same route is a new entry and arrives as usual. The header's Back and Home are never remembered.
+    B.backFocus = (() => {
+        const memo = new Map();
+        const here = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key + ' ' : '') + location.hash;
+        const rootEl = () => document.getElementById('icefin-theme-root');
+        const labelOf = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+        const secOf = (e) => { const s = e.closest('.bl-section'); const t = s && s.querySelector('.bl-section-title'); return t ? t.textContent.trim() : ''; };
+        const idOf = (e) => (e.blItem && (e.blItem.Id || '')) || '';
+        const NAV = '.bl-header .bl-hbtn[aria-label="Back"], .bl-header .bl-hbtn[aria-label="Home"]';
+        const shown = (e) => e.isConnected && e.getClientRects().length > 0;
+        const same = (e, d) => e.classList[0] === d.cls && (d.id ? idOf(e) === d.id : labelOf(e) === d.label);
+        let pending = null, obs = null, timer = null, raf = 0;
+        function record(t) {
+            const r = rootEl();
+            const e = t && t.closest && t.closest('[data-icefin-focus]');
+            if (!r || r.hidden || !e || !r.contains(e) || e.matches(NAV)) return;
+            const d = { cls: e.classList[0] || '', id: idOf(e), label: labelOf(e), sec: secOf(e) };
+            const twins = [...r.querySelectorAll('[data-icefin-focus]')].filter((x) => same(x, d) && secOf(x) === d.sec);
+            d.n = Math.max(0, twins.indexOf(e));
+            d.k = [...r.querySelectorAll('[data-icefin-focus]')].filter((x) => x.classList[0] === d.cls).indexOf(e);
+            const h = here();
+            memo.delete(h);
+            memo.set(h, d);
+            if (memo.size > 200) memo.delete(memo.keys().next().value);
+        }
+        // the remembered control on the screen as drawn now: same kind, same item (or label), same row, nth of its twins;
+        // a button that renamed itself meanwhile (Play is Resume after some playback) by its place among its kind
+        function find(d) {
+            const r = rootEl();
+            if (!r || r.hidden) return null;
+            const all = [...r.querySelectorAll('[data-icefin-focus]')].filter((e) => same(e, d) && shown(e));
+            const inRow = all.filter((e) => secOf(e) === d.sec);
+            const found = inRow[d.n] || inRow[0] || all[0];
+            if (found || d.id || d.k < 0) return found || null;
+            const kin = [...r.querySelectorAll('[data-icefin-focus]')].filter((e) => e.classList[0] === d.cls && shown(e));
+            return kin[d.k] || null;
+        }
+        function stop() {
+            pending = null;
+            if (obs) obs.disconnect();
+            obs = null;
+            clearTimeout(timer);
+            if (raf) cancelAnimationFrame(raf);
+            raf = 0;
+        }
+        function attempt() {
+            raf = 0;
+            if (!pending || here() !== pending.hash) { stop(); return; }
+            const e = find(pending.d);
+            if (e && T.ctx.focused() !== e) { const r = rootEl(); if (r) B.arrive(r, e); }
+        }
+        const soon = () => { if (!raf) raf = requestAnimationFrame(attempt); };
+        function routed() {
+            stop();
+            const h = here();
+            const d = memo.get(h);
+            if (!d) return;
+            pending = { hash: h, d };
+            const r = rootEl();
+            if (r) { obs = new MutationObserver(soon); obs.observe(r, { childList: true, subtree: true }); }
+            timer = setTimeout(stop, 4000);
+            setTimeout(soon, 0);
+        }
+        // the user's own move ends it (not Back, Escape or Backspace, which are how the user got here)
+        const onKey = (e) => { if (!/^(Escape|Backspace|Shift|Control|Alt|Meta)$/.test(e.key)) stop(); };
+        const onFocus = (e) => record(e.target);
+        const onMove = (e) => { if (e.movementX || e.movementY) stop(); };  // a moving pointer takes focus itself (pointer-first)
+        if (window.icefinBaselineBackFocusOff) window.icefinBaselineBackFocusOff();  // the theme loaded again: one set of listeners
+        const on = [[window, 'popstate', routed], [window, 'hashchange', routed], [document, 'icefin-focus', onFocus], [document, 'click', onFocus],
+            [window, 'keydown', onKey], [window, 'mousedown', stop], [window, 'mousemove', onMove], [window, 'wheel', stop]];
+        // capture on window: before the engine's own route handler, so the entry is known as the screen mounts
+        for (const [t, n, f] of on) t.addEventListener(n, f, true);
+        window.icefinBaselineBackFocusOff = () => { for (const [t, n, f] of on) t.removeEventListener(n, f, true); stop(); };
+        return {
+            stop,
+            // the control Back should land on, when this screen is being returned to and it is drawn already
+            target() { return pending && here() === pending.hash ? find(pending.d) : null; }
+        };
+    })();
 
 
     // ---- glue for the forked list box and item menu (panel.js, itemmenu.js) ----

@@ -80,7 +80,7 @@
             try { r = await Promise.resolve(c().getLiveTvRecommendedPrograms({ userId: uid(), IsAiring: true, limit: 24, ImageTypeLimit: 1, EnableImageTypes: 'Primary,Thumb,Backdrop', EnableTotalRecordCount: false, Fields: 'ChannelInfo,PrimaryImageAspectRatio' })); } catch (e) { r = null; }
             const items = (r && r.Items) || [];
             if (items.length) {
-                const row = B.cardRow('On Now', items.map((p) => B.card(p, { row: true, shape: 'backdrop', go: () => T.ctx.play({ ids: [p.ChannelId], serverId: B.sid() }),
+                const row = B.cardRow('On Now', items.map((p) => B.card(p, { row: true, shape: 'backdrop', go: () => B.playWith({ ids: [p.ChannelId], serverId: B.sid() }),
                     progress: Math.max(0, Math.min(100, ((Date.now() - Date.parse(p.StartDate)) / ((Date.parse(p.EndDate) - Date.parse(p.StartDate)) || 1)) * 100)) })), {});
                 row.querySelector('.bl-section-title').addEventListener('click', () => B.go('#/livetv?tab=0'));
                 wrap.append(row);
