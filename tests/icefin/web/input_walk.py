@@ -8,7 +8,11 @@ Inputs (--inputs, default pad,keys,mouse), one app session per theme, each input
   keys   DevTools Input.dispatchKeyEvent (ArrowUp/Down/Left/Right, Enter, Escape, Backspace, Tab, Shift+Tab): the
          in-page path real keys take, never an OS-level keyboard
   mouse  DevTools Input.dispatchMouseEvent: hover every element's centre (focus must follow where the theme is
-         pointer-first), click it
+         pointer-first), click it; the controls a click shows in place (a category chosen) join the screen's, reached again
+         through that click, and the clicked control, still there, is clicked once more (a chosen category opens); a
+         control outside the viewport is brought in by clicking the visible control nearest to it (a carousel slides)
+Every input starts on a freshly loaded home. Pad and keys position by the engine's focus when the control is on the page,
+else by the input along the focus moves seen on that screen (a control drawn only while its category is current).
 Per screen: pad and keys collect the controls the input reaches (snake walk; keys also Tab) and activate up to two per
 kind; mouse enumerates every visible interactive element inside the theme's root, stock chrome, overlay and
 jellyfin-web's page and dialogs, and activates every one (the denylist apart). Each activation is classified (new screen,
@@ -151,8 +155,31 @@ IW_JS = r"""
       const r = e.getBoundingClientRect();
       const x = Math.min(innerWidth - 1, Math.max(1, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(1, r.top + r.height / 2));
       const t = document.elementFromPoint(x, y);
-      return { ok: true, x, y, top: !!t && (t === e || e.contains(t)) };  // an ancestor on top means e is clipped away (QA pre)
+      // cin: its centre lies inside the viewport (x and y were not clamped): a carousel can leave a control outside it
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      return { ok: true, x, y, top: !!t && (t === e || e.contains(t)), cin: cx >= 1 && cy >= 1 && cx <= innerWidth - 1 && cy <= innerHeight - 1 };
     },
+    // the visible control nearest to an element that lies outside the viewport, among its parent's (then grandparent's)
+    // controls: clicking it slides a carousel (a bar of categories, a row) toward the element. null when there is none
+    near(key) {
+      const e = window.inputWalk.live(key); if (!e) return null;
+      const r = e.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      let p = e.parentElement;
+      for (let lvl = 0; p && p !== document.body && lvl < 2; lvl++, p = p.parentElement) {
+        let best = null, bd = Infinity;
+        for (const x of p.querySelectorAll(SEL)) {
+          if (x === e || x.contains(e) || e.contains(x) || !vis(x)) continue;
+          const q = x.getBoundingClientRect(), qx = q.left + q.width / 2, qy = q.top + q.height / 2;
+          if (qx < 1 || qy < 1 || qx > innerWidth - 1 || qy > innerHeight - 1) continue;
+          const t = document.elementFromPoint(qx, qy); if (!t || !(t === x || x.contains(t))) continue;
+          const d = Math.hypot(qx - cx, qy - cy); if (d < bd) { bd = d; best = x; }
+        }
+        if (best) { const i = info(best); els.set(i.key, best); return i; }
+      }
+      return null;
+    },
+    present(key) { return !!window.inputWalk.live(key); },
+    isCur(key) { const e = window.inputWalk.live(key); return !!e && L.cur() === e; },
     offscreen(key) {
       // true only when the element exists, is rendered, and even scrolled into view stays entirely outside the viewport
       const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e)) return false;
@@ -171,6 +198,12 @@ IW_JS = r"""
         const lab = key.split('|').slice(1).join('|');
         const same = lab ? cands.filter((x) => L.key(x).split('|').slice(1).join('|') === lab) : [];
         if (same.length === 1) e = same[0];
+      }
+      if (!e) {
+        // the same place, its label grown or cut (a watched mark added after playing it): one control only
+        const [pth, ...rest] = key.split('|'), lab = rest.join('|');
+        const grown = lab ? cands.filter((x) => { const [p2, ...r2] = L.key(x).split('|'), l2 = r2.join('|'); return p2 === pth && l2 && (l2.startsWith(lab) || lab.startsWith(l2)); }) : [];
+        if (grown.length === 1) e = grown[0];
       }
       if (e) els.set(key, e);
       return e || null;
@@ -366,12 +399,24 @@ class MouseDriver(Driver):
         if not r or not r.get("ok"):
             return False
         self.x, self.y = r["x"], r["y"]
+        self.hkey = key
         self.tr("hover", key[-40:])
         self._mouse("mouseMoved")
         time.sleep(0.4)
         return True
 
     def activate(self):
+        # where the control is now: a list still sliding (a column redrawn after Back, the hover bringing it in) moves it
+        # from under the pointer, and the click would land on its neighbour
+        for _ in range(4):
+            r = self.js(f"window.inputWalk.rect({json.dumps(self.hkey)})") if getattr(self, "hkey", None) else None
+            if not r or not r.get("ok") or (abs(r["x"] - self.x) < 3 and abs(r["y"] - self.y) < 3):
+                break
+            self.x, self.y = r["x"], r["y"]
+            self.last = r
+            self.tr("moved under the pointer; hover again")
+            self._mouse("mouseMoved")
+            time.sleep(0.35)
         self.tr("click", self.x, self.y)
         self._mouse("mousePressed", button="left", buttons=1, clickCount=1)
         time.sleep(0.06)
@@ -433,6 +478,7 @@ class Walker:
         self.present = present            # {"libraries": [regex...], "types": [...]}
         self.errs_seen = set()
         self.subs = {}                    # route key -> keys of its in-place sub-screens
+        self.edges = {}                   # screen key -> {focused key: {direction: {key focus went to}}} (pad, keys)
 
     # -------------------------------------------------------------- plumbing
     def tr(self, *x):
@@ -492,10 +538,20 @@ class Walker:
             k += f" [{self.item_type(s['item'])}]"
         # a sub-screen (a folder or section a theme opens in place on the same route): the level whose control set is on screen
         if self.subs.get(k):
-            cur, best, bo = self.ckeys(), None, 0.4999
+            # judged by the controls that tell the levels apart: the ones the screen keeps at every level (a header, a
+            # theme's pointer bar, a server line) matched any sub-level and the route's own level was never found again
+            # A long list scrolled within the level draws other rows (other keys), so the level's own controls need only
+            # partly be there (a quarter) once the level it opened from is gone
+            cur, best, bo = self.ckeys(), None, 0.2499
             for sk in self.subs[k]:
-                ks = set(self.screens[sk]["sub"]["keys"])
-                o = len(cur & ks) / len(ks) if ks else 0
+                st = self.screens[sk]["sub"]
+                ks, pre = set(st["keys"]) | set(st.get("seen", [])), set(st["pre"])
+                own, gone = ks - pre, pre - ks
+                if not own:
+                    continue
+                o = len(cur & own) / len(own)
+                if gone and len(cur & gone) * 2 > len(gone):
+                    continue        # the level it opened from is still on screen
                 if o > bo:
                     best, bo = sk, o
             k = best or k
@@ -707,10 +763,30 @@ class Walker:
                 return True
         self.js(f"location.hash = {json.dumps(here['hash'])}; true")
         s = self.settle()
-        if self.screen_key(s) != k:
-            self.tr("could not return to", k, "got", self.screen_key(s))
+        got = self.screen_key(s)
+        if got != k and (self.screens.get(base(got), {}).get("sub") or {}).get("rkey") == k:
+            # still in a level the theme keeps on this route (Back did not leave it, the hash is the same): a fresh load
+            self.tr("reloading to leave", got)
+            self.reload()
+            got = self.screen_key(self.settle())
+        if got != k:
+            self.tr("could not return to", k, "got", got)
             return False
         return True
+
+    def reload(self):
+        try:
+            self.page.eval("location.reload(); true", await_promise=False)
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(5)
+        try:
+            self.page.reconnect()
+            self.page.wait_for("!!window.icefinTheme && !!window.icefinTheme._engine && !!window.ApiClient && !!window.ApiClient.getCurrentUserId()", timeout=40)
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(2)
+        self.ensure()
 
     def enter_sub(self, k, here):
         """Go to the sub-screen's parent, position on the opener, activate it, and confirm the sub-level is on screen (the same
@@ -732,7 +808,9 @@ class Walker:
             return
         here = self.screens[k]
         if here.get("first_key"):
-            self.drv.focus(here["first_key"])
+            # the control the walk started on; drawn only while its category or row is current, so else by the input
+            if not self.drv.focus(here["first_key"]):
+                self.navigate(k, here["first_key"])
         for p in path:
             self.drv.move(p)
         self.settle(t=1.0)
@@ -744,25 +822,159 @@ class Walker:
         return True
 
     def position(self, k, c):
-        """On the control, ready to act: by the engine's focus when the screen is as it was, else a fresh load and the presses."""
+        """On the control, ready to act: by the engine's focus when the control is on the page, else by the input along the
+        focus moves the walk has seen (a control another category or row draws only while it is current), else a fresh load
+        and the recorded presses."""
         if self.mouse:
-            if self.drv.focus(c["key"]):
+            if self.mouse_reach(k, c):
                 return True
             if not self.go_here(k):
                 return False
             self.enum(k)
-            return self.drv.focus(c["key"])
+            return self.mouse_reach(k, c)
         f = self.focus_now()
         if f and f["key"] == c["key"]:
             return True
         if self.drv.focus(c["key"]):
             f = self.focus_now()
-            if f and f["key"] == c["key"]:
+            if f and (f["key"] == c["key"] or self.js(f"window.inputWalk.isCur({json.dumps(c['key'])})")):
                 return True
+        if self.navigate(k, c["key"]):
+            return True
         if not self.restore(k, c.get("path", [])):
             return False
         f = self.focus_now()
-        return bool(f and f["key"] == c["key"])
+        if f and f["key"] == c["key"]:
+            return True
+        return self.navigate(k, c["key"])
+
+    # ---- pad and keys: the focus graph
+    def edge(self, k, a, d, b):
+        if a and b and a != b and d in ("up", "down", "left", "right"):
+            self.edges.setdefault(k, {}).setdefault(a, {}).setdefault(d, set()).add(b)
+
+    def plan(self, k, start, target, bad):
+        """The presses from `start` to `target` over the focus moves seen on screen `k` (each move seen, cost 1) and their
+        reverses (assumed, cost 1.5): [(direction, expected key)], [] when there is no way."""
+        import heapq
+        inv = {"up": "down", "down": "up", "left": "right", "right": "left"}
+        E = self.edges.get(k, {})
+        adj = {}
+        for a, ds in E.items():
+            for d, bs in ds.items():
+                for b in bs:
+                    adj.setdefault(a, []).append((1.0, d, b))
+                    adj.setdefault(b, []).append((1.5, inv[d], a))
+        dist, prev, q = {start: 0.0}, {}, [(0.0, start)]
+        while q:
+            w, a = heapq.heappop(q)
+            if a == target:
+                break
+            if w > dist.get(a, INF):
+                continue
+            for cw_, d, b in adj.get(a, []):
+                if (a, d, b) in bad:
+                    continue
+                nw = w + cw_
+                if nw < dist.get(b, INF):
+                    dist[b], prev[b] = nw, (a, d)
+                    heapq.heappush(q, (nw, b))
+        if target not in prev:
+            return []
+        out, n = [], target
+        while n != start:
+            a, d = prev[n]
+            out.append((d, n))
+            n = a
+        return out[::-1]
+
+    def navigate(self, k, target, budget=40):
+        """Reach `target` with the input itself, along the focus moves recorded on this screen, planning again after every
+        press (a category or column remembers its own place, so a move can land elsewhere than last time). As soon as the
+        target is on the page the engine's focus takes it there (positioning, as everywhere)."""
+        if not self.edges.get(k):
+            return False
+        bad = set()
+        for _ in range(budget):
+            if self.late():
+                return False
+            f = self.focus_now()
+            cur = f["key"] if f else None
+            if cur == target:
+                return True
+            if self.js(f"window.inputWalk.present({json.dumps(target)})") and self.drv.focus(target):
+                f = self.focus_now()
+                if f and (f["key"] == target or self.js(f"window.inputWalk.isCur({json.dumps(target)})")):
+                    return True
+            nodes = set(self.edges[k]) | {b for ds in self.edges[k].values() for bs in ds.values() for b in bs}
+            if cur not in nodes:
+                # focus is somewhere the walk never moved from: a control the walk knows, on the page now
+                first = self.screens[k].get("first_key")
+                for n in ([first] if first else []) + sorted(nodes):
+                    if self.js(f"window.inputWalk.present({json.dumps(n)})") and self.drv.focus(n):
+                        break
+                else:
+                    return False
+                f = self.focus_now()
+                if not f or f["key"] not in nodes:
+                    return False
+                continue
+            steps = self.plan(k, cur, target, bad)
+            if not steps:
+                self.tr("no way to", target[-40:], "from", cur[-40:])
+                return False
+            d, want = steps[0]
+            self.drv.move(d)
+            s = self.settle(t=1.0)
+            if self.screen_key(s) != k:
+                self.tr("moving toward", target[-40:], "changed the screen to", self.screen_key(s))
+                self.go_here(k)
+                return False
+            f2 = self.focus_now()
+            got = f2["key"] if f2 else None
+            if got and got != cur:
+                self.edge(k, cur, d, got)
+            if got != want:
+                bad.add((cur, d, want))
+        return False
+
+    # ---- the mouse: controls another click shows, controls outside the viewport
+    def mouse_reach(self, k, c, depth=0):
+        """Hover the control, its centre in the viewport and nothing over it. A control that is not on the page is shown
+        first by the clicks that showed it (c['via']: a category chosen, a level opened); one outside the viewport is
+        brought in by clicking the visible control nearest to it, up to 6 times (a carousel slides)."""
+        key = c["key"]
+        if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
+            return True
+        if not self.drv.last and c.get("via") and depth < 3:
+            for v in c["via"]:
+                if self.js(f"window.inputWalk.present({json.dumps(key)})"):
+                    break
+                vc = next((x for x in self.ctrls.get(k, []) if x["key"] == v), None)
+                if not vc or not self.mouse_reach(k, vc, depth + 1):
+                    return False
+                self.tr("showing", key[-40:], "by", v[-40:])
+                self.drv.activate()
+                if self.screen_key(self.settle(prev=k, t=3.0)) != k:
+                    self.go_here(k)
+                    return False
+            if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
+                return True
+        for _ in range(6):
+            r = self.drv.last
+            if not r or not r.get("ok") or r.get("cin"):
+                break
+            n = self.js(f"window.inputWalk.near({json.dumps(key)})")
+            if not n or skip_reason(n) or not self.drv.focus(n["key"]):
+                break
+            self.tr("bringing in", key[-40:], "by", n["key"][-40:])
+            self.drv.activate()
+            if self.screen_key(self.settle(prev=k, t=3.0)) != k:
+                self.go_here(k)
+                return False
+            if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
+                return True
+        return bool(self.drv.focus(key))    # on the page: activate() judges a covered centre (obscured)
 
     # -------------------------------------------------------------- what is on a screen
     def enum(self, k, scope="base"):
@@ -821,6 +1033,7 @@ class Walker:
             return True
 
         def step(d):
+            moved_to[0] = False
             before = self.focus_now()
             self.drv.move(d)
             s = self.settle(t=1.0)
@@ -832,10 +1045,24 @@ class Walker:
             self.mark_off(k, before, f2["key"] if f2 else None)
             if f2 and (not before or f2["key"] != before["key"]):
                 path.append(d)
+                if before:
+                    self.edge(k, before["key"], d, f2["key"])
+            moved_to[0] = bool(f2 and (not before or f2["key"] != before["key"]))
+            self.tr("  at", (f2 or {}).get("key", "nothing")[-48:], "" if moved_to[0] else "(did not move)", "(seen)" if f2 and f2["key"] in seen else "")
             if not f2 or f2["key"] in seen:
                 return None
             take(f2, path)
             return f2
+
+        moved_to = [False]
+
+        def climb():
+            # up to the top, over controls already seen too (each snake starts at the top: a bar of categories over a
+            # column has its controls there, and the start of the second snake may sit under one already taken)
+            for _ in range(14):
+                step("up")
+                if not moved_to[0]:
+                    break
 
         f = self.focus_now()
         if not f:
@@ -846,9 +1073,7 @@ class Walker:
             here["first_key"] = f["key"]
         if f:
             take(f, path)
-        for _ in range(6):
-            if not step("up"):
-                break
+        climb()
 
         cut = [False]
 
@@ -857,21 +1082,30 @@ class Walker:
                 if self.late():
                     cut[0] = True
                     break
-                moved = False
+                moved, over = False, 0
                 for _ in range(14):
-                    if not step(horiz):
-                        break
-                    moved = True
+                    if step(horiz):
+                        moved, over = True, 0
+                        continue
+                    # over up to 3 controls already taken: a bar or row the other snake crossed may go on past them
+                    # (the second snake starts where the first left the screen's state, not where the first began)
+                    if moved_to[0] and over < 3:
+                        over += 1
+                        continue
+                    break
                 if not step("down") and not moved:
                     break
                 horiz = "left" if horiz == "right" else "right"
         snake("right")
         path.clear()
         if not self.late() and self.restore(k, []):
+            climb()
             snake("left")
         if self.inp == "keys" and not self.late() and self.restore(k, []):
             self.tab_sweep(k, take)
         self.enum(k)    # after the scrolling: lazy rows are in
+        if here.get("sub"):     # every control of the level, for telling it apart (screen_key)
+            here["sub"]["seen"] = sorted(set(here["sub"].get("seen", [])) | {c["key"] for c in ctrls} | set(here["elements"]))
         # complete: the snake ended because focus stopped moving everywhere, not because the budget ran out
         here["complete"] = not cut[0] and not self.late()
         here["walk"] = "complete" if here["complete"] else "cut by the budget"
@@ -896,6 +1130,9 @@ class Walker:
             self.drv.move(d)
             if self.screen_key(self.settle(t=1.0)) != self.cur_screen_key:
                 return False
+            f2 = self.focus_now()
+            if f and f2:
+                self.edge(self.cur_screen_key, f["key"], d, f2["key"])
         f = self.focus_now()
         return bool(f and f["key"] == key)
 
@@ -923,6 +1160,9 @@ class Walker:
             if ok:
                 e["reached"][self.inp] = True
                 self.tr("direct reach worked", e.get("label") or key[-40:])
+                f = self.focus_now()     # reached: one of this input's controls, to activate like the rest
+                if f and f["key"] == key and not any(x["key"] == key for x in self.ctrls.get(k, [])):
+                    self.ctrls.setdefault(k, []).append(dict(f, path=[]))
             else:
                 e["unreach"] = True
                 self.tr("direct reach failed", e.get("label") or key[-40:])
@@ -1002,7 +1242,7 @@ class Walker:
         d1 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})")
         noisy = d0["dom"] != d1["dom"]
         pre_keys, iid = set(), ""
-        if not self.mouse:      # for the in-place new-level check (a folder opened on the same route)
+        if True:                # for the in-place new-level check (a folder opened on the same route)
             pre_keys = self.ckeys()
             try:
                 iid = self.js("(() => { const e = window.inputWalk.live(" + json.dumps(c["key"]) + "); const n = e && e.closest('[data-id], [data-itemid]'); return n ? (n.getAttribute('data-id') || n.getAttribute('data-itemid') || '') : ''; })()") or ""
@@ -1019,8 +1259,15 @@ class Walker:
             outcome = "in-place"
         else:
             outcome = "nothing"
-        el["outcome"] = outcome if outcome in ("dialog", "in-place", "nothing") else f"screen: {pk}"
-        self.tr("activated", label, "->", el["outcome"])
+        again = c.get("again")
+        res = outcome if outcome in ("dialog", "in-place", "nothing") else f"screen: {pk}"
+        if again:
+            el["again"] = res       # the second click keeps the first one's outcome
+        else:
+            el["outcome"] = res
+        self.tr("activated", label, "again" if again else "", "->", res)
+        if outcome == "nothing" and again:
+            return                  # a second click that changes nothing (a tab already shown) is no finding
         if outcome == "nothing":
             if not self.mouse and not self.stable_focus():
                 self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
@@ -1031,11 +1278,22 @@ class Walker:
             self.finding("dead-control", k, label, "no screen, dialog or visible change", plugin=c.get("plugin", False))
             return
         if outcome == "in-place":
-            f2 = None if self.mouse else self.stable_focus()
+            # a route that changes late (a channel that starts playing) is a new screen, not a level opened in place
+            time.sleep(1.0)
+            s2 = self.settle(t=2.5)
+            if s2["route"] != s["route"]:
+                s, pk = s2, self.screen_key(s2)
+                outcome = "dialog" if pk == k + " (dialog)" else "screen"
+                el["again" if again else "outcome"] = outcome if outcome == "dialog" else f"screen: {pk}"
+                self.tr("late change ->", pk)
+        if outcome == "in-place":
+            f2 = self.stable_focus()
             if not self.mouse and not f2:
                 self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
-            sk = None if self.mouse else self.sub_level(k, here, c, label, s, f2, pre_keys, iid)
+            sk = self.sub_level(k, here, c, label, s, f2, pre_keys, iid)
             if not sk:
+                if self.mouse:
+                    self.reveal(k, here, c, pre_keys)
                 return
             outcome, pk = "sub", sk       # a new level on the same route: Back is tested now, the level is explored later
             el["outcome"] = f"sub-screen: {sk}"
@@ -1081,6 +1339,26 @@ class Walker:
                 el["back_ok"] = True
         else:
             el["back_ok"] = True
+
+    def reveal(self, k, here, c, pre_keys):
+        """The mouse changed the page in place without opening a level (a category chosen on a bar, a row's tab): the
+        controls it showed join the screen's, reached through this click (via), and the control, still there, is clicked a
+        second time at once (a chosen category opens its own screen on the next click)."""
+        ctrls = self.ctrls.setdefault(k, [])
+        known = {x["key"] for x in ctrls}
+        via = list(c.get("via", [])) + [c["key"]]
+        n = 0
+        for i in self.enum(k):
+            if i["key"] in known or i["key"] in pre_keys:
+                continue
+            ctrls.append(dict(i, via=via))
+            known.add(i["key"])
+            self.element(k, i)["reached"]["mouse"] = True
+            n += 1
+        if n:
+            self.tr("the click showed", n, "controls")
+        if not c.get("again") and self.js(f"window.inputWalk.present({json.dumps(c['key'])})"):
+            self.activate(k, here, dict(c, again=True))
 
     def back_out(self, k, opened):
         """Back until the screen is `k` again with nothing open (a dialog, sheet or the on-screen keyboard on the same
@@ -1250,32 +1528,42 @@ class Walker:
             return
         if not here["collected"]:
             self.collect(k, here)
-        todo = [c for c in self.ctrls.get(k, []) if (k, c["key"]) not in self.done]
-        # the seeds first (the preferences menu), then the first of each kind, then the rest
-        counts = {}
-
+        # the seeds first (the preferences menu), then the first of each kind, then the rest; again while activations show
+        # more controls (the mouse: a category chosen shows its column)
         def ukey(c):
             return c.get("sig", "") + "|" + (route_href(c["href"]) if c.get("href") else "")
-        ranked = []
-        for c in todo:
-            u = ukey(c)
-            counts[u] = counts.get(u, 0) + 1
-            ranked.append((0 if PREF_LABEL.search(c.get("label", "") + " " + c.get("cls", "") + " " + c.get("action", "")) else 1, counts[u], c))
-        ranked.sort(key=lambda t: (t[0], t[1]))
         tried = self.tried.setdefault(k, {})
-        for _, n, c in ranked:
-            if self.late():
+        # the server's libraries by name and search are seeds too: tried first, past the per-kind limit (a bar of
+        # categories shares one kind, and each opens its own screen)
+        names = {n.strip().lower() for n in self.present.get("names", [])}
+
+        def seed(c):
+            lab = (c.get("label") or "").strip().lower()
+            return lab in names or lab.split(",")[0].strip() in names or lab == "search"
+        for _pass in range(4):
+            todo = [c for c in self.ctrls.get(k, []) if (k, c["key"]) not in self.done]
+            counts, ranked, acted = {}, [], False
+            for c in todo:
+                u = ukey(c)
+                counts[u] = counts.get(u, 0) + 1
+                ranked.append((0 if PREF_LABEL.search(c.get("label", "") + " " + c.get("cls", "") + " " + c.get("action", "")) else 1 if seed(c) else 2, counts[u], c))
+            ranked.sort(key=lambda t: (t[0], t[1]))
+            for _, n, c in ranked:
+                if self.late():
+                    break
+                u = ukey(c)
+                if tried.get(u, 0) >= limit and not seed(c):
+                    continue
+                why = skip_reason(c)
+                self.done.add((k, c["key"]))
+                if why:
+                    self.element(k, c)["outcome"] = "skipped: " + why
+                    continue
+                tried[u] = tried.get(u, 0) + 1
+                acted = True
+                self.activate(k, here, c)
+            if not acted or self.late() or not self.go_here(k):
                 break
-            u = ukey(c)
-            if tried.get(u, 0) >= limit:
-                continue
-            why = skip_reason(c)
-            self.done.add((k, c["key"]))
-            if why:
-                self.element(k, c)["outcome"] = "skipped: " + why
-                continue
-            tried[u] = tried.get(u, 0) + 1
-            self.activate(k, here, c)
         if not self.mouse:
             # the controls the mouse can use and this input never reached
             here["ctrl_count"] = len(self.ctrls.get(k, []))
@@ -1738,16 +2026,18 @@ def use_theme(page, theme):
 
 def what_is_there(page):
     """What the server has, so 'required' means what it holds: library kinds and item types."""
-    libs, types = [], []
+    libs, types, names = [], [], []
     try:
-        kinds = page.eval("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => r.Items.map(v => v.CollectionType || 'mixed'))") or []
+        views = page.eval("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => r.Items.map(v => [v.CollectionType || 'mixed', v.Name || '']))") or []
+        kinds = [v[0] for v in views]
+        names = [v[1] for v in views if v[1]]
         libs = [(t, LIBRARY[t]) for t in dict.fromkeys(kinds) if t in LIBRARY]
         for t in ITEM_TYPES[:7]:
             if page.eval(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{IncludeItemTypes: '{t}', Recursive: true, Limit: 1}}).then(r => (r.Items || []).length > 0).catch(() => false)"):
                 types.append(t)
     except Exception:  # noqa: BLE001
         pass
-    return {"libraries": libs, "types": types}
+    return {"libraries": libs, "types": types, "names": names}
 
 
 def main():
@@ -1882,8 +2172,16 @@ def main():
                                     app.unplug()
                                     continue
                             idir = os.path.join(tdir, label)
-                            page.eval("location.hash = '#/home'; true")
-                            time.sleep(4)
+                            # every input starts from the same page: the home, freshly loaded (a theme keeps where each
+                            # screen was, a category chosen or a level open, which the walk before left behind)
+                            page.eval("location.hash = '#/home'; location.reload(); true", await_promise=False)
+                            time.sleep(6)
+                            page.reconnect()
+                            try:
+                                page.wait_for("!!window.icefinTheme && !!window.icefinTheme._engine && !!window.ApiClient && !!window.ApiClient.getCurrentUserId()", timeout=60)
+                            except Exception:  # noqa: BLE001
+                                pass
+                            time.sleep(3)
                             try:
                                 page.send("Emulation.setFocusEmulationEnabled", enabled=True)
                             except Exception:  # noqa: BLE001
