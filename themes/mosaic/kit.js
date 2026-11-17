@@ -36,6 +36,7 @@
     D.client = () => T.ctx.apiClient();
     D.sid = () => { const c = D.client(); return c ? c.serverId() : ''; };
     D.uid = () => { const c = D.client(); return c ? c.getCurrentUserId() : ''; };
+    D.signedIn = () => { try { const c = D.client(); return !!(c && c.getCurrentUserId() && c.accessToken && c.accessToken()); } catch (e) { return false; } };
     D.details = (id) => T.ctx.navigate(`#/details?id=${id}&serverId=${D.sid()}`);
     D.params = () => new URLSearchParams((location.hash.split('?')[1] || ''));
     D.time = (d) => (d || new Date()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });

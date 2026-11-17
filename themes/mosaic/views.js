@@ -345,7 +345,9 @@
         const mark = el('div', 'ms-mark');
         rootEl.append(ttl, tabs, stage, mark);
         const clock = D.clock(rootEl);
-        D.pointerNav(rootEl, () => C.back(true), opts.nav);
+        // the pointer's Back is the pad's: a level back, else the screen's own way out (as Arcade's QA pre: at a screen's
+        // first level it did nothing)
+        D.pointerNav(rootEl, () => C.onAction('back'), opts.nav);
         stage.addEventListener('wheel', (ev) => { ev.preventDefault(); C.onAction(ev.deltaY > 0 ? 'down' : 'up'); }, { passive: false });
 
         const top = () => S.stack[S.stack.length - 1];
@@ -391,6 +393,7 @@
             if (e && (e.open || e.go || (e.item && !e.synthetic))) h.push(['OK', e.okLabel || (e.open ? 'open' : (e.item ? (e.item.Type === 'TvChannel' ? 'watch' : 'details') : 'select'))]);
             if (e && !e.synthetic && (e.play || (e.item && D.playable(e.item)))) h.push(['▶', 'play']);
             if (e && !e.synthetic && (e.menu || e.item)) h.push(['≡', 'options']);
+            else if (deck && cur().pane) h.push(['≡', 'options']);
             else if (content && content.sortable) h.push(['≡', 'sort and filter']);
             if (deck && deck.panels.length > 1) h.push(['◀ ▶', 'panels']);
             if (tabEls.length) h.push(['L1 R1', 'sections']);
@@ -558,11 +561,26 @@
                 return;
             }
             // the overview's actions as white tiles two across; every other section a strip of white cards
-            p.view = makeView(p.body, entries, { mode: 'grid', kind: p.front ? 'action' : 'card', letters: false, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); C.activate(e, b); },
+            p.view = makeView(p.body, entries, { mode: 'grid', kind: p.front ? 'action' : 'card', letters: false, activate: (e, b) => { deckGo(deck.panels.indexOf(p), true); keepAt(p); C.activate(e, b); },
                 onFocus: (e) => { hintsFor(e); if (opts.onFocus) opts.onFocus(e, C); } });
             const ff = p.front ? Math.max(0, entries.findIndex((e) => e.focusFirst)) : (p.focusAt || 0);
-            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : ff));
+            const kept = (cur().deckMemo || {})[deck.panels.indexOf(p)];
+            p.view.at = Math.max(0, Math.min(entries.length - 1, p.memo != null ? p.memo : kept != null ? kept : ff));
             p.view.draw();
+            // the panel on show loaded after the deck was drawn (Back to details left on Albums, Songs, Cast and crew): it
+            // takes the focus now, or nothing would have it (ported from Harbor's QA pre)
+            if (deck.panels[deck.at] === p && S.zone !== 'tabs') {
+                const f = T.ctx.focused && T.ctx.focused();
+                if (!f || !f.isConnected || !p.el.contains(f)) focusDeck(true);
+            }
+        }
+        // the entry a panel was left on, kept in its level so Back to these details finds it again (ported from Harbor's
+        // QA pre: kept on the panel only, it was lost when the deck was drawn anew)
+        function keepAt(p) {
+            if (!p || !p.view || !deck) return;
+            p.memo = p.view.at;
+            const lv = cur();
+            (lv.deckMemo || (lv.deckMemo = {}))[deck.panels.indexOf(p)] = p.view.at;
         }
         function place(how) {
             const n = deck.panels.length;
@@ -594,8 +612,7 @@
         function deckGo(i, quiet) {
             if (deck && deck.panels[i] && deck.panels[i].empty) { const d = i > deck.at ? 1 : -1; let k = i; while (deck.panels[k] && deck.panels[k].empty) k += d; i = k; }
             if (!deck || i < 0 || i >= deck.panels.length) return false;
-            const p0 = deck.panels[deck.at];
-            if (p0.view) p0.memo = p0.view.at;
+            keepAt(deck.panels[deck.at]);
             if (i === deck.at) return true;
             deck.at = i;
             place();
@@ -754,7 +771,7 @@
                     if (deck) {
                         const p = deck.panels[deck.at];
                         const r = p.view ? p.view.move(a) : a;
-                        if (r === true) { p.memo = p.view.at; return true; }
+                        if (r === true) { keepAt(p); return true; }
                         if (r === 'left' || r === 'right') { if (!deckGo(deck.at + (r === 'right' ? 1 : -1))) T.ctx.sound('error'); return true; }
                         if (r === 'up' && p.tabsEl) { T.ctx.sound('error'); return true; }
                         T.ctx.sound('error');
@@ -785,12 +802,14 @@
                     const lv = cur();
                     if (lv.onBack) return lv.onBack(C) !== false;
                     if (top().onBack) return top().onBack(C) !== false;
-                    if (opts.leave !== false) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
+                    if (typeof opts.leave === 'function' ? opts.leave() : opts.leave !== false) { T.ctx.sound('back'); if (history.length > 1) history.back(); else T.ctx.navigate('#/home'); return true; }
                     return false;
                 }
                 if (a === 'menu') {
                     const e = C.entry();
-                    if (deck && (!e || e.synthetic) && cur().pane && D.itemMenu) { D.itemMenu(cur().pane, {}); return true; }  // an empty panel: the item's own menu
+                    // an empty panel, or an action with no options of its own (Play all, Shuffle): the item's own menu (QA pre:
+                    // the pointer's Options did nothing there)
+                    if (deck && (!e || e.synthetic || (!e.menu && !e.item)) && cur().pane && D.itemMenu) { D.itemMenu(cur().pane, {}); return true; }
                     if (!e || e.synthetic) { if (content && content.sortable && D.sortPanel) { D.sortPanel(C); return true; } return false; }
                     if (e.menu) { e.menu(C); return true; }
                     if (e.item && D.itemMenu) { D.itemMenu(e.item, { column: C }); return true; }
