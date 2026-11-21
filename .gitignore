@@ -36,4 +36,5 @@ deployment/dist
 /pdf/
 # ICEFIN-HOOK: real machine values kept out of the repo (PII-REDACTION-STANDARD §6)
 CLAUDE.local.md
+# ICEFIN-HOOK: real lab values (PII-REDACTION-STANDARD §6)
 docs/LAB.local.md
