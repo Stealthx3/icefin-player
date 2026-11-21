@@ -34,3 +34,6 @@ deployment/dist
 .claude/phone-alerts.local.json
 # ICEFIN-HOOK: generated PDFs of the plan are published with releases, not committed
 /pdf/
+# ICEFIN-HOOK: real machine values kept out of the repo (PII-REDACTION-STANDARD §6)
+CLAUDE.local.md
+docs/LAB.local.md

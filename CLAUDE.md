@@ -11,23 +11,24 @@ Fork of jellyfin-desktop v2.0.0 (Qt 6 + Qt WebEngine + jellyfin-web + libmpv), r
 - Plan doc (claude.ai, may be newer than SPEC): https://claude.ai/artifact/H95okuizWUjCofUumXG1Mo
 
 ## Standards (in `docs/standards/`, they apply to this project)
-Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If the master copies change, ask the user before updating these.
+Copies of the user's ai-assets master folder (its path is in the git-ignored `CLAUDE.local.md`) taken 2026-11-07. If the master copies change, ask the user before updating these.
 - `VM-LAB-STANDARD.md`: all build/run/test happens in libvirt guests via `scripts/lab.sh`, watchable in virt-manager. Never build on the host.
 - `PROGRESS-BAR-STANDARD.md`: progress page generated from `docs/PLAN.md`.
 - `PHONE-ALERTS-STANDARD.md`: push alerts when the user is needed.
 - `POST-MORTEM-STANDARD.md`: append one line per session to `docs/postmortem/JOURNAL.md`.
+- `PII-REDACTION-STANDARD.md` (v1, copied 2026-11-21, D45): nothing in the repo, its commits, PRs, notifications or published pages may identify the user or their machines. Write placeholders from the start (its §5: `192.0.2.x`, `/home/user`, `/path/to/…`); real values live only in `~/.config/pii-redaction/identity.json`, `CLAUDE.local.md` and `docs/LAB.local.md` (all outside git). `node scripts/pii-scan.mjs scan` before every push, and `scan docs/progress/index.html` before every republish of the progress page; the git hooks block commits with PII (never `--no-verify` without the user's OK). Public allow-list: `.pii-redaction.json`. `fix --apply` ignores that allow-list, so give it explicit paths, never the whole tree.
 - `STEAM-SHORTCUT-STANDARD.md` (v1, copied 2026-11-21, D43): the app adds itself to Steam with the brand kit's art. Art, config and the vendored helper are in `packaging/steam/` (copy the art from the kit, never edit it; the helper stays unchanged); the app side is `src/icefin/steam/` and `native/icefin/steamShortcut.js`; test `tests/icefin/steam/test_steam_shortcut.py`.
 
 ## Working setup
 - Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).
 - Agents: `.claude/agents/` (scout, runner, implementer, reviewer). The usage plan is dropped (D20).
 - Theme passes (D29, D31): `docs/themes/PIPELINE.md`, driven by `scripts/icefin/theme-pass.sh` (one theme at a time; walks and theme tests on the workstation's installed Icefin, updated first).
-- Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, republish to the same URL after each task).
+- Progress page: https://claude.ai/artifact/7SXtcWsFr8pe21DfQ4T7TU (`node scripts/progress.mjs`, then `node scripts/pii-scan.mjs scan docs/progress/index.html`, then republish to the same URL after each task).
 - Hardware (D28): no automated HTPC testing (the HTPC tier of D16 is retired; `scripts/icefin/htpc.sh` stays as history). Simulated hardware: `docs/dev/HARDWARE-SIMULATION.md`; real hardware: beta testers with `docs/BETA-CHECKLIST.md`.
 - Phone alerts: see PHONE-ALERTS-STANDARD; hooks installed, check with node scripts/phone-alerts.mjs check.
 - Decisions for the user (the user, 2026-11-16): push to the phone and post on the IceFin Decisions page, then keep working on what doesn't depend on the answer (`docs/dev/HUMAN-DECISIONS.md`).
 - QA/QC (D40): the theme pipeline, 3 passes per theme then 3 rounds over all, on the host, every element with mouse/keyboard and controller (`docs/themes/PIPELINE.md`, PLAN 11.6-11.9).
-- Branding assets: the art kit `/mnt/FileDrive/Personal/Projects/IceSuite/IceFin-Player/brand` (D35, masters; don't edit in place). App icon is the Progress ring mark; repo copies are listed in `docs/brand/README.md`. Re-sync metadata to the kit with `python3 -I scripts/icefin/export-brand-metadata.py <kit>/brand` after metainfo, README or theme changes.
+- Branding assets: the art kit `IceSuite/IceFin-Player/brand` in the user's IceSuite folder (full path in `CLAUDE.local.md`; D35, masters; don't edit in place). App icon is the Progress ring mark; repo copies are listed in `docs/brand/README.md`. Re-sync metadata to the kit with `python3 -I scripts/icefin/export-brand-metadata.py <kit>/brand` after metainfo, README or theme changes.
 - Git workflow (D17, D29, `docs/BRANCHING.md`): trunk-based, plus a long-lived `theme/<id>` branch per bundled theme for its completeness pass (merge commits into `main`; engine work stays on `feat/` branches). Branch `feat/<task>-<topic>` (or `fix/`, `docs/`, `ci/`, `chore/`) from `main`, push, open a PR, squash-merge when `icefin-hooks` and `icefin-flatpak` pass. Upstream merges use `sync/upstream-<ver>` and a merge commit. Never force-push `main`; never commit to `upstream/master`.
 - Repo: `origin` = github.com/Stealthx3/icefin-player (public), `upstream` = jellyfin/jellyfin-desktop (push disabled). App ID `io.github.stealthx3.IcefinPlayer` (D13).
 

@@ -9,15 +9,15 @@ class TestDiag : public QObject
 private slots:
   void sanitizes()
   {
-    const QString in = "URL: http://192.168.2.40:8096/Videos/abc/stream.mkv?api_key=0123456789abcdef0123456789abcdef\n"
+    const QString in = "URL: http://192.0.2.40:8096/Videos/abc/stream.mkv?api_key=0123456789abcdef0123456789abcdef\n"
                        "ws https://jf.example.org/socket?api_key=short123\n"
                        "Authorization: MediaBrowser Token=\"deadbeefdeadbeef\"\n"
                        "{\"Pw\":\"hunter2\"}\n"
-                       "log at /home/alice/.var/app/x/log and file:///home/alice/a.mkv on alicebox (alicebox.local)\n"
+                       "log at /home/user/.var/app/x/log and file:///home/user/a.mkv on alicebox (alicebox.local)\n"
                        "localhost stays, qrc:/x stays";
-    const QString out = Icefin::Diag::sanitize(in, "/home/alice/", "alicebox");
-    for (const char* secret : {"192.168.2.40", "8096", "jf.example.org", "0123456789abcdef0123456789abcdef", "short123", "deadbeefdeadbeef",
-                               "hunter2", "/home/alice", "alicebox"})
+    const QString out = Icefin::Diag::sanitize(in, "/home/user/", "alicebox");
+    for (const char* secret : {"192.0.2.40", "8096", "jf.example.org", "0123456789abcdef0123456789abcdef", "short123", "deadbeefdeadbeef",
+                               "hunter2", "/home/user", "alicebox"})
       QVERIFY2(!out.contains(QLatin1String(secret)), qPrintable(QString(secret) + " in:\n" + out));
     QVERIFY2(out.contains("http://[server]/Videos/abc/stream.mkv"), qPrintable(out));
     QVERIFY2(out.contains("https://[server]/socket"), qPrintable(out));
@@ -75,11 +75,11 @@ private slots:
       {"versions", QVariantMap{{"mpv", "mpv v0.42.0"}, {"libass", 24129536}, {"qt", "6.11.0"}}}};
     in.web = {{"accelerated", true}, {"features", QVariantMap{{"Rasterization", "Hardware accelerated"}, {"Compositing", "Hardware accelerated"}}}};
     in.audio = {{"backend", "pipewire"}, {"device", "hdmi"}, {"deviceType", "hdmi"}, {"passthrough", QStringList{"ac3", "eac3"}}, {"bitstream", true}};
-    in.settings = {{"main", QVariantMap{{"userWebClient", "http://10.0.0.5:8096/web"}}}};
+    in.settings = {{"main", QVariantMap{{"userWebClient", "http://198.51.100.5:8096/web"}}}};
     in.screens = {QVariantMap{{"name", "HDMI-A-1"}, {"size", "3840x2160"}, {"refresh", "60.00"}, {"dpr", 1.0}, {"primary", true}, {"window", true}}};
-    in.nowPlaying = "URL: http://10.0.0.5:8096/Videos/1/stream?api_key=abcdef";
+    in.nowPlaying = "URL: http://198.51.100.5:8096/Videos/1/stream?api_key=abcdef";
     in.recentLog = {"10:00:00.000 [info] Icefin router: HDR10 -> hdr10"};
-    in.home = "/home/bob";
+    in.home = "/home/user";
     in.hostName = "bobpc";
     const QString r = Icefin::Diag::build(in);
     for (const char* want : {"# IceFin Player diagnostics report", "## Summary", "Vulkan (compositor, HDR10 output)", "HDR (pq, bt2020, peak 1000 nits",
@@ -88,7 +88,7 @@ private slots:
                              "## Now playing", "## Recent log", "Icefin router: HDR10 -> hdr10", "## Capability model", "## Settings",
                              "http://[server]/web", "http://[server]/Videos/1/stream"})
       QVERIFY2(r.contains(QLatin1String(want)), qPrintable(QString("missing: ") + want + "\n" + r));
-    QVERIFY(!r.contains("10.0.0.5"));
+    QVERIFY(!r.contains("198.51.100.5"));
     QVERIFY(!r.contains("abcdef\n"));
   }
   void emptyInputsStillBuild()

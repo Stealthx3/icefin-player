@@ -162,7 +162,7 @@ Leave the user's uncommitted `docs/github/README.md` and their `scripts/bootstra
   - deleted `icefin/{base,infra,brand,flatpak,audio,gpu,render,hdr,input,theme}`, `test-push-probe` and `chore/repo-restructure`;
   - protection on `main`: required checks `hooks` and `flatpak` (names confirmed from PR #1's runs), 0 approvals, `enforce_admins` false, no force pushes or deletions;
   - repo settings, description, eight topics, private vulnerability reporting on.
-- Local reset done in the only clone (`/mnt/FileDrive/Personal/Projects/Git/icefin-player`; the lab guests get rsync copies without `.git`). Upstream tags now fetch as `upstream/v*`.
+- Local reset done in the only clone (the user's main checkout; the lab guests get rsync copies without `.git`). Upstream tags now fetch as `upstream/v*`.
   - The user's edited `scripts/bootstrap-fork.sh` blocked the switch, since `main` deletes that file. The edits were stashed (`stash@{0}`) and the identical file put back as untracked. `docs/github/README.md` was untouched. Both are superseded.
 - Verified:
   - `hook-count.sh` OK on `main`; `icefin-hooks` green on `main`;

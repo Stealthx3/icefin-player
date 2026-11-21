@@ -49,7 +49,7 @@ action sheet's slide) is the measure; Baseline must match it, not improve on it.
 3. **Branding:** "Within the theme, use server-side branding where possible. The app itself and client-specific
    pages should use the Icefin-Player art assets." The theme shows the server's own branding (its logo and splash
    where the server sets them); Icefin's pages (Client Settings, Icefin's own screens) and the app use Icefin-Player's
-   art (`/mnt/FileDrive/Personal/Projects/IceSuite/IceFin`, D15). Jellyfin's own marks are not used.
+   art (`IceSuite/IceFin`, D15). Jellyfin's own marks are not used.
 4. **Focus: A**, stock's TV focus (the card grows and gets a light frame).
 5. **Controller additions: all four**: ≡ opens the item menu, ▶ plays the focused item, L1 R1 change tabs, and
    "Exit Icefin?" on Back at the home; with focus on arrival, the hint line and the sounds.

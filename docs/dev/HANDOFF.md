@@ -37,7 +37,7 @@
 - **HLG acceptance row (spike 2.3):** KWin 6.3 and Mutter 48 don't accept the HLG transfer function on surfaces, so Icefin outputs HLG sources as PQ (HDR10). Change the acceptance row to "HLG sources play as HDR", or keep "TV reports HLG" as a target for compositors that add HLG later?
 
 ## HTPC tier (D16): connected 2026-11-08
-- HTPC `192.168.2.131`, user `htpc`, Bazzite 45 `bazzite-deck` (game mode by default; Plasma via desktop mode), kernel 7.2.
+- HTPC (address in the git-ignored `docs/LAB.local.md`), user `htpc`, Bazzite 45 `bazzite-deck` (game mode by default; Plasma via desktop mode), kernel 7.2.
 - AMD RX 9070 XT (Navi 48) on `card1-HDMI-A-2` → Hisense 55005N TV. The Denon AVR-S660H is on the TV's eARC/ARC
   (user, 2026-11-08), so the HTPC sees the TV's ELD (HISENSE): AC-3, E-AC-3, DTS, DTS-HD and LPCM, but no TrueHD.
   Passthrough rows are limited to what the TV forwards. TrueHD can't be bitstreamed on this setup, so the
