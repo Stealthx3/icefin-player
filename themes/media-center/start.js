@@ -156,6 +156,11 @@
                 // are closed, so a mouse had no way into them)
                 const head = el('div', 'mc-cat-title', c.title);
                 head.addEventListener('click', () => openRow(cat));
+                // a button for the pointer while the row is closed (the current row's title opens nothing); the remote
+                // changes rows by up and down, so the title is the pointer's way in only (QA 2: no walker click opened a row)
+                head.setAttribute('data-icefin-pointer-only', '');
+                head.setAttribute('aria-label', `Open ${c.title}`);
+                head.setAttribute('role', 'button');
                 cat.append(head);
                 const row = el('div', 'mc-row');
                 cat.setAttribute('data-mc-group', c.title);  // Back finds the tile in its own row (kit.js M.backFocus)
@@ -201,6 +206,8 @@
                     cur = r;
                     rows.forEach((x, k) => {
                         x.cat.classList.toggle('current', k === r);
+                        const h = x.cat.firstElementChild;
+                        if (k === r) h.removeAttribute('role'); else h.setAttribute('role', 'button');
                         x.cat.style.setProperty('--mc-dim', String(Math.max(0.22, 0.56 - 0.08 * Math.abs(k - r))));
                     });
                     strip.style.transform = `translateY(${Math.round(51 * vh() - r * 9 * vh())}px)`;

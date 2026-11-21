@@ -52,4 +52,9 @@ Engine (#218):
 
 ## Verified
 
-Pass 2 (with every fix above, walked together with Plaza's re-walk 2): to follow.
+Pass 2 (lab `~/walks/qa-plaza3v2-mc2`, walked together with Plaza's re-walk 2; build main with #218, theme/media-center
+f219a74d): Media Center 93 + 18 findings (from 174 + 26), none in the control. Every keys and pad run reached the
+libraries, a movie's and a series' details and the settings list past Theme (Playback, Subtitles, Start screen); the
+theme stayed Media Center to the end of every run. Gone: the Watch together script error, Video tests' lost focus, Back
+from the player to Live TV, the channel grid's overflow (no broken-back, obscured or script-error finding). The rest of
+pass 2 is in `media-center-2.md`.

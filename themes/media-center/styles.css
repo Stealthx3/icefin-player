@@ -495,6 +495,7 @@ html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-
 /* spinners: ‹ value › */
 .mc-spin { background: none; border: 0; padding: 0 0.8vh; margin: 0; font: inherit; font-size: 3.2vh; line-height: 1; color: inherit; opacity: 0.8; cursor: pointer; flex: none; }
 .mc-spin:hover, .mc-spin:focus { opacity: 1; outline: none; color: var(--icefin-color-focus); text-shadow: 0 0 1.5vh var(--icefin-color-focusGlow); }
+.mc-spin.mc-spin-off { opacity: 0.25; cursor: default; color: inherit; text-shadow: none; }
 
 /* This device: the engine's Client Settings page (ui.settings.screen) in the chrome; sections at the left, rows at
    the right, the help under a row while it has focus */
