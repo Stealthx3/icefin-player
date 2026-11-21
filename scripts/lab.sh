@@ -17,7 +17,7 @@ ENVF="${LAB_ENV:-lab.env}"; [[ "$ENVF" == /* ]] || ENVF="$ROOT/$ENVF"   # LAB_EN
 source "$ENVF"
 
 : "${LAB_PROJECT:?}" "${LAB_URI:=qemu:///system}" "${LAB_KIND:=vm}" "${LAB_NET:=default}"
-: "${LAB_POOL:=default}" "${LAB_BASE_VOL:=}" "${LAB_OS_VARIANT:=debian12}" "${LAB_VCPUS:=2}"
+: "${LAB_POOL:=VMDisks}" "${LAB_BASE_VOL:=}" "${LAB_OS_VARIANT:=debian12}" "${LAB_VCPUS:=2}"
 : "${LAB_RAM_MB:=4096}" "${LAB_DISK_GB:=20}" "${LAB_USER:=lab}" "${LAB_SSH_KEY:=$HOME/.ssh/id_ed25519.pub}"
 : "${LAB_DEST:=/home/$LAB_USER/src}" "${LAB_HOST_RESERVE_MB:=4096}" "${LAB_LXC_ROOTFS:=}"
 : "${LAB_GRAPHICS:=spice,listen=none}" "${LAB_AUTO_VIEW:=1}"
@@ -151,6 +151,7 @@ cmd_doctor() {
   else no "cannot connect $LAB_URI without sudo (libvirt group? libvirtd running?)"; fi
   virsh -q -c "$LAB_URI" net-info "$LAB_NET" 2>/dev/null | grep 'Active:.*yes' >/dev/null && ok "network $LAB_NET active" || no "network $LAB_NET not active"
   virsh -q -c "$LAB_URI" pool-info "$LAB_POOL" 2>/dev/null | grep 'State:.*running' >/dev/null && ok "pool $LAB_POOL running" || no "pool $LAB_POOL not running"
+  [ "$LAB_POOL" = default ] && no "LAB_POOL=default: lab disks belong in the VMDisks pool (§4)"
   if [ "$LAB_KIND" = vm ]; then
     [ -n "$LAB_BASE_VOL" ] && virsh -q -c "$LAB_URI" vol-info --pool "$LAB_POOL" "$LAB_BASE_VOL" >/dev/null 2>&1 \
       && ok "base volume $LAB_BASE_VOL" || no "base volume '$LAB_BASE_VOL' not in pool $LAB_POOL (VM-LAB-STANDARD §4)"
