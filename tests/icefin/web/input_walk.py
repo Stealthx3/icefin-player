@@ -184,7 +184,8 @@ IW_JS = r"""
     isCur(key) { const e = window.inputWalk.live(key); return !!e && L.cur() === e; },
     offscreen(key) {
       // true only when the element exists, is rendered, and even scrolled into view stays entirely outside the viewport
-      const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e)) return false;
+      // hidden (a closed row's tiles, drawn at opacity 0) is not outside the viewport: the row opens before they are used (QA 3)
+      const e = window.inputWalk.live(key); if (!e || !e.isConnected || !vis(e)) return false;
       try { e.scrollIntoView({ block: 'center', inline: 'center' }); } catch (_) { /* ignore */ }
       const r = e.getBoundingClientRect();
       return r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight;
@@ -424,6 +425,12 @@ class MouseDriver(Driver):
         time.sleep(0.06)
         self._mouse("mouseReleased", button="left", buttons=0, clickCount=1)
         time.sleep(0.25)
+
+    def wheel(self, dy):
+        """One notch of the wheel at the centre of the window (where a strip or a list sits), down for dy > 0."""
+        self.x, self.y = int(self.js("innerWidth") / 2), int(self.js("innerHeight") / 2)
+        self._mouse("mouseMoved")
+        self.page.send("Input.dispatchMouseEvent", type="mouseWheel", x=self.x, y=self.y, deltaX=0, deltaY=dy)
 
     def move(self, d):
         raise ValueError("the mouse has no D-pad")
@@ -971,6 +978,28 @@ class Walker:
                     return False
             if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
                 return True
+        same = lambda kk: kk.split(" > ")[0] == k.split(" > ")[0]   # another level of the same route, opened in place
+        r = self.drv.last
+        h = self.js("innerHeight") or 0
+        if r and r.get("ok") and not r.get("cin") and (r["y"] >= h - 1 or r["y"] <= 1):
+            # above or below the screen: the wheel, as a mouse user turns it, for a strip that moves a notch at a time
+            # (QA 3, Media Center's start strip: the rows below the screen came in only by clicking the row before,
+            # which opened it); it stops when a notch moves nothing
+            down = r["y"] >= h - 1
+            for _ in range(8):
+                before = self.js(f"(() => {{ const e = window.inputWalk.live({json.dumps(key)}); return e ? Math.round(e.getBoundingClientRect().top) : null; }})()")
+                self.tr("wheel", "down" if down else "up", "toward", key[-40:])
+                self.drv.wheel(120 if down else -120)
+                time.sleep(0.45)
+                kk = self.screen_key(self.screen())
+                if kk != k and not same(kk):
+                    self.go_here(k)
+                    return False
+                if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
+                    return True
+                after = self.js(f"(() => {{ const e = window.inputWalk.live({json.dumps(key)}); return e ? Math.round(e.getBoundingClientRect().top) : null; }})()")
+                if not (self.drv.last or {}).get("ok") or after == before:
+                    break
         for _ in range(6):
             r = self.drv.last
             if not r or not r.get("ok") or r.get("cin"):
@@ -980,7 +1009,8 @@ class Walker:
                 break
             self.tr("bringing in", key[-40:], "by", n["key"][-40:])
             self.drv.activate()
-            if self.screen_key(self.settle(prev=k, t=3.0)) != k:
+            kk = self.screen_key(self.settle(prev=k, t=3.0))
+            if kk != k and not same(kk):
                 self.go_here(k)
                 return False
             if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
@@ -1240,7 +1270,9 @@ class Walker:
             f = self.focus_now()
             if not obscured:
                 self.hovered[1] += 1
-                hovered = bool(f and f["key"] == c["key"])
+                # the same control found again by path, then label: a wall re-sorted (year, date added) moves a tile to
+                # another path, so the key alone said hover missed (QA 3, Media Center's wall)
+                hovered = bool(f and (f["key"] == c["key"] or self.js(f"window.inputWalk.isCur({json.dumps(c['key'])})")))
                 self.hovered[0] += hovered
                 el["hover_focus"] = hovered
                 if hovered:
@@ -1587,12 +1619,31 @@ class Walker:
             # the controls the mouse can use and this input never reached
             here["ctrl_count"] = len(self.ctrls.get(k, []))
 
+    # an item type reached only through another's details (a season through its series, a song through its album)
+    PARENTS = {"Season": ("Series",), "Episode": ("Season", "Series"), "Audio": ("MusicAlbum",), "MusicArtist": ("MusicAlbum", "Audio")}
+
     def priority_pop(self):
-        got = {n for n, rx in PRIORITY_ROUTES if any(re.search(rx, base(s).split(" ")[0]) for s in self.screens)}
-        for i, k in enumerate(self.queue):
-            if any(n not in got and re.search(rx, base(k).split(" ")[0]) for n, rx in PRIORITY_ROUTES):
-                return self.queue.pop(i)
-        return self.queue.pop(0)
+        """The next screen to explore: first one that leads to an item type not seen yet (its parent's details), then a
+        required route not explored yet, then in order. Counted by screens explored, not found: a series found early and
+        explored last left its seasons, episodes and songs to a budget already spent (QA 3, Media Center: 40 min)."""
+        done = getattr(self, "popped", set())
+        got = {n for n, rx in PRIORITY_ROUTES if any(re.search(rx, base(s).split(" ")[0]) for s in done)}
+        seen_t = {t for t in ITEM_TYPES if any(f"[{t}]" in s for s in self.screens)}
+        want = set()
+        for t, parents in self.PARENTS.items():
+            if t in self.present.get("types", []) and t not in seen_t:
+                want |= set(parents)
+        def rank(k):
+            b = base(k)
+            if any(f"[{t}]" in b for t in want) and b not in done:
+                return 0
+            if any(n not in got and re.search(rx, b.split(" ")[0]) for n, rx in PRIORITY_ROUTES):
+                return 1
+            return 2
+        i = min(range(len(self.queue)), key=lambda j: (rank(self.queue[j]), j))
+        k = self.queue.pop(i)
+        self.popped = done | {base(k)}
+        return k
 
     def run(self):
         s0 = self.settle()
@@ -1630,7 +1681,7 @@ class Walker:
             if self.hovered[1] >= 6 and self.hovered[0] / self.hovered[1] >= 0.5:
                 for k, sc in self.screens.items():
                     for key, e in sc["elements"].items():
-                        if e.get("hover_focus") is False:
+                        if e.get("hover_focus") is False and not e.get("pointer"):     # the pointer's own control: no focus stop
                             self.finding("hover-no-focus", k, e["label"] or key, "hover moves focus on most controls of this theme, not on this one", shot=False, plugin=e.get("plugin", False))
         routes = [base(k).split(" ")[0] for k in self.screens]
         missing = [n for n, rx in cw.REQUIRED if not any(re.search(rx, r) for r in routes)]
