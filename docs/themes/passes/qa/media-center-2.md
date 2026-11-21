@@ -44,4 +44,9 @@ Engine (#220):
 
 ## Verified
 
-Pass 3 (with every fix above, Media Center alone and a longer budget): to follow.
+Pass 3 (lab `~/walks/qa-mc3`, Media Center alone, 40 minutes a run; build main with #220, theme/media-center
+84318e20): Media Center 150 + 20 findings (141 + 19 not in the control), more than pass 2 because the longer runs
+reached more screens (Live TV, books, playlists, an artist, the classic home's pages). Gone: the Movies wall's Back
+(no back-focus on the wall), the value arrows (no dead-control or unreachable ‹ and ›), the Audio test's lost focus,
+the segment drop-downs. Every keys and pad run reached Live TV and a series. The rest of pass 3 is in
+`media-center-3.md`.
