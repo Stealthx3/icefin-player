@@ -62,10 +62,12 @@
     async function attach(api, dialog) {
         const section = themeSection(dialog);
         if (!section || section.querySelector('#' + ID)) return;
-        // The plain drop-down from the settings description stays as the fallback; the manager hides it.
+        // The plain drop-down from the settings description stays as the fallback; the manager hides it, with an inline
+        // !important: a theme that lays out every row (Media Center: label.inputContainer { display: flex !important })
+        // showed it again, and that drop-down saves at once, so a step on it switched the theme with no Apply (QA 1).
         section.querySelectorAll('label.inputContainer').forEach((l) => {
             const t = l.querySelector('.inputLabel');
-            if (t && /^Theme:/.test(t.textContent.trim()) && l.querySelector('select')) l.style.display = 'none';
+            if (t && /^Theme:/.test(t.textContent.trim()) && l.querySelector('select')) l.style.setProperty('display', 'none', 'important');
         });
         const box = el('div', { id: ID });
         box.style.marginBottom = '1.8em';
@@ -94,7 +96,7 @@
         // In-page drop-downs (clientSettings.js), now rather than on its next pass, so they're ready when shown.
         setTimeout(() => { if (window.icefinDropdown) box.querySelectorAll('select').forEach(window.icefinDropdown); }, 0);
         // Device wallpaper (9.26, wallpaper.js): behind any theme, one per device.
-        const wpName = el('span', { className: 'icefin-tm-wallpaper-name', textContent: 'None', style: 'margin-right:0.8em' });
+        const wpName = el('span', { className: 'icefin-tm-wallpaper-name', textContent: 'None', style: 'margin:0 0.8em 0 0.4em' });
         const wpChoose = button('Choose…', 'icefin-tm-wallpaper-choose');
         const wpRemove = button('Remove', 'icefin-tm-wallpaper-remove');
         wpRemove.style.display = 'none';

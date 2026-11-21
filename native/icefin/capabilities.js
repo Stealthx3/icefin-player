@@ -1108,7 +1108,68 @@
         const t = [...document.querySelectorAll('.skinHeader .pageTitle, .pageTitle')].find((x) => (x.textContent || '').trim());
         return t ? t.textContent.trim() : '';
     };
+    // Back to a framed page lands on the control that opened the next screen (QA 2, Plaza's walk: on the classic home
+    // every Back from an item focused the first row's scroll button). jellyfin-web redraws the page's rows as it comes
+    // back, so the element it kept is gone and nothing had focus: each history entry (the Navigation API's key, with the
+    // hash) remembers the last control focused on it by what identifies it, its card's item, its row, its kind and
+    // label, and the page finds that one again unless the user has moved first. A new visit to the same route is a new
+    // entry and starts on the page's first control.
+    const stockEntry = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key + ' ' : '') + location.hash;
+    const stockMemo = new Map();
+    let stockWant = null, stockArrived = 0, stockInput = 0;
+    // A page coming back focuses a control of its own before the engine looks (jellyfin-web's TV layout autofocuses the
+    // first card): recorded, that would replace what opened the next screen (QA 3, Plaza: Back from Books, Movies or a
+    // book on the classic home landed on its first tile, Live TV). For a moment after a navigation only a focus that
+    // follows the user's own move (arrows, Tab, the pointer, a pad's direction) is remembered.
+    let stockNavAt = 0, stockMoved = 0;
+    for (const t of ['hashchange', 'popstate']) window.addEventListener(t, () => { stockNavAt = Date.now(); }, true);
+    window.addEventListener('keydown', (e) => { if (/^(Arrow|Tab$)/.test(e.key)) stockMoved = Date.now(); }, true);
+    for (const t of ['mousedown', 'wheel']) window.addEventListener(t, () => { stockMoved = Date.now(); }, true);
+    const stockLabel = (el) => (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    const stockRow = (el) => { const s = el.closest('.verticalSection'), p = el.closest('.page'); return s && p ? [...p.querySelectorAll('.verticalSection')].indexOf(s) : -1; };
+    const stockId = (el) => { const c = el.closest('[data-id]'); return c ? c.getAttribute('data-id') : ''; };
+    const stockKind = (el) => el.tagName + '.' + (el.classList[0] || '');
+    document.addEventListener('focusin', (e) => {
+        const t = e.target;
+        if (!document.documentElement.hasAttribute('data-icefin-stock') || !t || !t.matches || !t.matches(STOCK_CTL)) return;
+        if (t.closest('.dialogContainer, #icefin-theme-overlay, #icefin-osk') || !(t.closest('.page') || (stockEl && stockEl.contains(t)))) return;
+        const frame = !!(stockEl && stockEl.contains(t));
+        // the frame's own Back and Home are how the page is left, not what the user comes back for
+        if (frame && /^(back|home)$/i.test(stockLabel(t))) return;
+        if (Date.now() - stockNavAt < 2500 && stockMoved <= stockNavAt) return;
+        const h = stockEntry();
+        stockMemo.delete(h);
+        stockMemo.set(h, { frame, id: stockId(t), row: stockRow(t), kind: stockKind(t), action: t.getAttribute('data-action') || '', label: stockLabel(t) });
+        if (stockMemo.size > 200) stockMemo.delete(stockMemo.keys().next().value);
+    }, true);
+    for (const t of ['keydown', 'mousedown', 'wheel']) window.addEventListener(t, () => { stockInput = Date.now(); }, true);
+    function stockFind(d) {
+        const all = stockControls().filter((el) => !!(stockEl && stockEl.contains(el)) === d.frame && stockKind(el) === d.kind);
+        const row = (el) => d.row < 0 || stockRow(el) === d.row;
+        const tests = d.id
+            ? [(el) => stockId(el) === d.id && row(el) && stockLabel(el) === d.label, (el) => stockId(el) === d.id && row(el), (el) => stockId(el) === d.id]
+            : [(el) => (!d.action || el.getAttribute('data-action') === d.action) && stockLabel(el) === d.label && row(el), (el) => !!d.label && stockLabel(el) === d.label];
+        for (const t of tests) { const hit = all.find(t); if (hit) return hit; }
+        return null;
+    }
+    // Focus the control kept for this entry, unless the user has moved since the page came back. True when it did.
+    function stockReturn() {
+        const w = stockWant;
+        if (!w || w.entry !== stockEntry() || stockInput > stockArrived) { stockWant = null; return false; }
+        if (osk || (overlayEl && !overlayClosing) || stockDialog()) return false;
+        const el = stockFind(w.d);
+        if (!el) return false;
+        stockWant = null;
+        if (el !== document.activeElement) {
+            stockFocus(el);
+            if (!(stockEl && stockEl.contains(el))) stockBox(el).scrollIntoView({ block: 'center', inline: 'nearest' });
+        }
+        return true;
+    }
     function stockRoute(info) {
+        const here = stockEntry();
+        stockWant = stockMemo.has(here) ? { entry: here, d: stockMemo.get(here) } : null;
+        stockArrived = Date.now();
         const dash = !!(info.theme && stockDashboard());
         const on = !!(info.theme && !info.screen && !dash && !/^#\/video\b/.test(location.hash));
         attr('data-icefin-dashboard', dash);
@@ -1135,12 +1196,15 @@
         send();
         // jellyfin-web shows the page and sets its title a moment after the route changes; once it has, the page's first
         // control has the focus (9.60, checklist 2.1: a controller starts on the page, not nowhere)
-        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 1200) stockArrive(); } }, ms));
+        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 400) stockReturn(); if (ms === 1200) stockArrive(); } }, ms));
+        // a page coming back draws its rows late (the classic home's sections): look for the control again a while
+        if (stockWant) stockTimers.push(...[2200, 3500].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) stockReturn(); }, ms)));
     }
     // Not a text field (that would open the on-screen keyboard unasked), and never over a dialog, the overlay or
     // something the user (or the page) has focused already.
     function stockArrive() {
         if (!document.documentElement.hasAttribute('data-icefin-stock') || osk || (overlayEl && !overlayClosing) || stockDialog()) return;
+        if (stockReturn()) return;
         const all = stockControls();
         const act = document.activeElement;
         if (act && act !== document.body && all.includes(act)) return;
@@ -1183,6 +1247,12 @@
             if (!area) continue;
             for (const el of area.querySelectorAll(STOCK_CTL)) {
                 if (el.disabled || el.closest('[hidden], .hide, [aria-hidden="true"]') || !stockShown(el)) continue;
+                // a .cardBox counts only for a card that does something (QA 3, Plaza: a book's cover on its details page is
+                // a card with no action or item, and the remote stopped on it, unmarked, with nothing to press)
+                if (el.matches('.cardBox') && !stockFocusable(el)) {
+                    const card = el.closest('.card');
+                    if (!card || !card.matches('[data-action], [data-id], .itemAction')) continue;
+                }
                 out.push(el);
             }
         }
@@ -1200,6 +1270,7 @@
         if ((a === 'left' || a === 'right') && act && (act.tagName === 'SELECT' || isText(act) || act.matches('[role="combobox"], input[type=range]'))) return false;
         const all = stockControls();
         if (!all.length) return false;
+        stockInput = stockMoved = Date.now();  // the user moved: a page coming back no longer refocuses what opened the next screen
         const cur = act && all.includes(act) ? act : null;
         let next = null;
         if (!cur) {

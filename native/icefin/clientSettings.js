@@ -4,7 +4,7 @@
 //   Main, Theme, Controllers, Subtitles,
 //   [Video tests | Video]   (Video tests is Icefin's Hardware section; Web GPU Buffers, Renderer and HDR Output lead Video)
 //   [Audio test  | Audio]
-//   Other, Saved Server, and the Close button.
+//   Other, Saved Server, anything else, Steam (Add to Steam, D43: last, the user's choice), and the Close button.
 // Nintendo Button Layout moves to Controllers. Two columns where the dialog is wide enough, one otherwise.
 // Every select gets an in-page drop-down: a box and a chevron, and a list opened by a mouse press, Enter, Space or the
 // remote's OK; arrows move, Enter or a click picks, Escape or Back closes it. The list lives inside the dialog, so the
@@ -192,6 +192,7 @@
             if (f.id === 'icefin-hardware-section') fs.videotests = f;
             else if (f.id === 'icefin-controllers-section') fs.controllers = f;
             else if (f.id === 'icefin-audiotest-section') fs.audiotest = f;
+            else if (f.id === 'icefin-steam-section') fs.steam = f;
             else if (f.parentElement === content || f.parentElement.classList.contains('icefin-cs-row')) fs[legend(f)] = fs[legend(f)] || f;
         }
         // Hardware is "Video tests" here.
@@ -237,6 +238,10 @@
             prev = node;
         }
         if (close && content.lastChild !== close) content.append(close);
+        // Steam (Add to Steam) ends the screen, after anything a plugin adds, just above the Close button.
+        if (fs.steam && (close ? close.previousSibling !== fs.steam : content.lastChild !== fs.steam)) {
+            if (close) close.before(fs.steam); else content.append(fs.steam);
+        }
         content.querySelectorAll('select').forEach(dropdown);
     }
 

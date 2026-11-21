@@ -14,6 +14,11 @@
     };
 
     function render(section, r) {
+        // A redraw (the test's progress, the web layer's status) replaces the controls: the one focused gets the focus
+        // back, or the remote was left on nothing (QA 1, Media Center: pressing Video tests lost the focus)
+        const old = section.querySelector('.icefin-hw-body');
+        const was = old && (old.querySelector('.icefin-focused') || (old.contains(document.activeElement) ? document.activeElement : null));
+        const had = was ? [...was.classList].find((c) => /^icefin-hw-/.test(c)) : null;
         section.querySelectorAll('.icefin-hw-body').forEach((n) => n.remove());
         const body = el('div', { className: 'icefin-hw-body' });
         if (r.running) {
@@ -43,7 +48,9 @@
         body.append(el('p', { className: 'fieldDescription icefin-hw-web', textContent: !web.features ? 'Web layer: checking…'
             : `Web layer: ${web.accelerated ? 'GPU-accelerated' : 'not GPU-accelerated'} (rasterization: ${f.Rasterization || '?'}; compositing: ${f.Compositing || '?'})`
               + (web.gbm === false ? ' · GBM off' : '') }));
-        const btn = el('button', { className: 'raised emby-button icefin-hw-run', type: 'button', textContent: 'Test again', disabled: !!r.running });
+        // busy, not disabled, while a test runs: a disabled button can't hold the focus
+        const btn = el('button', { className: 'raised emby-button icefin-hw-run', type: 'button', textContent: 'Test again' });
+        if (r.running) { btn.setAttribute('aria-disabled', 'true'); btn.style.opacity = '0.5'; }
         // Display (6.1): what the router knows about the screen the window is on.
         window.apiPromise.then((api) => api.router && api.router.display((d) => {
             const lum = d.maxLuminance >= 0 ? `, peak ${d.maxLuminance} nits, reference white ${d.referenceLuminance}` : '';
@@ -78,7 +85,7 @@
             }
             body.insertBefore(row, btn);
         }));
-        btn.addEventListener('click', () => window.apiPromise.then((api) => { api.hardware.run(); render(section, Object.assign({}, r, { running: true })); }));
+        btn.addEventListener('click', () => { if (r.running) return; window.apiPromise.then((api) => { api.hardware.run(); render(section, Object.assign({}, r, { running: true })); }); });
         body.append(btn);
         // Diagnostics report (11.4): redacted text for a bug report, copied to the clipboard and shown below for
         // sessions where the clipboard doesn't reach (Gamescope without a desktop).
@@ -96,6 +103,8 @@
             body.append(copy, note, box);
         }
         section.append(body);
+        const again = had && body.querySelector('.' + had);
+        if (again) { const T = window.icefinTheme; if (T && T.ctx && T.ctx.focus) T.ctx.focus(again); else again.focus(); }
     }
 
     function attach(api, dialog) {
