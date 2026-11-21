@@ -94,6 +94,8 @@ Judged, from the re-walk:
 - `Timed out while waiting for 'ready' event! Seeking…` on Now playing's Open Music (2 pad runs): jellyfin-web's own
   wait on a resumed song in the lab's software audio; the song plays.
 - Mouse dead-controls on the filters dialog (In progress, Not watched yet) and an artist's Overview and Now playing
-  chip: the filter toggles and the tab already shown; the chip opens Now playing (checked).
+  chip: the filters toggle, and Overview was the tab shown. The chip opened Now playing on its first press (trace); by
+  the second the song had ended, the chip was gone and the walker's click landed on Overview, which had moved under
+  the pointer.
 
 Re-walk 2 (with every fix above, walked together with Media Center's pass 2): to follow.
