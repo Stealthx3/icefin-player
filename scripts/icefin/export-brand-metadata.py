@@ -4,7 +4,7 @@
 Reads the repo's sources of truth and writes PROJECT-METADATA.md and project-metadata.json into a folder,
 normally the art kit's brand folder:
 
-    python3 -I scripts/icefin/export-brand-metadata.py /mnt/FileDrive/Personal/Projects/IceSuite/IceFin-Player/brand
+    python3 -I scripts/icefin/export-brand-metadata.py /path/to/IceSuite/IceFin-Player/brand
 
 Sources: src/icefin/meta/<app id>.metainfo.xml (name, summary, description, releases, URLs, license),
 src/icefin/meta/<app id>.desktop (generic name, keywords, categories), themes/*/theme.json (bundled themes),

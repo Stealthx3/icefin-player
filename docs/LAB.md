@@ -2,9 +2,9 @@
 _Standard: VM-LAB-STANDARD v1.2 · Created 2026-11-07_
 
 ## Host (from lab.sh doctor)
-- virt-install 5.1.0, virt-manager: yes, KVM: yes, LXC driver: yes
+- virt-install, virt-manager: yes, KVM: yes, LXC driver: yes
 - Network: default (NAT) · Pool: default (/var/lib/libvirt/images) · Base: lab-base-debian13.qcow2 (shared)
-- Host: 16 CPUs, 125 GB RAM
+- Host: meets the standard's requirements (exact CPU and RAM in the git-ignored `docs/LAB.local.md`)
 
 ## Guest decision (§2)
 | Role | Kind | Rule | "Yes" answers | Note |
@@ -192,7 +192,7 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
 - **Where:** `lab-icefin-htpcsim` (4 vCPU, 6 GB, Debian's standard kernel for virtio_gpu, the headless 4K Weston TV
   session from `tests/icefin/htpc/sim-provision.sh`, Mesa in software), with the app held to two CPUs (`taskset`).
   Separate from `lab-icefin-main`, so other sessions' tests don't skew the numbers. The servers stay on
-  `lab-icefin-main` (`ICEFIN_SERVER_HOST=192.168.122.83`, `~/jf/creds.json` copied VM to VM).
+  `lab-icefin-main` (`ICEFIN_SERVER_HOST=<main guest IP>`, `~/jf/creds.json` copied VM to VM; the guest's address is in the git-ignored `docs/LAB.local.md`, or `virsh domifaddr lab-icefin-main`).
 - **What:** `tests/icefin/perf/perf_budget.py` runs the Flatpak and, for stock jellyfin-web and every installed
   theme, measures the home screen idle and with focus moving, then the 1080p H.264 film. The figures are Qt Quick's
   own frames (`hardware.startFrameStats` / `frameStats`: each frame's cost from scene-graph sync to swap, frames per
@@ -204,7 +204,7 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   records the budget again. It catches regressions; what a real low-end GPU does stays with beta row V4.
 - **Run:** build the Flatpak in `lab-icefin-main`, `flatpak build-bundle`, install the bundle in the guest, then:
   ```
-  LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=192.168.122.83 ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
+  LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=<main guest IP> ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
   ```
 
 ## Full lab matrix (PLAN 11.1)
