@@ -99,8 +99,8 @@ Judged, from the re-walk:
   the pointer.
 
 Re-walk 2 (lab `~/walks/qa-plaza3v2-mc2`, walked together with Media Center's pass 2; build main with #216 and #217,
-theme/plaza dd1c9070): Plaza 129 + 11 findings (from 139 + 13). Gone: the reader's Full screen error, the Watch
-together script error, Back from an artist's details, the Live TV channel's Back (mouse). Nothing new but Shift+Tab
+theme/plaza dd1c9070): Plaza 129 + 11 findings (from 139 + 13). Gone: the reader's Full screen error, Back from
+an artist's details and the Live TV channel's Back (mouse). Nothing new but Shift+Tab
 and hover on two Now playing chips (judged as before).
 
 The Back-focus findings left are the walker's, each traced and replayed in the lab:
