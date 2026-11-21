@@ -116,3 +116,10 @@ The Back-focus findings left are the walker's, each traced and replayed in the l
   placement.
 
 Pass 3 is complete: every finding is fixed or judged. Next, the user's review of Plaza (screens and audio, D41).
+
+## Found after pass 3
+
+- [x] Plaza's notices (the toast) and its poster flights were hidden on Plaza's own screens: the engine hides
+      everything at the top of `<body>` that isn't Icefin's while a themed screen shows (server plugins put UI there),
+      and Plaza put both there unmarked. Found by Media Center's pass 3, where Play on an album showed no notice. Both
+      carry the engine's layer mark now (`data-icefin-layer`, engine #222).

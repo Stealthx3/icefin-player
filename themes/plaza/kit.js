@@ -303,6 +303,7 @@
         if (o.background) f.style.background = o.background;
         const box = (r) => ({ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: `${o.radius == null ? 18 : o.radius}px` });
         Object.assign(f.style, box(o.from));
+        f.setAttribute('data-icefin-layer', '');  // flies over Plaza's screens (the engine hides the rest of <body>)
         document.body.append(f);
         const ms = o.ms || 360;
         const a = f.animate([box(o.from), box(o.to)], { duration: ms, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
