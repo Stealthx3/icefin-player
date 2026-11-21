@@ -127,6 +127,24 @@ Issues and pull requests are welcome. See [CONTRIBUTING](.github/CONTRIBUTING.md
 
 Not available yet. Releases will ship as a Flatpak from a signed IceFin Player repository, with Flathub to follow after 1.0.
 
+### Adding IceFin Player to Steam
+
+IceFin Player can add itself to Steam as a non-Steam game, with its own library art (capsule, hero, logo and icon) and in an **IceSuite** collection, so it starts from Steam, Big Picture or Game Mode.
+
+1. On first start IceFin Player offers **Add to Steam** once. Later, use **Client Settings → Steam** at the end of the settings screen.
+2. Quit Steam completely first (Steam → Exit, and check its tray icon is gone): Steam rewrites its shortcuts when it closes and would drop the change.
+3. Start Steam again to see IceFin Player in your library.
+
+If Steam is installed as a Flatpak, it needs permission to start other Flatpak apps. IceFin Player shows this command; run it once in a terminal:
+
+```bash
+flatpak override --user --talk-name=org.freedesktop.Flatpak com.valvesoftware.Steam
+```
+
+IceFin Player's Flatpak can reach only Steam's folders (`~/.steam` and `~/.var/app/com.valvesoftware.Steam`), never the rest of your home folder, and writes there only when you click Add, Update art or Remove. When IceFin Player updates its art, the next start refreshes the art in Steam without asking.
+
+**Before uninstalling IceFin Player**, use **Client Settings → Steam → Remove from Steam**: uninstalling a Flatpak can't remove the shortcut. Otherwise, delete the shortcut in Steam yourself (right-click it → Manage → Remove non-Steam game from your library).
+
 ## Relationship to Jellyfin
 
 IceFin Player is an independent fork and is not affiliated with or endorsed by the Jellyfin project. It is built on [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) and works with any Jellyfin server, 10.11 and later.
