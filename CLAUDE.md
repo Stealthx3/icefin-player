@@ -16,6 +16,7 @@ Copies of `/mnt/FileDrive/Business/Development/ai-assets` taken 2026-11-07. If t
 - `PROGRESS-BAR-STANDARD.md`: progress page generated from `docs/PLAN.md`.
 - `PHONE-ALERTS-STANDARD.md`: push alerts when the user is needed.
 - `POST-MORTEM-STANDARD.md`: append one line per session to `docs/postmortem/JOURNAL.md`.
+- `STEAM-SHORTCUT-STANDARD.md` (v1, copied 2026-11-21, D43): the app adds itself to Steam with the brand kit's art. Art, config and the vendored helper are in `packaging/steam/` (copy the art from the kit, never edit it; the helper stays unchanged); the app side is `src/icefin/steam/` and `native/icefin/steamShortcut.js`; test `tests/icefin/steam/test_steam_shortcut.py`.
 
 ## Working setup
 - Build/test only via scripts/lab.sh (see docs/LAB.md). Guests are watchable in virt-manager (`lab-icefin-main`).

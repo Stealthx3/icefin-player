@@ -56,10 +56,11 @@ IceFin Player reads controllers through SDL3 (Client Settings → Controllers sh
   Mouse Trackpad* template (the Deck's right trackpad becomes the mouse), then bind the back grips: L4 to **View**
   (Home in IceFin Player; hold it for the theme's overlay panel) and R4 to **X** (the menu, with the item's details and
   options). Leave the Steam/Guide button to Steam.
-- **Artwork for the Steam shortcut**: after adding IceFin Player as a non-Steam game, give it its own art in Steam's
-  library (right-click → Manage → Set custom artwork, or Properties for the icon). The files are in
-  [`docs/brand/steam/`](brand/steam/): `capsule-600x900.png` (portrait capsule), `header-920x430.png` (wide capsule),
-  `hero-3840x1240.png` (background), `logo-1280x720.png` (logo over the hero) and `icon-256.png` (shortcut icon).
+- **Adding IceFin Player to Steam**: Client Settings → Steam → **Add to Steam** (also offered once on first start) adds
+  the non-Steam shortcut with all its art: quit Steam first, then start it again (README, *Adding IceFin Player to
+  Steam*). For a shortcut you made by hand, the art files are in [`packaging/steam/`](../packaging/steam/):
+  `capsule-600x900.png` (portrait capsule), `header-920x430.png` (wide capsule), `hero-3840x1240.png` (background),
+  `logo-1280x720.png` (logo over the hero) and `icon-256.png` (shortcut icon).
 - **Wii Remote**: meant to work as a pointer through the kernel's `hid-wiimote` driver. Not tested yet.
 
 ## Audio passthrough to a receiver
