@@ -82,7 +82,9 @@ IW_JS = r"""
   const OWN = '#icefin-theme-root, #icefin-stock-chrome, #icefin-theme-overlay, #icefin-osk, #icefin-live, .skinHeader, .mainAnimatedPage, .page, .dialogContainer, .actionSheet, #reactRoot, .mainDrawer, .nowPlayingBar, #videoOsdPage, .videoOsdBottom, .osdHeader, .backgroundContainer';
   const info = (e) => ({ plugin: !e.closest(OWN), key: L.key(e), sig: L.sig(e), label: label(e), tag: e.tagName.toLowerCase(), role: e.getAttribute('role') || '', type: e.getAttribute('type') || '',
     cls: (typeof e.className === 'string' ? e.className : '').slice(0, 120), action: e.getAttribute('data-action') || '', href: e.getAttribute('href') || '',
-    field: e.matches(FIELD), stateful: e.matches(STATEFUL), submit: e.matches('[type=submit]'), disabled: !!e.disabled || e.getAttribute('aria-disabled') === 'true' });
+    field: e.matches(FIELD), stateful: e.matches(STATEFUL), submit: e.matches('[type=submit]'), disabled: !!e.disabled || e.getAttribute('aria-disabled') === 'true',
+    // a control that is only the pointer's way in (the remote has another: a row title the remote changes by up and down)
+    pointer: !!e.closest('[data-icefin-pointer-only]') });
   const roots = () => {
     const r = ['icefin-theme-root', 'icefin-stock-chrome', 'icefin-theme-overlay', 'icefin-osk'].map((i) => document.getElementById(i)).filter((e) => e && shown(e));
     for (const s of ['.skinHeader', '.page:not(.hide)', '.mainAnimatedPage:not(.hide)', DLG]) document.querySelectorAll(s).forEach((e) => { if (shown(e) && !r.includes(e)) r.push(e); });
@@ -472,6 +474,7 @@ class Walker:
         drv.tr = self.tr
         self.screens, self.ctrls, self.findings, self.queue = {}, {}, [], []
         self.done, self.tried, self.itypes = set(), {}, {}
+        self.back_at = 0.0   # when Back last returned to a screen (position() waits out the engine's 2.5 s window)
         self.root = None
         self.shots = 0
         self.hovered = [0, 0]
@@ -715,6 +718,8 @@ class Walker:
             e["href"] = c["href"]
         if c.get("plugin"):
             e["plugin"] = True
+        if c.get("pointer"):
+            e["pointer"] = True
         if "inview" in c:
             e["inview"], e["osk"] = c["inview"], c.get("osk", False)
         return e
@@ -835,6 +840,12 @@ class Walker:
         f = self.focus_now()
         if f and f["key"] == c["key"]:
             return True
+        # placing focus by script is not input: for 2.5 s after a page comes back the engine keeps what opened the next
+        # screen unless the user has moved (QA 3, Plaza: Back from Music landed on Shows, placed by script 2 s after Back
+        # from Shows), so a scripted placement waits that out and is then remembered like a move
+        wait = 2.6 - (time.time() - self.back_at)
+        if wait > 0:
+            time.sleep(wait)
         if self.drv.focus(c["key"]):
             f = self.focus_now()
             if f and (f["key"] == c["key"] or self.js(f"window.inputWalk.isCur({json.dumps(c['key'])})")):
@@ -1141,7 +1152,7 @@ class Walker:
         Each gets one direct attempt; the ones the input can't reach either are flagged unreach (merge() reports them
         when the mouse can use them). At most 20 per screen."""
         els = self.screens[k]["elements"]
-        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("inview") and not e.get("osk")
+        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("inview") and not e.get("osk") and not e.get("pointer")
                 and not str(e.get("outcome", "")).startswith("skipped: disabled")][:20]
         self.cur_screen_key = k
         for key, e in todo:
@@ -1391,6 +1402,7 @@ class Walker:
             kk = last
             self.stop_play()
             if kk == k:
+                self.back_at = time.time()
                 return "ok", kk
             if self.screens.get(k, {}).get("sub") and k.startswith(base(kk) + " > "):
                 # Back from a route opened inside a sub-level lands on a parent level (the page redrew): not a failure of this walk
@@ -1410,13 +1422,20 @@ class Walker:
         here = self.screens[pk]
         here["collected"], here["nofollow"] = True, True
         try:
-            if self.mouse:
+            if not self.screen()["route"].startswith("/video"):
+                self.tr("the player closed itself (the clip ended)")
+            elif self.mouse:
                 for c in self.enum(pk):
                     self.element(pk, c)["reached"]["mouse"] = True
             else:
                 self.enum(pk)
                 seen = set()
                 for d in ["right"] * 5 + ["down"] * 3 + ["left"] * 5:
+                    # a short clip ends while the controls are walked and the player goes back by itself: a key
+                    # pressed after that moves focus on the screen played from, and its Back focus is judged wrong
+                    if not self.screen()["route"].startswith("/video"):
+                        self.tr("the player closed itself (the clip ended)")
+                        break
                     before = self.focus_now()
                     self.drv.move(d)
                     f = self.focus_now()
