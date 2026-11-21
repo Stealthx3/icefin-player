@@ -31,10 +31,11 @@ Engine (#220):
 
 - Choose… (wallpaper) and "play on" in the Watch together panel (dead-control): as in pass 1 (the system's file chooser;
   the panel's redraw).
-- Hover not focusing Play on and Watch together on the start strip and Live TV (hover-no-focus, mouse): there they are
-  the pointer's own buttons, not focus stops (the pad has them on the Tasks row and in each screen's chrome).
-- Hover not focusing Live TV's tabs (mouse): hovered, each tab takes the focus (checked: channels, recorded tv, guide);
-  the tab row slides as the tab changes, and the walker's next hover point was on the old geometry.
+- Hover not focusing Play on and Watch together on the start strip (hover-no-focus, mouse): there they are the
+  pointer's own buttons, not focus stops (the pad has them on the Tasks row).
+- Hover not focusing Live TV's tabs, Play on and Watch together (mouse): hovered, each takes the focus (checked:
+  channels, recorded tv, guide, Play on, Watch together). The run's last minutes had a channel tuning late under the
+  pointer (the walk's own trace: a late change to the player), and the tab row slides as the tab changes.
 - "No information" in the guide clicked (dead-control, mouse): an empty slot, nothing to open.
 - Shift+Tab (low): Media Center is a TV theme; Tab isn't one of its inputs.
 - Required screens not reached by the keys and pad runs (budget, 6): Live TV, a season, an episode, a song, an artist,
