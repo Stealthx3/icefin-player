@@ -286,7 +286,7 @@
                     let groups = [];
                     try { groups = await ctx.syncPlay.groups(); } catch (e) { groups = []; }
                     if (!groups.length) body.append(D.note('No groups yet.'));
-                    for (const g of groups) body.append(D.row(`Join ${g.name}`, { sub: (g.people || []).join(', '), value: `${(g.people || []).length} watching`, go: async () => { try { await ctx.syncPlay.join(g.id); D.panel.close(); D.notice(`Joined ${g.name}`); } catch (e) { fail(e); } } }));
+                    for (const g of groups) body.append(D.row(`Join ${g.name}`, { sub: (g.names || []).join(', '), value: `${g.people || 0} watching`, go: async () => { try { await ctx.syncPlay.join(g.id); D.panel.close(); D.notice(`Joined ${g.name}`); } catch (e) { fail(e); } } }));
                     body.append(D.row('New group', { icon: 'add', go: async () => { try { await ctx.syncPlay.create(''); D.panel.close(); D.notice('Group started'); } catch (e) { fail(e); } } }));
                     return;
                 }
