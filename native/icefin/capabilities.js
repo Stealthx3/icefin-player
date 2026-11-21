@@ -1117,6 +1117,14 @@
     const stockEntry = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key + ' ' : '') + location.hash;
     const stockMemo = new Map();
     let stockWant = null, stockArrived = 0, stockInput = 0;
+    // A page coming back focuses a control of its own before the engine looks (jellyfin-web's TV layout autofocuses the
+    // first card): recorded, that would replace what opened the next screen (QA 3, Plaza: Back from Books, Movies or a
+    // book on the classic home landed on its first tile, Live TV). For a moment after a navigation only a focus that
+    // follows the user's own move (arrows, Tab, the pointer, a pad's direction) is remembered.
+    let stockNavAt = 0, stockMoved = 0;
+    for (const t of ['hashchange', 'popstate']) window.addEventListener(t, () => { stockNavAt = Date.now(); }, true);
+    window.addEventListener('keydown', (e) => { if (/^(Arrow|Tab$)/.test(e.key)) stockMoved = Date.now(); }, true);
+    for (const t of ['mousedown', 'wheel']) window.addEventListener(t, () => { stockMoved = Date.now(); }, true);
     const stockLabel = (el) => (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
     const stockRow = (el) => { const s = el.closest('.verticalSection'), p = el.closest('.page'); return s && p ? [...p.querySelectorAll('.verticalSection')].indexOf(s) : -1; };
     const stockId = (el) => { const c = el.closest('[data-id]'); return c ? c.getAttribute('data-id') : ''; };
@@ -1128,6 +1136,7 @@
         const frame = !!(stockEl && stockEl.contains(t));
         // the frame's own Back and Home are how the page is left, not what the user comes back for
         if (frame && /^(back|home)$/i.test(stockLabel(t))) return;
+        if (Date.now() - stockNavAt < 2500 && stockMoved <= stockNavAt) return;
         const h = stockEntry();
         stockMemo.delete(h);
         stockMemo.set(h, { frame, id: stockId(t), row: stockRow(t), kind: stockKind(t), action: t.getAttribute('data-action') || '', label: stockLabel(t) });
@@ -1187,7 +1196,7 @@
         send();
         // jellyfin-web shows the page and sets its title a moment after the route changes; once it has, the page's first
         // control has the focus (9.60, checklist 2.1: a controller starts on the page, not nowhere)
-        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 1200) stockArrive(); } }, ms));
+        stockTimers = [400, 1200].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) { send(); if (ms === 400) stockReturn(); if (ms === 1200) stockArrive(); } }, ms));
         // a page coming back draws its rows late (the classic home's sections): look for the control again a while
         if (stockWant) stockTimers.push(...[2200, 3500].map((ms) => setTimeout(() => { if (stockEl && !stockEl.hidden) stockReturn(); }, ms)));
     }
@@ -1255,7 +1264,7 @@
         if ((a === 'left' || a === 'right') && act && (act.tagName === 'SELECT' || isText(act) || act.matches('[role="combobox"], input[type=range]'))) return false;
         const all = stockControls();
         if (!all.length) return false;
-        stockInput = Date.now();  // the user moved: a page coming back no longer refocuses what opened the next screen
+        stockInput = stockMoved = Date.now();  // the user moved: a page coming back no longer refocuses what opened the next screen
         const cur = act && all.includes(act) ? act : null;
         let next = null;
         if (!cur) {
