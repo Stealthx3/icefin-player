@@ -1784,12 +1784,15 @@ class LabApp(App):
     def __init__(self, a, steam=False):
         from setup import Server
         from session_play import start_x, JF, LAB_DISPLAY, launch
-        self.a, self.launch, self.LAB_DISPLAY = a, launch, LAB_DISPLAY
+        # --display: read here, not through session_play's LAB_DISPLAY (imported before main() sets the variable)
+        self.a, self.launch, self.LAB_DISPLAY = a, launch, getattr(a, "display", "") or LAB_DISPLAY
         cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
-        self.cred = json.load(open(os.path.join(JF, "creds.json")))[a.server]
+        # --user: a walker of its own (walk_parallel.py), so parallel walks don't change each other's home rows
+        self.cred = (json.load(open(os.path.join(JF, "creds-qa.json")))[a.server][a.user] if getattr(a, "user", "")
+                     else json.load(open(os.path.join(JF, "creds.json")))[a.server])
         self.srv = Server(cfg)
         self.srv.wait()
-        self.xv = start_x()
+        self.xv = start_x(self.LAB_DISPLAY)
         self.app = self.log = self.page = None
         self.pads = []
         self.open(steam)
@@ -1799,7 +1802,7 @@ class LabApp(App):
         # the lab's X server can go down with the app (QA 1: every reopen then failed on the xcb plugin): start it again
         if getattr(self, "xv", None) is not None and self.xv.poll() is not None:
             print("input_walk: the lab's X server had stopped; starting it again", flush=True)
-            self.xv = start_x()
+            self.xv = start_x(self.LAB_DISPLAY)
         self.open(getattr(self, "steam", False))
 
     def open(self, steam=False):
@@ -1810,6 +1813,10 @@ class LabApp(App):
         env = dict(os.environ, DISPLAY=self.LAB_DISPLAY, QT_QPA_PLATFORM="xcb", LC_ALL="C.UTF-8")
         if steam:
             env.update(SDL_GAMECONTROLLER_ALLOW_STEAM_VIRTUAL_GAMEPAD="1", SDL_GAMECONTROLLER_IGNORE_DEVICES="0x054c/0x0ce6")
+        if getattr(a, "sdl_only", ""):
+            # walk_parallel.py: several apps in one guest each see only their own pad model (or none, for keys and mouse);
+            # every uinput and uhid pad reaches every app in the guest otherwise
+            env["SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT"] = a.sdl_only
         if a.app.startswith("flatpak:"):
             self.app = self.launch(a.app, a.port, cfgdir, self.log, "xcb")
         else:
@@ -2058,7 +2065,12 @@ def main():
     ap.add_argument("--play-seconds", type=float, default=5, help="how long the player plays before Back")
     ap.add_argument("--mode", default="tv", choices=["tv", "desktop"], help="lab: the app's window mode")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--display", default="", help="lab: an X display of this walk's own (walk_parallel.py runs several at once)")
+    ap.add_argument("--user", default="", help="lab: a walker user from ~/jf/creds-qa.json (walk_parallel.py) instead of the server's admin")
+    ap.add_argument("--sdl-only", default="", help="lab: SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT for the app: the only pad model it sees")
     a = ap.parse_args()
+    if a.display:
+        os.environ["ICEFIN_LAB_DISPLAY"] = a.display     # read by session_play at import (LabApp imports it late)
     a.out = os.path.abspath(os.path.expanduser(a.out))
     os.makedirs(a.out, exist_ok=True)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
@@ -2102,6 +2114,8 @@ def main():
         for scenario, fams, scen_inputs in scenarios:
             if scenario != "plain" and any(f == "steam" for f in fams) and not any(i == "pad" for i in scen_inputs):
                 continue
+            if scenario == "plain" and not fams and scen_inputs == ["pad"]:
+                continue        # a steam-only walk (walk_parallel.py's steam shard): no plain runs to make
             try:
                 app = HostApp(a, scenario) if a.host else LabApp(a, steam=scenario == "steam-env")
             except Skip as s:
