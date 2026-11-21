@@ -70,12 +70,53 @@ def ensure_users(server, names):
         pol.update(IsAdministrator=True, EnableAllFolders=True, IsHidden=True)
         s.call("POST", f"/Users/{uid}/Policy", pol)
         have[n] = {"user": n, "password": pw}
+        existing[n] = {"Id": uid, "Name": n}
         print(f"walk_parallel: walker user {n} ready on {server}", flush=True)
+    sync_users(s, [u for u in existing.values() if u["Name"] == admin["user"]][0]["Id"], [existing[n]["Id"] for n in names])
     old = os.umask(0o077)
     try:
         json.dump(store, open(path, "w"), indent=1)
     finally:
         os.umask(old)
+
+
+USERDATA = ("Played", "PlaybackPositionTicks", "IsFavorite", "PlayCount", "LastPlayedDate", "Likes")
+
+
+def sync_users(s, admin_id, uids):
+    """Each walker user starts as a copy of the lab's admin, the user the serial walks used: its user settings,
+    jellyfin-web's display preferences, and every item's played state, resume point and favourite. A fresh user
+    has none of it (no Continue Watching or Next Up, default layout), so its walks see other screens; and a walk's
+    own playback drifts it, so this runs before every parallel walk."""
+    conf = s.call("GET", f"/Users/{admin_id}")["Configuration"]
+    prefs = {}
+    for pid in ("usersettings",):
+        try:
+            prefs[pid] = s.call("GET", f"/DisplayPreferences/{pid}?userId={admin_id}&client=emby")
+        except Exception:  # noqa: BLE001
+            pass
+    q = "Recursive=true&Fields=UserData&EnableUserData=true&Limit=100000"
+    want = {i["Id"]: i.get("UserData") or {} for i in s.call("GET", f"/Items?userId={admin_id}&{q}")["Items"]}
+    for uid in uids:
+        try:
+            s.call("POST", f"/Users/Configuration?userId={uid}", conf)
+        except Exception:  # noqa: BLE001
+            s.call("POST", f"/Users/{uid}/Configuration", conf)
+        for pid, body in prefs.items():
+            s.call("POST", f"/DisplayPreferences/{pid}?userId={uid}&client=emby", body)
+        have = {i["Id"]: i.get("UserData") or {} for i in s.call("GET", f"/Items?userId={uid}&{q}")["Items"]}
+        n = 0
+        for iid, ud in want.items():
+            cur = have.get(iid, {})
+            if all(cur.get(k) == ud.get(k) for k in USERDATA):
+                continue
+            body = {k: ud.get(k) for k in USERDATA if k != "LastPlayedDate" or ud.get(k)}
+            body.setdefault("Played", False)
+            body.setdefault("PlaybackPositionTicks", 0)
+            body.setdefault("IsFavorite", False)
+            s.call("POST", f"/UserItems/{iid}/UserData?userId={uid}", body)
+            n += 1
+        print(f"walk_parallel: user {uid[:8]} synced with the admin ({n} items' user data)", flush=True)
 
 
 def load_run(d):

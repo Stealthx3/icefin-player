@@ -1785,7 +1785,7 @@ class LabApp(App):
         from setup import Server
         from session_play import start_x, JF, LAB_DISPLAY, launch
         # --display: read here, not through session_play's LAB_DISPLAY (imported before main() sets the variable)
-        self.a, self.launch, self.LAB_DISPLAY = a, launch, getattr(a, "display", "") or LAB_DISPLAY
+        self.a, self.launch, self.LAB_DISPLAY, self.start_x = a, launch, getattr(a, "display", "") or LAB_DISPLAY, start_x
         cfg = {s["name"]: s for s in json.load(open(os.path.join(HERE, "..", "servers", "servers.json")))["servers"]}[a.server]
         # --user: a walker of its own (walk_parallel.py), so parallel walks don't change each other's home rows
         self.cred = (json.load(open(os.path.join(JF, "creds-qa.json")))[a.server][a.user] if getattr(a, "user", "")
@@ -1802,7 +1802,7 @@ class LabApp(App):
         # the lab's X server can go down with the app (QA 1: every reopen then failed on the xcb plugin): start it again
         if getattr(self, "xv", None) is not None and self.xv.poll() is not None:
             print("input_walk: the lab's X server had stopped; starting it again", flush=True)
-            self.xv = start_x(self.LAB_DISPLAY)
+            self.xv = self.start_x(self.LAB_DISPLAY)     # imported in __init__, not at module level
         self.open(getattr(self, "steam", False))
 
     def open(self, steam=False):
