@@ -79,6 +79,7 @@
         for (const old of document.querySelectorAll('.mc-notice')) old.remove();
         const n = el('div', 'mc-notice' + (bad ? ' mc-notice-bad' : ''), text);
         n.setAttribute('role', 'status');
+        n.setAttribute('data-icefin-layer', '');  // shown over the theme's screens (the engine hides the rest of <body>)
         document.body.append(n);
         if (!quiet) T.ctx.sound(bad ? 'error' : 'select');  // quiet: the control that led here has sounded already
         setTimeout(() => n.classList.add('mc-notice-out'), 4000);

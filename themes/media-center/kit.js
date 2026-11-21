@@ -202,6 +202,7 @@
             b.title = label;
             b.append(M.svg(icon));
             if (focusable) M.focusable(b);
+            else b.setAttribute('data-icefin-pointer-only', '');  // the start strip's: the pad has them on the Tasks row
             b.addEventListener('click', () => { const K = window.icefinMediaCenter; if (K && K.playOn) { T.ctx.sound('select'); K.playOn(tab); } else T.ctx.sound('error'); });
             box.append(b);
         }

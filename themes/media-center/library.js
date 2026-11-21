@@ -31,7 +31,7 @@
             ['date taken', sort('DateCreated,SortName', 'Descending')], ['folders', { folders: true, ...sort('SortName') }],
             ['videos only', { types: 'Video', ...sort('DateCreated', 'Descending') }], ['favourites', { Filters: 'IsFavorite', ...sort('SortName') }]] },
         '#/books': { title: 'book library', types: 'Book', layout: POSTER, pivots: [
-            ['continue reading', { Filters: 'IsResumable', ...sort('DatePlayed', 'Descending') }], ['title', sort('SortName')],
+            ['continue reading', { Filters: 'IsResumable', skipEmpty: true, ...sort('DatePlayed', 'Descending') }], ['title', sort('SortName')],
             ['date added', sort('DateCreated,SortName', 'Descending')], ['favourites', { Filters: 'IsFavorite', ...sort('SortName') }]] },
         '#/musicvideos': { title: 'music videos', types: 'MusicVideo', layout: WIDE, pivots: [['title', sort('SortName')], ['date added', sort('DateCreated,SortName', 'Descending')]] },
         '#/playlists': { title: 'playlists', types: 'Playlist', layout: SQUARE, noParent: true, pivots: [['playlists', sort('SortName')], ['date added', sort('DateCreated', 'Descending')]] }
@@ -385,6 +385,19 @@
                 root.addEventListener('icefin-focus', (e) => { if (L && L.tiles.includes(e.target)) follow(e.target); });
                 await more();
                 if (!L || L.root !== root) return;
+                // a first pivot with nothing in it (continue reading, with no book begun) gives way to the next one, so
+                // the library never opens on "Nothing here yet." while it has items (QA 3)
+                if (!L.tiles.length && L.pivot.skipEmpty && !kept && tab == null) {
+                    const k = kind.pivots.findIndex(([, s]) => s === L.pivot) + 1;
+                    if (kind.pivots[k]) {
+                        L.pivotItems.forEach((x, i) => x.classList.toggle('on', i === k));
+                        L.pivot = kind.pivots[k][1];
+                        shiftPivot(pivot, L.pivotItems[k], true);
+                        L.gen++; L.tiles = []; L.total = 0; L.done = false; L.loading = false; L.grid.textContent = '';
+                        await more();
+                        if (!L || L.root !== root) return;
+                    }
+                }
                 const home = M.flyHome ? M.flyHome((id) => L.tiles.find((x) => x.mcItem && x.mcItem.Id === id) || null) : null;
                 // no flight (an item without art, a tab or Sort): Back still lands on what opened the next screen (kit.js)
                 const back = home || (M.returnTo ? M.returnTo(root) : null);
