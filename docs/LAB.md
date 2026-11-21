@@ -3,7 +3,7 @@ _Standard: VM-LAB-STANDARD v1.2 · Created 2026-11-07_
 
 ## Host (from lab.sh doctor)
 - virt-install, virt-manager: yes, KVM: yes, LXC driver: yes
-- Network: default (NAT) · Pool: default (/var/lib/libvirt/images) · Base: lab-base-debian13.qcow2 (shared)
+- Network: default (NAT) · Pool: VMDisks, a data drive's folder (path in the git-ignored `docs/LAB.local.md`), not libvirt's `default` pool on the system drive (D46) · Base: lab-base-debian13.qcow2 (shared)
 - Host: meets the standard's requirements (exact CPU and RAM in the git-ignored `docs/LAB.local.md`)
 
 ## Guest decision (§2)
