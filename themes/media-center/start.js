@@ -42,7 +42,9 @@
         for (const v of views.Items || []) {
             try {
                 const latest = await client.getLatestItems({ userId: uid, parentId: v.Id, Limit: 12, Fields: 'PrimaryImageAspectRatio' });
-                if (latest.length) cats.push({ title: v.Name, items: latest, wide: false, view: v });
+                // A library with nothing new (the server leaves watched items out of Latest) keeps its row with its
+                // "All …" tile: without it, a library watched through had no way in from the start strip (QA 1)
+                if (latest.length || LIBRARY[v.CollectionType]) cats.push({ title: v.Name, items: latest, wide: false, view: v });
             } catch (e) { console.warn('Media Center: latest', v.Name, e); }
         }
         cats.push({ title: 'Tasks', links: [

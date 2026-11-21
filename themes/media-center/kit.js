@@ -96,12 +96,27 @@
             timer = setTimeout(stop, 4000);
             setTimeout(soon, 0);
         }
+        // jellyfin-web opens the player with history.pushState, which fires neither popstate nor hashchange: the screen
+        // left was never filed, so Back from the player found nothing to put back (QA 1: Live TV landed on a guide gap).
+        // The Navigation API hears every change, as it happens. A replace at the same address keeps the entry.
+        const urlOf = (h) => h.slice(h.indexOf(' ') + 1);
+        const onEntry = (e) => {
+            const h = here();
+            if (e && e.navigationType === 'replace' && h !== lastHash && urlOf(h) === urlOf(lastHash)) {
+                if (cur && cur.hash === lastHash) cur.hash = h;
+                if (pending && pending.hash === lastHash) pending.hash = h;
+                lastHash = h;
+                return;
+            }
+            routed();
+        };
         const onFocus = (e) => record(e.target);
         const onInput = (e) => { if (e.type !== 'mousemove' || e.movementX || e.movementY) stop(); };
         const INPUT = ['keydown', 'mousedown', 'wheel', 'mousemove'];
         const off = () => {
             window.removeEventListener('popstate', routed, true);
             window.removeEventListener('hashchange', routed, true);
+            if (window.navigation) navigation.removeEventListener('currententrychange', onEntry);
             document.removeEventListener('icefin-focus', onFocus, true);
             document.removeEventListener('click', onFocus, true);
             for (const t of INPUT) window.removeEventListener(t, onInput, true);
@@ -111,6 +126,7 @@
         window.icefinMediaCenterBackFocusOff = off;
         window.addEventListener('popstate', routed, true);
         window.addEventListener('hashchange', routed, true);
+        if (window.navigation) navigation.addEventListener('currententrychange', onEntry);
         document.addEventListener('icefin-focus', onFocus, true);
         document.addEventListener('click', onFocus, true);
         for (const t of INPUT) window.addEventListener(t, onInput, true);

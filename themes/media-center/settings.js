@@ -166,6 +166,19 @@
     window.icefinMediaCenter.register('#/mypreferencesmenu', {
         onAction(action, ctx) {
             if (M.band.open && ['up', 'down', 'left', 'right'].includes(action)) { ctx.move(action, M.band.open.el); return true; }
+            // The settings list moves as a list: up and down step through the entries, left and right stay in it, and up
+            // from the first reaches the header. By geometry, left from an entry jumped to the header's Home button, so
+            // the remote left the list part-way down (QA 1: no run got past Theme to Playback, Display or Start screen).
+            if (H && !C && ['up', 'down', 'left', 'right'].includes(action)) {
+                const items = [...H.root.querySelectorAll('.mc-set-entry')];
+                const i = items.indexOf(ctx.focused());
+                if (i >= 0) {
+                    if (action === 'left' || action === 'right') return true;
+                    const n = i + (action === 'down' ? 1 : -1);
+                    if (n >= items.length) return true;
+                    if (n >= 0) { ctx.focus(items[n]); ctx.sound('focus'); return true; }
+                }
+            }
             if (C && (action === 'left' || action === 'right')) {
                 const f = ctx.focused();
                 if (f && f.tagName === 'SELECT' && f.hasAttribute('data-mc-spin')) { step(f, action === 'left' ? -1 : 1); return true; }

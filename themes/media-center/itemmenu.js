@@ -311,7 +311,7 @@
                     let groups = [];
                     try { groups = await ctx.syncPlay.groups(); } catch (e) { groups = []; }
                     if (!groups.length) body.append(M.note('No groups yet.'));
-                    for (const g of groups) body.append(M.row(g.name, { sub: (g.people || []).join(', '), go: async () => { try { await ctx.syncPlay.join(g.id); M.panel.close(); M.notice(`Joined ${g.name}`); } catch (e) { fail(e); } } }));
+                    for (const g of groups) body.append(M.row(g.name, { sub: (g.names || []).join(', ') || `${g.people || 0} watching`, go: async () => { try { await ctx.syncPlay.join(g.id); M.panel.close(); M.notice(`Joined ${g.name}`); } catch (e) { fail(e); } } }));
                     body.append(M.foot(M.button('New group', async () => { try { await ctx.syncPlay.create(''); M.panel.close(); M.notice('Group started'); } catch (e) { fail(e); } }, true)));
                     return;
                 }
@@ -324,8 +324,10 @@
                 } });
                 body.append(M.sec('this device'), ...here.map(row), M.sec('other devices'));
                 // Look again says when it looked, so a list that came back the same still shows the press did something
-                if (!others.length) body.append(M.note(again ? `Looked again at ${M.time()}: no other devices are on this server.` : 'No other devices are on this server right now.'));
-                else if (again) body.append(M.note(`Looked again at ${M.time()}.`));
+                // to the second: two looks in one minute read the same (QA 1: Look again pressed twice showed no change)
+                const at = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+                if (!others.length) body.append(M.note(again ? `Looked again at ${at()}: no other devices are on this server.` : 'No other devices are on this server right now.'));
+                else if (again) body.append(M.note(`Looked again at ${at()}.`));
                 const look = M.row('Look again', { go: () => playOn('play', item, true) });
                 body.append(...others.map(row), look);
                 if (again && look.isConnected) focusIn(look);

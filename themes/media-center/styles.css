@@ -373,7 +373,9 @@ html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-
 .mc-tv-info-title { font-size: 3.4vh; }
 .mc-tv-info-when { font-size: 2.2vh; opacity: 0.75; margin-top: 0.4vh; }
 .mc-tv-info-text { font-size: 2.2vh; opacity: 0.88; margin-top: 0.8vh; line-height: 1.45; max-height: 6.4vh; overflow: hidden; }
-.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; scrollbar-width: none; }
+.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; box-sizing: border-box; scrollbar-width: none; }
+/* (border-box: with the padding the list ran 2vh past the body, which clips; its last row sat under the edge and the
+   body scrolled itself to show it: QA 1, the mouse's clicks on those channels hit nothing) */
 .mc-tv-channel, .mc-tv-rec-tile { cursor: pointer; outline: none; opacity: 0.85; transition: transform 180ms; }
 .mc-tv-logo, .mc-tv-rec-art { position: relative; height: 14.6vh; background: rgb(var(--icefin-color-glass-channel) / 0.06) center / contain no-repeat; display: flex; align-items: center; justify-content: center; font-size: 2.4vh; border-radius: 0.14vh; }
 .mc-tv-rec-art { background-size: cover; }
