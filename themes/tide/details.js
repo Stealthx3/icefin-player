@@ -234,6 +234,7 @@
                 const ghost = el('div', 'td-e-thumb has-art');
                 ghost.style.backgroundImage = flight.art;
                 Object.assign(ghost.style, { position: 'fixed', left: `${flight.rect.left}px`, top: `${flight.rect.top}px`, width: `${flight.rect.width}px`, height: `${flight.rect.height}px`, transform: 'none' });
+                ghost.setAttribute('data-icefin-layer', '');  // over Tide's screens (the engine hides the rest of <body>)
                 document.body.append(ghost);
                 slot.style.opacity = '0';
                 D.fly(ghost, slot.getBoundingClientRect(), 360, () => { ghost.remove(); slot.style.opacity = ''; });

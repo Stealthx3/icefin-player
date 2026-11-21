@@ -40,6 +40,7 @@
         f.classList.add('td-flier');
         f.removeAttribute('data-icefin-focus');
         Object.assign(f.style, { position: 'fixed', left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, margin: '0', transformOrigin: '0 0', zIndex: 900, pointerEvents: 'none' });
+        f.setAttribute('data-icefin-layer', '');  // over Tide's screens (the engine hides the rest of <body>)
         document.body.append(f);
         const sx = to.width / r.width, sy = to.height / r.height;
         const anim = f.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${to.left - r.left}px, ${to.top - r.top}px) scale(${sx}, ${sy})`, opacity: 0.85 }],
@@ -225,6 +226,7 @@
                     const ghost = el('div', 'td-e-thumb has-art');
                     ghost.style.backgroundImage = home.art;
                     Object.assign(ghost.style, { position: 'fixed', left: `${home.rect.left}px`, top: `${home.rect.top}px`, width: `${home.rect.width}px`, height: `${home.rect.height}px`, transform: 'none', zIndex: 900 });
+                    ghost.setAttribute('data-icefin-layer', '');  // over Tide's screens (the engine hides the rest of <body>)
                     document.body.append(ghost);
                     t.style.opacity = '0';
                     requestAnimationFrame(() => D.fly(ghost, t.getBoundingClientRect(), 320, () => { ghost.remove(); t.style.opacity = ''; }));
