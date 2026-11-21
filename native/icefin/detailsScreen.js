@@ -389,8 +389,16 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 button('shuffle', 'Shuffle', () => playContainer(true));
                 if (pm() && pm().instantMix) button('mix', 'Instant mix', () => pm().instantMix(item));
             } else if (item.Type !== 'Person') {
-                button('play', 'Play', () => playContainer(false));
-                button('shuffle', 'Shuffle', () => playContainer(true));
+                // a container offers Play and Shuffle only when it holds something that plays (QA 3, Plaza: a folder of
+                // books showed both, and neither did anything); an album or a playlist always does
+                let plays = true;
+                if (item.IsFolder && item.Type !== 'MusicAlbum' && item.Type !== 'Playlist') {
+                    try { plays = ((await client.getItems(uid, { ParentId: item.Id, Recursive: true, MediaTypes: 'Video,Audio', Limit: 1 })).TotalRecordCount || 0) > 0; } catch (e) { /* keep them */ }
+                }
+                if (plays) {
+                    button('play', 'Play', () => playContainer(false));
+                    button('shuffle', 'Shuffle', () => playContainer(true));
+                }
                 if ((item.Type === 'MusicAlbum' || item.Type === 'Playlist') && pm() && pm().instantMix) button('mix', 'Instant mix', () => pm().instantMix(item));
             }
             if ((item.LocalTrailerCount || 0) > 0 || (item.RemoteTrailers || []).length) {
@@ -531,6 +539,10 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                         }
                         r.addEventListener('click', () => {
                             if (S && S.moving) { placeAt(r); drop(); return; }
+                            // the song that is playing opens what's playing instead of starting it over unseen (QA 3, Plaza:
+                            // pressing it changed nothing on the screen)
+                            const now = T.ctx.nowPlaying && T.ctx.nowPlaying();
+                            if (now && now.item && now.item.Id === t.Id && (now.item.MediaType || '') === 'Audio') { T.ctx.navigate('#/queue'); return; }
                             const rows = order(), m = pm();
                             if (m) m.play({ ids: rows.map((x) => x.dataset.id), startIndex: rows.indexOf(r), serverId: sid });
                         });

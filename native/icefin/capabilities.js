@@ -1247,6 +1247,12 @@
             if (!area) continue;
             for (const el of area.querySelectorAll(STOCK_CTL)) {
                 if (el.disabled || el.closest('[hidden], .hide, [aria-hidden="true"]') || !stockShown(el)) continue;
+                // a .cardBox counts only for a card that does something (QA 3, Plaza: a book's cover on its details page is
+                // a card with no action or item, and the remote stopped on it, unmarked, with nothing to press)
+                if (el.matches('.cardBox') && !stockFocusable(el)) {
+                    const card = el.closest('.card');
+                    if (!card || !card.matches('[data-action], [data-id], .itemAction')) continue;
+                }
                 out.push(el);
             }
         }
