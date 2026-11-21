@@ -16,7 +16,7 @@ _Standard: VM-LAB-STANDARD v1.2 · Created 2026-11-07_
 ## Guests (watch in virt-manager → QEMU/KVM)
 | Guest | Kind | Base | vCPU/RAM | Purpose | Snapshots |
 |---|---|---|---|---|---|
-| lab-icefin-main | vm | lab-base-debian13 | 8 / 16 GB, 80 GB disk | native + Flatpak builds, unit tests, Jellyfin servers | clean, provisioned, servers |
+| lab-icefin-main | vm | lab-base-debian13 | 12 / 24 GB, 80 GB disk (raised from 8 / 16 GB for parallel walks, D44) | native + Flatpak builds, unit tests, Jellyfin servers | clean, provisioned, servers |
 | lab-icefin-htpcsim | vm | lab-base-debian13 | 4 / 6 GB, 40 GB disk | stand-in HTPC (`lab.htpcsim.env`, `tests/icefin/htpc/sim-provision.sh`) | clean, provisioned |
 
 Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with the KDE SDK need it.
