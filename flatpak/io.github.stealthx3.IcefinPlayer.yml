@@ -23,6 +23,12 @@ finish-args:
   - --talk-name=org.freedesktop.ScreenSaver
   - --own-name=org.freedesktop.ReserveDevice1.*  # exclusive ALSA device reservation (3.5)
   - --own-name=org.mpris.MediaPlayer2.IcefinPlayer.*
+  # Add to Steam (Steam Shortcut Standard v1, D43): Steam's folders only, never home. The same three paths Heroic Games
+  # Launcher has on Flathub for its Add to Steam. Flathub justification: "Writes this app's own non-Steam shortcut and
+  # its library artwork into Steam's userdata, on the user's request only."
+  - --filesystem=~/.steam:rw
+  - --filesystem=~/.steam/steam:rw
+  - --filesystem=~/.var/app/com.valvesoftware.Steam:rw
   - --env=QML_DISABLE_DISK_CACHE=1  # the qrc QML carries the build's fixed timestamps, so Qt's disk cache kept the previous build's compiled QML after an update (seen on the HTPC, 8.4)
   # Added with their features: --device=shm (host jackd, 3.1), Mutter DisplayConfig (refresh matching),
   # xdg-config/wireplumber:create (only if the runtime IEC958 setting fails, 3.4).
@@ -179,3 +185,14 @@ modules:
                   project-id: 9265
                   stable-only: true
                   url-template: https://www.freedesktop.org/software/uchardet/releases/uchardet-$version.tar.xz
+
+  # Add to Steam (Steam Shortcut Standard v1, D43): the helper vendored from ai-assets, its config and the five Steam
+  # images from the brand kit (packaging/steam/). The app runs the helper from Client Settings -> Steam.
+  - name: steam-shortcut
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 add_to_steam.py ${FLATPAK_DEST}/bin/${FLATPAK_ID}-steam
+      - install -Dm644 -t ${FLATPAK_DEST}/share/${FLATPAK_ID}/steam steam-shortcut.json capsule-600x900.png header-920x430.png hero-3840x1240.png logo-1280x720.png icon-256.png
+    sources:
+      - type: dir
+        path: ../packaging/steam

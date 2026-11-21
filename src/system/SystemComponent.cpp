@@ -627,7 +627,8 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/icefin/capabilityPrompt.js",  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
     ":/web-client/extension/icefin/deviceProfile.js",  // ICEFIN-HOOK: Auto device profile (PLAN 6.4)
     ":/web-client/extension/icefin/gamepads.js",  // ICEFIN-HOOK: controller layer, page side (PLAN 7.3, 7.5)
-    ":/web-client/extension/icefin/audioTestPage.js"  // ICEFIN-HOOK: Client Settings -> Audio test (PLAN 3.8)
+    ":/web-client/extension/icefin/audioTestPage.js",  // ICEFIN-HOOK: Client Settings -> Audio test (PLAN 3.8)
+    ":/web-client/extension/icefin/steamShortcut.js"  // ICEFIN-HOOK: Client Settings -> Steam, first-run offer (PLAN 11.10)
   };
 
   cachedScript = jmpInfoDeclaration;
