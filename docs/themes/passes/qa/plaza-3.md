@@ -98,4 +98,21 @@ Judged, from the re-walk:
   the second the song had ended, the chip was gone and the walker's click landed on Overview, which had moved under
   the pointer.
 
-Re-walk 2 (with every fix above, walked together with Media Center's pass 2): to follow.
+Re-walk 2 (lab `~/walks/qa-plaza3v2-mc2`, walked together with Media Center's pass 2; build main with #216 and #217,
+theme/plaza dd1c9070): Plaza 129 + 11 findings (from 139 + 13). Gone: the reader's Full screen error, the Watch
+together script error, Back from an artist's details, the Live TV channel's Back (mouse). Nothing new but Shift+Tab
+and hover on two Now playing chips (judged as before).
+
+The Back-focus findings left are the walker's, each traced and replayed in the lab:
+- Back from the player to a series, a list (Play all, Shuffle) and a video's details (5 pad runs, keys): no Back was
+  pressed. The walker records the player's controls with right ×5, down ×3, left ×5; the clip ended part-way (the test
+  episodes are 33 and 38 s, and the walker users resume where the admin stopped), the player went back by itself, and
+  Plaza focused the episode (replayed: E2). The presses still to come then moved the focus to the header's Back. The
+  walker now stops recording when the player has gone back (qa/7.6-walk).
+- Back to the classic home's Music, Photos and a book, focus on the tile before (keys, 3 pad runs): the walker placed
+  the focus on the tile by script, not by a press, two seconds after Back from the tile before; for 2.5 s after a Back
+  the engine keeps what opened the next screen unless the user has moved (#215), so the scripted focus wasn't kept.
+  Replayed with presses: Back lands on the tile opened. The walker now waits out that window before a scripted
+  placement.
+
+Pass 3 is complete: every finding is fixed or judged. Next, the user's review of Plaza (screens and audio, D41).
