@@ -44,10 +44,12 @@
             // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
             // Descendants too: jellyfin-web sets visibility: visible on some of its own (the list page's A-Z picker).
             // Server plugins add UI straight to <body> (a media bar's slides, toasts): everything at the top level except
-            // Icefin's own (the screen root, the overlay, the on-screen keyboard, the device wallpaper) and jellyfin-web's dialogs (which the
+            // Icefin's own (the screen root, the overlay, the on-screen keyboard, the device wallpaper), a theme's own layers
+            // ([data-icefin-layer]: a notice, a flight, a hint bar it puts on <body>) and jellyfin-web's dialogs (which the
             // capability prompt uses too) steps aside as well. A theme with a transparent screen over the native
-            // backdrop showed all of it through.
-            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(#icefin-live):not(#icefin-wallpaper):not(.dialogContainer)';
+            // backdrop showed all of it through. (QA 3, Media Center: without the layer mark a theme's notices and
+            // flights on <body> were hidden on its own screens, so Play on an album showed nothing.)
+            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(#icefin-live):not(#icefin-wallpaper):not([data-icefin-layer]):not(.dialogContainer)';
             const hide = ['.skinHeader', '.mainDrawer', '.mainDrawerHandle', '.mainAnimatedPages', '.backgroundContainer', '#reactRoot', `body > ${keep}`]
                 .map((s) => `html.${SCREEN_CLASS} ${s}, html.${SCREEN_CLASS} ${s} *`).join(', ');
             st.textContent = `${hide} { visibility: hidden !important; }`

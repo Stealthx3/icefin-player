@@ -151,6 +151,7 @@
             n = document.createElement('div');
             n.id = NOTICE_ID;
             n.setAttribute('role', 'status');
+            n.setAttribute('data-icefin-layer', '');
             n.style.cssText = 'position:fixed;left:3vw;top:3vh;z-index:1001;max-width:46vw;padding:0.7em 1.1em;font-size:1.05em;'
                 + 'background:var(--icefin-color-surfaceRaised, var(--icefin-color-surface));color:var(--icefin-color-text);border-radius:var(--icefin-shape-cardRadius);'
                 + 'box-shadow:0 0 1.5em rgb(var(--icefin-color-background-channel) / 0.6);pointer-events:none;transition:opacity 400ms';

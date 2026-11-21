@@ -57,6 +57,10 @@ window.icefinTheme.registerScreen('#/home', {
 - Focus: arrows move between `[data-icefin-focus]` elements by position; Enter clicks; the focused element gets
   the class `icefin-focused`. Themes can't remap input (SPEC "One input pipeline").
 - Routes are written as jellyfin-web uses them, without query or `.html`: `#/home`, `#/details`.
+- While a theme's screen shows, everything at the top of `<body>` that isn't Icefin's is hidden (server plugins put UI
+  there). Put what a theme draws outside its screen root (a notice, a flight, a hint bar) on `<body>` with the
+  attribute `data-icefin-layer`, or it stays hidden. A control only the pointer uses (the remote reaches the same
+  thing another way) carries `data-icefin-pointer-only`.
 
 ## Theme script API (`icefinTheme.apiVersion` 1, PLAN 8.7)
 Theme scripts reach Icefin and the server **only** through `ctx` and `window.icefinTheme`. The host globals behind them
