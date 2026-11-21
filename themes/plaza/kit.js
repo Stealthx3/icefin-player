@@ -191,6 +191,20 @@
             timer = setTimeout(stop, 8000);  // a screen that loads in several requests can take a while (QA 3); input still stops it
             setTimeout(soon, 0);
         }
+        // jellyfin-web opens the player (and some pages) with history.pushState, which fires neither popstate nor
+        // hashchange: the screen left was never filed, so Back from the player found nothing to put back (QA 3: Back
+        // to a series or a list landed on the first row). The Navigation API hears every change, as it happens, with
+        // the screen left still up. A replace at the same address is the same screen under a new key: carry it over.
+        const onEntry = (e) => {
+            const h = here();
+            if (e && e.navigationType === 'replace' && h !== lastHash && urlOf(h) === urlOf(lastHash)) {
+                if (cur && cur.hash === lastHash) cur.hash = h;
+                if (pending && pending.hash === lastHash) pending.hash = h;
+                lastHash = h;
+                return;
+            }
+            routed();
+        };
         // capture listeners on window run before the engine's own, so the screen left is still up when it is filed
         const onFocus = (e) => record(e.target);
         const onInput = (e) => { if (e.type !== 'mousemove' || e.movementX || e.movementY) stop(); };
@@ -198,6 +212,7 @@
         const off = () => {
             window.removeEventListener('popstate', routed, true);
             window.removeEventListener('hashchange', routed, true);
+            if (window.navigation) navigation.removeEventListener('currententrychange', onEntry);
             document.removeEventListener('icefin-focus', onFocus, true);
             document.removeEventListener('click', onFocus, true);
             for (const t of INPUT) window.removeEventListener(t, onInput, true);
@@ -207,6 +222,7 @@
         window.icefinPlazaBackFocusOff = off;
         window.addEventListener('popstate', routed, true);
         window.addEventListener('hashchange', routed, true);
+        if (window.navigation) navigation.addEventListener('currententrychange', onEntry);
         document.addEventListener('icefin-focus', onFocus, true);
         document.addEventListener('click', onFocus, true);
         for (const t of INPUT) window.addEventListener(t, onInput, true);
