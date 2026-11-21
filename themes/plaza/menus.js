@@ -326,9 +326,12 @@
                 };
                 screen.sort = () => sortOf(state);
                 const first = back && tabs.find((x) => x.id === back.tab && x.grid) ? back.tab : tabs[0].id;
+                // Back to a tab's action (Play all, Shuffle, the sort): the grid drawn after it doesn't take the focus Back
+                // put on that tab (QA 3: Back from the player landed on the first card)
+                const want = P.backFocus.target();
                 F.setTabs(tabs, first, (id) => show(id, false));
                 if (spec.after) spec.after(F, parent, p, screen);
-                show(first, true, back ? back.page : 0);
+                show(first, !(want && want.tab), back ? back.page : 0);
                 P.keep(() => ({ tab, page: grid ? grid.page : 0, sort: { sort: state.sort, flip: state.flip, filters: [...state.filters] } }));
                 screen.relayout = () => { if (grid) grid.relayout(); };
                 window.addEventListener('resize', screen.relayout);
@@ -697,6 +700,7 @@
                     el('div', 'pz-ep-meta', [P.runtime(ep.RunTimeTicks), ep.PremiereDate ? new Date(ep.PremiereDate).getFullYear() : '', ep.Overview || ''].filter(Boolean).join(' · ')));
                 const played = ep.UserData && ep.UserData.Played;
                 const more = P.focusable(el('div', 'pz-ep-more', 'Details'));
+                more.plazaItem = ep;     // its episode, so Back from those details finds this row's button, not the first (QA 3)
                 more.addEventListener('click', (e) => { e.stopPropagation(); P.details(ep); });
                 row.append(still, text);
                 if (played) row.append(el('div', 'pz-ep-done', '✓'));
@@ -734,7 +738,10 @@
                 const tabs = seasons.map((s) => ({ id: s.Id, label: s.IndexNumber === 0 ? 'Specials' : s.Name, s }));
                 F.setTabs(tabs, start ? start.Id : null, (sid) => { const t = tabs.find((x) => x.id === sid); if (t && t.s) season(t.s, false); });
                 F.root.setAttribute('data-pz-seasons', String(seasons.length));
-                if (start) await season(start, true); else list.append(el('div', 'pz-empty', 'No seasons yet'));
+                // Back from an episode or the player: Back focus puts the row used back, so the season doesn't take it (QA 3:
+                // the series loads in four requests, and on a slow machine the first row won)
+                const want = P.backFocus.target();
+                if (start) await season(start, !want); else list.append(el('div', 'pz-empty', 'No seasons yet'));
             },
             onAction(a, ctx) {
                 P.sawAction();
@@ -972,9 +979,19 @@
             ];
         },
         after(F, parent, p, screen) {
+            const q = listQuery(p);
+            // Play all and Shuffle only where something plays (QA 3: a books library offered both, and they did nothing)
+            P.safe(P.client().getItems(P.uid(), Object.assign({ Recursive: true, Limit: 50, MediaTypes: 'Video,Audio' }, q, { IncludeItemTypes: undefined }))).then((r) => {
+                if (!Array.isArray(r.Items) || r.Items.some((x) => !x.IsFolder)) return;     // keep them if the server didn't answer
+                for (const id of ['playall', 'shuffle']) {
+                    const b = F.tab(id);
+                    if (!b) continue;
+                    if (b === document.activeElement && F.tab('all')) F.tab('all').focus();
+                    b.remove();
+                }
+            });
             // The A–Z rail (the walk's mock-up): a letter jumps the list to the first title from it; shown while sorted A to Z
             const rail = el('div', 'pz-az');
-            const q = listQuery(p);
             for (const ch of ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']) {
                 const b = P.focusable(el('div', 'pz-az-key', ch));
                 b.setAttribute('aria-label', ch === '#' ? 'Numbers and symbols' : `Titles from ${ch}`);

@@ -113,7 +113,7 @@
     // Every history entry (its key and hash: an item's details, a library's wall) remembers the last control focused or
     // clicked on it, and what its screen asks to keep (P.keep: the tab, the grid's page, the chosen disc). Back to that
     // entry, the screen reads that state from P.returning() as it mounts, and the control is focused once it is drawn:
-    // within 4 s, and never after the user has moved. A new visit to the same route is a new entry and starts fresh.
+    // within 8 s, and never after the user has moved. A new visit to the same route is a new entry and starts fresh.
     // Back and Home themselves are not remembered. The home keeps its own (P.homeReturn).
     P.backFocus = (() => {
         const memo = new Map();
@@ -143,7 +143,8 @@
         }
         function find(r, d) {
             const all = [...r.querySelectorAll('[data-icefin-focus]')].filter((e) => e.getClientRects().length && clsOf(e) === d.cls);
-            return (d.id && all.find((e) => idOf(e) === d.id))
+            // an item can show twice (an album's artist as Artist and as Album artist): the same label first
+            return (d.id && (all.find((e) => idOf(e) === d.id && labelOf(e) === d.label) || all.find((e) => idOf(e) === d.id)))
                 || (d.action && all.find((e) => e.getAttribute('data-action') === d.action))
                 || (d.tab && all.find((e) => e.getAttribute('data-pz-tab') === d.tab))
                 || (!d.id && d.label && all.find((e) => labelOf(e) === d.label)) || null;
@@ -187,7 +188,7 @@
             pending = { hash: h, entry };
             const r = rootEl();
             if (r) { obs = new MutationObserver(soon); obs.observe(r, { childList: true, subtree: true }); }
-            timer = setTimeout(stop, 4000);
+            timer = setTimeout(stop, 8000);  // a screen that loads in several requests can take a while (QA 3); input still stops it
             setTimeout(soon, 0);
         }
         // capture listeners on window run before the engine's own, so the screen left is still up when it is filed
@@ -214,7 +215,9 @@
             // the state a screen keeps for Back (asked for as the screen is left), registered as it mounts
             keep(fn) { keep = { hash: here(), fn }; },
             // the state kept for this hash when the user comes back to it, else null
-            returning() { return pending && pending.hash === here() ? pending.entry.state || null : null; }
+            returning() { return pending && pending.hash === here() ? pending.entry.state || null : null; },
+            // what Back to this hash will focus ({id, action, tab, label, cls}), else null
+            target() { return pending && pending.hash === here() ? pending.entry.d || null : null; }
         };
     })();
     P.keep = (fn) => P.backFocus.keep(fn);
