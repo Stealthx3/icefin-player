@@ -14,6 +14,11 @@
     const me = document.currentScript && document.currentScript.src;
     D.base = me ? me.replace(/[^/]*$/, '') : '';
     if (D.base) document.documentElement.style.setProperty('--ms-mark', `url("${D.base}icefin-mark.svg")`);
+    // the corner shows the server's own icon where the target shows its brand (PLAN 9.27, D39); the app's notices keep the
+    // IceFin Player mark (--ms-mark)
+    if (window.icefinTheme && window.icefinTheme.ui && window.icefinTheme.ui.brand) window.icefinTheme.ui.brand().then((b) => {
+        if (b && b.icon) document.documentElement.style.setProperty('--ms-brand', `url("${b.icon}")`);
+    }).catch(() => {});
 
     // Tide's screens register through D.register: shared handlers (D.onAction: ≡ and ▶ on the focused entry, the
     // hints) see every action first, then the screen's own onAction.

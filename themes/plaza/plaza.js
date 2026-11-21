@@ -695,9 +695,9 @@
             // nothing left to go back to: offer to quit (9.44)
             if (T.ctx.exit && P.sheet) {
                 P.sheet.show({
-                    title: 'Icefin', kind: 'livetv',
+                    title: 'IceFin Player', kind: 'livetv',
                     render(body) {
-                        body.append(el('div', 'pz-sheet-question', 'Exit Icefin?'), el('div', 'pz-sheet-note', 'Anything playing stops.'));
+                        body.append(el('div', 'pz-sheet-question', 'Exit IceFin Player?'), el('div', 'pz-sheet-note', 'Anything playing stops.'));
                         const f = el('div', 'pz-panel-foot');
                         const stay = P.focusable(el('div', 'pz-tab pz-tab-on', 'Cancel'));
                         stay.addEventListener('click', () => P.sheet.close());

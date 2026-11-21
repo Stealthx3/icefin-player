@@ -98,7 +98,14 @@
     ui.chrome.set('sideRail', {
         width: '24.0625vw',  // 462 of 1920
         async mount(rail) {
-            rail.append(el('div', 'hb-brand', 'Icefin'));
+            // where the target shows its own logo: the server's banner, else its icon and name (PLAN 9.27, D39)
+            const brand = el('div', 'hb-brand', 'IceFin Player');
+            rail.append(brand);
+            if (ui.brand) ui.brand().then((b) => {
+                if (!b || !brand.isConnected) return;
+                if (b.banner) { const img = el('img', 'hb-brand-banner'); img.alt = b.name || ''; img.src = b.banner; brand.replaceChildren(img); }
+                else if (b.icon || b.name) { brand.replaceChildren(); if (b.icon) { const img = el('img', 'hb-brand-icon'); img.alt = ''; img.src = b.icon; brand.append(img); } brand.append(el('span', 'hb-brand-name', b.name || 'IceFin Player')); }
+            }).catch(() => {});
             const view = el('div', 'hb-rail-view');
             pin(view);
             const list = el('div', 'hb-rail-list');

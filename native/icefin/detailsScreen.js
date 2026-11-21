@@ -29,6 +29,11 @@
     const PLAYABLE = new Set(['Movie', 'Episode', 'Video', 'MusicVideo', 'Trailer', 'Audio']);
     const CONTAINER = new Set(['Series', 'Season', 'MusicAlbum', 'MusicArtist', 'BoxSet', 'Playlist', 'Folder', 'CollectionFolder', 'Person']);
     const pm = () => window.icefinPlaybackManager;
+    // The season whose episodes a series showed, per history entry: Back from one of its episodes shows that season
+    // again, so the episode that was opened is there to take the focus (QA 2, Plaza's walk: Back from Book Two's first
+    // episode showed Book One and focused Play). A new visit (a new entry) starts on the next-up season as before.
+    const seasonShown = new Map();
+    const entryOf = (itemId) => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : location.hash) + ' ' + itemId;
 
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const focusable = (e) => { e.setAttribute('data-icefin-focus', ''); e.tabIndex = -1; return e; };
@@ -452,6 +457,7 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
             const opts = { userId: uid, Fields: 'PrimaryImageAspectRatio,UserData' };
             if (!live()) return;
             if (item.Type === 'Series') {
+                const entry = entryOf(item.Id);  // before the awaits: the entry this screen is on
                 if (S.next) section('nextup', 'Next up').append(card(client, S.next, 'wide', null, `S${S.next.ParentIndexNumber} E${S.next.IndexNumber}`));
                 let seasons = [];
                 try { seasons = (await client.getSeasons(item.Id, opts)).Items || []; } catch (e) { /* none */ }
@@ -462,6 +468,9 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                     const showSeason = async (season) => {
                         if (!season || shown === season.Id) return;
                         shown = season.Id;
+                        seasonShown.delete(entry);
+                        seasonShown.set(entry, season.Id);
+                        if (seasonShown.size > 100) seasonShown.delete(seasonShown.keys().next().value);
                         srow.querySelectorAll('.icefin-d-card').forEach((c) => c.classList.toggle('current', c.dataset.id === season.Id));
                         erow.parentElement.querySelector('h2').textContent = season.Name;
                         let eps = [];
@@ -476,7 +485,8 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                         c.addEventListener('icefin-focus', () => { clearTimeout(timer); timer = setTimeout(() => showSeason(s), 250); });
                         srow.append(c);
                     });
-                    await showSeason(seasons.find((s) => S.next && s.Id === S.next.SeasonId) || seasons.find((s) => !((s.UserData || {}).Played)) || seasons[0]);
+                    await showSeason(seasons.find((s) => s.Id === seasonShown.get(entry))
+                        || seasons.find((s) => S.next && s.Id === S.next.SeasonId) || seasons.find((s) => !((s.UserData || {}).Played)) || seasons[0]);
                 }
             } else if (item.Type === 'Season') {
                 let eps = [];
@@ -644,7 +654,14 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 if (action === 'left' || action === 'right') return true;  // a list: nothing beside it
                 return false;  // enter clicks the option; back closes the picker (onBack)
             },
-            onBack() { if (S && S.moving && S.reorder) return S.reorder('back'); return closePicker(); },
+            // a picker or a move first; then Back leaves the page as its Back button does. A screen that returned false
+            // here left the keyboard's Escape and Backspace with nothing to do in desktop mode (QA 1, the Plaza walk)
+            onBack() {
+                if (S && S.moving && S.reorder) return S.reorder('back');
+                if (closePicker()) return true;
+                if (history.length > 1) history.back(); else T.ctx.navigate('#/home');
+                return true;
+            },
             async mount(root) {
                 ensureStyle();
                 const params = new URLSearchParams(location.hash.split('?')[1] || '');

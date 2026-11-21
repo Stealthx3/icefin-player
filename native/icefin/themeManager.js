@@ -93,7 +93,24 @@
             el('label', { className: 'inputLabel', textContent: text }), control);
         // In-page drop-downs (clientSettings.js), now rather than on its next pass, so they're ready when shown.
         setTimeout(() => { if (window.icefinDropdown) box.querySelectorAll('select').forEach(window.icefinDropdown); }, 0);
-        box.append(classicRow, field('Theme: ', themeSel), field('Colour scheme: ', presetSel), preview, about, trustRow,
+        // Device wallpaper (9.26, wallpaper.js): behind any theme, one per device.
+        const wpName = el('span', { className: 'icefin-tm-wallpaper-name', textContent: 'None', style: 'margin-right:0.8em' });
+        const wpChoose = button('Choose…', 'icefin-tm-wallpaper-choose');
+        const wpRemove = button('Remove', 'icefin-tm-wallpaper-remove');
+        wpRemove.style.display = 'none';
+        const wpRow = el('div', { className: 'inputContainer icefin-tm-wallpaper', style: 'display:block;margin-bottom:1em' },
+            el('label', { className: 'inputLabel', textContent: 'Wallpaper: ' }), wpName, wpChoose, wpRemove,
+            el('p', { className: 'fieldDescription', textContent: 'An animated SVG, a looping MP4 or WebM, or a picture, behind any theme. Paused with Low Motion; hidden while video plays.' }));
+        const wpLoad = async () => {
+            const w = api.theme.wallpaper ? await call(api.theme.wallpaper) : null;
+            wpName.textContent = w && w.name ? w.name : 'None';
+            wpRemove.style.display = w && w.url ? '' : 'none';
+        };
+        wpChoose.addEventListener('click', () => api.theme.pickWallpaper());
+        wpRemove.addEventListener('click', () => api.theme.clearWallpaper());
+        if (api.theme.wallpaperChanged) api.theme.wallpaperChanged.connect(() => { if (box.isConnected) wpLoad(); });
+        wpLoad();
+        box.append(classicRow, field('Theme: ', themeSel), wpRow, field('Colour scheme: ', presetSel), preview, about, trustRow,
             el('div', {}, apply, cancel, install, remove), status);
 
         let themes = [];
