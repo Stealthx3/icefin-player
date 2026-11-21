@@ -626,10 +626,33 @@
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }
+        // The theme's overlay over jellyfin-web's own page (a sheet opened from a framed page's Play on) is modal there
+        // too, so the keys drive it as the remote does. They went to the page underneath: Escape left the page with the
+        // sheet still up, and the arrows moved a focus inside the page that nobody could see (QA, the keyboard walk).
+        const ov = !current && window.icefinTheme && window.icefinTheme.ui && window.icefinTheme.ui.overlay;
+        if (ov && ov.isOpen && ov.isOpen()) {
+            const t1 = e.target;
+            if (t1 && t1 !== document.body && t1 !== document.documentElement && t1.closest && !t1.closest('#icefin-theme-overlay, #icefin-osk')) return;
+            if (foreignDialog()) return;
+            if (t1 && (t1.isContentEditable || (t1.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit)$/i.test(t1.type || '')) || t1.tagName === 'TEXTAREA')
+                && (action === 'left' || action === 'right' || e.key === 'Backspace')) return;
+            if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            return;
+        }
         if (!current) {
             const t0 = e.target;
             const typing = t0 && (t0.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t0.tagName));
             if (action === 'back' && !typing && !foreignDialog() && stockRootBack()) { e.preventDefault(); e.stopImmediatePropagation(); }
+            // On a theme's frame around jellyfin-web's page the arrows move as the remote does, over the page and the
+            // frame (its Back, Home and tabs take no Tab stop): in desktop layout jellyfin-web's arrows only scrolled, so
+            // the keyboard never reached the frame (QA 2, Plaza's walk: Back, Home, Play on and Watch together on the
+            // classic home). A field, a list or a slider keeps the arrows it edits with; a jellyfin-web dialog keeps all.
+            if (/^(up|down|left|right)$/.test(action) && document.documentElement.hasAttribute('data-icefin-stock') && !foreignDialog()) {
+                const editsAll = t0 && (t0.isContentEditable || /^(TEXTAREA|SELECT)$/.test(t0.tagName) || (t0.tagName === 'INPUT' && t0.type === 'range'));
+                const editsLine = t0 && t0.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit|reset|image|color|file)$/i.test(t0.type || '');
+                if (editsAll || (editsLine && (action === 'left' || action === 'right'))) return;
+                if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            }
             return;
         }
         // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
