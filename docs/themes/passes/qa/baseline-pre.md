@@ -80,9 +80,18 @@ Judged not Baseline's, or not real:
 For the host walk:
 - [ ] Back focus across the board, with the pad, keys and mouse (the restore waits for the screen to draw the control;
       a slow server could pass the walker's 1.5 s settle).
+      Open (baseline-1.md): the restore works on the libraries, Live TV and every details page, but failed on the home
+      for every opener in every run (99). Fixed as F1 (c8a990e4); missing: a re-walk with the home's back_ok True. The
+      slow-server worry did not show.
 - [ ] The now playing bar against stock's: its height, colour and buttons (from memory of stock's TV bar, not a
       capture), and that the hints and the alpha strip clear it.
+      Open: the mouse run's screenshot shows the bar and the A-Z strip clears it; missing: a pad screenshot with the bar
+      and the hints up, and the side-by-side with stock's bar for height and colour.
 - [ ] Hover moves focus: the rows slide to centre a hovered card as they do for the remote; check this reads well
       with the mouse, and compare with stock in the same shell (the stock control).
+      Open: hover took focus on almost every control (the mechanism holds); missing: the eye check of the feel next to
+      stock.
 - [ ] The mouse's Back with a panel open in the app itself (Qt's goBack, not the walker's CDP event), once #204 is in main.
+      Open: with the walker's CDP back event all eight item panels closed on Back, so #204's cancel works; missing: the
+      real button, `xdotool click 8` on the lab display.
 - Low findings (Shift+Tab) are left for pass 1.
