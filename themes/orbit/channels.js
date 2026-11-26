@@ -81,6 +81,7 @@
             // front, the current one's title brings its first tile back (QA pre: the mouse reached one channel only)
             const title = el('div', 'ob-channel-title', ch.title);
             title.setAttribute('role', 'button');
+            title.setAttribute('data-icefin-pointer-only', '');  // the pointer's way; a pad has ▲ ▼ (QA Orbit 1)
             title.setAttribute('aria-label', `${ch.title}: the channel`);
             title.addEventListener('click', () => {
                 const k = S ? S.rows.findIndex((r) => r.el === row) : -1;
@@ -334,7 +335,9 @@
             if (r < 0) { if (action === 'down' || action === 'up' || action === 'left') { focusChannel(S.index); return true; } return false; }
             if (action === 'up' || action === 'down') {
                 const n = r + (action === 'down' ? 1 : -1);
-                if (n >= 0 && n < S.rows.length) { focusChannel(n); ctx.sound('navigate'); remember(); } else ctx.sound('error');
+                if (n >= 0 && n < S.rows.length) { focusChannel(n); ctx.sound('navigate'); remember(); }
+                else if (n < 0 && S.who && S.who.isConnected) { T.ctx.focus(S.who); ctx.sound('navigate'); }  // Up on the top channel reaches the account (QA Orbit 1)
+                else ctx.sound('error');
                 return true;
             }
             if (action === 'left' || action === 'right') { setTimeout(remember, 0); return false; }  // the carousel's own moves

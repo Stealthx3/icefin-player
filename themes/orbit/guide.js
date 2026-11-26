@@ -19,6 +19,7 @@
     let S = null;
     // the tab that left the guide, with the history entry it left (the Navigation API's key, else the hash)
     let tabBack = null;
+    let played = null;  // the cell played from this history entry: Back from the player focuses it again (QA Orbit 1)
     const entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '') || location.hash;
 
     function info(p, ch) {
@@ -139,6 +140,8 @@
                 }
                 const back = tabBack && tabBack.entry && tabBack.entry === entryKey() ? tabBack.at : null;
                 tabBack = null;
+                const cell = played && played.entry === entryKey() ? played : null;
+                played = null;
                 S.channels = chans.map((ch) => ({ id: ch.Id, name: ch.Name, ch }));
                 S.guide = ui.guideGrid(S.guideEl, {
                     channels: S.channels,
@@ -152,14 +155,15 @@
                     renderChannel(ch, cell) { cell.append(el('span', 'or-chno', ch.ch.ChannelNumber || ''), el('span', 'or-chname', ch.name)); },
                     renderProgram(p, cell) { cell.textContent = p.title; if (p.item && p.item.TimerId) cell.append(el('span', 'or-rec', ' ●')); },
                     emptyLabel: 'No information',
-                    focus: back == null,
+                    focus: back == null && !cell,
                     onFocus(p, ch) { info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
                     onSelect(p, ch) {
-                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
+                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { played = { entry: entryKey(), id: ch.id, time: p.start }; stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
                         else if (D.liveOptions && p.item) D.liveOptions(p.item);
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
                 });
+                if (cell) { const r = S.channels.findIndex((x) => x.id === cell.id); if (r >= 0) S.guide.focus(r, Math.max(cell.time, Date.now())); }
                 if (back != null && S.menu[back]) { S.menuIndex = back; focusMenu(); }
                 // a stretch with no programme information (the engine's gap cell does nothing on OK or a click): now,
                 // it is the channel, so it plays; later, there is nothing to open (QA pre: OK on it did nothing)
@@ -167,7 +171,7 @@
                     const cell = ev.target.closest && ev.target.closest('.icefin-guide-gap');
                     const p = cell && cell.guideProgramme, ch = cell && cell.guideChannel;
                     if (!p || !ch) return;
-                    if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { E.sound('select'); stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
+                    if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { E.sound('select'); played = { entry: entryKey(), id: ch.id, time: p.start }; stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
                     else E.sound('error');
                 });
             },

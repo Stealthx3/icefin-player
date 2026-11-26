@@ -110,6 +110,20 @@ def main():
         act("up")
         check("up at the first channel stays", foc() == "tile/0/5", foc())
 
+        # The wheel on the view (QA Orbit 1): down a notch is the next channel, with Shift one tile along the ring.
+        wheel = lambda **o: js("document.querySelector('.ob-view').dispatchEvent(new WheelEvent('wheel', Object.assign({bubbles: true, cancelable: true}, %s))); true" % json.dumps(o))
+        wheel(deltaY=120)
+        time.sleep(0.5)
+        check("the wheel down steps to the next channel", root("data-ob-index") == "1", root("data-ob-index"))
+        wheel(deltaY=-120)
+        time.sleep(0.5)
+        check("the wheel up returns", root("data-ob-index") == "0", root("data-ob-index"))
+        wheel(deltaY=-120, shiftKey=True)
+        time.sleep(0.5)
+        check("Shift and the wheel step along the ring", foc() == "tile/0/4", foc())
+        wheel(deltaY=120, shiftKey=True)  # back to the end tile for the checks below
+        time.sleep(0.5)
+
         # The guide over the themed home.
         act("icefin_overlay")
         page.wait_for("!!document.querySelector('#icefin-theme-overlay .ob-guide')", timeout=5)

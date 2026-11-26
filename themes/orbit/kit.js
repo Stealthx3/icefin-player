@@ -258,20 +258,26 @@
     D.hintsOff = () => { if (hintEl) hintEl.hidden = true; };
 
     // ---- the pointer's Back and Home (Decisions board): a quiet line at the top left, while the mouse moves ----
+    // A button in the pointer's line: the pointer that moves over it focuses it, without making it a stop for the arrows.
+    // Content moving under a resting cursor sends events without movement: those never take focus (QA Orbit 1)
+    D.pointerFocus = (b) => {
+        b.addEventListener('mousemove', (e) => { if ((e.movementX || e.movementY) && T.ctx.focused && T.ctx.focused() !== b) T.ctx.focus(b); });
+        return b;
+    };
     D.pointerNav = (root, back, extra) => {
         const nav = D.el('div', 'or-pnav');
-        const b = D.el('button', 'or-pnav-btn');
+        const b = D.pointerFocus(D.el('button', 'or-pnav-btn'));
         b.type = 'button';
         b.append(D.svg('back'), document.createTextNode(' Back'));
         b.addEventListener('click', () => { T.ctx.sound('back'); if (back) back(); else history.back(); });
-        const h = D.el('button', 'or-pnav-btn');
+        const h = D.pointerFocus(D.el('button', 'or-pnav-btn'));
         h.type = 'button';
         h.append(D.svg('home'), document.createTextNode(' Home'));
         h.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/home'); });
         nav.append(b, h);
         // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
-        const add = (icon, label, go) => { const x = D.el('button', 'or-pnav-btn'); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
-        add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
+        const add = (icon, label, go) => { const x = D.pointerFocus(D.el('button', 'or-pnav-btn')); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
+        add('reorder', 'Options', () => { if (!(T.handleAction && T.handleAction('menu')) && D.notice) D.notice('No options here', true); });  // always answers (QA Orbit 1)
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));
         for (const x of (extra || [])) add(x.icon || 'item', x.label, x.go);

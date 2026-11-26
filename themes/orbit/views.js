@@ -290,7 +290,7 @@
     D.columns = function (rootEl, opts) {
         const key = opts.key || location.hash.split('?')[0];
         const saved = opts.fresh ? null : D.memory.get(key);
-        const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0), zone: 'main', tabAt: 0 };
+        const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0), zone: opts.zone || 'main', tabAt: 0 };  // zone: a screen may start on its tabs (QA Orbit 1)
         rootEl.setAttribute('data-or-screen', opts.name || 'browse');
         rootEl.classList.add('or-screen');
         const ttl = el('div', 'or-ttl');
@@ -487,6 +487,8 @@
                 p.seasons.forEach((s, k) => {
                     const b = el('button', 'or-tab' + (k === si ? ' on' : ''), s.item.Name || s.name);
                     b.type = 'button';
+                    b.setAttribute('data-icefin-pointer-only', '');  // a pad changes season with the shoulders (QA Orbit 1)
+                    b.setAttribute('aria-selected', k === si ? 'true' : 'false');
                     b.tabIndex = -1;
                     b.addEventListener('click', () => { T.ctx.sound('navigate'); fillPanel(p, k).then(() => { if (deck && deck.panels[deck.at] === p) focusDeck(true); }); });
                     p.tabsEl.append(b);
@@ -713,7 +715,8 @@
                         tabEls[n].click();
                         return true;
                     }
-                    if (a === 'down') { S.zone = 'main'; if (V) V.focus(); return true; }
+                    // an empty tab has no view: its button takes the focus (QA Orbit 1)
+                    if (a === 'down') { S.zone = 'main'; if (V) V.focus(); else { const w = rootEl.querySelector('.or-main .or-empty .or-btn'); if (w) T.ctx.focus(w); else T.ctx.sound('error'); } return true; }
                     if (a === 'up') { T.ctx.sound('error'); return true; }
                     if (a === 'step_backward' || a === 'step_forward') { const n = S.tabAt + (a === 'step_forward' ? 1 : -1); if (n >= 0 && n < tabEls.length) tabEls[n].click(); else T.ctx.sound('error'); return true; }
                     if (a !== 'back' && a !== 'menu') return false;  // OK: the engine clicks the tab

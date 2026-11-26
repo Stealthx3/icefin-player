@@ -82,13 +82,23 @@
     ];
 
     // ---- a programme's options (Notices board) ----
-    async function programmeOptions(id, ch) {
-        let p;
-        try { p = await I.programme(id); } catch (e) { fail(e); return; }
+    async function programmeOptions(id, ch, given) {
+        // the panel shows at once with the programme the guide holds; the record defaults fill the steppers when they
+        // arrive (QA Orbit 1)
+        const defs = Promise.resolve().then(() => I.recordDefaults(id)).catch(() => null);  // the server's defaults
+        let p = given && given.StartDate && given.EndDate && given.Name ? given : null;
+        if (!p) { try { p = await I.programme(id); } catch (e) { fail(e); return; } }
         const pre = [[0, 'on time'], [60, '1 min'], [120, '2 min'], [300, '5 min'], [600, '10 min'], [900, '15 min']];
         const keep = [[0, 'all'], [1, 'the newest'], [3, '3'], [5, '5'], [10, '10']];
         const o = { pre: 0, post: 0, keep: 0 };
-        try { const d = await I.recordDefaults(id); o.pre = d.PrePaddingSeconds || 0; o.post = d.PostPaddingSeconds || 0; } catch (e) { /* the server's defaults */ }
+        let rowPre = null, rowPost = null;
+        const swap = (old, make) => { if (!old || !old.isConnected) return; const had = old === T.ctx.focused(); const nw = make(); old.replaceWith(nw); if (had) T.ctx.focus(nw); };
+        defs.then((d) => {
+            if (!d) return;
+            o.pre = d.PrePaddingSeconds || 0; o.post = d.PostPaddingSeconds || 0;
+            swap(rowPre, () => (rowPre = D.stepper('Start early', pre, o.pre, (v) => { o.pre = v; })));
+            swap(rowPost, () => (rowPost = D.stepper('Stop late', pre, o.post, (v) => { o.post = v; })));
+        });
         const s = Date.parse(p.StartDate), e = Date.parse(p.EndDate), now = Date.now();
         D.panel.show({
             title: p.Name, path: `${hm(s)}–${hm(e)} · ${p.ChannelName || (ch && ch.Name) || ''}`,
@@ -98,14 +108,14 @@
                 if (p.TimerId) body.append(D.row('Cancel the recording', { icon: 'record', danger: true, go: async () => { try { await I.cancelRecording(p.TimerId); D.panel.close(); D.notice('Recording cancelled'); } catch (er) { fail(er); } } }));
                 else body.append(D.row('Record', { icon: 'record', go: async () => { try { await I.record(p, false, o); D.panel.close(); D.notice(`Recording ${p.Name}`); } catch (er) { fail(er); } } }));
                 if (p.IsSeries && !p.SeriesTimerId) body.append(D.row('Record the series', { icon: 'timer', go: async () => { try { await I.record(p, true, o); D.panel.close(); D.notice(`Recording every ${p.Name}`); } catch (er) { fail(er); } } }));
-                body.append(D.sec('Recording'),
-                    D.stepper('Start early', pre, o.pre, (v) => { o.pre = v; }),
-                    D.stepper('Stop late', pre, o.post, (v) => { o.post = v; }),
+                rowPre = D.stepper('Start early', pre, o.pre, (v) => { o.pre = v; });
+                rowPost = D.stepper('Stop late', pre, o.post, (v) => { o.post = v; });
+                body.append(D.sec('Recording'), rowPre, rowPost,
                     D.stepper('Keep', keep, o.keep, (v) => { o.keep = v; }));
             }
         });
     }
-    D.liveOptions = (it) => (it.Type === 'Program' ? programmeOptions(it.Id) : (it.CurrentProgram ? programmeOptions(it.CurrentProgram.Id, it) : watch(it)));
+    D.liveOptions = (it) => (it.Type === 'Program' ? programmeOptions(it.Id, null, it) : (it.CurrentProgram ? programmeOptions(it.CurrentProgram.Id, it) : watch(it)));
 
     // a channel's own details (the walk's details-channel): its programmes as a column, Watch first
     D.programmeScreen = (root, it) => {
@@ -130,10 +140,19 @@
         async mount(root, ctx) {
             const tab = D.params().get("or");
             if (tab && tab !== 'guide') {
-                const cats = [Object.assign(channelsLevel(), { label: 'Channels', key: 'channels' }), { label: 'Guide', key: 'guide', title: 'Guide', load: async () => { setTimeout(() => T.ctx.navigate('#/livetv'), 0); return []; } },
+                // Back to this entry comes up on the tab that was shown, tabs focused if they were (QA Orbit 1)
+                const entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '') || location.hash;
+                const kept = D.liveBar && D.liveBar.entry === entryKey() ? D.liveBar : null;
+                let returning = !!kept && kept.guide;  // the Guide tab shown again must not navigate straight back out
+                const cats = [Object.assign(channelsLevel(), { label: 'Channels', key: 'channels' }), { label: 'Guide', key: 'guide', title: 'Guide', load: async () => {
+                    if (returning) { returning = false; return []; }
+                    D.liveBar = { entry: entryKey(), at: 1, tabs: true, guide: true };
+                    setTimeout(() => T.ctx.navigate('#/livetv'), 0); return [];
+                } },
                     Object.assign(recordingsLevel(), { label: 'Recordings', key: 'recordings' }), Object.assign(scheduleLevel(), { label: 'Schedule', key: 'schedule' }), Object.assign(seriesLevel(), { label: 'Series', key: 'series' })];
-                const at = Math.max(0, cats.findIndex((x) => x.key === tab));
-                const C = D.columns(root, { name: 'livetv', key: `#/livetv?or=${tab}`, fresh: true, root: { bar: cats, at } });
+                const at = kept ? kept.at : Math.max(0, cats.findIndex((x) => x.key === tab));
+                const C = D.columns(root, { name: 'livetv', key: `#/livetv?or=${tab}`, fresh: true, zone: kept && kept.tabs ? 'tabs' : 'main', root: { bar: cats, at },
+                    onLevel: (lv, CC) => { if (!returning && cats[CC.S.barIndex].key !== 'guide') D.liveBar = { entry: entryKey(), at: CC.S.barIndex, tabs: CC.S.zone === 'tabs' }; } });
                 G = { C };
                 return;
             }

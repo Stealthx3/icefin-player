@@ -120,12 +120,13 @@
         return lv;
     };
     // Play all and Shuffle at the top of a drill-down's column (checklist 1.3)
-    D.playAllHead = (q) => (list) => (list.length ? [
-        { name: 'Play all', icon: 'play', shape: 'icon', go: () => T.ctx.play({ items: list.slice(0, 500) }), okLabel: 'play' },
-        { name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => { const s = list.slice(); for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } T.ctx.play({ items: s.slice(0, 500) }); }, okLabel: 'shuffle' }
+    // the notices say what started, with the level's title (QA Orbit 1)
+    D.playAllHead = (q, title) => (list) => (list.length ? [
+        { name: 'Play all', icon: 'play', shape: 'icon', go: () => { D.notice(`Playing ${title || 'all'}`); T.ctx.play({ items: list.slice(0, 500) }); }, okLabel: 'play' },
+        { name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => { D.notice(`Shuffling ${title || 'all'}`); const s = list.slice(); for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } T.ctx.play({ items: s.slice(0, 500) }); }, okLabel: 'shuffle' }
     ] : []);
     // A genre, studio or person's items (#/list's keys, checklist 1.3)
-    D.dropLevel = (title, icon, q, o) => D.listLevel(title, icon, Object.assign({ IncludeItemTypes: 'Movie,Series,MusicAlbum,MusicVideo,Video,Book' }, q), Object.assign({ head: D.playAllHead(q) }, o || {}));
+    D.dropLevel = (title, icon, q, o) => D.listLevel(title, icon, Object.assign({ IncludeItemTypes: 'Movie,Series,MusicAlbum,MusicVideo,Video,Book' }, q), Object.assign({ head: D.playAllHead(q, title) }, o || {}));
     D.folderLevel = (it) => D.listLevel(it.Name, D.kindIcon(it.Type), { ParentId: it.Id, Recursive: false, SortBy: 'IsFolder,SortName' }, { sortable: true });
     D.groupLevel = (title, icon, fetch, toLevel) => ({
         title, icon, letters: true,
@@ -202,7 +203,7 @@
             out.push(folder(albums),
                 folder(D.groupLevel('Artists', 'person', async () => { const r = await Promise.resolve(c().getAlbumArtists(uid(), { ParentId: view.Id, SortBy: 'SortName', Fields: FIELDS })); return (r && r.Items) || []; },
                     (a) => D.artistLevel(a))),
-                folder(D.listLevel('Songs', 'song', { ParentId: view.Id, IncludeItemTypes: 'Audio' }, { head: D.playAllHead() })),
+                folder(D.listLevel('Songs', 'song', { ParentId: view.Id, IncludeItemTypes: 'Audio' }, { head: D.playAllHead(null, 'Songs') })),
                 folder(D.listLevel('Playlists', 'playlists', { IncludeItemTypes: 'Playlist', MediaTypes: 'Audio' }, { head: () => [D.newPlaylistEntry()] })),
                 folder(genresMusic(view)), folder(latestLevel(view, 'MusicAlbum')), folder(favLevel(view, 'MusicAlbum,Audio,MusicArtist', albums)));
         } else if (t === 'livetv') {
@@ -231,7 +232,7 @@
     const genresMusic = (view) => D.groupLevel('Genres', 'genre',
         async () => { const r = await c().getJSON(c().getUrl('MusicGenres', { ParentId: view.Id, UserId: uid(), SortBy: 'SortName' })); return (r && r.Items) || []; },
         (g) => D.dropLevel(g.Name, 'genre', { GenreIds: g.Id, ParentId: view.Id, IncludeItemTypes: 'MusicAlbum' }));
-    D.artistLevel = (a) => D.listLevel(a.Name, 'person', { ArtistIds: a.Id, IncludeItemTypes: 'MusicAlbum', SortBy: 'ProductionYear,SortName', SortOrder: 'Descending' }, { head: D.playAllHead() });
+    D.artistLevel = (a) => D.listLevel(a.Name, 'person', { ArtistIds: a.Id, IncludeItemTypes: 'MusicAlbum', SortBy: 'ProductionYear,SortName', SortOrder: 'Descending' }, { head: D.playAllHead(null, a.Name) });
     // Photos and home videos grouped by day (PhotosBooks board): days are entries; a day opens its photos and videos
     D.daysLevel = (view) => ({
         title: 'Days', icon: 'schedule',

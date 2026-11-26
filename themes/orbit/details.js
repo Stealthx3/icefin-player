@@ -24,6 +24,7 @@
     };
     const shuffled = (list) => { const s = list.slice(); for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } return s; };
     async function shuffleOf(it) {
+        D.notice(`Shuffling ${it.Name}`);  // say it at once: a long fetch or a song already showing hides the start (QA Orbit 1)
         const kids = await D.items(it.Type === 'MusicArtist' ? { ArtistIds: it.Id, IncludeItemTypes: 'Audio', Limit: 500 } : it.Type === 'Series' ? { ParentId: it.Id, IncludeItemTypes: 'Episode', Limit: 2000 } : { ParentId: it.Id, Limit: 500 });
         if (kids.length) T.ctx.play({ items: shuffled(kids) });
     }
@@ -54,9 +55,9 @@
             out.push(...eps);
         }
         if (it.Type === 'MusicAlbum' || it.Type === 'Playlist' || it.Type === 'BoxSet' || it.Type === 'PhotoAlbum' || it.Type === 'Folder' || it.Type === 'MusicArtist' || it.Type === 'MusicGenre') {
-            out.push({ name: 'Play all', icon: 'play', shape: 'icon', focusFirst: true, okLabel: 'play', go: () => T.ctx.play({ ids: [it.Id], serverId: D.sid() }) });
+            out.push({ name: 'Play all', icon: 'play', shape: 'icon', focusFirst: true, okLabel: 'play', go: () => { D.notice(`Playing ${it.Name}`); T.ctx.play({ ids: [it.Id], serverId: D.sid() }); } });  // (QA Orbit 1)
             out.push({ name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => shuffleOf(it) });
-            if (it.Type !== 'BoxSet' && it.Type !== 'PhotoAlbum' && it.Type !== 'Folder') out.push({ name: 'Instant mix', icon: 'mix', shape: 'icon', go: () => T.ctx.instantMix(it) });
+            if (it.Type !== 'BoxSet' && it.Type !== 'PhotoAlbum' && it.Type !== 'Folder') out.push({ name: 'Instant mix', icon: 'mix', shape: 'icon', go: () => { D.notice(`Instant mix from ${it.Name}`); T.ctx.instantMix(it); } });  // (QA Orbit 1)
         }
         if (it.Type === 'MusicAlbum' || it.Type === 'Playlist' || it.Type === 'BoxSet' || it.Type === 'PhotoAlbum' || it.Type === 'Folder') {
             const kids = await D.items(it.Type === 'MusicAlbum' ? { ParentId: it.Id, SortBy: 'ParentIndexNumber,IndexNumber,SortName', Recursive: true, IncludeItemTypes: 'Audio' }
@@ -67,14 +68,14 @@
                 if (it.Type === 'MusicAlbum') { e.name = `${k.IndexNumber || n + 1}. ${k.Name}`; e.sub = [(k.Artists || []).join(', ') !== it.AlbumArtist ? (k.Artists || []).join(', ') : '', k.RunTimeTicks ? D.clockTicks(k.RunTimeTicks) : ''].filter(Boolean).join(' · '); e.shape = 'icon'; e.icon = 'song'; e.art = ''; }
                 // a song is a row of its own (DetailsAlbum board): Play from here, its artist, its length
                 if (k.MediaType === 'Audio') { e.row = `${k.IndexNumber || n + 1} · ${k.Name}`; e.cellName = '▶ Play from here'; e.cellSub = k.RunTimeTicks ? D.clockTicks(k.RunTimeTicks) : ''; e.okLabel = 'play from here'; }
-                if (k.MediaType === 'Audio' || k.Type === 'Photo') e.go = () => T.ctx.play({ items: kids, startIndex: n });
+                if (k.MediaType === 'Audio' || k.Type === 'Photo') e.go = () => { if (k.MediaType === 'Audio') D.notice(`Playing ${k.Name}`); T.ctx.play({ items: kids, startIndex: n }); };  // (QA Orbit 1)
                 e.menu = () => D.itemMenu(k, where);
                 out.push(e);
             });
         }
         if (it.Type === 'MusicArtist') {
             out.push({ name: 'Albums', icon: 'album', shape: 'icon', open: () => D.listLevel('Albums', 'album', { ArtistIds: it.Id, IncludeItemTypes: 'MusicAlbum', SortBy: 'ProductionYear,SortName', SortOrder: 'Descending' }) });
-            out.push({ name: 'Songs', icon: 'song', shape: 'icon', open: () => D.listLevel('Songs', 'song', { ArtistIds: it.Id, IncludeItemTypes: 'Audio' }, { head: D.playAllHead() }) });
+            out.push({ name: 'Songs', icon: 'song', shape: 'icon', open: () => D.listLevel('Songs', 'song', { ArtistIds: it.Id, IncludeItemTypes: 'Audio' }, { head: D.playAllHead(null, it.Name) }) });
             out.push({ name: 'Appears on', icon: 'album', shape: 'icon', open: () => D.listLevel('Appears on', 'album', { ContributingArtistIds: it.Id, IncludeItemTypes: 'MusicAlbum', ExcludeItemIds: it.Id }) });
         }
         if (it.Type === 'Person') {
