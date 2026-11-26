@@ -98,6 +98,7 @@
         if (!bar || !bar.isConnected) {
             bar = el('div', 'mc-hints');
             bar.setAttribute('aria-hidden', 'true');  // the keys' effect is announced by the controls themselves
+            bar.setAttribute('data-icefin-layer', '');
             document.body.append(bar);
         }
         bar.hidden = false;
@@ -147,6 +148,7 @@
         if (target.closest && (target.closest('#icefin-stock-chrome') || target.closest('#icefin-osk') || target.closest('.dialogContainer'))) return;
         if (!cap || !cap.isConnected) {
             cap = el('div', 'mc-sc-caption');
+            cap.setAttribute('data-icefin-layer', '');
             document.body.append(cap);
             capFill = M.caption ? M.caption(cap, (node, text) => { node.textContent = text; }) : (text) => { cap.textContent = text; };
         }

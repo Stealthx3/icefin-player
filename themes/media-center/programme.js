@@ -48,7 +48,11 @@
             if (prog.IsSeries && !prog.SeriesTimerId && Date.parse(prog.EndDate) > now) side.append(M.button('Record series', () => record(true)));
         }
         const others = el('div', 'mc-pi-others');
-        side.append(M.button('Other showings', () => { const r = others.querySelector('[data-icefin-focus]'); if (r) T.ctx.focus(r); else T.ctx.sound('error'); }), M.button('Back to guide', () => T.ctx.navigate('#/livetv')));
+        const rest = upcoming.filter((p) => !prog || p.Id !== prog.Id).slice(0, 5);
+        // Other showings jumps to the list below, so only when there is one (with none it gave only the error sound;
+        // the list's own note says there are none)
+        if (rest.length) side.append(M.button('Other showings', () => { const r = others.querySelector('[data-icefin-focus]'); if (r) T.ctx.focus(r); }));
+        side.append(M.button('Back to guide', () => T.ctx.navigate('#/livetv')));
         root.append(side);
         const pic = el('div', 'mc-pi-pic');
         const tag = prog && ((prog.ImageTags || {}).Primary || (prog.ImageTags || {}).Thumb);
@@ -81,7 +85,6 @@
         const text = el('div', 'mc-pi-text', prog ? [prog.IndexNumber != null && prog.ParentIndexNumber != null ? `S${prog.ParentIndexNumber} E${prog.IndexNumber}` : '', prog.EpisodeTitle, prog.Overview].filter(Boolean).join(' · ') : '');
         root.append(text);
         others.append(M.sec('other showings'));
-        const rest = upcoming.filter((p) => !prog || p.Id !== prog.Id).slice(0, 5);
         if (!rest.length) others.append(el('div', 'mc-note', 'No other showings in the guide.'));
         for (const p of rest) others.append(M.row(p.Name, { sub: when(p.StartDate), go: () => M.details(p.Id) }));
         root.append(others);

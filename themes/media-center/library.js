@@ -31,13 +31,25 @@
             ['date taken', sort('DateCreated,SortName', 'Descending')], ['folders', { folders: true, ...sort('SortName') }],
             ['videos only', { types: 'Video', ...sort('DateCreated', 'Descending') }], ['favourites', { Filters: 'IsFavorite', ...sort('SortName') }]] },
         '#/books': { title: 'book library', types: 'Book', layout: POSTER, pivots: [
-            ['continue reading', { Filters: 'IsResumable', ...sort('DatePlayed', 'Descending') }], ['title', sort('SortName')],
+            ['continue reading', { Filters: 'IsResumable', skipEmpty: true, ...sort('DatePlayed', 'Descending') }], ['title', sort('SortName')],
             ['date added', sort('DateCreated,SortName', 'Descending')], ['favourites', { Filters: 'IsFavorite', ...sort('SortName') }]] },
         '#/musicvideos': { title: 'music videos', types: 'MusicVideo', layout: WIDE, pivots: [['title', sort('SortName')], ['date added', sort('DateCreated,SortName', 'Descending')]] },
         '#/playlists': { title: 'playlists', types: 'Playlist', layout: SQUARE, noParent: true, pivots: [['playlists', sort('SortName')], ['date added', sort('DateCreated', 'Descending')]] }
     };
 
     let L = null;  // the mounted library
+    // What the wall showed on each history entry (the Navigation API's key): its pivot, a genre or studio opened, the
+    // sort and filter, a folder. Back from a details page mounts the wall again; without this it came back on the first
+    // pivot and the tile focused was a different one (QA 2: Back from a movie opened under 'year' landed under 'title').
+    const VIEW_OF = new Map();
+    const entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '');
+    function keep() {
+        const key = entryKey();
+        if (!key || !L || !L.pivotItems) return;
+        VIEW_OF.delete(key);
+        VIEW_OF.set(key, { k: L.pivotItems.findIndex((x) => x.classList.contains('on')), filter: L.filter, opts: L.opts, parentId: L.parentId });
+        if (VIEW_OF.size > 100) VIEW_OF.delete(VIEW_OF.keys().next().value);
+    }
 
     function image(it) {
         const c = M.client(), tags = it.ImageTags || {};
@@ -59,6 +71,7 @@
 
     function tile(it, group) {
         const t = focusable(el('div', 'mc-lib-tile' + (group ? ' mc-lib-group' : '')));
+        t.setAttribute('aria-label', it.Name || '');  // a poster shows no name (QA 2: the walker read the tiles as '')
         const src = image(it);
         if (group) {
             const stack = el('div', 'mc-lib-stack');
@@ -155,6 +168,7 @@
     }
 
     function reload() {
+        keep();
         L.gen++;
         L.tiles = [];
         L.total = 0;
@@ -346,18 +360,48 @@
                     if ((tab != null && String(k) === tab) || (tab == null && k === 0)) { p.classList.add('on'); L.pivot = spec; }
                 });
                 if (!L.pivot) { L.pivot = kind.pivots[0][1]; pivot.firstChild.classList.add('on'); }
+                L.pivotItems = [...pivot.children];
+                const kept = VIEW_OF.get(entryKey());
+                if (kept) {
+                    if (kept.k >= 0 && kept.k < kind.pivots.length) {
+                        L.pivotItems.forEach((x, k) => x.classList.toggle('on', k === kept.k));
+                        L.pivot = kind.pivots[kept.k][1];
+                    }
+                    L.filter = kept.filter || null;
+                    L.opts = kept.opts;
+                    if (kept.parentId) L.parentId = kept.parentId;
+                }
+                grid.dataset.group = L.pivot.group && !L.filter ? '1' : '';
+                crumb.textContent = L.filter ? `${L.filter.name} · ` : '';
                 pivot.prepend(crumb);
                 L.sortBtn = focusable(el('button', 'mc-pivot-item mc-lib-sort', 'sort and filter'));
                 L.sortBtn.type = 'button';
                 L.sortBtn.setAttribute('aria-label', 'Sort and filter');
                 L.sortBtn.addEventListener('click', () => { T.ctx.sound('select'); sortPanel(); });
                 pivot.append(L.sortBtn);
+                const o = L.opts;
+                if (o) L.sortBtn.classList.toggle('on', o.sortBy !== 'SortName' || o.order !== 'Ascending' || !!(o.unwatched || o.favourites || o.uhd || o.genre || o.year));
                 requestAnimationFrame(() => { const on = pivot.querySelector('.mc-pivot-item.on'); if (on) shiftPivot(pivot, on, true); });
                 root.addEventListener('icefin-focus', (e) => { if (L && L.tiles.includes(e.target)) follow(e.target); });
                 await more();
                 if (!L || L.root !== root) return;
+                // a first pivot with nothing in it (continue reading, with no book begun) gives way to the next one, so
+                // the library never opens on "Nothing here yet." while it has items (QA 3)
+                if (!L.tiles.length && L.pivot.skipEmpty && !kept && tab == null) {
+                    const k = kind.pivots.findIndex(([, s]) => s === L.pivot) + 1;
+                    if (kind.pivots[k]) {
+                        L.pivotItems.forEach((x, i) => x.classList.toggle('on', i === k));
+                        L.pivot = kind.pivots[k][1];
+                        shiftPivot(pivot, L.pivotItems[k], true);
+                        L.gen++; L.tiles = []; L.total = 0; L.done = false; L.loading = false; L.grid.textContent = '';
+                        await more();
+                        if (!L || L.root !== root) return;
+                    }
+                }
                 const home = M.flyHome ? M.flyHome((id) => L.tiles.find((x) => x.mcItem && x.mcItem.Id === id) || null) : null;
-                if (home || L.tiles[0]) T.ctx.focus(home || L.tiles[0]);
+                // no flight (an item without art, a tab or Sort): Back still lands on what opened the next screen (kit.js)
+                const back = home || (M.returnTo ? M.returnTo(root) : null);
+                if (back || L.tiles[0]) T.ctx.focus(back || L.tiles[0]);
                 root.setAttribute('data-mc-ready', '1');
             },
             onBack() {

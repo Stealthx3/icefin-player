@@ -8,7 +8,7 @@
 //   M.panel.show({title, sub, wide, render(body, panel)})   opens the panel, or swaps its content when one is up
 //   M.panel.close()                                         closes it
 //   M.panel.isOpen()
-//   M.notice(text, bad)                                     a notice at the bottom right for 4 s, with the select or error sound
+//   M.notice(text, bad, quiet)                              a notice at the bottom right for 4 s, with the select or error sound
 //   M.row(label, {sub, value, go, danger, on, icon})        a focusable panel row (.mc-li)
 //   M.button(label, go, main)                               a focusable button (.mc-btn)
 //   M.field(label, value, {type, multiline, placeholder})   a labelled text field (the on-screen keyboard opens on it)
@@ -74,13 +74,14 @@
     };
 
     // ---- the notice (the Kit board: bottom right, 4 s) ----
-    M.notice = (text, bad) => {
+    M.notice = (text, bad, quiet) => {
         if (!text) return;
         for (const old of document.querySelectorAll('.mc-notice')) old.remove();
         const n = el('div', 'mc-notice' + (bad ? ' mc-notice-bad' : ''), text);
         n.setAttribute('role', 'status');
+        n.setAttribute('data-icefin-layer', '');  // shown over the theme's screens (the engine hides the rest of <body>)
         document.body.append(n);
-        T.ctx.sound(bad ? 'error' : 'select');
+        if (!quiet) T.ctx.sound(bad ? 'error' : 'select');  // quiet: the control that led here has sounded already
         setTimeout(() => n.classList.add('mc-notice-out'), 4000);
         setTimeout(() => n.remove(), 4000 + ui.motion.duration(200));
     };

@@ -37,8 +37,9 @@
         T.ctx.sound('focus');
         return true;
     }
-    // asButtons: real buttons (jellyfin-web's pages, where its own focus navigation reaches them); otherwise marks the
-    // pointer can press, while the remote's left and right step the focused drop-down itself.
+    // Marks the pointer can press, while the remote's left and right step the focused drop-down itself. On jellyfin-web's
+    // pages they were buttons, and down from a drop-down stopped on the next row's ‹ and then skipped that row's
+    // drop-down (QA 2: the keys and pad runs never reached the segment and quality drop-downs on Playback).
     // A drop-down as wide as its value, so ‹ and › sit beside it (Chromium 122 has no field-sizing): measured again
     // when it changes, gets focus, or the page fills it in.
     let ruler = null;
@@ -50,22 +51,35 @@
         const w = ruler.measureText(o ? o.text : '').width + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 6;
         if (w > 6) select.style.width = `${Math.ceil(w)}px`;
     }
-    function spinner(select, asButtons) {
+    function spinner(select) {
         if (select.multiple) return;
-        if (select.hasAttribute('data-mc-spin')) { fit(select); return; }
+        if (select.hasAttribute('data-mc-spin')) { fit(select); if (select.mcSpinEnds) select.mcSpinEnds(); return; }
         select.setAttribute('data-mc-spin', '');
         select.addEventListener('change', () => fit(select));
         select.addEventListener('focus', () => fit(select));
         requestAnimationFrame(() => fit(select));
         const anchor = select.closest('.icefin-dd') || select;
+        // a mark with nothing further that way shows as off (QA 2: ‹ on a first value did nothing)
         const mark = (dir, text) => {
-            const b = el(asButtons ? 'button' : 'span', 'mc-spin mc-spin-' + (dir < 0 ? 'prev' : 'next'), text);
-            if (asButtons) { b.type = 'button'; b.setAttribute('aria-label', dir < 0 ? 'Previous value' : 'Next value'); } else b.setAttribute('aria-hidden', 'true');
-            b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); step(select, dir); });
+            const b = el('span', 'mc-spin mc-spin-' + (dir < 0 ? 'prev' : 'next'), text);
+            b.setAttribute('aria-hidden', 'true');
+            b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (step(select, dir)) ends(); });
             return b;
         };
-        anchor.before(mark(-1, '‹'));
-        anchor.after(mark(1, '›'));
+        const prev = mark(-1, '‹'), next = mark(1, '›');
+        const open = (dir) => { const o = [...select.options]; for (let i = select.selectedIndex + dir; i >= 0 && i < o.length; i += dir) if (!o[i].disabled && !o[i].hidden) return true; return false; };
+        const ends = () => {
+            for (const [b, dir] of [[prev, -1], [next, 1]]) {
+                const off = select.disabled || !open(dir);
+                b.classList.toggle('mc-spin-off', off);
+            }
+        };
+        select.addEventListener('change', ends);
+        select.addEventListener('focus', ends);
+        requestAnimationFrame(ends);
+        select.mcSpinEnds = ends;
+        anchor.before(prev);
+        anchor.after(next);
         (anchor.parentElement || anchor).classList.add('mc-spin-row');
     }
 
@@ -154,7 +168,7 @@
         if (!C || C.root !== root) return;
         const host = root.querySelector('.icefin-cs-host');
         const rail = root.querySelector('.icefin-cs-rail');
-        const decorate = () => { if (host) host.querySelectorAll('select').forEach((s) => spinner(s, false)); };
+        const decorate = () => { if (host) host.querySelectorAll('select').forEach((s) => spinner(s)); };
         decorate();
         if (host) { C.obs = new MutationObserver(decorate); C.obs.observe(host, { childList: true, subtree: true }); }
         if (section && rail) {
@@ -166,6 +180,19 @@
     window.icefinMediaCenter.register('#/mypreferencesmenu', {
         onAction(action, ctx) {
             if (M.band.open && ['up', 'down', 'left', 'right'].includes(action)) { ctx.move(action, M.band.open.el); return true; }
+            // The settings list moves as a list: up and down step through the entries, left and right stay in it, and up
+            // from the first reaches the header. By geometry, left from an entry jumped to the header's Home button, so
+            // the remote left the list part-way down (QA 1: no run got past Theme to Playback, Display or Start screen).
+            if (H && !C && ['up', 'down', 'left', 'right'].includes(action)) {
+                const items = [...H.root.querySelectorAll('.mc-set-entry')];
+                const i = items.indexOf(ctx.focused());
+                if (i >= 0) {
+                    if (action === 'left' || action === 'right') return true;
+                    const n = i + (action === 'down' ? 1 : -1);
+                    if (n >= items.length) return true;
+                    if (n >= 0) { ctx.focus(items[n]); ctx.sound('focus'); return true; }
+                }
+            }
             if (C && (action === 'left' || action === 'right')) {
                 const f = ctx.focused();
                 if (f && f.tagName === 'SELECT' && f.hasAttribute('data-mc-spin')) { step(f, action === 'left' ? -1 : 1); return true; }
@@ -215,7 +242,7 @@
             col.append(cancel);
             page.prepend(col);
         }
-        page.querySelectorAll('.selectContainer select').forEach((s) => spinner(s, true));
+        page.querySelectorAll('.selectContainer select').forEach((s) => spinner(s));
     }
     M.stockHooks.push(adapt);
 })();
