@@ -37,7 +37,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Icefin version or commit
+      label: IceFin Player version or commit
   - type: textarea
     id: screenshots
     attributes:

@@ -277,30 +277,41 @@
     }
 
     // ---- Play on and Watch together (the PlayOn board): one panel, two tabs ----
-    M.playOn = function playOn(tab, item) {
+    M.playOn = function playOn(tab, item, again) {
         const ctx = T.ctx;
+        // one focus in the panel (the engine's focus() clears only the screen's)
+        const focusIn = (e) => { const p = e.closest('.mc-sp-panel'); if (p) p.querySelectorAll('.icefin-focused').forEach((x) => x.classList.remove('icefin-focused')); ctx.focus(e); };
         M.panel.show({
             title: tab === 'together' ? 'watch together' : 'play on', sub: item ? item.Name : '',
             async render(body) {
                 const tabs = el('div', 'mc-pivot mc-sp-tabs');
+                let on = null;
                 for (const [id, label] of [['play', 'play on'], ['together', 'watch together']]) {
                     const b = M.focusable(el('button', 'mc-pivot-item' + ((tab || 'play') === id ? ' on' : ''), label));
                     b.type = 'button';
+                    b.setAttribute('aria-pressed', String((tab || 'play') === id));
                     b.addEventListener('click', () => playOn(id, item));
                     tabs.append(b);
+                    if ((tab || 'play') === id) on = b;
                 }
                 body.append(tabs);
+                // the focus stays on the tab just chosen (it went back to the first tab on every switch)
+                if (on && !again) focusIn(on);
                 if (tab === 'together') {
                     const cur = ctx.syncPlay && ctx.syncPlay.current();
                     if (cur) {
-                        body.append(M.sec('you are in'), M.row(cur.name, { on: true }), M.foot(M.button('Leave the group', async () => { try { await ctx.syncPlay.leave(); M.panel.close(); M.notice(`Left ${cur.name}`); } catch (e) { fail(e); } })));
+                        // the group you are in is a line to read, not a control (it was a focusable row that did nothing)
+                        const inRow = M.row(cur.name, { on: true });
+                        for (const at of ['data-icefin-focus', 'role', 'tabindex']) inRow.removeAttribute(at);
+                        inRow.classList.add('mc-sp-static');
+                        body.append(M.sec('you are in'), inRow, M.foot(M.button('Leave the group', async () => { try { await ctx.syncPlay.leave(); M.panel.close(); M.notice(`Left ${cur.name}`); } catch (e) { fail(e); } })));
                         return;
                     }
                     body.append(M.sec('groups on this server'));
                     let groups = [];
                     try { groups = await ctx.syncPlay.groups(); } catch (e) { groups = []; }
                     if (!groups.length) body.append(M.note('No groups yet.'));
-                    for (const g of groups) body.append(M.row(g.name, { sub: (g.people || []).join(', '), go: async () => { try { await ctx.syncPlay.join(g.id); M.panel.close(); M.notice(`Joined ${g.name}`); } catch (e) { fail(e); } } }));
+                    for (const g of groups) body.append(M.row(g.name, { sub: (g.names || []).join(', ') || `${g.people || 0} watching`, go: async () => { try { await ctx.syncPlay.join(g.id); M.panel.close(); M.notice(`Joined ${g.name}`); } catch (e) { fail(e); } } }));
                     body.append(M.foot(M.button('New group', async () => { try { await ctx.syncPlay.create(''); M.panel.close(); M.notice('Group started'); } catch (e) { fail(e); } }, true)));
                     return;
                 }
@@ -312,8 +323,14 @@
                     try { await ctx.setPlayTarget(t.id); M.panel.close(); M.notice(t.kind === 'this' ? 'Playing here' : `Plays on ${t.name}`); } catch (e) { fail(e); }
                 } });
                 body.append(M.sec('this device'), ...here.map(row), M.sec('other devices'));
-                if (!others.length) body.append(M.note('No other devices are on this server right now.'));
-                body.append(...others.map(row), M.row('Look again', { go: () => playOn('play', item) }));
+                // Look again says when it looked, so a list that came back the same still shows the press did something
+                // to the second: two looks in one minute read the same (QA 1: Look again pressed twice showed no change)
+                const at = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+                if (!others.length) body.append(M.note(again ? `Looked again at ${at()}: no other devices are on this server.` : 'No other devices are on this server right now.'));
+                else if (again) body.append(M.note(`Looked again at ${at()}.`));
+                const look = M.row('Look again', { go: () => playOn('play', item, true) });
+                body.append(...others.map(row), look);
+                if (again && look.isConnected) focusIn(look);
             }
         });
     };

@@ -46,6 +46,7 @@
     function flier(rect, bg) {
         const f = M.el('div', 'mc-flier');
         f.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;background-image:${bg}`;
+        f.setAttribute('data-icefin-layer', '');
         document.body.append(f);
         setTimeout(() => f.remove(), SAFETY);
         return f;

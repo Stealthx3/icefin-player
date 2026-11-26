@@ -1,3 +1,5 @@
+> **2026-11-16: current state.** Every bundled theme has been through the refinement pipeline (D31, D34): Plaza, Media Center, Tide, Almanac, Baseline, Orbit, Mosaic, Arcade, Harbor and Lumen (`scripts/icefin/theme-pipeline.json`: queue empty). Spark, Marquee and Plum are held back for a later update (D36): their packages are in `themes-later/`, their passes (PLAN 9.54, 9.57, 9.58) wait until they return. The name is written **IceFin Player** (D37). With the themes done, D34's hold on non-theme work is over: the open PLAN items are 7.6 (the walk over every screen; the pad harness is in `main`, #162), 9.23/9.26-9.28/9.33/9.61, 10.2, 11.1, 11.3, 11.5, 12.1 and 12.3. CI's Flatpak job keeps its runtimes on a volume (#188), so Flathub runtime updates no longer fail it. Test builds: `docs/dev/TEST-REPO.md`. Lab configs: copy `lab.env` with your own `LAB_DEST` (scratchpad copies don't survive a restart).
+
 > **2026-11-11: D28.** No HTPC testing any more. The goal is a feature-complete Icefin built and checked in the virtual lab, with simulated hardware where it can be built (`docs/dev/HARDWARE-SIMULATION.md`); real hardware goes to beta testers (`docs/BETA-CHECKLIST.md`). The HTPC notes below are history.
 
 # Handoff to Claude Code
@@ -35,7 +37,7 @@
 - **HLG acceptance row (spike 2.3):** KWin 6.3 and Mutter 48 don't accept the HLG transfer function on surfaces, so Icefin outputs HLG sources as PQ (HDR10). Change the acceptance row to "HLG sources play as HDR", or keep "TV reports HLG" as a target for compositors that add HLG later?
 
 ## HTPC tier (D16): connected 2026-11-08
-- HTPC `192.0.2.131`, user `htpc`, Bazzite 45 `bazzite-deck` (game mode by default; Plasma via desktop mode), kernel 7.2.
+- HTPC (address in the git-ignored `docs/LAB.local.md`), user `htpc`, Bazzite 45 `bazzite-deck` (game mode by default; Plasma via desktop mode), kernel 7.2.
 - AMD RX 9070 XT (Navi 48) on `card1-HDMI-A-2` → Hisense 55005N TV. The Denon AVR-S660H is on the TV's eARC/ARC
   (user, 2026-11-08), so the HTPC sees the TV's ELD (HISENSE): AC-3, E-AC-3, DTS, DTS-HD and LPCM, but no TrueHD.
   Passthrough rows are limited to what the TV forwards. TrueHD can't be bitstreamed on this setup, so the

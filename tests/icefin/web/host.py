@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """host.py — the theme pipeline's host harness (PLAN 9.45, docs/themes/PIPELINE.md).
 
-Walks and theme tests run on the user's workstation, against the installed Icefin Player Flatpak, the user's own
+Walks and theme tests run on the user's workstation, against the installed IceFin Player Flatpak, the user's own
 profile and their own server (the user's choice, 2026-11-12):
   - update() brings the Flatpak up to date from the test repository before every run and says what is installed;
   - one host run at a time (a lock): the app and the profile are the user's, and two runs would fight over them;
@@ -43,7 +43,7 @@ def update():
     if r.returncode != 0:
         res["updateError"] = (r.stderr or r.stdout).strip().splitlines()[-1:] or ["failed"]
     state = "updated " + before["commit"] + " -> " + after["commit"] if res["updated"] else "already current" if res["current"] else "NOT current (test repo has " + (remote["commit"] or "?") + ")"
-    print(f"host: Icefin Player {after['version']} {after['commit']} ({after['date']}): {state}", flush=True)
+    print(f"host: IceFin Player {after['version']} {after['commit']} ({after['date']}): {state}", flush=True)
     return res
 
 
@@ -82,7 +82,7 @@ class Host:
     """The user's Icefin, started for a run with a theme folder from a worktree; restores their theme on close()."""
     def __init__(self, themes, port, log_path):
         if is_running():
-            raise RuntimeError("host: Icefin Player is open. Close it first: a run uses your profile and never takes over a session you are in.")
+            raise RuntimeError("host: IceFin Player is open. Close it first: a run uses your profile and never takes over a session you are in.")
         self.themes, self.port, self.original = os.path.abspath(themes) if themes else None, port, None
         args = ["flatpak", "run", "--user"]
         if self.themes:
@@ -123,7 +123,7 @@ class Host:
         subprocess.run(["spectacle", "-b", "-n", "-a", "-o", path], timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             from PIL import Image
-            # The strip with the fin mark and "Icefin Player" (a dark strip alone let another app's dark top through:
+            # The strip with the fin mark and "IceFin Player" (a dark strip alone let another app's dark top through:
             # 9.60, the Claude window kept as Icefin's), and the fin's own cyan in the icon's corner.
             box = (0, 0, 160, 30)
             ref = list(Image.open(TITLEBAR_REF).convert("L").crop(box).getdata())

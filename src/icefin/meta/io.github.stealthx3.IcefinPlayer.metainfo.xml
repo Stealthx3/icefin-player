@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.stealthx3.IcefinPlayer</id>
-  <name>Icefin Player</name>
+  <name>IceFin Player</name>
   <summary>Themeable Jellyfin client for the desktop and the living room</summary>
   <developer id="io.github.stealthx3">
     <name>Stealthx3</name>
@@ -13,12 +13,12 @@
   <url type="vcs-browser">https://github.com/Stealthx3/icefin-player</url>
   <description>
     <p>
-      Icefin Player plays media from a Jellyfin server using the server's own web interface and mpv.
+      IceFin Player plays media from a Jellyfin server using the server's own web interface and mpv.
       It adds themes, HDR output, HDMI audio passthrough and controller support, and is built for
       Linux and Wayland.
     </p>
     <p>
-      Icefin Player is an independent fork of jellyfin-desktop and is not affiliated with or endorsed
+      IceFin Player is an independent fork of jellyfin-desktop and is not affiliated with or endorsed
       by the Jellyfin project.
     </p>
   </description>
@@ -39,6 +39,10 @@
     <control>tv-remote</control>
   </supports>
   <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#80e5ff</color>
+    <color type="primary" scheme_preference="dark">#06445e</color>
+  </branding>
   <releases>
     <release version="0.1.0~alpha.2" date="2026-11-12" type="development">
       <url>https://github.com/Stealthx3/icefin-player/releases/tag/v0.1.0-alpha.2</url>

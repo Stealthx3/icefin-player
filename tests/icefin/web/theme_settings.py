@@ -21,7 +21,7 @@ from session_play import launch, start_x, JF  # noqa: E402
 from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 
-THEMES = ["media-center", "harbor", "spark", "plum", "plaza", "orbit", "mosaic", "lumen", "marquee", "almanac", "arcade", "tide"]
+THEMES = ["media-center", "harbor", "plaza", "orbit", "mosaic", "lumen", "almanac", "arcade", "tide"]  # Spark, Plum, Marquee: themes-later/
 ROOT = "document.querySelector('#icefin-theme-root')"
 
 

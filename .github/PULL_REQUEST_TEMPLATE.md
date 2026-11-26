@@ -3,7 +3,7 @@
 
 ## Checklist
 - [ ] Branch is `feat/…`, `fix/…`, `docs/…`, `ci/…` or `chore/…` off `main`
-- [ ] Icefin code is in the Icefin directories; upstream files only gained marked `ICEFIN-HOOK` lines (`scripts/icefin/hook-count.sh` passes)
+- [ ] IceFin Player code is in the IceFin Player directories; upstream files only gained marked `ICEFIN-HOOK` lines (`scripts/icefin/hook-count.sh` passes)
 - [ ] Built and tested in the lab, not on the host (say what ran)
 - [ ] PLAN box ticked and progress page regenerated, if this completes a task
 - [ ] `CHANGELOG.md` *Unreleased* updated, for user-visible changes

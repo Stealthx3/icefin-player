@@ -1,0 +1,13 @@
+{
+  "app_id": "io.github.stealthx3.IcefinPlayer",
+  "name": "IceFin Player",
+  "launch_args": "--fullscreen",
+  "tags": ["IceSuite"],
+  "art": {
+    "capsule": "capsule-600x900.png",
+    "header": "header-920x430.png",
+    "hero": "hero-3840x1240.png",
+    "logo": "logo-1280x720.png",
+    "icon": "icon-256.png"
+  }
+}

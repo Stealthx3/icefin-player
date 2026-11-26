@@ -143,7 +143,8 @@
                 if (a === 'menu' && f && f.pzServer) { forget(f.pzServer); return true; }
                 return false;
             },
-            onBack() { return false; },
+            // signed in (opened from the home's server button): Back returns there; signing in has no way back (QA 1)
+            onBack() { const c = T.ctx.apiClient && T.ctx.apiClient(); if (c && c.isLoggedIn && c.isLoggedIn() && history.length > 1) { history.back(); return true; } return false; },
             unmount() { if (F) F.stop(); ui.pointerFirst(false); F = null; }
         };
         async function draw(grid) {
@@ -200,18 +201,24 @@
                     i.placeholder = 'https://jellyfin.example.com or 192.168.1.20:8096';
                     P.focusable(i);
                     l.append(el('span', 'pz-field-label', 'The server’s address'), i);
+                    // what's missing, said in the card under the field (QA 2: a toast at the foot of the screen, away
+                    // from the card, is easily missed; the walk still saw Connect do nothing)
+                    const note = el('div', 'pz-sheet-note pz-si-need');
+                    note.hidden = true;
+                    i.addEventListener('input', () => { note.hidden = true; });
                     const f = el('div', 'pz-panel-foot');
                     const go = P.focusable(el('div', 'pz-tab pz-tab-on', 'Connect'));
                     go.addEventListener('click', async () => {
                         const a = i.value.trim();
-                        if (!a) { T.ctx.focus(i); T.ctx.sound('error'); return; }
+                        // nothing typed: say so (QA 1, a Connect that seemed dead), and the field takes focus
+                        if (!a) { note.textContent = 'Type the server’s address first.'; note.hidden = false; T.ctx.focus(i); T.ctx.sound('error'); return; }
                         P.sheet.close();
                         connect(a, a);
                     });
                     const no = P.focusable(el('div', 'pz-tab', 'Cancel'));
                     no.addEventListener('click', () => P.sheet.close());
                     f.append(go, no);
-                    body.append(l, f);
+                    body.append(l, note, f);
                 }
             });
         }

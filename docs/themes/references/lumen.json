@@ -1,8 +1,9 @@
 {
   "theme": "lumen",
-  "target": "Apple TV (tvOS) home and TV app layout, per the platform's published design guidelines, 1920x1080",
+  "target": "Apple TV (tvOS) TV app layout, per the platform's published design guidelines and its current version's walkthroughs, 1920x1080",
   "sources": [
     "Apple Human Interface Guidelines, Layout, tvOS (updated September 9, 2026), https://developer.apple.com/design/human-interface-guidelines/layout: safe area 60 pt top and bottom, 80 pt sides; grids two to nine columns at 860, 560, 410, 320, 260, 217, 184, 160 pt wide with 40 pt horizontal spacing and at least 100 pt between rows (tvOS draws 1 pt as 1 px at 1080p)",
+    "The current version's sidebar, hero and rows: 9to5Mac, 7 tvOS 26 Features You NEED to Try! (https://www.youtube.com/watch?v=SpQ8_j-egfE) and AppleInsider, Everything New in tvOS 26 (https://www.youtube.com/watch?v=om2Sg3q2q8g), watched in the browser (PLAN 9.53, docs/themes/passes/lumen.md)",
     "Layout only: no artwork, icons, sounds, fonts or names from the target are used"
   ],
   "measurements": {
@@ -10,7 +11,9 @@
     "poster rows": "the six-column grid: 260 px wide (2:3, 390 tall), 40 apart, from x 80",
     "16:9 rows": "the four-column grid: 410 px wide (231 tall), 40 apart",
     "rows": "at least 100 px between the bottom of an unfocused row and the next row's top, more for titled rows",
-    "motion": "not specified by the guidelines; not checked"
+    "motion": "not specified by the guidelines; not checked",
+    "sidebar": "collapsed to a glass pill at the top left (24 px in from both edges); opened, a glass panel 353 px wide floating 24 px from the left, top and foot",
+    "hero": "the featured item's art full-bleed, its title at the side inset, the first row peeking from about 74% down"
   },
   "tolerancePx": 12,
   "timingTolerance": 0.1,
@@ -20,12 +23,52 @@
       "name": "home",
       "settleMs": 1500,
       "boxes": {
-        "tab bar at the top inset": {"sel": ".lm-tabs", "y": 60, "tol": 6},
-        "first poster": {"sel": ".lm-row:not(.wide) .lm-card", "index": 0, "x": 80, "w": 260, "h": 390},
-        "second poster": {"sel": ".lm-row:not(.wide) .lm-card", "index": 1, "x": 380, "w": 260, "h": 390}
+        "the collapsed sidebar at the top left": {
+          "sel": ".lm-mini",
+          "x": 24,
+          "y": 24,
+          "tol": 6
+        },
+        "first poster": {
+          "sel": ".lm-hrow:not(.wide) .lm-hcard",
+          "index": 0,
+          "x": 80,
+          "w": 260,
+          "h": 390
+        },
+        "second poster": {
+          "sel": ".lm-hrow:not(.wide) .lm-hcard",
+          "index": 1,
+          "x": 380,
+          "w": 260,
+          "h": 390
+        },
+        "first 16:9 card": {
+          "sel": ".lm-hrow.wide .lm-htrack:has(.lm-hcard + .lm-hcard) .lm-hcard",
+          "index": 0,
+          "x": 80,
+          "w": 410,
+          "h": 231
+        },
+        "second 16:9 card": {
+          "sel": ".lm-hrow.wide .lm-htrack:has(.lm-hcard + .lm-hcard) .lm-hcard",
+          "index": 1,
+          "x": 530,
+          "w": 410,
+          "h": 231
+        }
       },
       "text": {
-        "row title at the side inset": {"sel": ".lm-row-title", "index": 0, "x": 80}
+        "the hero's title at the side inset": {
+          "sel": ".lm-hero-title",
+          "index": 0,
+          "x": 80
+        },
+        "row title at the side inset": {
+          "sel": ".lm-hrow-title",
+          "index": 0,
+          "x": 80
+        }
       }
     }
   ],

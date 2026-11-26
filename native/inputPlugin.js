@@ -77,7 +77,7 @@ class inputPlugin {
 
                     const canNext = currentIndex < playlist.length - 1;
 
-                    const state = playbackManager.getPlayerState();
+                    const state = playbackManager.getCurrentPlayer() ? playbackManager.getPlayerState() : null;  // ICEFIN-HOOK: a book reader is no media player (QA 3: "player cannot be null")
                     const isMusic = state?.NowPlayingItem?.MediaType === 'Audio';
                     const canPrevious = isMusic ? true : currentIndex > 0;
 

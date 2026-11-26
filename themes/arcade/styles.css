@@ -96,9 +96,6 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 /* ---- the ground: the sky over the floor, slow rings (Effects board) ---- */
 .ac-screen, [data-ar] { position: absolute; inset: 0; overflow: hidden !important; color: var(--icefin-color-text);
   background: var(--ac-ground); }
-.ac-screen::before { content: ""; position: absolute; left: -15vw; top: -36vh; width: 70vw; height: 125vh; border-radius: 50%; pointer-events: none;
-  background: repeating-radial-gradient(circle, rgb(255 255 255 / 0) 0 7.2vh, rgb(255 255 255 / 0.07) 7.3vh 7.5vh); animation: ac-drift 60s linear infinite alternate; }
-@keyframes ac-drift { to { transform: translate(3vw, 2vh) scale(1.04); } }
 
 /* the page's name (top left), the clock (top right), the mark (bottom right) */
 .ac-ttl { position: absolute; left: 3.12vw; top: 3.6vh; z-index: 3; text-shadow: none; max-width: 60vw; }
@@ -112,7 +109,7 @@ html[data-icefin-theme] body { background: var(--icefin-color-background); font-
 .ac-server { border: 0; padding: 0; background: none; color: inherit; font: inherit; font-size: 0.86vw; opacity: 0.85; cursor: pointer; }
 .ac-server.down { color: var(--icefin-color-error); }
 .ac-mark { position: absolute; right: 2.34vw; bottom: 3.3vh; width: 2.34vw; aspect-ratio: 1; z-index: 3; pointer-events: none;
-  background: var(--ac-mark) center / contain no-repeat; filter: drop-shadow(0 0.3vh 0.6vh rgb(0 0 0 / 0.4)); }
+  background: var(--ac-brand, var(--ac-mark)) center / contain no-repeat; border-radius: 18%; filter: drop-shadow(0 0.3vh 0.6vh rgb(0 0 0 / 0.4)); }
 .ac-song { display: flex; align-items: center; gap: 0.6vw; margin-top: 0.6vh; justify-content: flex-end; }
 .ac-song-label { border: 0; background: none; color: inherit; font: inherit; font-size: 0.86vw; cursor: pointer; padding: 0; max-width: 18vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ac-song-bar { width: 6vw; height: 0.6vh; border-radius: 0.4vh; background: rgb(0 0 0 / 0.35); overflow: hidden; cursor: pointer; }

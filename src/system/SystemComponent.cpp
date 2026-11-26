@@ -622,11 +622,13 @@ QString SystemComponent::getNativeShellScript()
     ":/web-client/extension/icefin/themeSync.js",  // ICEFIN-HOOK: per-user theme choice (PLAN 8.5)
     ":/web-client/extension/icefin/hardwarePage.js",  // ICEFIN-HOOK: Client Settings -> Hardware (PLAN 4.1)
     ":/web-client/extension/icefin/themeManager.js",  // ICEFIN-HOOK: Client Settings -> Theme manager (PLAN 9.21)
+    ":/web-client/extension/icefin/wallpaper.js",  // ICEFIN-HOOK: device wallpaper behind themes (PLAN 9.26)
     ":/web-client/extension/icefin/clientSettings.js",  // ICEFIN-HOOK: Client Settings arrangement and drop-downs (PLAN 9.22)
     ":/web-client/extension/icefin/capabilityPrompt.js",  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
     ":/web-client/extension/icefin/deviceProfile.js",  // ICEFIN-HOOK: Auto device profile (PLAN 6.4)
     ":/web-client/extension/icefin/gamepads.js",  // ICEFIN-HOOK: controller layer, page side (PLAN 7.3, 7.5)
-    ":/web-client/extension/icefin/audioTestPage.js"  // ICEFIN-HOOK: Client Settings -> Audio test (PLAN 3.8)
+    ":/web-client/extension/icefin/audioTestPage.js",  // ICEFIN-HOOK: Client Settings -> Audio test (PLAN 3.8)
+    ":/web-client/extension/icefin/steamShortcut.js"  // ICEFIN-HOOK: Client Settings -> Steam, first-run offer (PLAN 11.10)
   };
 
   cachedScript = jmpInfoDeclaration;

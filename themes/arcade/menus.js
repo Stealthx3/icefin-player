@@ -175,7 +175,7 @@
         for (const v of (D.views || [])) rows.push([v.Name, D.kindIcon(v.CollectionType), go(D.viewRoute(v))]);
         rows.push(['Quick access', 'more', () => D.quickAccess()], ['Settings', 'settings', go('#/mypreferencesmenu')],
             ['Switch user', 'people', () => D.panel.ask({ title: 'Switch user?', path: 'You', text: 'You sign out here and choose who signs in.', choices: [{ label: 'Stay', safe: true }, { label: 'Switch user', run: () => T.ctx.signOut() }] })],
-            ['Exit Icefin', 'exit', () => D.exitAsk()]);
+            ['Exit IceFin Player', 'exit', () => D.exitAsk()]);
         return rows;
     }
     function panelRow(text, icon, run, close) {

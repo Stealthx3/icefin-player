@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Icefin Player is in alpha. Only the latest release (currently a pre-release) receives security fixes.
+IceFin Player is in alpha. Only the latest release (currently a pre-release) receives security fixes.
 
 ## Reporting a vulnerability
 

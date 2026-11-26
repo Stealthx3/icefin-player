@@ -110,7 +110,7 @@ def main():
             settle()
             check("left steps to Settings; it takes the fixed point", cat() == "Settings" and abs(rect(".td-cat.current svg")["cx"] - 561 / 1920) < 0.012, cat())
             names = colnames()
-            check("the Settings column: you, the preference pages, Client settings, the server, Exit", any("Client settings" == n for n in names) and any(n.startswith("Server") for n in names) and "Exit Icefin" in names, str(names))
+            check("the Settings column: you, the preference pages, Client settings, the server, Exit", any("Client settings" == n for n in names) and any(n.startswith("Server") for n in names) and "Exit IceFin Player" in names, str(names))
             shot("home-settings.png")
             act("right")
             ready()
