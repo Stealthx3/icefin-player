@@ -286,7 +286,7 @@
         nav.append(b, h);
         // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
         const add = (icon, label, go) => { const x = D.el('button', 'td-pnav-btn'); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
-        add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
+        add('reorder', 'Options', () => { if (T.handleAction && !T.handleAction('menu')) D.notice('No options here', true); });  // nothing used it (QA Tide 1)
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));
         for (const x of (extra || [])) add(x.icon || 'item', x.label, x.go);

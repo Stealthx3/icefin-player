@@ -152,7 +152,7 @@
             if (!chans.length) { box.append(el('div', 'td-empty-title', 'This server has no Live TV channels')); return; }
             me.guide = ui.guideGrid(box, {
                 channels: chans.map((ch) => ({ id: ch.Id, name: ch.Name, ch })),
-                rows: 7, span: 120, focus: true,
+                rows: 7, span: 120, focus: true, selectGaps: true,  // a gap between programmes can be chosen (QA Tide 1)
                 async fetch(ids, a, b) {
                     const res = await Promise.resolve(c().getLiveTvPrograms({ UserId: uid(), ChannelIds: ids.join(','), MinEndDate: iso(a), MaxStartDate: iso(b), EnableImages: false, EnableUserData: false, SortBy: 'StartDate', EnableTotalRecordCount: false, Limit: 2000 }));
                     return items(res).map((p) => ({ id: p.Id, channelId: p.ChannelId, start: Date.parse(p.StartDate), end: Date.parse(p.EndDate), title: p.Name, item: p }));

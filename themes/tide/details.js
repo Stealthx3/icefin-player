@@ -54,9 +54,12 @@
             out.push(...eps);
         }
         if (it.Type === 'MusicAlbum' || it.Type === 'Playlist' || it.Type === 'BoxSet' || it.Type === 'PhotoAlbum' || it.Type === 'Folder' || it.Type === 'MusicArtist' || it.Type === 'MusicGenre') {
-            out.push({ name: 'Play all', icon: 'play', shape: 'icon', focusFirst: true, okLabel: 'play', go: () => T.ctx.play({ ids: [it.Id], serverId: D.sid() }) });
-            out.push({ name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => shuffleOf(it) });
-            if (it.Type !== 'BoxSet' && it.Type !== 'PhotoAlbum' && it.Type !== 'Folder') out.push({ name: 'Instant mix', icon: 'mix', shape: 'icon', go: () => T.ctx.instantMix(it) });
+            // a notice on music presses, as Media Center (QA Tide 1); videos open the player anyway
+            const music = it.Type === 'MusicAlbum' || it.Type === 'MusicArtist' || it.Type === 'MusicGenre' || (it.Type === 'Playlist' && it.MediaType === 'Audio');
+            const say = (text) => { if (music) D.notice(text); };
+            out.push({ name: 'Play all', icon: 'play', shape: 'icon', focusFirst: true, okLabel: 'play', go: () => { say(`Playing ${it.Name}`); T.ctx.play({ ids: [it.Id], serverId: D.sid() }); } });
+            out.push({ name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => { say(`Shuffling ${it.Name}`); return shuffleOf(it); } });
+            if (it.Type !== 'BoxSet' && it.Type !== 'PhotoAlbum' && it.Type !== 'Folder') out.push({ name: 'Instant mix', icon: 'mix', shape: 'icon', go: () => { say(`Instant mix from ${it.Name}`); return T.ctx.instantMix(it); } });
         }
         if (it.Type === 'MusicAlbum' || it.Type === 'Playlist' || it.Type === 'BoxSet' || it.Type === 'PhotoAlbum' || it.Type === 'Folder') {
             const kids = await D.items(it.Type === 'MusicAlbum' ? { ParentId: it.Id, SortBy: 'ParentIndexNumber,IndexNumber,SortName', Recursive: true, IncludeItemTypes: 'Audio' }
@@ -65,7 +68,7 @@
             kids.forEach((k, n) => {
                 const e = D.entry(k, { inSeason: true });
                 if (it.Type === 'MusicAlbum') { e.name = `${k.IndexNumber || n + 1}. ${k.Name}`; e.sub = [(k.Artists || []).join(', ') !== it.AlbumArtist ? (k.Artists || []).join(', ') : '', k.RunTimeTicks ? D.clockTicks(k.RunTimeTicks) : ''].filter(Boolean).join(' · '); e.shape = 'icon'; e.icon = 'song'; e.art = ''; }
-                if (k.MediaType === 'Audio' || k.Type === 'Photo') e.go = () => T.ctx.play({ items: kids, startIndex: n });
+                if (k.MediaType === 'Audio' || k.Type === 'Photo') e.go = () => { if (k.MediaType === 'Audio') D.notice(`Playing ${k.Name}`); T.ctx.play({ items: kids, startIndex: n }); };  // (QA Tide 1)
                 e.menu = () => D.itemMenu(k, where);
                 out.push(e);
             });

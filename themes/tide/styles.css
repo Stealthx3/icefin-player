@@ -110,6 +110,7 @@ html[data-icefin-backdrop] .td-wave, html[data-icefin-backdrop] .td-shade { disp
 .td-trail-name { position: absolute; top: calc(100% + 0.8vh); left: 0; font-size: 0.85vw; white-space: nowrap; max-width: 14vw; overflow: hidden; text-overflow: ellipsis; }
 .td-trail-step:first-child .td-trail-name, .td-trail-step.near .td-trail-name { left: 0; }
 .td-trail-step:hover { opacity: 1; }
+.td-trail-step[aria-current] { cursor: default; }  /* the level on screen is a label (QA Tide 1) */
 
 /* ---- the letter strip ---- */
 .td-letters { position: absolute; right: 2.2vw; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; }

@@ -170,6 +170,8 @@
                 else t.append(D.svg(src.icon || 'folder'));
                 const name = lv.bar ? src.label : (src.title || '');
                 if (near && name) t.append(el('div', 'td-trail-name', name));
+                // the level on screen is a label, not a control (QA Tide 1)
+                if (opts.selfInTrail && k === shown.length - 1) { t.setAttribute('aria-current', 'page'); t.setAttribute('aria-label', name); trail.append(t); return; }
                 t.setAttribute('role', 'button');
                 t.setAttribute('aria-label', `Back to ${name}`);
                 t.addEventListener('click', () => {
@@ -480,7 +482,8 @@
                 if (!quiet) C.redraw('back');
                 return true;
             },
-            replaceTop(level) { S.stack[S.stack.length - 1] = level; return C.redraw(); },
+            // keep the focused row when a level is replaced (QA Tide 1)
+            replaceTop(level) { if (level && level.focus == null) level.focus = curIndex(); S.stack[S.stack.length - 1] = level; return C.redraw(); },
             reload() { cur().reload = true; return load(); },
             activate(e, d) {
                 if (!e) return;
