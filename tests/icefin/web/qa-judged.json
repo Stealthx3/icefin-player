@@ -10,6 +10,8 @@
     {"kind": "^no-focus-indicator$", "screen": "^/home\\?icefin=stock", "element": "^Icefin Test (Book|Document)$", "why": "jellyfin-web's own classic home: its book cards", "doc": "media-center-3.md, plaza-3.md"},
     {"kind": "^dead-control$", "screen": "^/mypreferencesmenu\\?pane=client", "element": "^Play (DTS|Dolby)", "why": "the Audio test's Play buttons pressed while a clip plays, when they are busy", "doc": "media-center-3.md"},
     {"kind": "^back-focus$", "screen": "\\[MusicAlbum\\]", "element": "LabArtist$", "why": "two controls for one person (artist and album artist): Back focuses the other", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/home( > .*)?$", "element": "^Open ", "why": "the start strip's rows are not levels: the mouse's Back button goes back in history (the app's mapping, as on every page)", "doc": "media-center-3.md"},
+    {"kind": "^broken-back$", "input": "^mouse$", "screen": "\\?collectionType=", "detail": "^Back from /[a-z]+\\?collectionType=[a-z]+ > ", "why": "a library's pivot is a view choice, not a level: the mouse's Back button goes back in history", "doc": "media-center-3.md"},
     {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"}
   ],
   "media-center": [
