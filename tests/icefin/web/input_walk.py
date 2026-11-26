@@ -86,7 +86,8 @@ IW_JS = r"""
     // a control that is only the pointer's way in (the remote has another: a row title the remote changes by up and down)
     pointer: !!e.closest('[data-icefin-pointer-only]') });
   const roots = () => {
-    const r = ['icefin-theme-root', 'icefin-stock-chrome', 'icefin-theme-overlay', 'icefin-osk'].map((i) => document.getElementById(i)).filter((e) => e && shown(e));
+    // #icefin-live (the engine's Live TV "Connecting to ..." card) counts as a change (QA Tide 1: a channel press that showed it was judged dead)
+    const r = ['icefin-theme-root', 'icefin-stock-chrome', 'icefin-theme-overlay', 'icefin-osk', 'icefin-live'].map((i) => document.getElementById(i)).filter((e) => e && shown(e));
     for (const s of ['.skinHeader', '.page:not(.hide)', '.mainAnimatedPage:not(.hide)', DLG]) document.querySelectorAll(s).forEach((e) => { if (shown(e) && !r.includes(e)) r.push(e); });
     // plugin UI added straight to <body> (a media bar, a banner): enumerated too, flagged plugin
     for (const e of document.body.children) if (shown(e) && !e.matches(OWN) && !e.matches('script, style, link, template, #reactRoot') && !e.querySelector(OWN) && !r.includes(e)) r.push(e);
@@ -96,8 +97,9 @@ IW_JS = r"""
   const snap = (e) => {
     const cs = getComputedStyle(e), p = e.parentElement, ps = p ? getComputedStyle(p) : cs;
     const cls = [...e.classList].filter((c) => c !== 'icefin-focused').sort().join('.');
+    // textShadow and fontWeight too: a focus look made of a glow or a bolder label is a look (QA Tide 1)
     return [cs.outlineStyle + cs.outlineWidth + cs.outlineColor, cs.boxShadow, cs.transform, cs.filter, cs.backgroundColor, cs.borderTopColor, cs.borderTopWidth, cs.color,
-            cs.opacity, cs.textDecorationLine, cs.backgroundImage.slice(0, 60), ps.transform, ps.boxShadow, cls, p ? [...p.classList].sort().join('.') : ''].join('|');
+            cs.textShadow, cs.fontWeight, cs.opacity, cs.textDecorationLine, cs.backgroundImage.slice(0, 60), ps.transform, ps.boxShadow, cls, p ? [...p.classList].sort().join('.') : ''].join('|');
   };
   // a floating ring or cursor element (not the control itself) over at least half of it
   const ring = (e) => {
@@ -218,7 +220,9 @@ IW_JS = r"""
       const e = this.live(key); if (!e) return false;
       const g = window.icefinTheme && window.icefinTheme._engine;
       if (g && g.hasScreen() && g.root() && g.root().contains(e)) g.focus(e); else e.focus({ preventScroll: false });
-      return L.cur() === e;
+      // an element of the overlay the engine marks .icefin-focused is focused, though cur() names the screen's own (QA Tide 1)
+      const ov = document.getElementById('icefin-theme-overlay');
+      return L.cur() === e || !!(ov && ov.contains(e) && e.classList.contains('icefin-focused'));
     },
     focusedKey() { const e = L.cur(); return e ? L.key(e) : ''; },
     digest(key) {
@@ -656,9 +660,11 @@ class Walker:
             key = f["key"] if f else ""
             if key != last:
                 last, since = key, time.time()
-            elif time.time() - since >= 0.25:
+            elif (key or self.mouse) and time.time() - since >= 0.25:     # the mouse focuses nothing by itself
                 break
-            if time.time() - t0 >= 1.5:
+            # nothing focused is not settled: a screen that rebuilds from the server focuses when its answer comes, so wait
+            # up to 4 s for it (QA Almanac 1: 34 focus-lost read off a slow server); something focused settles as before
+            if time.time() - t0 >= (1.5 if key or self.mouse else 4.0):
                 break
             time.sleep(0.08)
         return f
@@ -1237,6 +1243,7 @@ class Walker:
 
     def tab_sweep(self, k, take):
         n, last, miss = 0, None, 0
+        seen = set()    # distinct controls Tab reached
         for i in range(40):
             self.drv.move("tab")
             n += 1
@@ -1247,10 +1254,12 @@ class Walker:
                     break
                 continue
             last = f["key"]
+            seen.add(last)
             take(f, ["tab"] * n)
         if last:
             self.drv.move("shift-tab")
-            if n > 1:
+            # Shift+Tab is judged only when Tab reached two or more distinct controls: from the only one there is nowhere back (QA Tide 1)
+            if n > 1 and len(seen) >= 2:
                 f = self.focus_now()
                 if f and f["key"] == last:
                     self.finding("shift-tab", k, last[-40:], "Shift+Tab did not move focus back")
@@ -1358,6 +1367,14 @@ class Walker:
                 el["outcome"] = "obscured"
                 self.finding("obscured", k, label, "another element covers its centre and the click did nothing")
                 return
+            # a tab or page already shown (aria-selected, aria-current) changes nothing by design (QA Tide 1)
+            try:
+                cur_state = self.js("(() => { const e = window.inputWalk.live(" + json.dumps(c["key"]) + "); if (!e) return false; const a = e.getAttribute('aria-current'); return e.getAttribute('aria-selected') === 'true' || (a !== null && a !== 'false'); })()")
+            except Exception:  # noqa: BLE001
+                cur_state = False
+            if cur_state:
+                el["outcome"] = "current (no change)"
+                return
             self.finding("dead-control", k, label, "no screen, dialog or visible change", plugin=c.get("plugin", False))
             return
         if outcome == "in-place":
@@ -1369,6 +1386,13 @@ class Walker:
                 time.sleep(0.5)
             time.sleep(1.0)
             s2 = self.settle(t=2.5)
+            # a player that starts late: the route becomes /video within 3 s, so the press opened the player (QA Tide 1);
+            # waited only after a press that plays, an in-place press is common (a column entry)
+            t1 = time.time()
+            plays = bool(re.search(r"\b(play|resume|shuffle|watch|start|mix)\b", label, re.I))
+            while plays and not s2["route"].startswith("/video") and time.time() - t1 < 3.0:
+                time.sleep(0.4)
+                s2 = self.screen()
             if s2["route"] != s["route"]:
                 s, pk = s2, self.screen_key(s2)
                 outcome = "dialog" if pk == k + " (dialog)" else "screen"
@@ -1401,6 +1425,13 @@ class Walker:
                 cc = dict(c)
                 reopen = lambda: self.position(k, cc) and (self.drv.activate(), self.settle(prev=k))[1] and self.screen_key(self.screen()) == pk
                 self.dialog_pass(k, pk, reopen, here["reached_by"] + [label])
+        # a control that is itself a way back: the level it reaches is a level up, not one opened, so no Back check (QA Tide 1)
+        if outcome in ("screen", "sub") and re.match(r"^\s*(back to |go back)", label, re.I):
+            el["outcome"] = "a way back (no Back check)"
+            el["back_ok"] = None
+            self.tr("a way back: no Back check", label)
+            self.restore(k, c.get("path", []))
+            return
         status, kk = self.back_out(k, pk)
         self.errors(k, label)
         if status == "root":
@@ -1420,7 +1451,8 @@ class Walker:
             if not f:
                 el["back_ok"] = False
                 self.finding("focus-lost", k, label, f"after Back from {pk} nothing is focused")
-            elif f["key"] != want:
+            # the same control redrawn at another path (a row window that scrolled) is the opener (QA Almanac 1)
+            elif f["key"] != want and not self.js(f"window.inputWalk.isCur({json.dumps(want)})"):
                 el["back_ok"] = False
                 self.finding("back-focus", k, label, f"after Back from {pk} focus is on '{f['label']}', not the control that opened it")
             else:
@@ -1464,6 +1496,10 @@ class Walker:
         # already there (a dialog pass closed the dialog itself): pressing Back now would leave the screen (QA 1)
         if self.screen_key(self.screen()) == k:
             return "ok", k
+        # the player closed itself before Back (the route already left /video): nothing to go back from, no broken-back (QA Tide 1)
+        if opened.split(" ")[0].startswith("/video") and not self.screen()["route"].startswith("/video"):
+            self.tr("the player closed itself; no Back check")
+            return "root", self.screen_key(self.screen())
         for i in range(6):
             if self.late() and i > 2:
                 break
