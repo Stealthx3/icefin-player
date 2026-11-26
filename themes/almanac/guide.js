@@ -70,15 +70,18 @@
             }
         });
     }
+    // file the played cell under this history entry: Back from the player focuses it again (QA Almanac 1)
+    function fileCell(ch, p) { opener = { entry: S.entry, cell: { id: ch.id, time: p.start } }; }
     function selectGap(p, ch) {
-        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: S.client.serverId() }); }
+        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { fileCell(ch, p); stopPreview(); T.ctx.play({ ids: [ch.id], serverId: S.client.serverId() }); }
         else channelOptions(ch.ch);
     }
 
     function screen() {
         return {
             onAction(action, ctx) {
-                if (!S || !S.ready) return false;
+                // the tab strip answers while the channels load (QA Almanac 1)
+                if (!S || (!S.ready && S.menu.indexOf(ctx.focused()) < 0)) return false;
                 D.sawAction && D.sawAction(action);
                 const f = ctx.focused();
                 if (action === 'menu') {
@@ -112,6 +115,7 @@
                 D.pointerNav(root);
                 const entry = D.entryKey ? D.entryKey() : '';
                 const back = opener && D.isReturn && D.isReturn(opener.entry) ? opener.label : null;
+                const cellBack = opener && opener.cell && D.isReturn && D.isReturn(opener.entry) ? opener.cell : null;
                 S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0, entry };
                 const top = el('div', 'al-top');
                 const inf = el('div', 'al-info');
@@ -135,8 +139,9 @@
 
                 S.client = T.ctx.apiClient();  // a cold start creates the client late: read it after userViews
                 const c = S.client, uid = c.getCurrentUserId();
-                await D.loadViews();
-                if (!S || S.root !== root) return;
+                // the strip from the views already held; refresh behind, await only on a cold start (QA Almanac 1)
+                if (D.views && D.views.length) D.loadViews();
+                else { await D.loadViews(); if (!S || S.root !== root) return; }
                 const entries = D.navTabs();
                 S.menu = entries.map((x, i) => {
                     const b = el('div', 'al-menu-item al-tab' + (x.current ? ' current' : ''), x.label);
@@ -148,6 +153,7 @@
                     menu.append(b);
                     return b;
                 });
+                if (back) focusMenu();  // Back from a tab: its tab at once, before the channels return (QA Almanac 1)
 
                 const res = await Promise.resolve(c.getLiveTvChannels({ UserId: uid, EnableImages: true, ImageTypeLimit: 1, Limit: 1000, EnableUserData: false })).catch(() => null);
                 if (!S || S.root !== root) return;
@@ -173,9 +179,10 @@
                     renderProgram(p, cell) { cell.textContent = p.title; if (p.item && p.item.TimerId) cell.append(el('span', 'al-rec', ' ●')); },
                     emptyLabel: 'No information',
                     focus: back ? false : undefined,  // Back from a tab's screen: the tab, not the grid
-                    onFocus(p, ch) { info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
+                    // (onFocus clears the stale tab opener: a cell focused means the user left the strip; QA Almanac 1)
+                    onFocus(p, ch) { opener = null; info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
                     onSelect(p, ch) {
-                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
+                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { fileCell(ch, p); stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
                         else if (D.liveOptions && p.item) D.liveOptions(p.item);
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
@@ -185,7 +192,8 @@
                     const cell = ev.target && ev.target.closest ? ev.target.closest('.icefin-guide-gap') : null;
                     if (cell && cell.guideProgramme && cell.guideChannel) { T.ctx.sound('select'); selectGap(cell.guideProgramme, cell.guideChannel); }
                 });
-                if (back) focusMenu();
+                if (back && !(E.focused() && S.guideEl.contains(E.focused()))) focusMenu();
+                if (cellBack) { const row = S.channels.findIndex((x) => x.id === cellBack.id); if (row >= 0) S.guide.focus(row, Math.max(cellBack.time, Date.now())); }  // Back from the player: its cell (QA Almanac 1)
             },
             unmount() {
                 D.screenHints = null;

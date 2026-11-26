@@ -58,7 +58,8 @@
                 tl.append(me.pos, me.bar, me.dur);
                 me.bar.addEventListener('pointerdown', (e) => { const p = player(), s = state(); if (!p || !s || !s.duration) return; const r = me.bar.getBoundingClientRect(); p.seek(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * s.duration); });
                 const tr = el('div', 'al-np-transport');
-                const btn = (label, glyph, go) => { const b = D.focusable(el('button', 'al-np-btn', glyph)); b.type = 'button'; b.setAttribute('aria-label', label); b.title = label; b.addEventListener('click', () => { ctx.sound('select'); go(); tick(); }); tr.append(b); return b; };
+                // idle: a press says "Nothing is playing" instead of doing nothing (QA Almanac 1)
+                const btn = (label, glyph, go) => { const b = D.focusable(el('button', 'al-np-btn', glyph)); b.type = 'button'; b.setAttribute('aria-label', label); b.title = label; b.addEventListener('click', () => { if (!audioNow()) { D.notice('Nothing is playing', true); return; } ctx.sound('select'); go(); tick(); }); tr.append(b); return b; };
                 me.shuffle = btn('Shuffle', '⇄', () => { const p = player(); if (p && p.toggleShuffle) p.toggleShuffle(); else if (ctx.setShuffle) { const m = ctx.playMode(); ctx.setShuffle(!(m && m.shuffle)); } });
                 btn('Previous', '◀◀', () => { const p = player(); if (p) p.previousItem(); });
                 me.pp = btn('Play or pause', '❚❚', () => { const p = player(); if (p) p.playPause(); });

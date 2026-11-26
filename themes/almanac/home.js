@@ -135,6 +135,8 @@
     };
 
     // ---- the server's status: pinged every 60 s ----
+    // the server button's label, shared by its creation and the ping, so Back finds it by label at once (QA Almanac 1)
+    const srvLabel = () => `${D.serverName || 'Server'}: ${D.serverUp ? 'reachable' : 'not answering'}; choose a server`;
     async function ping() {
         const cl = c();
         if (!cl) return;
@@ -144,7 +146,7 @@
             D.serverUp = true;
         } catch (e) { D.serverUp = false; }
         const s = document.querySelector('.al-server');
-        if (s) { s.textContent = `${D.serverUp ? '●' : '○'} ${D.serverName || 'server'}`; s.classList.toggle('down', !D.serverUp); s.setAttribute('aria-label', `${D.serverName || 'Server'}: ${D.serverUp ? 'reachable' : 'not answering'}; choose a server`); }
+        if (s) { s.textContent = `${D.serverUp ? '●' : '○'} ${D.serverName || 'server'}`; s.classList.toggle('down', !D.serverUp); s.setAttribute('aria-label', srvLabel()); }
         if (!D.serverUp && D.notice) D.notice(`Couldn’t reach ${D.serverName || 'the server'}`, true);
     }
 
@@ -161,6 +163,7 @@
             if (box) {
                 const srv = D.pointerFocus(el('button', 'al-server', `● ${D.serverName || '…'}`));
                 srv.type = 'button';
+                srv.setAttribute('aria-label', srvLabel());
                 srv.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.selectServer(); });
                 box.append(srv);
             }

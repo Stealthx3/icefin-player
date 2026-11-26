@@ -427,6 +427,18 @@
         async function load(how) {
             const lv = cur();
             const ticket = ++S.loading;
+            // Back to a level kept in memory: draw it first (header, tabs, rows or the tab), refresh behind (QA Almanac 1)
+            if (S.mem) {
+                S.mem = false;
+                if (lv.reload && lv.rows && lv.entries) {
+                    S.entries = lv.entries;
+                    for (const [, x] of rowEls) x.d.remove();
+                    rowEls.clear();
+                    drawHeader();
+                    drawTabs();
+                    if (S.zone === 'tabs' && tabEls.length) { drawRows(how); drawPane(litEntry()); focusTab(S.tabAt); } else { S.zone = 'rows'; drawRows(how); }
+                }
+            }
             if (!lv.entries || lv.reload) {
                 rootEl.setAttribute('data-al-loading', '1');
                 let list = [];
@@ -613,7 +625,8 @@
                 }
                 if (a === 'menu') {
                     const e = C.entry();
-                    if (!e || e.synthetic) { if (cur().sortable && D.sortPanel) { D.sortPanel(C); return true; } return false; }
+                    // a synthetic cell has no options of its own: the page's item has (QA Almanac 1)
+                    if (!e || e.synthetic) { if (cur().sortable && D.sortPanel) { D.sortPanel(C); return true; } if (cur().pane && D.itemMenu) { D.itemMenu(cur().pane, { column: C }); return true; } return false; }
                     if (e.menu) { e.menu(C); return true; }
                     if (e.item && D.itemMenu) { D.itemMenu(e.item, { column: C }); return true; }
                     return false;
@@ -637,7 +650,7 @@
             }
         };
         // back on a screen kept in memory: its rows again, refreshed (progress, watched marks), the same cell lit
-        if (saved) { const c0 = cur(); if (c0) { c0.reload = true; } }
+        if (saved) { const c0 = cur(); if (c0) { c0.reload = true; S.mem = true; } }
         D.currentColumn = C;
         D.goLevel = (lv) => { if (D.currentColumn && D.currentColumn.S.alive) D.currentColumn.push(lv); };
         if (saved || !opts.root.deferred) C.redraw(saved ? null : 'first');

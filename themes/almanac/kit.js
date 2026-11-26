@@ -152,7 +152,7 @@
     D.songLine = (host) => {
         const line = D.el('div', 'al-song');
         line.hidden = true;
-        const label = D.el('button', 'al-song-label');
+        const label = D.pointerFocus(D.el('button', 'al-song-label'));  // follows the pointer (QA Almanac 1)
         label.type = 'button';
         label.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/queue'); });
         const bar = D.el('div', 'al-song-bar');
@@ -261,7 +261,7 @@
         nav.append(D.pointerFocus(b), D.pointerFocus(h));
         // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
         const add = (icon, label, go) => { const x = D.pointerFocus(D.el('button', 'al-pnav-btn')); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
-        add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
+        add('reorder', 'Options', () => { if (!(T.handleAction && T.handleAction('menu')) && D.notice) D.notice('No options here', true); });  // always answers (QA Almanac 1)
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));
         for (const x of (extra || [])) add(x.icon || 'item', x.label, x.go);
