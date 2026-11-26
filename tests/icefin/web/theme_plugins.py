@@ -136,7 +136,7 @@ def main():
             for key in ("homeSections", "homeSectionCount", "drawer", "userMenu", "pluginScripts", "playMethod"):
                 check(f"{mode}: {key} same as engine off", r[key] == ref[key], "" if r[key] == ref[key] else f"({layer}) off={ref[key]} {mode}={r[key]}")
             rows = r["reporting"] if isinstance(r["reporting"], list) else []
-            check(f"{mode}: Playback Reporting row with Icefin's client name", any("Icefin" in json.dumps(x) for x in rows), str(rows)[:200])
+            check(f"{mode}: Playback Reporting row with IceFin Player's client name", any("IceFin Player" in json.dumps(x) for x in rows), str(rows)[:200])
     except Exception as e:  # noqa: BLE001
         check("run", False, f"{type(e).__name__}: {e}")
     finally:

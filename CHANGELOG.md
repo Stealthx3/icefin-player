@@ -1,10 +1,16 @@
 # Changelog
 
-All notable changes to Icefin Player are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Upstream merges are listed with the upstream version they bring in.
+All notable changes to IceFin Player are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Upstream merges are listed with the upstream version they bring in.
 
 ## [Unreleased]
 
+### Removed
+- Spark, Marquee and Plum are left out of the built-in themes for now; they return in a later update. A device that used one of them shows the stock look until another theme is chosen.
+
 ### Added
+- A device wallpaper (animated SVG, looping MP4 or WebM, or a picture) behind any theme, chosen in Client Settings under Theme.
+- Almanac and Tide have their own music: a startup jingle, a background loop and a goodbye (Almanac an easy lounge groove, Tide a still, wave-like wash).
+- Steam artwork for adding IceFin Player as a non-Steam game, with steps in docs/INSTALL.md.
 - Details screens show initials for a person or artist without a photo, and each chapter's start time on its picture, in every theme.
 - Media Center draws its own player controls over video: a title or the film's logo, chapter and end time, a seek bar with chapter marks, round glass transport buttons, a side panel for audio, subtitles, speed, aspect and repeat, playback info and a chapters strip; skip prompts and Up next appear in the same look. If a server plugin adds its own button or panel to the player, that video uses the web player's controls instead, with a short note saying why (also on request from the panel).
 - Media Center: library screens for movies, TV, music, pictures, books, music videos and playlists, with sorts and filters along the top, a sideways grid with the glass focus, and genres as stacks of covers.
@@ -18,8 +24,12 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Client Settings -> Hardware -> Copy report: a diagnostics report for bug reports (versions, GPU and decoding, display and HDR, audio and receiver, recent log), with server addresses, sign-in tokens, user, host and home folder names removed. The bug report form asks for it.
 - Audio: Receiver in Standby (Switch When It Wakes, Always PCM, Keep Bitstream). By default a receiver that is in standby gets PCM, and the playing track switches to the bitstream 4 seconds after the receiver wakes.
 - Under Steam, button prompts match the controller Steam took over (PlayStation, Nintendo, Steam Deck or Xbox shapes) instead of generic ones. docs/INSTALL.md has a recommended Steam layout.
+- Every theme draws the Display, Playback, Subtitles and Controls preference pages in its own style, laid out like its Client Settings; a change saves at once.
 
 ### Changed
+- The themes' own text says IceFin Player (exit prompts, server notices, Media Center's description and the rest).
+- The app is now written IceFin Player (window title, app menus and stores, the client name your server shows, the diagnostics report). Servers that list devices show the new name for this client; nothing else changes.
+- Store listings get the suite's brand colours (light #80e5ff, dark #06445e).
 - New app icon: the Progress ring mark from the IceSuite art kit (the fin and wave inside a playback ring), installed as a full hicolor set (16–512 px, scalable and symbolic). The README has the kit's banner and feature icons.
 - Plaza 0.9.0, from a walk of every element: tabs slide toward the tab you pick; menus and pickers rise in and fall out; the sort and filter panel slides from its edge; a poster grows into its details and Back shrinks it home; settings tiles grow into their pages; the bar's caption cross-fades; details fade under the frame; the focused name stays inside the window; sheets end above the bar; Display's tick boxes are switch rows and the bar names the focused setting.
 - Plaza's details page goes back to its top when focus returns to the actions or pickers (after a picker closes, or Up from a list), so the title isn't left under the band.
@@ -28,10 +38,23 @@ All notable changes to Icefin Player are documented here. The format follows [Ke
 - Plaza: every genre, network and artist cell shows its name; Play all and Shuffle are buttons apart from the tabs; empty lists say what to do next.
 - The theme no longer follows the account by default: each device keeps its own, so several devices on one account can use different themes at once. Client Settings -> Theme -> Sync Theme With Account turns syncing back on.
 - Dolby Vision profile 5 plays the original file: Force Transcode Dolby Vision is now off by default. The Vulkan renderer shows it; on OpenGL Icefin asks first (play anyway, or ask the server for an HDR10 or SDR version). If you saved video settings on an earlier build, switch it off by hand.
+- Harbor, Orbit and Mosaic show your server's icon (Harbor its banner or icon and name) where the interface they follow shows its own brand.
 
 ### Fixed
+- On jellyfin-web's pages inside a theme, Back returns focus to the control that opened the next page, and the arrow keys reach the frame's Back, Home and tabs. Back to a series shows the season of the episode that was opened.
+- Back from an episode to its series shows the season that episode is in, so the episode keeps the focus.
+- Back to one of jellyfin-web's own pages inside a theme (Classic home and the rest) lands on the card or control that opened the next screen, not the page's first control; the arrow keys there move over the page and the theme's frame (its Back, Home, Play on and Watch together) as a controller does.
+- The mouse's Back button with a theme's panel open (item options, a menu) closes the panel instead of leaving it over the previous screen.
+- Over jellyfin-web's own pages inside a theme, the arrow keys, Enter and Escape work inside the theme's side panel or sheet; Escape left the page with the panel still up.
+- On jellyfin-web's own pages inside a theme (Classic home and the rest), the controller and the arrow keys reach every card's picture and title and the rows' scroll buttons; moving onto a card used to stop dead.
+- Escape and Backspace leave the themed settings area and details screens, as their Back buttons do.
+- Playing a Live TV channel no longer drops the theme's player controls for jellyfin-web's.
+- The keyboard works on a theme's screens after a jellyfin-web dialog has been opened and closed.
+- Back on Jellyfin's own home opened from a theme (Classic home) returns to where it was opened from, with a controller, a remote or the keyboard.
 - A crash when a new item started while the last one's cover art was still downloading (for the desktop's media controls). The same mistake could crash Icefin when the server address check or a URL lookup was replaced by a newer one.
 - Plaza: every control can be reached and shows focus with a controller, the home's server card included; the Live TV card shows the channel's number and name when there is no picture or the logo would vanish on its screen; a long press on View no longer reopens the last item menu; Low Motion also stills the player's controls and the frame's Now playing pill.
+- Nintendo controllers (Switch Pro, Joy-Cons) show Nintendo button prompts again, and the Nintendo Button Layout option applies to them; they were treated as generic pads.
+- A controller unplugged after connecting is let go of properly; one announced twice stayed open in the background.
 - Escape on an open drop-down in Client Settings closes just the list again, instead of the whole Client Settings page.
 - A theme's startup jingle plays when Icefin starts with that theme already chosen; something briefly in its way at launch used to skip it for the whole run. The log says why it waits.
 - Client Settings -> Controllers: Remap is reachable with a controller (it sat out of line with the switches, so Down skipped it).

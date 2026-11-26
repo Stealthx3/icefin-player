@@ -2,11 +2,26 @@
   "schema": 1,
   "id": "mosaic",
   "name": "Mosaic",
-  "version": "0.2.0",
-  "description": "Large lowercase pivot headers across the top that slide with their sections, each a grid of flat tiles in three sizes with live tiles cycling content. Light grey with green tiles; typography carries the design.",
+  "version": "0.3.0",
+  "description": "The target's pivot: a row of light lowercase headers over a grid of flat tiles in three sizes, green for places and actions, art for things, live tiles cycling; libraries as hubs with posters two rows deep running sideways; details as a pivot of the item's sections over its darkened backdrop; white panels and lists with a green focus for everything else; a guide panel over any screen.",
   "styles": "styles.css",
   "scripts": [
-    "mosaic.js"
+    "kit.js",
+    "panel.js",
+    "views.js",
+    "data.js",
+    "home.js",
+    "pivots.js",
+    "itemmenu.js",
+    "details.js",
+    "guide.js",
+    "tv.js",
+    "library.js",
+    "np.js",
+    "player.js",
+    "settings.js",
+    "account.js",
+    "interim.js"
   ],
   "sounds": {
     "focus": "sounds/focus.wav",
@@ -25,15 +40,26 @@
           "surfaceRaised": "#2a2f33",
           "text": "#f2f3f3",
           "textSecondary": "#b0b3b6",
-          "focus": "#f2f3f3",
-          "onFocus": "#111315",
+          "focus": "#009a00",
+          "onFocus": "#ffffff",
           "divider": "rgba(255, 255, 255, 0.12)",
           "hover": "rgba(47, 143, 31, 0.22)",
           "inputBackground": "#1f2326",
-          "backgroundMid": "#1a1d20",
-          "backgroundLow": "#0c0d0e"
+          "backdropTop": "#1f2326",
+          "backdropMid": "#16191b",
+          "backdropBottom": "#111315",
+          "floor": "#0c0d0e",
+          "panelLo": "#24282c"
         }
       }
+    }
+  },
+  "music": {
+    "startup": "music/startup.ogg",
+    "ambient": "music/ambient.ogg",
+    "jingles": {
+      "guide": "music/guide.ogg",
+      "goodbye": "music/goodbye.ogg"
     }
   }
 }

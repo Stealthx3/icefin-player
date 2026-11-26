@@ -20,6 +20,11 @@ jobs:
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11
       options: --privileged
+      # The image ships its runtimes in /var/lib/flatpak. When Flathub has a newer one, flatpak-builder updates it, and
+      # moving the old deploy out of an image layer fails on overlayfs ("Invalid cross-device link"). A volume there
+      # gets a copy of the image's runtimes on one plain filesystem, so the update can move them.
+      volumes:
+        - /var/lib/flatpak
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,6 +56,9 @@ jobs:
         with:
           path: ~/weston-16
           key: weston16-ubuntu-24.04-${{ hashFiles('tests/icefin/hdr/build-weston.sh') }}
+      # the runner image's package lists go stale (Ubuntu drops superseded .debs from its mirror)
+      - name: Refresh package lists
+        run: sudo apt-get update -q >/dev/null
       - name: Weston 16 (built once, then cached)
         run: sh tests/icefin/hdr/build-weston.sh
       - name: Flatpak, this commit's bundle and its runtime

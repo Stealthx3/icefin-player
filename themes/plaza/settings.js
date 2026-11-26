@@ -90,7 +90,7 @@
             entries.append(t);
         };
         extra('Classic home', 'Jellyfin’s own home, with any plugin home sections', 'boxsets', 'classic', () => T.ctx.navigate('#/home?icefin=stock'));
-        if (T.ctx.exit) extra('Exit Icefin', 'Quit the app', 'exit', 'power', () => T.ctx.exit());
+        if (T.ctx.exit) extra('Exit IceFin Player', 'Quit the app', 'exit', 'power', () => T.ctx.exit());
         const tile = (t) => {
             if (t.classList.contains('pz-s-tile')) return;
             const [kind, icon] = look(t);
@@ -131,9 +131,17 @@
         new MutationObserver(() => { for (const t of entries.querySelectorAll('.icefin-s-entry:not(.pz-s-tile)')) tile(t); }).observe(entries, { childList: true });
     }
 
+    // the preference pages, drawn as Client Settings is (PLAN 9.62, D39); Home stays Plaza's own (prefs.js)
+    // pointer-first like Plaza's menus: hovering a control focuses it (QA 1)
+    const pointered = (s) => Object.assign(Object.create(s), {
+        mount(root, ctx) { T.ui.pointerFirst(true); return s.mount.call(s, root, ctx); },
+        unmount() { T.ui.pointerFirst(false); return s.unmount ? s.unmount.call(s) : undefined; }
+    });
+    if (T.ui.settings.prefs) for (const r of T.ui.settings.prefsRoutes) T.registerScreen(r, pointered(T.ui.settings.prefs()));
     const base = T.ui.settings.screen({ layout: 'tiles' });
     T.registerScreen('#/mypreferencesmenu', {
         mount(root, ctx) {
+            T.ui.pointerFirst(true);
             const r = base.mount.call(base, root, ctx);
             decorate(root);
             // the Client Settings page fills in a moment later
@@ -142,6 +150,6 @@
         },
         onAction: (a, ctx) => (base.onAction ? base.onAction.call(base, a, ctx) : false),
         onBack: () => (base.onBack ? base.onBack.call(base) : false),
-        unmount: () => (base.unmount ? base.unmount.call(base) : undefined)
+        unmount: () => { T.ui.pointerFirst(false); return base.unmount ? base.unmount.call(base) : undefined; }
     });
 })();

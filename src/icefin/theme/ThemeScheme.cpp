@@ -9,6 +9,8 @@
 #include <QRegularExpression>
 #include <QWebEngineUrlRequestJob>
 #include <QWebEngineUrlScheme>
+#include "settings/SettingsComponent.h"
+#include "shared/Paths.h"
 
 namespace Icefin::Theme
 {
@@ -59,6 +61,24 @@ void SchemeHandler::requestStarted(QWebEngineUrlRequestJob* job)
 {
   const QUrl url = job->requestUrl();
   if (job->requestMethod() != "GET") { job->fail(QWebEngineUrlRequestJob::RequestDenied); return; }
+  if (url.host() == "wallpaper") {
+    // The device wallpaper: only the file named by the setting, directly inside the wallpapers folder.
+    const QString name = QFileInfo(url.path()).fileName();
+    const QString current = SettingsComponent::Get().value("theme", "wallpaper").toString();
+    static const QMap<QString, QByteArray> extra{{"mp4", "video/mp4"}, {"webm", "video/webm"}, {"gif", "image/gif"}, {"webp", "image/webp"}};
+    const QString ext = QFileInfo(name).suffix().toLower();
+    QByteArray mime = extra.value(ext);
+    if (mime.isEmpty()) mime = mimeFor(name);
+    const QString file = Paths::globalDataDir("wallpapers") + '/' + name;
+    if (name.isEmpty() || name != current || url.path() != "/" + name || mime.isEmpty() || !QFileInfo(file).isFile()) {
+      job->fail(QWebEngineUrlRequestJob::UrlNotFound);
+      return;
+    }
+    auto* f = new QFile(file, job);
+    if (!f->open(QIODevice::ReadOnly)) { job->fail(QWebEngineUrlRequestJob::UrlNotFound); return; }
+    job->reply(mime, f);
+    return;
+  }
   const Package* p = m_lookup ? m_lookup(url.host()) : nullptr;
   if (!p || !p->ok()) { job->fail(QWebEngineUrlRequestJob::UrlNotFound); return; }
   const bool trusted = m_trusted && m_trusted(*p);

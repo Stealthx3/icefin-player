@@ -24,10 +24,13 @@ from setup import Server  # noqa: E402
 from cdp import Page  # noqa: E402
 import hostmode  # noqa: E402
 
-THEMES = ["media-center", "harbor", "spark", "plum", "plaza", "orbit", "mosaic", "lumen", "marquee", "almanac", "arcade", "tide"]
-LAYOUT = {"media-center": "poster", "harbor": "poster", "spark": "hero", "plum": "poster", "plaza": "banner", "orbit": "poster",
-          "mosaic": "panel", "lumen": "hero", "marquee": "hero", "almanac": "panel", "arcade": "banner", "tide": "panel"}
+THEMES = ["media-center", "harbor", "plaza", "orbit", "mosaic", "lumen", "almanac", "arcade", "tide"]  # Spark, Plum, Marquee: themes-later/
+LAYOUT = {"media-center": "poster", "harbor": "poster", "plaza": "banner", "orbit": "poster",
+          "mosaic": "panel", "lumen": "hero", "almanac": "panel", "arcade": "banner", "tide": "panel"}
 ROOT = "document.querySelector('#icefin-theme-root')"
+# themes parked in themes-later/ are not bundled, so the default list skips them
+REPO = os.path.join(HERE, "..", "..", "..")
+THEMES = [t for t in THEMES if os.path.isdir(os.path.join(REPO, "themes", t))]
 
 
 def main():
@@ -113,9 +116,13 @@ def main():
 
         def open_details(item_id):
             js(f"location.hash = '#/details?id={item_id}&serverId=' + {api}.serverId(); true")
-            page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready') === '{item_id}'", timeout=10)
+            # the engine's screen marks ready with the item id; a theme's own details screen (its pass, ownDetails) marks '1'
+            page.wait_for(f"['{item_id}', '1'].includes(({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-ready'))", timeout=10)
+            if js(f"{ROOT}.getAttribute('data-icefin-details-ready')") == "1":
+                return False
             page.wait_for(f"({ROOT} || {{getAttribute: () => null}}).getAttribute('data-icefin-details-complete') === '{item_id}'", timeout=30)
             time.sleep(0.8)
+            return True
 
         def shot(name):
             open(os.path.join(a.out, name), "wb").write(base64.b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
@@ -128,9 +135,13 @@ def main():
                 continue
             # A movie with two audio tracks.
             try:
-                open_details(movie2)
+                engine = open_details(movie2)
             except Exception as e:  # noqa: BLE001
                 check(f"{tid}: movie opens the themed details screen", False, str(e))
+                continue
+            if not engine:
+                # the theme's pass replaced the engine's screen with its own; its pass test covers it
+                print(f"theme_details: info {tid}: the theme's own details screen (covered by its pass test), skipped", flush=True)
                 continue
             info = js("JSON.stringify({layout: document.querySelector('.icefin-details').dataset.layout, actions: [...document.querySelectorAll('.icefin-d-btn')].map(b => b.dataset.action), options: [...document.querySelectorAll('.icefin-d-select')].map(b => b.dataset.option), stock: location.hash.includes('icefin=stock')})")
             info = json.loads(info)

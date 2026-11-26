@@ -30,6 +30,9 @@ html[data-icefin-motion="low"] .mc-ribbon { animation: none; }
 .mc-cat-title { height: 9vh; line-height: 9vh; padding-left: 17.2vw; font-size: 5.6vh; font-weight: 300; white-space: nowrap;
   opacity: var(--mc-dim, 0.5); transition: opacity var(--mc-ms, 320ms); }
 .mc-cat.current .mc-cat-title { opacity: 1; }
+/* A closed row's title opens it for the pointer (start.js); it lifts under the pointer as the tiles do. */
+.mc-cat:not(.current) .mc-cat-title { cursor: pointer; }
+html[data-mc-input="pointer"] .mc-cat:not(.current) .mc-cat-title:hover { opacity: 0.85; }
 /* The open row: 28.5vh under its title (the lens 18.3vh from y 60.7vh, its label under it); closed rows take no room. */
 .mc-band { height: 0; overflow: clip; overflow-clip-margin: 3vh; opacity: 0;
   transition: height var(--mc-ms, 320ms) cubic-bezier(.2,.7,.2,1), opacity calc(var(--mc-ms, 320ms) * 0.6) ease-out; }
@@ -370,7 +373,9 @@ html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-
 .mc-tv-info-title { font-size: 3.4vh; }
 .mc-tv-info-when { font-size: 2.2vh; opacity: 0.75; margin-top: 0.4vh; }
 .mc-tv-info-text { font-size: 2.2vh; opacity: 0.88; margin-top: 0.8vh; line-height: 1.45; max-height: 6.4vh; overflow: hidden; }
-.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; scrollbar-width: none; }
+.mc-tv-channels, .mc-tv-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(26vh, 1fr)); gap: 3vh 2.2vh; overflow: auto; max-height: 100%; padding: 1vh; box-sizing: border-box; scrollbar-width: none; }
+/* (border-box: with the padding the list ran 2vh past the body, which clips; its last row sat under the edge and the
+   body scrolled itself to show it: QA 1, the mouse's clicks on those channels hit nothing) */
 .mc-tv-channel, .mc-tv-rec-tile { cursor: pointer; outline: none; opacity: 0.85; transition: transform 180ms; }
 .mc-tv-logo, .mc-tv-rec-art { position: relative; height: 14.6vh; background: rgb(var(--icefin-color-glass-channel) / 0.06) center / contain no-repeat; display: flex; align-items: center; justify-content: center; font-size: 2.4vh; border-radius: 0.14vh; }
 .mc-tv-rec-art { background-size: cover; }
@@ -490,6 +495,7 @@ html[data-icefin-motion="low"] .mc-lib-grid, html[data-icefin-motion="low"] .mc-
 /* spinners: ‹ value › */
 .mc-spin { background: none; border: 0; padding: 0 0.8vh; margin: 0; font: inherit; font-size: 3.2vh; line-height: 1; color: inherit; opacity: 0.8; cursor: pointer; flex: none; }
 .mc-spin:hover, .mc-spin:focus { opacity: 1; outline: none; color: var(--icefin-color-focus); text-shadow: 0 0 1.5vh var(--icefin-color-focusGlow); }
+.mc-spin.mc-spin-off { opacity: 0.25; cursor: default; color: inherit; text-shadow: none; }
 
 /* This device: the engine's Client Settings page (ui.settings.screen) in the chrome; sections at the left, rows at
    the right, the help under a row while it has focus */
@@ -671,6 +677,7 @@ html[data-icefin-theme]:not([data-icefin-stock]) .page[data-mc-form] { visibilit
 .mc-sp-swap { animation: mc-sp-swap 120ms ease-out both; }
 @keyframes mc-sp-swap { from { opacity: 0; } }
 .mc-sp-row { margin: 0.2vh 0; }
+.mc-sp-static { cursor: default; }
 .mc-sp-label { display: flex; flex-direction: column; min-width: 0; }
 .mc-sp-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mc-sp-rowsub { display: block; font-size: 1.9vh; opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

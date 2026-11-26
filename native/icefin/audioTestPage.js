@@ -19,6 +19,11 @@
         if (!api.audiotest) return;
         const results = {};
         const render = (section) => api.audiotest.formats((formats) => {
+            // each result draws the section again: the button that had focus comes back with it (QA 2, Media Center: the
+            // remote was left on nothing after Play)
+            const act = document.activeElement;
+            const had = act && section.contains(act) && act.closest('.icefin-at-row')
+                ? { id: act.closest('.icefin-at-row').getAttribute('data-id'), cls: act.classList.contains('icefin-at-copy') ? 'icefin-at-copy' : 'icefin-at-play' } : null;
             section.querySelectorAll('.icefin-at-body').forEach((n) => n.remove());
             const body = document.createElement('div');
             body.className = 'icefin-at-body';
@@ -35,7 +40,8 @@
                 btn.type = 'button';
                 btn.className = 'raised emby-button icefin-at-play';
                 btn.textContent = `Play ${f.label}`;
-                btn.addEventListener('click', () => { btn.disabled = true; results[f.id] = { pending: true }; render(section); api.audiotest.play(f.id); });
+                // busy while its clip plays (aria-disabled, not disabled: a disabled button can't keep the focus)
+                btn.addEventListener('click', () => { if (results[f.id] && results[f.id].pending) return; results[f.id] = { pending: true }; render(section); api.audiotest.play(f.id); });
                 const exp = document.createElement('div');
                 exp.className = 'fieldDescription';
                 exp.textContent = `Receiver should show: ${f.receiverShows}`;
@@ -43,7 +49,7 @@
                 res.className = 'fieldDescription icefin-at-result';
                 const r = results[f.id];
                 res.textContent = !r ? '' : r.pending ? 'Playing…' : describe(r);
-                if (r && r.pending) btn.disabled = true;
+                if (r && r.pending) { btn.setAttribute('aria-disabled', 'true'); btn.style.opacity = '0.5'; }
                 row.append(btn, exp, res);
                 const fm = r && r.formats;
                 if (fm && !fm.ok && fm.rule) {
@@ -65,6 +71,8 @@
                 body.append(row);
             }
             section.append(body);
+            const again = had && body.querySelector(`.icefin-at-row[data-id="${CSS.escape(had.id)}"] .${had.cls}`);
+            if (again) { const T = window.icefinTheme; if (T && T.ctx && T.ctx.focus) T.ctx.focus(again); else again.focus(); }
         });
         api.audiotest.result.connect((r) => {
             results[r.id] = r;

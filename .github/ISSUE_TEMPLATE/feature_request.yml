@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement to Icefin Player
+description: Suggest an improvement to IceFin Player
 labels: ["enhancement"]
 body:
   - type: markdown
