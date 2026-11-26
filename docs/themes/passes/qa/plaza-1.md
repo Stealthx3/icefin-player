@@ -18,11 +18,17 @@ From the lab smoke walk of input_walk.py (keys, mouse, pad-xbox, 4 min each; the
       left it set; the keyboard ignored the theme's screen whenever a jellyfin-web form dialog was left in the page,
       even closed (engine #201).
 - [x] Back on Classic home (jellyfin-web's home opened from Settings) went nowhere: engine #200.
-- [ ] Pad A on the list screen's All / Play all / Shuffle reported dead in the lab; no cause found in the code
+- [x] Pad A on the list screen's All / Play all / Shuffle reported dead in the lab; no cause found in the code
       ("All" is the tab already showing). Recheck on the host walk. The first host walk's pad runs (dualsense,
       switchpro) stopped at 8 screens and never opened a library, a list or a book: still open.
-- [ ] A book's "Add to favorites" (jellyfin-web's details page in Plaza's frame) not reached by the pad in the lab;
+      Closed in pass 3: the list was a books library's, whose Play all and Shuffle had nothing to play (dead for
+      every input); they show only where something plays now (engine #215). Every pad run opens a list and "All".
+- [x] A book's "Add to favorites" (jellyfin-web's details page in Plaza's frame) not reached by the pad in the lab;
       no exclusion rule matches. Recheck on the host walk with the focus trace. Not reached on the first host walk.
+      Traced in pass 3's re-walk 2: the pads reached Play, Mark played and More, never Add to favorites or Download.
+      The engine's picker skipped a neighbour the focused button overlaps by a few pixels: engine #225, checked in
+      the app before it merges.
+      Closed: #225 merged; in the lab, Right from Play walks Download, Mark played, Add to favorites and More.
 
 From the host walk (plaza-qa1-20261116-1621; build 7b4c02c, so without engine #200/#201 or the fixes above):
 - [x] Details pages (Person, Season, Episode, Series; 137 focus-lost with the mouse): hovering a control on the
@@ -45,8 +51,10 @@ the keys run after 17:14 (engine #200, #201, not in that build); Play then Back 
 already returns, then it presses Back); "Translation key is missing" (jellyfin-web's own details page under the
 screen, logging a cast member's role); the search keys and "All" (a field value the walker didn't count yet, the tab
 already showing); the home's empty slot (a gap that takes a moved channel, as on the target).
-- [ ] jellyfin-web's own pages (?icefin=stock): focus after Back and focus rings; the host walk's stock control
+- [x] jellyfin-web's own pages (?icefin=stock): focus after Back and focus rings; the host walk's stock control
       says which are jellyfin-web's own behaviour.
+      Closed in pass 3 (plaza-3.md): the classic home's book cards' focus look and its Back-focus leftovers were
+      traced to jellyfin-web's page and the walker; rechecked in the overall rounds.
 
 ## 1. Themed elements: screens and surfaces
 
