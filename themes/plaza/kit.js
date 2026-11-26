@@ -107,7 +107,157 @@
     P.inputMode = (mode) => { const h = document.documentElement; if (h && h.getAttribute('data-pz-input') !== mode) h.setAttribute('data-pz-input', mode); };
     window.addEventListener('keydown', () => { lastKey = Date.now(); P.inputMode('keys'); }, true);
     window.addEventListener('mousemove', (e) => { if (e.movementX || e.movementY) P.inputMode('pointer'); }, true);
-    P.sawAction = () => { if (Date.now() - lastKey > 120) P.inputMode('pad'); };
+    P.sawAction = () => { P.backFocus.stop(); if (Date.now() - lastKey > 120) P.inputMode('pad'); };
+
+    // ---- Back lands on the control that opened the next screen (QA 1) ----
+    // Every history entry (its key and hash: an item's details, a library's wall) remembers the last control focused or
+    // clicked on it, and what its screen asks to keep (P.keep: the tab, the grid's page, the chosen disc). Back to that
+    // entry, the screen reads that state from P.returning() as it mounts, and the control is focused once it is drawn:
+    // within 8 s, and never after the user has moved. A new visit to the same route is a new entry and starts fresh.
+    // Back and Home themselves are not remembered. The home keeps its own (P.homeReturn).
+    P.backFocus = (() => {
+        const memo = new Map();
+        // the entry: the Navigation API's key for this history entry (Back returns to the same key), with the hash
+        const here = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key + ' ' : '') + location.hash;
+        let cur = null, prev = null, pending = null, keep = null, lastHash = here(), obs = null, timer = null, raf = 0;
+        const rootEl = () => document.getElementById('icefin-theme-root');
+        const idOf = (e) => (e.dataset && e.dataset.id) || (e.plazaItem && (e.plazaItem.Id || e.plazaItem.ItemId)) || (e.plazaChannel && e.plazaChannel.id) || '';
+        const labelOf = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+        const clsOf = (e) => e.classList[0] || '';
+        const NAV = '[data-action=back], [data-action=home], .pz-mround-back, .pz-mround-home';
+        const describe = (e) => ({ id: idOf(e), action: e.getAttribute('data-action') || '', tab: e.getAttribute('data-pz-tab') || '', label: labelOf(e), cls: clsOf(e) });
+        // An entry can change under the same address with no event this hears (a history step jellyfin-web takes on its
+        // own: pushState fires neither popstate nor hashchange). The walk (QA 2): a library reached that way kept its
+        // page and its control under the entry it was mounted on, so Back to a card on page 2 found no page (the first
+        // page came back) or no entry at all. The screen up is still the one that registered: the same address is enough.
+        const urlOf = (h) => h.slice(h.indexOf(' ') + 1);
+        const keepNow = (h) => { if (!keep || (keep.hash !== h && urlOf(keep.hash) !== urlOf(h))) return null; try { return keep.fn(); } catch (err) { return null; } };
+        function record(e) {
+            const r = rootEl();
+            const t = e && e.closest && e.closest('[data-icefin-focus]');
+            if (!r || !t || !r.contains(t) || t.matches(NAV)) return;
+            const h = here();
+            if (h !== lastHash && urlOf(h) === urlOf(lastHash)) { if (cur && cur.hash === lastHash) cur.hash = h; lastHash = h; }
+            if (cur && cur.hash !== h) prev = cur;
+            cur = { hash: h, d: describe(t), state: keepNow(h) };
+        }
+        function find(r, d) {
+            const all = [...r.querySelectorAll('[data-icefin-focus]')].filter((e) => e.getClientRects().length && clsOf(e) === d.cls);
+            // an item can show twice (an album's artist as Artist and as Album artist): the same label first
+            return (d.id && (all.find((e) => idOf(e) === d.id && labelOf(e) === d.label) || all.find((e) => idOf(e) === d.id)))
+                || (d.action && all.find((e) => e.getAttribute('data-action') === d.action))
+                || (d.tab && all.find((e) => e.getAttribute('data-pz-tab') === d.tab))
+                || (!d.id && d.label && all.find((e) => labelOf(e) === d.label)) || null;
+        }
+        function stop() {
+            pending = null;
+            if (obs) obs.disconnect();
+            obs = null;
+            clearTimeout(timer);
+            if (raf) cancelAnimationFrame(raf);
+            raf = 0;
+        }
+        function attempt() {
+            raf = 0;
+            const p = pending, r = rootEl();
+            if (!p || here() !== p.hash) { stop(); return; }
+            if (!r || r.hidden) return;
+            const e = find(r, p.entry.d);
+            if (!e) return;
+            if (T.ctx.focused() !== e) T.ctx.focus(e);
+            stop();
+        }
+        const soon = () => { if (!raf) raf = requestAnimationFrame(attempt); };
+        // the route changed: file the control used on the one left, and look up the one arrived at
+        function routed() {
+            const h = here();
+            if (h === lastHash) return;
+            const old = lastHash;
+            lastHash = h;
+            const c = cur && cur.hash === old ? cur : prev && prev.hash === old ? prev : null;
+            if (c) {
+                const st = keepNow(old);
+                memo.delete(old);
+                memo.set(old, Object.assign({}, c, st ? { state: st } : {}));
+                if (memo.size > 200) memo.delete(memo.keys().next().value);
+            }
+            stop();
+            const bareHome = /^#\/home(\.html)?(\?|$)/.test(location.hash) && !/[?&]pz=/.test(location.hash);
+            const entry = memo.get(h);
+            if (!entry || bareHome) return;
+            pending = { hash: h, entry };
+            const r = rootEl();
+            if (r) { obs = new MutationObserver(soon); obs.observe(r, { childList: true, subtree: true }); }
+            timer = setTimeout(stop, 8000);  // a screen that loads in several requests can take a while (QA 3); input still stops it
+            setTimeout(soon, 0);
+        }
+        // jellyfin-web opens the player (and some pages) with history.pushState, which fires neither popstate nor
+        // hashchange: the screen left was never filed, so Back from the player found nothing to put back (QA 3: Back
+        // to a series or a list landed on the first row). The Navigation API hears every change, as it happens, with
+        // the screen left still up. A replace at the same address is the same screen under a new key: carry it over.
+        const onEntry = (e) => {
+            const h = here();
+            if (e && e.navigationType === 'replace' && h !== lastHash && urlOf(h) === urlOf(lastHash)) {
+                if (cur && cur.hash === lastHash) cur.hash = h;
+                if (pending && pending.hash === lastHash) pending.hash = h;
+                lastHash = h;
+                return;
+            }
+            routed();
+        };
+        // capture listeners on window run before the engine's own, so the screen left is still up when it is filed
+        const onFocus = (e) => record(e.target);
+        const onInput = (e) => { if (e.type !== 'mousemove' || e.movementX || e.movementY) stop(); };
+        const INPUT = ['keydown', 'mousedown', 'wheel', 'mousemove'];
+        const off = () => {
+            window.removeEventListener('popstate', routed, true);
+            window.removeEventListener('hashchange', routed, true);
+            if (window.navigation) navigation.removeEventListener('currententrychange', onEntry);
+            document.removeEventListener('icefin-focus', onFocus, true);
+            document.removeEventListener('click', onFocus, true);
+            for (const t of INPUT) window.removeEventListener(t, onInput, true);
+            stop();
+        };
+        if (window.icefinPlazaBackFocusOff) window.icefinPlazaBackFocusOff();  // the theme loaded again: one set of listeners
+        window.icefinPlazaBackFocusOff = off;
+        window.addEventListener('popstate', routed, true);
+        window.addEventListener('hashchange', routed, true);
+        if (window.navigation) navigation.addEventListener('currententrychange', onEntry);
+        document.addEventListener('icefin-focus', onFocus, true);
+        document.addEventListener('click', onFocus, true);
+        for (const t of INPUT) window.addEventListener(t, onInput, true);
+        return {
+            stop,
+            // the state a screen keeps for Back (asked for as the screen is left), registered as it mounts
+            keep(fn) { keep = { hash: here(), fn }; },
+            // the state kept for this hash when the user comes back to it, else null
+            returning() { return pending && pending.hash === here() ? pending.entry.state || null : null; },
+            // what Back to this hash will focus ({id, action, tab, label, cls}), else null
+            target() { return pending && pending.hash === here() ? pending.entry.d || null : null; }
+        };
+    })();
+    P.keep = (fn) => P.backFocus.keep(fn);
+    P.returning = () => P.backFocus.returning();
+
+    // ---- the mouse's Back button over a card or panel of Plaza's own (QA 2) ----
+    // That button goes to the web view's history, not through the actions: with a channel's card or the sort panel open
+    // the screen under it went back (the walk: from a card on the home to the menu visited before it). The engine's
+    // overlay (the sheets) has this already; Plaza's own layers register here, and the Back closes the top one while the
+    // screen stays, where the Navigation API can cancel the step; where it can't, they close with the screen.
+    const layers = new Set();
+    P.layer = (isOpen, close) => { const l = { isOpen, close }; layers.add(l); return () => layers.delete(l); };
+    if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+        const webDialog = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden');
+        const onNavigate = (e) => {
+            if (e.navigationType !== 'traverse' || e.defaultPrevented || !layers.size || webDialog()) return;
+            const open = [...layers].filter((l) => { try { return l.isOpen(); } catch (err) { return false; } });
+            if (!open.length) return;
+            if (e.cancelable) { e.preventDefault(); open[open.length - 1].close(); } else open.reverse().forEach((l) => l.close());
+        };
+        if (window.icefinPlazaLayersOff) window.icefinPlazaLayersOff();  // the theme loaded again: one listener
+        window.navigation.addEventListener('navigate', onNavigate);
+        window.icefinPlazaLayersOff = () => window.navigation.removeEventListener('navigate', onNavigate);
+    }
 
     // ---- a page in a strip of pages: the next one slides in from its side (450 ms, ease-out) ----
     P.slide = (node, dir) => {
@@ -153,6 +303,7 @@
         if (o.background) f.style.background = o.background;
         const box = (r) => ({ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: `${o.radius == null ? 18 : o.radius}px` });
         Object.assign(f.style, box(o.from));
+        f.setAttribute('data-icefin-layer', '');  // flies over Plaza's screens (the engine hides the rest of <body>)
         document.body.append(f);
         const ms = o.ms || 360;
         const a = f.animate([box(o.from), box(o.to)], { duration: ms, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
