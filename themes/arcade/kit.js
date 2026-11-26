@@ -36,6 +36,7 @@
     D.client = () => T.ctx.apiClient();
     D.sid = () => { const c = D.client(); return c ? c.serverId() : ''; };
     D.uid = () => { const c = D.client(); return c ? c.getCurrentUserId() : ''; };
+    D.signedIn = () => { try { const c = D.client(); return !!(c && c.getCurrentUserId() && c.accessToken && c.accessToken()); } catch (e) { return false; } };
     D.details = (id) => T.ctx.navigate(`#/details?id=${id}&serverId=${D.sid()}`);
     D.params = () => new URLSearchParams((location.hash.split('?')[1] || ''));
     D.time = (d) => (d || new Date()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -127,6 +128,7 @@
         upcoming: `<rect x="4" y="5" width="16" height="15" rx="1.5" ${A}/><path d="M4 10h16M12 13v4M10 15h4" ${A}/>`,
         song: `<path d="M9 17V5l9-2v3l-9 2" ${A}/><circle cx="6.5" cy="17" r="2.5" ${A}/>`,
         back: `<path d="M15 5l-7 7 7 7" ${A}/>`,
+        menu: `<path d="M4 7h16M4 12h16M4 17h16" ${A}/>`,
         pause: `<path d="M8.5 5.5v13M15.5 5.5v13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>`,
         prev: `<path d="M6 5.5v13M18 6l-9 6 9 6z" ${A}/>`,
         next: `<path d="M18 5.5v13M6 6l9 6-9 6z" ${A}/>`,
@@ -269,8 +271,10 @@
         h.append(D.svg('home'), document.createTextNode(' Home'));
         h.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/home'); });
         nav.append(b, h);
-        // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
+        // what a pad has keys for and a mouse doesn't: the main menu (the guide button: every library, Settings, Exit; QA
+        // pre: the mouse had no way to it), the options (≡), Play on, Watch together, and a screen's own
         const add = (icon, label, go) => { const x = D.el('button', 'ac-pnav-btn'); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
+        if (D.signedIn()) add('menu', 'Menu', () => { if (D.openMenu) D.openMenu(); });
         add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));

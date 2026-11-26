@@ -72,6 +72,16 @@
         head.append(el('div', 'ac-panel-title', spec.title || ''));
         const body = el('div', 'ac-panel-body');
         level.append(head, body);
+        // a level under the top one shows below or beside it: a click there goes back to it and does what was clicked
+        // (pointer-first; ported from Harbor's QA pre: its rows looked live and did nothing)
+        level.addEventListener('click', (ev) => {
+            if (!level.classList.contains('ac-level-under') || !host) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            while (stack.length > 1 && stack[stack.length - 1].el !== level) D.panel.pop();
+            const row = ev.target.closest && ev.target.closest('[data-icefin-focus]');
+            if (row && level.contains(row)) { T.ctx.focus(row); row.click(); }
+        }, true);
         if (how === 'replace' && stack.length) { const old = box.lastElementChild; if (old) old.remove(); stack.pop(); }
         const under = box.lastElementChild;
         if (under && how === 'push') {
