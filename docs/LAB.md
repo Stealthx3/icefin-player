@@ -2,9 +2,9 @@
 _Standard: VM-LAB-STANDARD v1.2 · Created 2026-11-07_
 
 ## Host (from lab.sh doctor)
-- virt-install 5.1.0, virt-manager: yes, KVM: yes, LXC driver: yes
-- Network: default (NAT) · Pool: default (/var/lib/libvirt/images) · Base: lab-base-debian13.qcow2 (shared)
-- Host: 16 CPUs, 125 GB RAM
+- virt-install, virt-manager: yes, KVM: yes, LXC driver: yes
+- Network: default (NAT) · Pool: VMDisks, a data drive's folder (path in the git-ignored `docs/LAB.local.md`), not libvirt's `default` pool on the system drive (D46) · Base: lab-base-debian13.qcow2 (shared)
+- Host: meets the standard's requirements (exact CPU and RAM in the git-ignored `docs/LAB.local.md`)
 
 ## Guest decision (§2)
 | Role | Kind | Rule | "Yes" answers | Note |
@@ -16,10 +16,24 @@ _Standard: VM-LAB-STANDARD v1.2 · Created 2026-11-07_
 ## Guests (watch in virt-manager → QEMU/KVM)
 | Guest | Kind | Base | vCPU/RAM | Purpose | Snapshots |
 |---|---|---|---|---|---|
-| lab-icefin-main | vm | lab-base-debian13 | 8 / 16 GB, 80 GB disk | native + Flatpak builds, unit tests, Jellyfin servers | clean, provisioned, servers |
+| lab-icefin-main | vm | lab-base-debian13 | 12 / 24 GB, 80 GB disk (raised from 8 / 16 GB for parallel walks, D44) | native + Flatpak builds, unit tests, Jellyfin servers | clean, provisioned, servers |
+| lab-icefin-qa2 | vm | clone of lab-icefin-main (D47) | 10 / 20 GB, 80 GB disk | a second QA walk in parallel; test-repo Flatpak builds | none (virt-clone drops them) |
 | lab-icefin-htpcsim | vm | lab-base-debian13 | 4 / 6 GB, 40 GB disk | stand-in HTPC (`lab.htpcsim.env`, `tests/icefin/htpc/sim-provision.sh`) | clean, provisioned |
 
 Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with the KDE SDK need it.
+
+### A second QA guest (D47)
+`lab-icefin-qa2` is a `virt-clone` of `lab-icefin-main` into the VMDisks pool (the original shut down for the copy,
+about 15 minutes for 80 GB). Three things the clone needs that aren't obvious:
+- Its netplan file (`/etc/netplan/50-cloud-init.yaml`) matches the original's MAC, and cloud-init is disabled, so the
+  clone boots with no address. `virt-sysprep` fails on this host (libguestfs's supermin), so: with the original shut
+  down, give the clone the original's MAC (`virsh dumpxml`, edit, `virsh define`), boot it, change the MAC in the
+  netplan file to the clone's own, set its hostname, regenerate `/etc/machine-id` and the SSH host keys, power off,
+  restore its MAC.
+- The Jellyfin containers don't start on boot, in either guest: run `tests/icefin/servers/servers.sh up` after every
+  boot (a walk otherwise waits for the server without a word), and `livetv.py` to move the guide to now.
+- Its `~/icesuite-site` is a copy of the original's, behind the published site: `icesuite.py sync` first; where sync
+  refuses, `git checkout -f -B gh-pages origin/gh-pages && git clean -fd` in it (the published site is the truth).
 
 ## Jellyfin servers (PLAN 1.7, inside lab-icefin-main)
 - `tests/icefin/servers/servers.sh up|down|status|reset`: rootless podman, config in `tests/icefin/servers/servers.json`.
@@ -192,7 +206,7 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
 - **Where:** `lab-icefin-htpcsim` (4 vCPU, 6 GB, Debian's standard kernel for virtio_gpu, the headless 4K Weston TV
   session from `tests/icefin/htpc/sim-provision.sh`, Mesa in software), with the app held to two CPUs (`taskset`).
   Separate from `lab-icefin-main`, so other sessions' tests don't skew the numbers. The servers stay on
-  `lab-icefin-main` (`ICEFIN_SERVER_HOST=192.0.2.83`, `~/jf/creds.json` copied VM to VM).
+  `lab-icefin-main` (`ICEFIN_SERVER_HOST=<main guest IP>`, `~/jf/creds.json` copied VM to VM; the guest's address is in the git-ignored `docs/LAB.local.md`, or `virsh domifaddr lab-icefin-main`).
 - **What:** `tests/icefin/perf/perf_budget.py` runs the Flatpak and, for stock jellyfin-web and every installed
   theme, measures the home screen idle and with focus moving, then the 1080p H.264 film. The figures are Qt Quick's
   own frames (`hardware.startFrameStats` / `frameStats`: each frame's cost from scene-graph sync to swap, frames per
@@ -204,7 +218,7 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   records the budget again. It catches regressions; what a real low-end GPU does stays with beta row V4.
 - **Run:** build the Flatpak in `lab-icefin-main`, `flatpak build-bundle`, install the bundle in the guest, then:
   ```
-  LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=192.0.2.83 ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
+  LAB_ENV=lab.htpcsim.env scripts/lab.sh exec -r htpcsim 'export XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=wayland-0 ICEFIN_SERVER_HOST=<main guest IP> ICEFIN_JF_DIR=$HOME/jf; python3 tests/icefin/perf/perf_budget.py'
   ```
 
 ## Full lab matrix (PLAN 11.1)
@@ -212,7 +226,17 @@ host ── libvirt ──> lab-icefin-main (L1, nested KVM)
   `summary.md` / `summary.json` after each test, with each test's output in `<name>.log` (`--out`, default
   `~/lab-matrix/<date-time>`). Groups: `unit` (ctest), `app` (the app's own tests), `theme` (engine, every theme,
   and `clone_layout.py` for each reference spec), `av` (the Virtual AV lab rows and Icefin's rows), `hdr` (the virtual
-  HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) runs only when named.
+  HDR display on the Flatpak, headless Gamescope). `public` (the 40 public sinks, ~40 min) and `walk` (the controller
+  walk over every screen, stock and every theme, up to ~2.5 h; 7.6) run only when named. The app group includes the
+  quick controller checks: every pad family (virtual pads, `docs/dev/HARDWARE-SIMULATION.md` option C) and Steam's.
+- **QA crawler (PLAN 11.7, D40/D41):** `tests/icefin/web/input_walk.py` touches every element and path on every screen
+  with pad (each family), keys (DevTools key events) and mouse (DevTools mouse events), per theme and stock, and writes
+  per-theme `report.json` / `report.md` with findings (broken Back, dead controls, no focus indicator, elements the mouse
+  can use that pad or keys never reach, focus lost, script errors, plugin UI as info). Lab: `python3 input_walk.py --app
+  ~/build-matrix/src/icefin-player --server jf12 --out ~/iwalk [--themes a,b --inputs pad,keys,mouse --family all]`
+  (`lab-matrix.py --only input_walk`). Host: `--host` (the installed Flatpak, 1920x1080, sleep/lock inhibited, each theme
+  paired with a stock control, ends on stock; `--steam shortcut,gamescope`; the shortcut is managed with
+  `scripts/icefin/qa-steam-shortcut.py add|remove|status`, with Steam closed). Pads on the host need /dev/uinput and /dev/uhid.
   `--list` prints the tests; `--only` / `--skip` take names. The budget test runs in `lab-icefin-htpcsim` (above).
 - **Tree and builds:** `~/src-matrix` (`git archive` of the commit plus the mpvqt submodule), built twice:
   ```

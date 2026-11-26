@@ -133,7 +133,7 @@
     }
 
     // ---- the exit question (stock has none; the controller's Back on the home) ----
-    B.exitAsk = () => B.panel && B.panel.ask({ title: 'Exit Icefin?', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => B.farewell(() => T.ctx.exit()) }] });
+    B.exitAsk = () => B.panel && B.panel.ask({ title: 'Exit IceFin Player?', choices: [{ label: 'Cancel', safe: true }, { label: 'Exit', run: () => B.farewell(() => T.ctx.exit()) }] });
 
     let S = null;
     B.register('#/home', {

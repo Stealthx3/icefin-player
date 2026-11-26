@@ -137,7 +137,7 @@ def main():
             act("back")
             page.wait_for("!!document.querySelector('.ms-panel .ms-row')", timeout=10)
             settle(0.4)
-            check("Back on home asks to exit, Cancel focused", "Exit Icefin?" in js("document.querySelector('.ms-panel-title').textContent") and focused() == "Cancel", str(focused()))
+            check("Back on home asks to exit, Cancel focused", "Exit IceFin Player?" in js("document.querySelector('.ms-panel-title').textContent") and focused() == "Cancel", str(focused()))
             shot("exit.png")
             act("back"); settle(0.6)
             check("Back again keeps you on the home", js("!document.querySelector('.ms-panel')") is True and "#/home" in js("location.hash"))

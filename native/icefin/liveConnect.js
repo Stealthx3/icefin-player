@@ -92,10 +92,33 @@ html[data-icefin-motion="low"] #${ID}, html[data-icefin-motion="low"] #${ID} * {
         cur.buttons.forEach((b, k) => b.classList.toggle('icefin-focused', k === cur.focus));
     }
     const pm = () => window.icefinPlaybackManager;
+    // A start cancelled before the server answered still plays when the stream opens, seconds later, and takes the
+    // screen to the player: for a while after Cancel or Back, that channel starting is stopped (QA 3, Media Center:
+    // Back from the guide while a channel tuned, and the player opened on the screen Back went to).
+    const LATE_MS = 45000;
+    let dropped = null;  // {id, until, watch}
+    function dropLate(channel) {
+        if (dropped) clearInterval(dropped.watch);
+        const d = { id: channel && channel.Id, until: Date.now() + LATE_MS };
+        d.watch = setInterval(() => {
+            if (Date.now() > d.until || cur) { clearInterval(d.watch); if (dropped === d) dropped = null; return; }
+            let now = null;
+            try { now = T.ctx.nowPlaying && T.ctx.nowPlaying(); } catch (e) { /* not ready */ }
+            const it = now && now.item;
+            if (it && it.Id === d.id) {
+                clearInterval(d.watch);
+                if (dropped === d) dropped = null;
+                try { const p = pm(); if (p) p.stop(now.player); } catch (e) { /* stopped already */ }
+            }
+        }, 250);
+        dropped = d;
+    }
     function cancel() {
         const p = pm();
+        const ch = cur && cur.channel;
         close();
         try { if (p && p.getCurrentPlayer && p.getCurrentPlayer()) p.stop(); } catch (e) { /* nothing playing */ }
+        dropLate(ch);
     }
     function fail(reason) {
         if (!cur || cur.state === 'failed') return;
@@ -116,6 +139,7 @@ html[data-icefin-motion="low"] #${ID}, html[data-icefin-motion="low"] #${ID} * {
 
     function show(channel, options) {
         close();
+        if (dropped) { clearInterval(dropped.watch); dropped = null; }  // a new start, maybe the same channel again
         ensureStyle();
         const root = el('div');
         root.id = ID;
@@ -228,6 +252,14 @@ html[data-icefin-motion="low"] #${ID}, html[data-icefin-motion="low"] #${ID} * {
     };
     E.addActionHook(hook);
     E.onReset(() => { close(); E.addActionHook(hook); });
+    // Back by the history (the mouse's Back button, which the app maps to the web view's goBack, or a page's own Back)
+    // while a channel connects is the user leaving: cancel it, as Back on the remote does. The player page opening is
+    // a push, not a traversal, so it never lands here (QA 3, Media Center: the dialog stayed over every screen the
+    // mouse went to for 40 s, and the player opened late).
+    window.addEventListener('popstate', () => {
+        if (cur && cur.state === 'connecting' && !/^#\/video\b/.test(location.hash)) cancel();
+        else if (cur && cur.state === 'failed') close();
+    });
     // Keys on the player page (no themed screen there to pass them on).
     const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Enter: 'enter', Escape: 'back', Backspace: 'back' };
     window.addEventListener('keydown', (e) => {

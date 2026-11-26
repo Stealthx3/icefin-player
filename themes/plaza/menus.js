@@ -191,7 +191,8 @@
             draw(p, dir || (p > g.page ? 1 : -1), focusAt != null ? focusAt : 0);
             return true;
         }
-        g.ready = draw(0, 0, opts.takeFocus ? 0 : null);
+        // opts.page: the page to open on (Back to this screen: the page it was left on)
+        g.ready = draw(opts.page || 0, 0, opts.takeFocus ? 0 : null);
         g.el = box;
         g.focusFirst = () => { if (g.cells[0]) { T.ctx.focus(g.cells[0]); return true; } return false; };
         g.focused = () => { const f = T.ctx.focused(); return g.cells.includes(f) ? f : null; };
@@ -271,7 +272,10 @@
         F.root.setAttribute('data-pz-panel', 'sort');
         T.ctx.focus(sorts.children[state.sort]);
         T.ctx.sound('select');
+        // the mouse's Back button closes the panel too, and the list stays (kit.js)
+        const unlayer = P.layer(() => panel.isConnected && !panel.classList.contains('pz-panel-out'), () => close());
         const close = () => {
+            unlayer();
             if (!panel.isConnected || panel.classList.contains('pz-panel-out')) return;
             const low = document.documentElement.getAttribute('data-icefin-motion') === 'low';
             if (low) panel.remove(); else { panel.classList.add('pz-panel-out'); setTimeout(() => panel.remove(), 220); }
@@ -305,22 +309,30 @@
                 ui.pointerFirst(true);
                 const p = P.params();
                 const parent = spec.parent ? spec.parent(p) : p.get('topParentId') || p.get('id');
+                // Back to this screen: the tab, sort and page it was left on (kit.js, P.keep)
+                const back = P.returning();
+                if (back && back.sort) Object.assign(state, { sort: back.sort.sort, flip: back.sort.flip, filters: new Set(back.sort.filters) });
                 F = frame(root, { view: spec.view, kind: spec.kind(p), name: spec.name(p), hints: spec.hints });
                 const tabs = spec.tabs(parent, p).map((t) => Object.assign({}, t));
                 if (spec.sortable) tabs.push({ id: 'sort', label: sortLabel(state), cls: 'pz-tab-sort', go: () => { panel = sortPanel(F, state, () => show(tab, false)); } });
-                const show = (id, focusGrid) => {
+                const show = (id, focusGrid, page) => {
                     tab = id;
                     const t = tabs.find((x) => x.id === id);
                     if (grid) grid.destroy();
                     F.focusText('');
-                    grid = pageGrid(F.body, Object.assign({ frame: F, takeFocus: focusGrid, empty: t.empty }, t.grid(sortOf(state), parent, p)));
+                    grid = pageGrid(F.body, Object.assign({ frame: F, takeFocus: focusGrid, empty: t.empty, page }, t.grid(sortOf(state), parent, p)));
                     screen.grid = grid;
                     if (spec.shown) spec.shown(screen);
                 };
                 screen.sort = () => sortOf(state);
-                F.setTabs(tabs, tabs[0].id, (id) => show(id, false));
+                const first = back && tabs.find((x) => x.id === back.tab && x.grid) ? back.tab : tabs[0].id;
+                // Back to a tab's action (Play all, Shuffle, the sort): the grid drawn after it doesn't take the focus Back
+                // put on that tab (QA 3: Back from the player landed on the first card)
+                const want = P.backFocus.target();
+                F.setTabs(tabs, first, (id) => show(id, false));
                 if (spec.after) spec.after(F, parent, p, screen);
-                show(tabs[0].id, true);
+                show(first, !(want && want.tab), back ? back.page : 0);
+                P.keep(() => ({ tab, page: grid ? grid.page : 0, sort: { sort: state.sort, flip: state.flip, filters: [...state.filters] } }));
                 screen.relayout = () => { if (grid) grid.relayout(); };
                 window.addEventListener('resize', screen.relayout);
             },
@@ -531,7 +543,11 @@
 
     // ---- Live TV: channels, the guide, recordings, the schedule ----
     function liveTv() {
-        let F = null, grid = null, guide = null, guideEl = null;
+        let F = null, grid = null, guide = null, guideEl = null, tabNow = 'channels';
+        // Back from a channel's video (or a programme's details) returns to the tab it was opened from, the guide too
+        // (QA 1): the tab is kept when the screen is left for #/video or #/details, and taken back only by a return to the
+        // same history entry (Back leaves history.length as it was; a fresh visit from the home adds entries).
+        let comeBack = null;
         const c = () => P.client(), uid = () => P.uid();
         const playChannel = (ch) => P.play(ch, true);
         // each channel on the page with what comes on next (one request for the page)
@@ -623,6 +639,7 @@
             if (head) new MutationObserver(dayOf).observe(head, { attributes: true, attributeFilter: ['data-start'] });
         }
         function show(id, focus) {
+            tabNow = id;
             if (grid) { grid.destroy(); grid = null; }
             if (guide) { guide.stop(); guide = null; }
             if (guideEl) { guideEl.remove(); guideEl = null; }
@@ -636,7 +653,10 @@
             mount(root) {
                 ui.pointerFirst(true);
                 F = frame(root, { view: 'livetv', kind: 'livetv', name: 'Live TV' });
-                const first = P.params().get('pztab') === 'guide' ? 'guide' : 'channels';
+                F.hash = location.hash;
+                const back = comeBack && comeBack.at === history.length && comeBack.hash === location.hash ? comeBack.tab : null;
+                comeBack = null;
+                const first = P.params().get('pztab') === 'guide' ? 'guide' : back || 'channels';
                 F.setTabs([{ id: 'channels', label: 'Channels' }, { id: 'guide', label: 'Guide' }, { id: 'recordings', label: 'Recordings' }, { id: 'schedule', label: 'Schedule' }], first, (id) => show(id, false));
                 show(first, true);
             },
@@ -649,7 +669,11 @@
                 return common(a, ctx);
             },
             onBack() { goBack(); return true; },
-            unmount() { if (guide) guide.stop(); if (F) F.stop(); ui.pointerFirst(false); F = null; grid = null; guide = null; guideEl = null; }
+            unmount() {
+                // the route has changed already: leaving for a video or a details page keeps the tab for the way back
+                comeBack = F && /^#\/(video|details)\b/.test(location.hash) ? { tab: tabNow, at: history.length, hash: F.hash } : null;
+                if (guide) guide.stop(); if (F) F.stop(); ui.pointerFirst(false); F = null; grid = null; guide = null; guideEl = null;
+            }
         };
         return screen;
     }
@@ -676,6 +700,7 @@
                     el('div', 'pz-ep-meta', [P.runtime(ep.RunTimeTicks), ep.PremiereDate ? new Date(ep.PremiereDate).getFullYear() : '', ep.Overview || ''].filter(Boolean).join(' · ')));
                 const played = ep.UserData && ep.UserData.Played;
                 const more = P.focusable(el('div', 'pz-ep-more', 'Details'));
+                more.plazaItem = ep;     // its episode, so Back from those details finds this row's button, not the first (QA 3)
                 more.addEventListener('click', (e) => { e.stopPropagation(); P.details(ep); });
                 row.append(still, text);
                 if (played) row.append(el('div', 'pz-ep-done', '✓'));
@@ -713,7 +738,10 @@
                 const tabs = seasons.map((s) => ({ id: s.Id, label: s.IndexNumber === 0 ? 'Specials' : s.Name, s }));
                 F.setTabs(tabs, start ? start.Id : null, (sid) => { const t = tabs.find((x) => x.id === sid); if (t && t.s) season(t.s, false); });
                 F.root.setAttribute('data-pz-seasons', String(seasons.length));
-                if (start) await season(start, true); else list.append(el('div', 'pz-empty', 'No seasons yet'));
+                // Back from an episode or the player: Back focus puts the row used back, so the season doesn't take it (QA 3:
+                // the series loads in four requests, and on a slow machine the first row won)
+                const want = P.backFocus.target();
+                if (start) await season(start, !want); else list.append(el('div', 'pz-empty', 'No seasons yet'));
             },
             onAction(a, ctx) {
                 P.sawAction();
@@ -760,7 +788,11 @@
             async mount(root) {
                 ui.pointerFirst(true);
                 F = frame(root, { view: 'resume', kind: 'resume', name: 'Continue Watching', hints: 'Ⓐ Resume · ◀▶ Disc · ≡ Details' });
-                F.setTabs([{ id: 'all', label: 'All' }, { id: 'movies', label: 'Movies' }, { id: 'episodes', label: 'Episodes' }], 'all', (id) => load(id, false));
+                // Back to this screen: the tab and the disc it was left on (kit.js, P.keep)
+                const back = P.returning();
+                let shown = back && ['all', 'movies', 'episodes'].includes(back.tab) ? back.tab : 'all';
+                F.setTabs([{ id: 'all', label: 'All' }, { id: 'movies', label: 'Movies' }, { id: 'episodes', label: 'Episodes' }], shown, (id) => load(id, false));
+                P.keep(() => ({ tab: shown, index }));
                 rack = el('div', 'pz-rack');
                 info = el('div', 'pz-info pz-centre-info pz-rack-info');
                 const pills = el('div', 'pz-rack-pills');
@@ -769,21 +801,22 @@
                 pill('From start', (it) => P.play(it, true));
                 pill('Details', P.details);
                 F.body.append(rack, info, pills);
-                const load = async (id, focus) => {
+                const load = async (id, focus, at) => {
+                    shown = id;
                     const q = { Limit: 40, Fields: P.FIELDS, MediaTypes: 'Video' };
                     if (id === 'movies') q.IncludeItemTypes = 'Movie';
                     if (id === 'episodes') q.IncludeItemTypes = 'Episode';
                     const r = await P.safe(P.client().getResumableItems(P.uid(), q));
                     if (!F) return;
                     items = P.items(r);
-                    index = 0;
+                    index = Math.max(0, Math.min(at || 0, items.length - 1));
                     F.root.setAttribute('data-pz-ready', String(items.length));
                     if (!items.length) { rack.textContent = ''; info.textContent = ''; info.append(el('div', 'pz-big', 'Nothing in progress')); pills.style.display = 'none'; F.focusText(''); F.pageText(''); return; }
                     pills.style.display = '';
                     draw();
                     if (focus) T.ctx.focus(rack.querySelector('.pz-disc-focus'));
                 };
-                await load('all', true);
+                await load(shown, true, back ? back.index : 0);
             },
             onAction(a, ctx) {
                 P.sawAction();
@@ -859,6 +892,10 @@
                 input.setAttribute('aria-label', 'Search');
                 input.placeholder = 'Search';
                 input.value = P.params().get('query') || '';
+                // Back from a result: the words and the filter it was found with (kit.js, P.keep)
+                const back = P.returning();
+                if (back) { if (!input.value) input.value = back.term || ''; if (TYPES[back.filter]) filter = back.filter; }
+                P.keep(() => ({ term: input ? input.value : '', filter }));
                 input.addEventListener('input', changed);
                 field.append(input);
                 field.addEventListener('click', () => input.focus());
@@ -942,9 +979,19 @@
             ];
         },
         after(F, parent, p, screen) {
+            const q = listQuery(p);
+            // Play all and Shuffle only where something plays (QA 3: a books library offered both, and they did nothing)
+            P.safe(P.client().getItems(P.uid(), Object.assign({ Recursive: true, Limit: 50, MediaTypes: 'Video,Audio' }, q, { IncludeItemTypes: undefined }))).then((r) => {
+                if (!Array.isArray(r.Items) || r.Items.some((x) => !x.IsFolder)) return;     // keep them if the server didn't answer
+                for (const id of ['playall', 'shuffle']) {
+                    const b = F.tab(id);
+                    if (!b) continue;
+                    if (b === document.activeElement && F.tab('all')) F.tab('all').focus();
+                    b.remove();
+                }
+            });
             // The A–Z rail (the walk's mock-up): a letter jumps the list to the first title from it; shown while sorted A to Z
             const rail = el('div', 'pz-az');
-            const q = listQuery(p);
             for (const ch of ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']) {
                 const b = P.focusable(el('div', 'pz-az-key', ch));
                 b.setAttribute('aria-label', ch === '#' ? 'Numbers and symbols' : `Titles from ${ch}`);

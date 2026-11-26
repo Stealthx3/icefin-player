@@ -26,6 +26,9 @@
         const s = Math.max(0, Math.floor((ms || 0) / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
         return h ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
     };
+    // Every list from the player as an array: a Live TV channel or a recording has no chapters and, while it opens, no
+    // tracks yet (QA 1: the controls failed on .map of a channel's missing list and Live TV fell back to jellyfin-web's).
+    const L = (x) => (Array.isArray(x) ? x : []);
     const kindOf = (s) => (s.type === 'Episode' ? 'tvshows' : s.type === 'TvChannel' || s.live ? 'livetv' : s.mediaType === 'Audio' ? 'music'
         : s.type === 'Movie' || s.type === 'Trailer' ? 'movies' : 'homevideos');
 
@@ -74,20 +77,20 @@
         const st = () => player.state();
         const prev = round('pz-pl-prev', 'Previous', svg(ICON.prev), () => {
             const s = st();
-            if (s.live) player.channelDown(); else if (s.chapters.length > 1 && !(s.playlistIndex > 0)) player.previousChapter(); else player.previousItem();
+            if (s.live) player.channelDown(); else if (L(s.chapters).length > 1 && !(s.playlistIndex > 0)) player.previousChapter(); else player.previousItem();
         });
         const back10 = round('pz-pl-skip', 'Back 10 seconds', '−10', () => player.seekBy(-10000));
         const pp = round('pz-pl-pp', 'Play or pause', svg(ICON.pause), () => player.playPause());
         const fwd30 = round('pz-pl-skip', 'Forward 30 seconds', '+30', () => player.seekBy(30000));
         const next = round('pz-pl-next', 'Next', svg(ICON.next), () => {
             const s = st();
-            if (s.live) player.channelUp(); else if (s.next) player.nextItem(); else if (s.chapters.length > 1) player.nextChapter();
+            if (s.live) player.channelUp(); else if (s.next) player.nextItem(); else if (L(s.chapters).length > 1) player.nextChapter();
         });
-        const audio = pill('', 'Audio', null, () => picker('Audio', st().audio.map((a) => ({ label: a.label, sub: a.detail, on: a.selected, go: () => player.setAudio(a.index) }))));
+        const audio = pill('', 'Audio', null, () => picker('Audio', L(st().audio).map((a) => ({ label: a.label, sub: a.detail, on: a.selected, go: () => player.setAudio(a.index) }))));
         const subs = pill('', 'Subtitles', null, () => {
             const s = st();
             picker('Subtitles', [{ label: 'Off', on: s.subtitleIndex === -1, go: () => player.setSubtitles(-1) }]
-                .concat(s.subtitles.map((x) => ({ label: x.label, sub: x.detail, on: x.selected, go: () => player.setSubtitles(x.index) }))));
+                .concat(L(s.subtitles).map((x) => ({ label: x.label, sub: x.detail, on: x.selected, go: () => player.setSubtitles(x.index) }))));
         });
         const chapters = pill('', 'Chapters', null, () => chapterStrip());
         // Plaza's own Play on card (playon.js) where the engine has its calls, else jellyfin-web's menus over the video
@@ -137,11 +140,11 @@
         S.subs.hidden = !(s.subtitles && s.subtitles.length);
         S.chapters.hidden = !(s.chapters && s.chapters.length > 1);
         // the chapter marks on the time line
-        const tk = s.duration ? s.chapters.map((c) => c.start).join() : '';
+        const tk = s.duration ? L(s.chapters).map((c) => c.start).join() : '';
         if (tk !== S.ticksKey) {
             S.ticksKey = tk;
             S.ticks.textContent = '';
-            if (s.duration) for (const c of s.chapters.slice(1)) { const t = el('i'); t.style.left = `${(c.start / s.duration) * 100}%`; S.ticks.append(t); }
+            if (s.duration) for (const c of L(s.chapters).slice(1)) { const t = el('i'); t.style.left = `${(c.start / s.duration) * 100}%`; S.ticks.append(t); }
         }
         drawArchive(s);
         // paused: the controls stay
@@ -150,7 +153,7 @@
     }
     // the archive: skip prompts and Up next, above the capsule (and on their own when the controls are hidden)
     function drawArchive(s) {
-        const list = s.archive || [];
+        const list = L(s.archive);
         const key = list.map((a) => a.id + ':' + (a.label || a.title || '')).join('|');
         if (key === S.archiveKey) {
             for (const a of list) { const c = S.archive.querySelector(`[data-pz-arch="${a.id}"] .pz-pl-count`); if (c && a.countdown != null) c.textContent = `in ${a.countdown} s`; }
@@ -258,7 +261,7 @@
         const s = S.player.state();
         card('Chapters', (body) => {
             const strip = el('div', 'pz-pl-chapters');
-            for (const c of s.chapters) {
+            for (const c of L(s.chapters)) {
                 const x = P.focusable(el('div', 'pz-pl-chap' + (c.index === s.chapter ? ' pz-pl-chap-on' : '')));
                 const img = el('div', 'pz-pl-chap-img');
                 if (c.image) P.bg(img, c.image);
@@ -285,11 +288,11 @@
             };
             if (s.speeds && s.speeds.length > 1) {
                 const now = (s.speeds.find((x) => Number(x.id) === Number(s.rate)) || { name: `${s.rate}×` }).name;
-                row('Speed', now, () => picker('Speed', s.speeds.map((x) => ({ label: x.name, on: Number(x.id) === Number(s.rate), go: () => p.setSpeed(Number(x.id)) }))), true);
+                row('Speed', now, () => picker('Speed', L(s.speeds).map((x) => ({ label: x.name, on: Number(x.id) === Number(s.rate), go: () => p.setSpeed(Number(x.id)) }))), true);
             }
             if (s.aspects && s.aspects.length > 1) {
                 const now = (s.aspects.find((x) => x.id === s.aspect) || { name: s.aspect || 'Auto' }).name;
-                row('Aspect ratio', now, () => picker('Aspect ratio', s.aspects.map((x) => ({ label: x.name, on: x.id === s.aspect, go: () => p.setAspect(x.id) }))), true);
+                row('Aspect ratio', now, () => picker('Aspect ratio', L(s.aspects).map((x) => ({ label: x.name, on: x.id === s.aspect, go: () => p.setAspect(x.id) }))), true);
             }
             if (s.subtitleIndex !== -1) {
                 const off = (n) => `${n > 0 ? '+' : ''}${(Math.round(n * 10) / 10).toFixed(1)} s`;

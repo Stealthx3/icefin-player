@@ -44,10 +44,12 @@
             // 10.11's legacy chrome and pages, and 10.12+'s React app (#reactRoot: MUI app bar, drawer, pages).
             // Descendants too: jellyfin-web sets visibility: visible on some of its own (the list page's A-Z picker).
             // Server plugins add UI straight to <body> (a media bar's slides, toasts): everything at the top level except
-            // Icefin's own (the screen root, the overlay, the on-screen keyboard) and jellyfin-web's dialogs (which the
+            // Icefin's own (the screen root, the overlay, the on-screen keyboard, the device wallpaper), a theme's own layers
+            // ([data-icefin-layer]: a notice, a flight, a hint bar it puts on <body>) and jellyfin-web's dialogs (which the
             // capability prompt uses too) steps aside as well. A theme with a transparent screen over the native
-            // backdrop showed all of it through.
-            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(#icefin-live):not(.dialogContainer)';
+            // backdrop showed all of it through. (QA 3, Media Center: without the layer mark a theme's notices and
+            // flights on <body> were hidden on its own screens, so Play on an album showed nothing.)
+            const keep = ':not(#icefin-theme-root):not(#icefin-theme-overlay):not(#icefin-osk):not(#icefin-live):not(#icefin-wallpaper):not([data-icefin-layer]):not(.dialogContainer)';
             const hide = ['.skinHeader', '.mainDrawer', '.mainDrawerHandle', '.mainAnimatedPages', '.backgroundContainer', '#reactRoot', `body > ${keep}`]
                 .map((s) => `html.${SCREEN_CLASS} ${s}, html.${SCREEN_CLASS} ${s} *`).join(', ');
             st.textContent = `${hide} { visibility: hidden !important; }`
@@ -500,7 +502,11 @@
             const centre = dir === 'left' ? ax - bx : dir === 'right' ? bx - ax : dir === 'up' ? ay - by : by - ay;
             if (centre <= 0) continue;
             const overlap = horiz ? Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) : Math.min(a.right, b.right) - Math.max(a.left, b.left);
-            if (overlap > 0 && along > -1) {
+            // a neighbour the current element overlaps by less than half (a focused button scaled up, a bigger button
+            // beside smaller ones) is still the next one along the beam (QA: on a book's details, Left from More went
+            // to Mark played past Add to favorites, and Right from Play past Download; a pad never reached either)
+            const slack = Math.min(horiz ? a.width : a.height, horiz ? b.width : b.height) / 2;
+            if (overlap > 0 && along > -slack) {
                 if (along < beamDist) { beamDist = along; beamBest = e; }
                 continue;
             }
@@ -567,6 +573,14 @@
     const startDialogWatch = () => dialogWatch.observe(document.body, { childList: true, subtree: true });
     if (document.body) startDialogWatch(); else document.addEventListener('DOMContentLoaded', startDialogWatch);
 
+    // jellyfin-web's own home opened from a theme ("Classic home": #/home?icefin=stock) is jellyfin-web's root page,
+    // where its Back does nothing; reached from the theme's settings, Back returns there (QA 1, every theme).
+    function stockRootBack() {
+        if (!pkg || !/^#\/home\b/.test(location.hash) || !/[?&]icefin=stock\b/.test(location.hash) || history.length < 2) return false;
+        history.back();
+        sound('back');
+        return true;
+    }
     function handleAction(action) {
         lastInput = 'pad';
         for (const h of actionHooks.slice()) {
@@ -581,6 +595,7 @@
             if (!dlg.contains(document.activeElement) && action !== 'back' && focusInto(dlg)) { sound('focus'); return true; }
             return false;
         }
+        if (action === 'back' && !current && stockRootBack()) return true;
         if (!current) return false;
         // A screen may own its navigation (rows, strips): it sees every action first and returns true when it used it.
         if (current.screen.onAction) {
@@ -617,13 +632,48 @@
             const d = foreignDialog();
             if (d && closeLooseDialog(d)) { sound('back'); e.preventDefault(); e.stopImmediatePropagation(); return; }
         }
-        if (!current) return;
+        // The theme's overlay over jellyfin-web's own page (a sheet opened from a framed page's Play on) is modal there
+        // too, so the keys drive it as the remote does. They went to the page underneath: Escape left the page with the
+        // sheet still up, and the arrows moved a focus inside the page that nobody could see (QA, the keyboard walk).
+        const ov = !current && window.icefinTheme && window.icefinTheme.ui && window.icefinTheme.ui.overlay;
+        if (ov && ov.isOpen && ov.isOpen()) {
+            const t1 = e.target;
+            if (t1 && t1 !== document.body && t1 !== document.documentElement && t1.closest && !t1.closest('#icefin-theme-overlay, #icefin-osk')) return;
+            if (foreignDialog()) return;
+            if (t1 && (t1.isContentEditable || (t1.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit)$/i.test(t1.type || '')) || t1.tagName === 'TEXTAREA')
+                && (action === 'left' || action === 'right' || e.key === 'Backspace')) return;
+            if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            return;
+        }
+        if (!current) {
+            const t0 = e.target;
+            const typing = t0 && (t0.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t0.tagName));
+            if (action === 'back' && !typing && !foreignDialog() && stockRootBack()) { e.preventDefault(); e.stopImmediatePropagation(); }
+            // On a theme's frame around jellyfin-web's page the arrows move as the remote does, over the page and the
+            // frame (its Back, Home and tabs take no Tab stop): in desktop layout jellyfin-web's arrows only scrolled, so
+            // the keyboard never reached the frame (QA 2, Plaza's walk: Back, Home, Play on and Watch together on the
+            // classic home). A field, a list or a slider keeps the arrows it edits with; a jellyfin-web dialog keeps all.
+            if (/^(up|down|left|right)$/.test(action) && document.documentElement.hasAttribute('data-icefin-stock') && !foreignDialog()) {
+                const editsAll = t0 && (t0.isContentEditable || /^(TEXTAREA|SELECT)$/.test(t0.tagName) || (t0.tagName === 'INPUT' && t0.type === 'range'));
+                const editsLine = t0 && t0.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit|reset|image|color|file)$/i.test(t0.type || '');
+                if (editsAll || (editsLine && (action === 'left' || action === 'right'))) return;
+                if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            }
+            return;
+        }
         // Keys typed in something else (a jellyfin-web dialog such as Client Settings, a form field, a list over the
         // screen) are that thing's: only keys on the theme's own UI, or on nothing in particular, drive the screen.
         const t = e.target;
         if (t && t !== document.body && t !== document.documentElement && t.closest
             && !t.closest(`#${ROOT_ID}, #icefin-theme-overlay, #icefin-osk`)) return;
-        if (document.querySelector('.dialogContainer .dialog.opened, .dialogContainer .formDialog')) return;
+        // A jellyfin-web dialog that shows (or the capability prompt) keeps its keys, the same test as the controller's
+        // (foreignDialog). Only one that shows: the old test matched any .formDialog left in the page, open or not, and
+        // the keyboard then did nothing on the theme's screen while a controller still worked (QA 1).
+        if (foreignDialog()) return;
+        // Left, Right and Backspace in a text field (Client Settings' fields, the preference pages') edit it, here too
+        const tf = e.target;
+        if (tf && (tf.isContentEditable || (tf.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit)$/i.test(tf.type || '')) || tf.tagName === 'TEXTAREA')
+            && (action === 'left' || action === 'right' || e.key === 'Backspace')) return;
         if (handleAction(action)) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
 

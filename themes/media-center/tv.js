@@ -138,6 +138,8 @@
         if (!S) return;
         if (S.guide) { S.guide.stop(); S.guide = null; }
         S.tab = k;
+        const key = entryKey();
+        if (key) TAB_OF.set(key, k);
         S.pivot.querySelectorAll('.mc-pivot-item').forEach((x, i) => x.classList.toggle('on', i === k));
         S.body.textContent = '';
         S.body.dataset.tab = TABS[k][0];
@@ -147,6 +149,11 @@
         else { const f = S.body.querySelector('[data-icefin-focus]'); if (f) T.ctx.focus(f); }
         S.root.setAttribute('data-mc-ready', TABS[k][0]);
     }
+
+    // The tab shown on each history entry: Back from the player (or a programme's details) comes back to it, not to the
+    // guide (QA 1: a channel played from Channels came back to the guide). A new visit is a new entry: the guide.
+    const TAB_OF = new Map();
+    const entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '');
 
     window.icefinMediaCenter.register('#/livetv', {
         onAction(action, ctx) {
@@ -183,7 +190,8 @@
             });
             const tab = +(new URLSearchParams(location.hash.split('?')[1] || '').get('tab') || 0);
             const map = { 0: 0, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };  // jellyfin-web's tabs: programmes, guide, channels, recordings, schedule, series
-            await show(map[tab] != null ? map[tab] : 0);
+            const kept = TAB_OF.get(entryKey());
+            await show(kept != null ? kept : map[tab] != null ? map[tab] : 0);
         },
         unmount() {
             if (S) { if (S.guide) S.guide.stop(); S.chrome.stop(); }

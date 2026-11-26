@@ -62,10 +62,12 @@
     async function attach(api, dialog) {
         const section = themeSection(dialog);
         if (!section || section.querySelector('#' + ID)) return;
-        // The plain drop-down from the settings description stays as the fallback; the manager hides it.
+        // The plain drop-down from the settings description stays as the fallback; the manager hides it, with an inline
+        // !important: a theme that lays out every row (Media Center: label.inputContainer { display: flex !important })
+        // showed it again, and that drop-down saves at once, so a step on it switched the theme with no Apply (QA 1).
         section.querySelectorAll('label.inputContainer').forEach((l) => {
             const t = l.querySelector('.inputLabel');
-            if (t && /^Theme:/.test(t.textContent.trim()) && l.querySelector('select')) l.style.display = 'none';
+            if (t && /^Theme:/.test(t.textContent.trim()) && l.querySelector('select')) l.style.setProperty('display', 'none', 'important');
         });
         const box = el('div', { id: ID });
         box.style.marginBottom = '1.8em';
@@ -93,7 +95,24 @@
             el('label', { className: 'inputLabel', textContent: text }), control);
         // In-page drop-downs (clientSettings.js), now rather than on its next pass, so they're ready when shown.
         setTimeout(() => { if (window.icefinDropdown) box.querySelectorAll('select').forEach(window.icefinDropdown); }, 0);
-        box.append(classicRow, field('Theme: ', themeSel), field('Colour scheme: ', presetSel), preview, about, trustRow,
+        // Device wallpaper (9.26, wallpaper.js): behind any theme, one per device.
+        const wpName = el('span', { className: 'icefin-tm-wallpaper-name', textContent: 'None', style: 'margin:0 0.8em 0 0.4em' });
+        const wpChoose = button('Choose…', 'icefin-tm-wallpaper-choose');
+        const wpRemove = button('Remove', 'icefin-tm-wallpaper-remove');
+        wpRemove.style.display = 'none';
+        const wpRow = el('div', { className: 'inputContainer icefin-tm-wallpaper', style: 'display:block;margin-bottom:1em' },
+            el('label', { className: 'inputLabel', textContent: 'Wallpaper: ' }), wpName, wpChoose, wpRemove,
+            el('p', { className: 'fieldDescription', textContent: 'An animated SVG, a looping MP4 or WebM, or a picture, behind any theme. Paused with Low Motion; hidden while video plays.' }));
+        const wpLoad = async () => {
+            const w = api.theme.wallpaper ? await call(api.theme.wallpaper) : null;
+            wpName.textContent = w && w.name ? w.name : 'None';
+            wpRemove.style.display = w && w.url ? '' : 'none';
+        };
+        wpChoose.addEventListener('click', () => api.theme.pickWallpaper());
+        wpRemove.addEventListener('click', () => api.theme.clearWallpaper());
+        if (api.theme.wallpaperChanged) api.theme.wallpaperChanged.connect(() => { if (box.isConnected) wpLoad(); });
+        wpLoad();
+        box.append(classicRow, field('Theme: ', themeSel), wpRow, field('Colour scheme: ', presetSel), preview, about, trustRow,
             el('div', {}, apply, cancel, install, remove), status);
 
         let themes = [];

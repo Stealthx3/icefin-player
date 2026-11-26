@@ -129,7 +129,7 @@ def main():
             act("back")
             page.wait_for("!!document.querySelector('.bl-panel .bl-row')", timeout=10)
             settle(0.4)
-            check("Back on the home asks to exit, Cancel focused", js("document.querySelector('.bl-panel-title').textContent") == "Exit Icefin?" and focused() == "Cancel", str(focused()))
+            check("Back on the home asks to exit, Cancel focused", js("document.querySelector('.bl-panel-title').textContent") == "Exit IceFin Player?" and focused() == "Cancel", str(focused()))
             shot("exit.png")
             act("back"); settle(0.6)
             check("Back again keeps you on the home", js("!document.querySelector('.bl-panel')") is True and "#/home" in js("location.hash"), str(focused()))

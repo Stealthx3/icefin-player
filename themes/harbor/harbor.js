@@ -45,7 +45,12 @@
         music: [['Albums', 0], ['Album artists', 2], ['Artists', 3], ['Playlists', 4], ['Songs', 5], ['Genres', 6]]
     };
     function categoriesFor(client, section, views) {
-        if (!section.view) return views.map((v) => ({ label: v.Name, hash: libraryHash(client, v) }));
+        if (!section.view) {  // Home: each library, then Play on and Watch together (9.52; the target keeps such actions in the home's rows)
+            const D = window.icefinHarbor;
+            const out = views.map((v) => ({ label: v.Name, hash: libraryHash(client, v) }));
+            if (D && D.playOn) out.push({ label: 'Play on…', run: () => D.playOn('play', null) }, { label: 'Watch together…', run: () => D.playOn('together', null) });
+            return out;
+        }
         const v = section.view, tabs = TABS[v.CollectionType];
         if (!tabs) return [{ label: 'All items', hash: libraryHash(client, v) }];
         return tabs.map(([label, tab]) => ({ label, hash: `${libraryHash(client, v)}&tab=${tab}` }));
@@ -93,7 +98,14 @@
     ui.chrome.set('sideRail', {
         width: '24.0625vw',  // 462 of 1920
         async mount(rail) {
-            rail.append(el('div', 'hb-brand', 'Icefin'));
+            // where the target shows its own logo: the server's banner, else its icon and name (PLAN 9.27, D39)
+            const brand = el('div', 'hb-brand', 'IceFin Player');
+            rail.append(brand);
+            if (ui.brand) ui.brand().then((b) => {
+                if (!b || !brand.isConnected) return;
+                if (b.banner) { const img = el('img', 'hb-brand-banner'); img.alt = b.name || ''; img.src = b.banner; brand.replaceChildren(img); }
+                else if (b.icon || b.name) { brand.replaceChildren(); if (b.icon) { const img = el('img', 'hb-brand-icon'); img.alt = ''; img.src = b.icon; brand.append(img); } brand.append(el('span', 'hb-brand-name', b.name || 'IceFin Player')); }
+            }).catch(() => {});
             const view = el('div', 'hb-rail-view');
             pin(view);
             const list = el('div', 'hb-rail-list');
@@ -134,7 +146,7 @@
         const name = item.Type === 'Episode' ? `${item.SeriesName || ''} · ${item.Name}` : item.Name;
         t.setAttribute('aria-label', name);
         t.append(el('div', 'hb-caption', name));
-        t.addEventListener('click', () => openInfo(item));
+        t.addEventListener('click', () => { const D = window.icefinHarbor; if (D && D.openItem) { T.ctx.sound('select'); D.openItem(item, t); } else openInfo(item); });  // 9.52: the shared details page
         return t;
     }
 
@@ -144,7 +156,7 @@
         t.setAttribute('aria-label', cat.label);
         t.tabIndex = -1;
         t.append(el('div', 'hb-tile-mark', cat.label.charAt(0)), el('div', 'hb-tile-label', cat.label));
-        t.addEventListener('click', () => { location.hash = cat.hash; });
+        t.addEventListener('click', () => { if (cat.run) cat.run(); else location.hash = cat.hash; });
         return t;
     }
 
@@ -309,6 +321,11 @@
         onAction(action, ctx) {
             if (!S || !S.rail) return false;
             const f = ctx.focused();
+            const D = window.icefinHarbor;  // 9.52: the shared item menu, play and exit
+            if (D && f && f.harborItem && !S.dialog) {
+                if (action === 'menu' && D.itemMenu) { D.itemMenu(f.harborItem, {}); return true; }
+                if ((action === 'play_pause' || action === 'playpause') && D.playable(f.harborItem)) { ctx.sound('select'); D.playItem(f.harborItem, true); return true; }
+            }
             if (S.dialog) {
                 const i = S.dialog.buttons.indexOf(f);
                 if (action === 'back') { closeInfo(); ctx.sound('back'); return true; }
@@ -327,6 +344,7 @@
                     if (enterContent()) ctx.sound('focus');
                     return true;
                 }
+                if (action === 'back' && D && D.exitAsk) { D.exitAsk(); return true; }
                 return action === 'left';
             }
             const r = S.shelves.findIndex((row) => row.includes(f));
@@ -367,27 +385,4 @@
             S = null;
         }
     });
-})();
-
-// Details (PLAN 9.18): the engine's details screen (every feature of the stock page) in this theme's layout; the look
-// is in styles.css, "Details".
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.details) T.registerScreen('#/details', T.ui.details.screen({ layout: 'poster' }));
-})();
-
-// Player controls (PLAN 9.19): jellyfin-web's own controls (every function kept) in this theme's layout; the look is
-// the osd.* tokens in tokens.json.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.osd) T.ui.osd.set({ layout: 'bar' });
-})();
-
-// Settings (PLAN 9.24): the engine's settings area (Client settings, Classic View, Server Settings) in this theme's look.
-(function () {
-    'use strict';
-    const T = window.icefinTheme;
-    if (T && T.ui && T.ui.settings) T.registerScreen('#/mypreferencesmenu', T.ui.settings.screen({ layout: 'list' }));
 })();

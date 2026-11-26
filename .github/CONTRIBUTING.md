@@ -1,8 +1,8 @@
-# Contributing to Icefin Player
+# Contributing to IceFin Player
 
-Thanks for your interest. Icefin is in alpha and mostly developed by one person, but issues, ideas and pull requests are welcome.
+Thanks for your interest. IceFin Player is in alpha and mostly developed by one person, but issues, ideas and pull requests are welcome.
 
-Icefin is a fork of [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop). Please report bugs in Icefin here, not to the Jellyfin project.
+IceFin Player is a fork of [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop). Please report bugs in IceFin Player here, not to the Jellyfin project.
 
 ## Before you start
 - Read the [README](../README.md), the [plan](../docs/PLAN.md) and the [design spec](../docs/SPEC.md).

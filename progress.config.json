@@ -1,7 +1,7 @@
 {
-  "pageTitle": "Icefin Player Progress",
+  "pageTitle": "IceFin Player Progress",
   "eyebrow": "icefin-player · jellyfin-desktop v2.0.0 fork",
-  "heading": "Icefin Player 1.0 progress",
+  "heading": "IceFin Player 1.0 progress",
   "plan": "docs/PLAN.md",
   "out": "docs/progress/index.html",
   "badge": "docs/progress/progress-bar.svg",

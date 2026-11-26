@@ -57,6 +57,10 @@ window.icefinTheme.registerScreen('#/home', {
 - Focus: arrows move between `[data-icefin-focus]` elements by position; Enter clicks; the focused element gets
   the class `icefin-focused`. Themes can't remap input (SPEC "One input pipeline").
 - Routes are written as jellyfin-web uses them, without query or `.html`: `#/home`, `#/details`.
+- While a theme's screen shows, everything at the top of `<body>` that isn't Icefin's is hidden (server plugins put UI
+  there). Put what a theme draws outside its screen root (a notice, a flight, a hint bar) on `<body>` with the
+  attribute `data-icefin-layer`, or it stays hidden. A control only the pointer uses (the remote reaches the same
+  thing another way) carries `data-icefin-pointer-only`.
 
 ## Theme script API (`icefinTheme.apiVersion` 1, PLAN 8.7)
 Theme scripts reach Icefin and the server **only** through `ctx` and `window.icefinTheme`. The host globals behind them
@@ -209,3 +213,10 @@ One shader drawn under the page by the engine (`qml/icefin/Backdrop.qml`, betwee
 - Switching to a backdrop theme from one without a backdrop reloads the page once, on the same route: a page that
   painted before the backdrop existed keeps stale pixels where it turns transparent (Chromium). Switching between two
   backdrop themes keeps the page. Screens should keep no state that a reload would lose.
+
+## Device wallpaper (PLAN 9.26)
+The user may set one wallpaper for the device (an animated SVG, a looping MP4 or WebM, or a picture; Client Settings ->
+Theme). It replaces the theme's background: the engine puts it in a layer behind the page, sets `html[data-icefin-wallpaper]`,
+makes the page backgrounds transparent and sets `--icefin-color-background` to `transparent`. A theme should paint its
+full-screen background with `--icefin-color-background` (or give up its own background under `html[data-icefin-wallpaper]`)
+so the wallpaper shows through. It is paused under Low Motion and hidden while video plays.

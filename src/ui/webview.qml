@@ -8,7 +8,7 @@ import QtQuick.Controls 6.0
 Window
 {
   id: mainWindow
-  title: "Icefin Player"  // ICEFIN-HOOK: window title (branding, PLAN 1.3)
+  title: "IceFin Player"  // ICEFIN-HOOK: window title (branding, PLAN 1.3)
   objectName: "mainWindow"
   width: 1280
   height: 720
@@ -23,6 +23,7 @@ Window
   property string debugInfo: ""
   property string videoInfo: ""
   property string webUrl: ""
+  property bool icefinPageFullScreenKept: false  // ICEFIN-HOOK: the window was already full screen when a page asked for it
 
   signal reloadWebClient()
 
@@ -225,6 +226,7 @@ Window
     settings.localContentCanAccessFileUrls: true
     settings.allowRunningInsecureContent: true
     settings.playbackRequiresUserGesture: false
+    settings.fullScreenSupportEnabled: true  // ICEFIN-HOOK: the Fullscreen API (a book reader's Full screen) is off by default in Qt WebEngine; requests were refused
     profile.httpUserAgent: components.system.getUserAgent()
     profile.httpCacheType: WebEngineProfile.MemoryHttpCache
     url: mainWindow.webUrl
@@ -300,7 +302,9 @@ Window
     onFullScreenRequested:
     {
       console.log("Request fullscreen: " + request.toggleOn)
-      mainWindow.setFullScreen(request.toggleOn)
+      // ICEFIN-HOOK: a page's full screen ending leaves the window as it was before it began (full screen stays full screen)
+      if (request.toggleOn) mainWindow.icefinPageFullScreenKept = mainWindow.visibility === Window.FullScreen  // ICEFIN-HOOK: see above
+      if (request.toggleOn || !mainWindow.icefinPageFullScreenKept) mainWindow.setFullScreen(request.toggleOn)  // ICEFIN-HOOK: see above
       request.accept()
     }
 

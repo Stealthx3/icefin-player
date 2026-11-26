@@ -1,6 +1,6 @@
 # Beta checklist: what only real hardware can show (D28)
 
-Icefin is built and checked in the virtual lab. These rows need a real GPU, TV, receiver, controller or Steam,
+IceFin Player is built and checked in the virtual lab. These rows need a real GPU, TV, receiver, controller or Steam,
 and a person to look or listen. Beta testers run whichever rows their hardware allows and report the result with
 the diagnostics report (Client Settings → Hardware → *Copy report*, PLAN 11.4), the hardware they used and, where it helps, a
 phone photo of the TV or receiver display.
@@ -45,9 +45,13 @@ result is seen; anything else is a bug report (P1 if playback is silent, black o
 | --- | --- | --- | --- | --- |
 | C1 | Xbox pad (USB and Bluetooth), DualSense, Switch Pro, an 8BitDo pad | Walk every screen of the default theme and two clone themes | Every screen reachable; on-screen glyphs match the pad | 7.6 |
 | C2 | Steam Deck or Steam Controller, Steam game mode | Same | One input per press (no duplicates); glyphs match the pad (not "generic") | 7.4, 7.6 |
-| C3 | Any pad, Steam running on the desktop | Start Icefin from the app menu (not from Steam); press the D-pad, A and B on a themed screen | Each press acts once; the log says "duplicate guard on"; typing in the search field is unaffected | 7.4 |
-| C5 | Steam Deck or any pad, Steam | Add Icefin as a non-Steam game, apply the recommended layout (INSTALL, Controllers), then export it from Steam's controller settings | Trackpad moves the pointer; L4 goes Home (hold: overlay panel); R4 opens the menu; send us the exported layout so it can ship | 7.4 |
-| C4 | Bluetooth or IR five-way remote | Walk the default theme and Plum | Every screen reachable with five keys and Back | SPEC |
+| C3 | Any pad, Steam running on the desktop | Start IceFin Player from the app menu (not from Steam); press the D-pad, A and B on a themed screen | Each press acts once; the log says "duplicate guard on"; typing in the search field is unaffected | 7.4 |
+| C5 | Steam Deck or any pad, Steam | Add IceFin Player as a non-Steam game, apply the recommended layout (INSTALL, Controllers), then export it from Steam's controller settings | Trackpad moves the pointer; L4 goes Home (hold: overlay panel); R4 opens the menu; send us the exported layout so it can ship | 7.4 |
+| S1 | Desktop with native Steam (signed in) | Client Settings → Steam → Add to Steam; quit Steam when asked; start Steam | One IceFin Player entry in the library and in an **IceSuite** collection; the portrait tile, the wide tile (Recent), the page's hero and logo and the list icon are IceFin's art; **Play** starts IceFin Player full screen | D43 (Steam Shortcut Standard §8 step 2) |
+| S2 | Desktop with Steam installed as a Flatpak (`com.valvesoftware.Steam`) | Add to Steam: the dialog shows the Flatpak Steam command; run it, quit Steam, add, start Steam | Same as S1, and **Play** starts IceFin Player (through `flatpak-spawn --host`) | D43 (§8 step 2) |
+| S3 | Steam Deck (or any Game Mode / Gamescope session) | After S1 on the Deck's desktop mode, switch to Game Mode and start IceFin Player from the library | The art shows in Game Mode; IceFin Player starts full screen; the controller layout (C5) and the Steam overlay (Steam button) work | D43 (§8 step 3) |
+| S4 | Any of S1-S3 | Add to Steam a second time; then Client Settings → Steam → Remove from Steam (Steam closed) | Still one entry after the second add; after Remove and a Steam start, the entry and its art are gone and your other non-Steam games are untouched | D43 (§8 step 4) |
+| C4 | Bluetooth or IR five-way remote | Walk the default theme and Media Center | Every screen reachable with five keys and Back | SPEC |
 
 ## Reporting
 

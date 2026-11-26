@@ -12,6 +12,7 @@
     const KIND = { Movie: 'movie details', Episode: 'episode details', Series: 'series', Season: 'season', MusicAlbum: 'album details',
         MusicArtist: 'artist', Person: 'person', BoxSet: 'collection', Playlist: 'playlist', Audio: 'song', MusicVideo: 'music video',
         Video: 'video details', Trailer: 'trailer', TvChannel: 'channel', Folder: 'folder' };
+    const AUDIO = new Set(['MusicAlbum', 'MusicArtist', 'Audio']);  // a playlist may be video, which goes to the player
 
     function decorate(root) {
         const d = root.querySelector('.icefin-details');
@@ -30,6 +31,28 @@
             }
         }
         d.append(M.el('div', 'mc-title', KIND[d.dataset.type] || 'details'));
+        // Music plays without leaving the page, and the screen covers jellyfin-web's now-playing bar: say it started
+        // (the walk's Play and Shuffle on an album changed nothing that showed; QA 3 re-walk 2: Instant mix, and Play
+        // on a playlist of songs, still didn't). A playlist may be video, which goes to the player: it says so only
+        // once a song plays here.
+        if (AUDIO.has(d.dataset.type) || d.dataset.type === 'Playlist') {
+            d.addEventListener('click', (e) => {
+                const b = e.target.closest && e.target.closest(['play', 'shuffle', 'resume', 'mix'].map((a) => `.icefin-d-actions [data-action=${a}]`).join(', '));
+                if (!b) return;
+                const a = b.dataset.action;
+                const name = ((d.querySelector('.icefin-d-title') || {}).textContent || '').trim();
+                const say = () => M.notice(`${a === 'shuffle' ? 'Shuffling' : a === 'mix' ? 'Instant mix from' : 'Playing'}${name ? ' ' + name : ''}`, false, true);
+                if (d.dataset.type !== 'Playlist') { say(); return; }
+                const t0 = Date.now();
+                const wait = () => {
+                    let np = null;
+                    try { np = T.ctx.nowPlaying(); } catch (err) { np = null; }
+                    if (np && np.item && np.item.MediaType === 'Audio' && !/^#\/video\b/.test(location.hash)) { say(); return; }
+                    if (d.isConnected && Date.now() - t0 < 8000) setTimeout(wait, 250);
+                };
+                setTimeout(wait, 250);
+            });
+        }
         const clock = M.el('div', 'mc-clock');
         d.append(clock);
         root.mcClock = M.clock(clock);
