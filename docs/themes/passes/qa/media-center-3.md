@@ -124,4 +124,26 @@ Judged:
   Steam, unreachable-by-input): both reached the page in their last minutes and stepped drop-downs with Right, as on the
   Playback page; the keys and the other pad runs reached every control there.
 
-Re-walk 3 (the fixes above): to follow.
+Re-walk 3 (lab `~/walks/qa-mc3v3`; build main with #222 and #224, theme/media-center 193f8e43, the walker's fixes
+above): Media Center 48 + 7 findings (from 91 + 11), 10 + 1 left after the judged list. Gone: the player's dead
+controls and the dead Play, Shuffle and Instant mix (the other run's group), the Watch now broken-backs, the hover
+findings on the pivots, Instant mix and the playlists (the notice shows). The mouse now reaches a show, a book, the
+photos and a playlist (7 required screens unreached, from 14). The keys and pad runs reached the same screens as in
+re-walk 2.
+
+Found by re-walk 3, and fixed:
+- [x] On an episode's page the season's row includes that episode, marked current; the mouse pressed it and nothing
+      changed (dead-control): it opened the same page again. Its press now goes to the page's first action, and the
+      card is `aria-current` (engine #229). Checked in the lab on Icefin Test Show S01E01: the press focuses Play.
+
+Judged:
+- Back from a start-strip row ("Open Movies", "Open Live TV") and from the picture library's folders pivot with the
+  mouse's Back button ending on the page before (broken-back, mouse, 3, in every walk of this pass): the start
+  strip's rows and a library's pivots are not levels, and the button goes back in history, as judged above. Added to
+  the judged list.
+- Required screens not reached by the keys and pad runs at 40 minutes (a Live TV library, a song, an artist, Now
+  playing; budget, 6): the same four as in re-walk 2, each reached in passes 1 and 2. The walks run 60 minutes from
+  here (`walk_parallel.py`, D47's reused control pays for it); Media Center's next walk is round 1's.
+
+Media Center's third pass is done: every finding is fixed or judged above. The real mouse Back button and the pad's
+reach on a book's buttons were checked in the lab (media-center-pre.md).

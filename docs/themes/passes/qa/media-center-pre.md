@@ -82,17 +82,21 @@ mouse's Back button over an overlay is fixed by Harbor's engine branch, `b73c5ca
   2026-11-16 and #200 merged that day at 15:53, so recheck with a build known to include #200.
   Closed: in pass 3's re-walk 2 (build with #200) all five pad runs opened Classic home and a book from it, and
   none reported Back there.
-- [ ] **unreachable-by-input (pad, Book's framed details: Home, Back, Add to favorites):** the engine's framed-page
+- [x] **unreachable-by-input (pad, Book's framed details: Home, Back, Add to favorites):** the engine's framed-page
   navigation should reach the frame's Home and Back (up, then left). Plaza's pass has the same open item for Add to
   favorites. Recheck with the focus trace.
   Traced in pass 3's re-walk 2: every pad run reached the frame's Home and Back and the book's Play, Mark played
   and More, never Add to favorites or Download. The engine's picker skipped a neighbour the focused button
   overlaps by a few pixels (it scales up): engine #225, checked in the app before it merges.
+  Closed: #225 merged; in the lab (main with #225), Right from Play walks Download, Mark played, Add to favorites,
+  More, Play on and Watch together.
 - [x] The pointer on the start strip (a closed row's title, the wheel, a tile that stays put on hover), and the
   notice when music starts from a details screen.
   Closed: a closed row's title is the pointer's own button and the wheel turns the strip (pass 2, the walker in
   pass 3); the notice shows for Play, Shuffle, Resume and Instant mix and for a playlist of songs (pass 3).
-- [ ] Mouse Back over a panel on the real app, where Qt's event filter sends the button to the web view's
+- [x] Mouse Back over a panel on the real app, where Qt's event filter sends the button to the web view's
   `goBack()`. The Navigation API path in b73c5caf should catch it.
-  Still open: the walker's mouse Back is a DevTools event the page gets directly, so Qt's path isn't walked. To
-  check with a real button press on the lab's display.
+  The walker's mouse Back is a DevTools event the page gets directly, so Qt's path isn't walked.
+  Closed: checked with real button presses (xdotool, button 8, on the app's own lab display; main with #224, #225):
+  from a movie the button went back one step to the movie library, not two, and with the item menu open it closed
+  the menu and the movie stayed.
