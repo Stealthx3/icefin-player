@@ -1,0 +1,21 @@
+{
+  "about": "Findings already judged in a QA pass doc (D47): walk_parallel.py marks a finding that matches a rule (every field given is a case-insensitive regex over the finding's field) and leaves it out of the theme's triage.md; it stays in report.json. '*' applies to every theme. Add a rule only for a finding a pass doc judged with a reason, and name that doc; remove it when the reason no longer holds.",
+  "*": [
+    {"kind": "^dead-control$", "element": "^Choose…$", "why": "the wallpaper's Choose… opens the system's file chooser, which the walker can't see", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "^play on$", "why": "the Play on panel's own tab: pressing it redraws the panel in place", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^script-error$", "detail": "Failed to get playlist permissions", "why": "jellyfin-web asks whether the user may edit a playlist; the walker users aren't its owner and the server answers 404", "doc": "media-center-3.md"},
+    {"kind": "^script-error$", "detail": "playbackstart|Invalid page request|no audio or video data played", "why": "jellyfin-web's book reader", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^dead-control$", "screen": "\\[Book\\].*\\(dialog\\)", "element": "^Previous$", "why": "the book reader's Previous on its first page: nothing comes before it (stock is the same)", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^dead-control$", "screen": "\\[(PhotoAlbum|Photo)\\]", "element": "^Play$", "why": "a photo album's Play starts a slideshow on its own timing", "doc": "media-center-3.md"},
+    {"kind": "^no-focus-indicator$", "screen": "^/home\\?icefin=stock", "element": "^Icefin Test (Book|Document)$", "why": "jellyfin-web's own classic home: its book cards", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^dead-control$", "screen": "^/mypreferencesmenu\\?pane=client", "element": "^Play (DTS|Dolby)", "why": "the Audio test's Play buttons pressed while a clip plays, when they are busy", "doc": "media-center-3.md"},
+    {"kind": "^back-focus$", "screen": "\\[MusicAlbum\\]", "element": "LabArtist$", "why": "two controls for one person (artist and album artist): Back focuses the other", "doc": "media-center-3.md, plaza-3.md"},
+    {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"}
+  ],
+  "media-center": [
+    {"kind": "^shift-tab$", "why": "Media Center is a TV theme; Tab isn't one of its inputs", "doc": "media-center-3.md"}
+  ],
+  "plaza": [
+    {"kind": "^shift-tab$", "why": "Plaza is a TV theme; Tab isn't one of its inputs (arrows are)", "doc": "plaza-3.md"}
+  ]
+}
