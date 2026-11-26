@@ -81,6 +81,7 @@ DANGER = re.compile(r"sign ?out|log ?out|delete|remove|erase|clear|forget|reset|
 REQUIRED = [("Home", r"^/home$"), ("a library", r"^/(movies|tv|music|list|livetv|books|photos|musicvideos|homevideos)"),
             ("details", r"^/details"), ("search", r"^/search"), ("the preferences menu", r"^/mypreferencesmenu"),
             ("video playback", r"^/video")]
+WAYBACK = re.compile(r"^\s*(‹\s*)?(back|home|go back)\s*$", re.I)
 FAMILIES = ["xbox", "dualsense", "switchpro", "8bitdo"]
 
 
@@ -175,95 +176,232 @@ def walk(a, start, plug, name, theme, kind, steam, env):
     shot = lambda k: open(os.path.join(out, re.sub(r"[^a-z0-9]+", "_", k.lower()).strip("_")[:60] + ".png"), "wb").write(
         __import__("base64").b64decode(page.send("Page.captureScreenshot", format="png")["data"]))
     shot(k0)
+    root = k0  # the home: reached from a button it's the root, where Back asks to exit (not a way back)
     while queue and time.time() < deadline:
         k = queue.pop(0)
         here = screens[k]
         if k.endswith("(dialog)"):
             continue
-        js(f"location.hash = {json.dumps(here['hash'])}; true")
-        s = settle()
-        if screen_key(s) != k:
-            tr("could not return to", k, "got", screen_key(s))
+        tried, seen, path = {}, {}, []
+        overlays_done = set()
+
+        def go_here():
+            """Back on this screen with focus where the presses so far left it: open its hash, replay the path."""
+            js(f"location.hash = {json.dumps(here['hash'])}; true")
+            s = settle()
+            if screen_key(s) != k:
+                tr("could not return to", k, "got", screen_key(s))
+                return False
+            for c in path:
+                press(c)
+            settle(t=1.0)
+            return True
+
+        def close_extra(want):
+            """Close a dialog or overlay a press opened (East, up to three times) until the screen is `want` again."""
+            for _ in range(3):
+                press("east")
+                s = settle(t=2.0)
+                if screen_key(s) == want:
+                    return True
+            return False
+
+        if not go_here():
             continue
         ensure()
-        js("window.labWalk.reset()")
-        # the snake: collect what the D-pad reaches
-        seen, order = {}, []
-        f = focus_now()
-        if not f:
-            press("down")
-            f = focus_now()
-        if f:
-            seen[f["key"]] = f
-            order.append(f)
-        horiz = "right"
-        for _ in range(4 * 14):
-            if time.time() > deadline:
-                break
-            moved = False
-            for _ in range(14):
-                press(horiz)
-                f2 = focus_now()
-                if not f2 or f2["key"] in seen:
-                    break
-                seen[f2["key"]] = f2
-                order.append(f2)
-                moved = True
-            press("down")
-            f2 = focus_now()
-            if screen_key(settle(t=1.0)) != k:   # moving changed the screen (a tab row, a guide)
-                tr("moving changed the screen")
-                break
-            if not f2 or (f2["key"] in seen and not moved):
-                break
-            if f2["key"] not in seen:
-                seen[f2["key"]] = f2
-                order.append(f2)
-            horiz = "left" if horiz == "right" else "right"
-        tr("screen", k, "controls reached", len(order))
-        here["controls"] = len(order)
-        # South on two of each kind of control
-        tried = {}
-        for c in order:
-            if time.time() > deadline:
-                break
-            if c["field"] or DANGER.search(c["label"]) or "dashboard" in c["href"] or "configurationpage" in c["href"]:
-                continue
-            if tried.get(c["sig"], 0) >= 2:
-                continue
-            tried[c["sig"]] = tried.get(c["sig"], 0) + 1
-            if not js(f"window.labWalk.jump({json.dumps(c['key'])})"):
-                continue
+
+        def visit(f):
+            """South on a control (two of each kind), record what opens, come back; True if focus is where it was."""
+            if f["field"] or DANGER.search(f["label"]) or "dashboard" in f["href"] or "configurationpage" in f["href"]:
+                return True
+            if WAYBACK.match(f["label"]):   # an on-screen Back or Home: a way back, not a screen this one opens
+                return True
+            if tried.get(f["sig"], 0) >= 2:
+                return True
+            tried[f["sig"]] = tried.get(f["sig"], 0) + 1
             press("south")
             s2 = settle(prev=k)
             k2 = screen_key(s2)
             if k2 == k:
-                continue
-            tr("opened", k2, "from", k, "via", c["label"])
-            if "dashboard" in s2["route"] or "configurationpage" in s2["route"]:
-                js(f"location.hash = {json.dumps(here['hash'])}; true")
-                settle()
-                continue
+                return True
+            tr("opened", k2, "from", k, "via", f["label"])
             if k2 not in screens:
-                screens[k2] = {"hash": s2["hash"], "via": here["via"] + [c["label"] or c["sig"]]}
+                screens[k2] = {"hash": s2["hash"], "via": here["via"] + [f["label"] or f["sig"]]}
                 queue.append(k2)
                 shot(k2)
+            if "dashboard" in s2["route"] or "configurationpage" in s2["route"]:
+                return go_here()
+            if k2 == k + " (dialog)":
+                # South opened something on this page (a channel's preview, a menu, a prompt): one level into it, South
+                # on what it focuses (its Open, unless that's destructive), then Back out until the page is plain again
+                f3 = focus_now()
+                if f3 and not f3["field"] and not DANGER.search(f3["label"]):
+                    press("south")
+                    s4 = settle(prev=k2)
+                    k4 = screen_key(s4)
+                    if k4 not in (k, k2):
+                        tr("opened", k4, "from", k2, "via", f3["label"])
+                        if k4 not in screens:
+                            screens[k4] = {"hash": s4["hash"], "via": here["via"] + [f["label"] or f["sig"], f3["label"] or f3["sig"]]}
+                            queue.append(k4)
+                            shot(k4)
+                        if s4["route"].startswith("/video"):
+                            time.sleep(2)
+                for _ in range(5):
+                    if screen_key(settle(t=1.5)) == k:
+                        break
+                    press("east")
+                js("window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying() && window.icefinPlaybackManager.stop(); true")
+                k5 = screen_key(settle(t=2.0))
+                if k5 == k:
+                    return True
+                if k5 == root + " (dialog)" and k == root:
+                    close_extra(root)
+                else:
+                    back_fails.append(f"{k2} … -> {k5} (want {k})")
+                    tr("back did not return through", k2, k5)
+                return go_here()
             if s2["route"].startswith("/video"):
                 time.sleep(2)
-            press("east")
-            s3 = settle(prev=k2)
-            if s2["route"].startswith("/video") and screen_key(s3) == k2:   # the first Back shows the controls
+            # Back, innermost first: up to three presses (a video's first shows its controls; a themed screen's may
+            # leave its tabs or a level first) until the screen changes
+            k3 = k2
+            for _ in range(3):
                 press("east")
-                s3 = settle(prev=k2)
-            k3 = screen_key(s3)
-            if k3 != k:
+                k3 = screen_key(settle(prev=k2))
+                if k3 != k2:
+                    break
+            js("window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying() && window.icefinPlaybackManager.stop(); true")
+            if k3 == k:
+                return True
+            if k2.split(" ")[0] == root and k3 == root + " (dialog)":
+                tr("opened the home (the root): Back asks to exit, as it should")   # not a way back; close the ask
+                close_extra(root)
+            else:
                 back_fails.append(f"{k2} -> {k3} (want {k})")
                 tr("back did not return", k2, k3)
-                js("window.icefinPlaybackManager && window.icefinPlaybackManager.stop && window.icefinPlaybackManager.stop(); true")
-                js(f"location.hash = {json.dumps(here['hash'])}; true")
-                settle()
-                ensure()
-            js("window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying() && window.icefinPlaybackManager.stop(); true")
+            js("window.icefinPlaybackManager && window.icefinPlaybackManager.stop && window.icefinPlaybackManager.stop(); true")
+            return go_here()
+
+        def explore_overlay(c):
+            """An overlay a press opens (Lumen's sidebar): its rows, up and down from where it opens, South on each (not
+            the destructive ones); what they open is recorded. A row's screen is a jump, not a child: no Back check."""
+            overlays_done.add(k)
+            ov = k + " (dialog)"
+            rows = []                                  # (presses from where it opens, control)
+            for d in ("down", "up"):
+                if d == "up":
+                    close_extra(k) or go_here()
+                    press(c)
+                    settle(t=1.0)
+                n, keys = 0, {r[1]["key"] for r in rows}
+                f0 = focus_now()
+                if d == "down" and f0:
+                    rows.append(([], f0)); keys.add(f0["key"])
+                for _ in range(20):
+                    press(d); n += 1
+                    f = focus_now()
+                    if not f or f["key"] in keys:
+                        break
+                    keys.add(f["key"]); rows.append(([d] * n, f))
+            close_extra(k) or go_here()
+            tr("overlay", ov, "rows", len(rows))
+            for presses, f in rows[:24]:
+                if time.time() > deadline:
+                    break
+                if f["field"] or DANGER.search(f["label"]) or WAYBACK.match(f["label"]):
+                    continue
+                press(c)
+                if screen_key(settle(t=1.0)) != ov:
+                    go_here()
+                    continue
+                for d in presses:
+                    press(d)
+                g = focus_now()
+                if not g or g["key"] != f["key"]:
+                    close_extra(k) or go_here()
+                    continue
+                press("south")
+                s2 = settle(prev=ov)
+                k2 = screen_key(s2)
+                if k2 not in (k, ov):
+                    tr("opened", k2, "from the overlay on", k, "via", f["label"])
+                    if k2 not in screens:
+                        screens[k2] = {"hash": s2["hash"], "via": here["via"] + [c, f["label"] or f["sig"]]}
+                        queue.append(k2)
+                        shot(k2)
+                    js("window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying() && window.icefinPlaybackManager.stop(); true")
+                    go_here()
+                elif k2 == ov:
+                    close_extra(k) or go_here()
+
+        def step(c):
+            """A D-pad press in the snake. Returns the newly reached control, or None (no move, a blocked edge)."""
+            before = focus_now()
+            press(c)
+            s = settle(t=1.0)
+            kk = screen_key(s)
+            if kk != k:
+                if kk.split(" (dialog)")[0] == k:   # an overlay (a sidebar, a menu): reached; try its rows, close it
+                    if kk not in screens:
+                        screens[kk] = {"hash": s["hash"], "via": here["via"] + [c]}
+                        shot(kk)
+                    tr("moving opened", kk)
+                    if k not in overlays_done:
+                        explore_overlay(c)
+                    elif not close_extra(k):
+                        go_here()
+                else:                                # moving changed the page (a tab row): record it, come back
+                    tr("moving changed the screen to", kk)
+                    if kk not in screens:
+                        screens[kk] = {"hash": s["hash"], "via": here["via"] + path + [c]}
+                        queue.append(kk)
+                        shot(kk)
+                    go_here()
+                return None
+            f2 = focus_now()
+            if f2 and (not before or f2["key"] != before["key"]):
+                path.append(c)   # every press that moved focus, so go_here() can replay the way back
+            if not f2 or f2["key"] in seen:
+                return None
+            seen[f2["key"]] = f2
+            if not visit(f2):
+                return None
+            return f2
+
+        # the snake: right along a row until focus stops, down, left back, down, ...; South on each new control.
+        # First up to the top (a bar over the content: Settings, Search), trying what's on the way.
+        f = focus_now()
+        if not f:
+            press("down")
+            path.append("down")
+            f = focus_now()
+        if f:
+            seen[f["key"]] = f
+            visit(f)
+        for _ in range(6):
+            if not step("up"):
+                break
+        def snake(horiz):
+            for _ in range(4 * 14):
+                if time.time() > deadline:
+                    break
+                moved = False
+                for _ in range(14):
+                    if not step(horiz):
+                        break
+                    moved = True
+                if not step("down") and not moved:
+                    break
+                horiz = "left" if horiz == "right" else "right"
+        snake("right")
+        # again from the screen's start, left first: what only a press down from the left reaches (Plaza's Settings
+        # at the left of its bar, under the first channels)
+        path.clear()
+        if time.time() < deadline and go_here():
+            snake("left")
+        tr("screen", k, "controls reached", len(seen))
+        here["controls"] = len(seen)
     routes = [k.split(" ")[0] for k in screens]
     missing = [r for r, rx in REQUIRED if not any(re.search(rx, x) for x in routes)]
     tr("done", len(screens), "screens; missing", missing)

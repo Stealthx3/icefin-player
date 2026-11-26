@@ -29,6 +29,11 @@
     const PLAYABLE = new Set(['Movie', 'Episode', 'Video', 'MusicVideo', 'Trailer', 'Audio']);
     const CONTAINER = new Set(['Series', 'Season', 'MusicAlbum', 'MusicArtist', 'BoxSet', 'Playlist', 'Folder', 'CollectionFolder', 'Person']);
     const pm = () => window.icefinPlaybackManager;
+    // The season whose episodes a series showed, per history entry: Back from one of its episodes shows that season
+    // again, so the episode that was opened is there to take the focus (QA 2, Plaza's walk: Back from Book Two's first
+    // episode showed Book One and focused Play). A new visit (a new entry) starts on the next-up season as before.
+    const seasonShown = new Map();
+    const entryOf = (itemId) => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : location.hash) + ' ' + itemId;
 
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const focusable = (e) => { e.setAttribute('data-icefin-focus', ''); e.tabIndex = -1; return e; };
@@ -384,8 +389,16 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 button('shuffle', 'Shuffle', () => playContainer(true));
                 if (pm() && pm().instantMix) button('mix', 'Instant mix', () => pm().instantMix(item));
             } else if (item.Type !== 'Person') {
-                button('play', 'Play', () => playContainer(false));
-                button('shuffle', 'Shuffle', () => playContainer(true));
+                // a container offers Play and Shuffle only when it holds something that plays (QA 3, Plaza: a folder of
+                // books showed both, and neither did anything); an album or a playlist always does
+                let plays = true;
+                if (item.IsFolder && item.Type !== 'MusicAlbum' && item.Type !== 'Playlist') {
+                    try { plays = ((await client.getItems(uid, { ParentId: item.Id, Recursive: true, MediaTypes: 'Video,Audio', Limit: 1 })).TotalRecordCount || 0) > 0; } catch (e) { /* keep them */ }
+                }
+                if (plays) {
+                    button('play', 'Play', () => playContainer(false));
+                    button('shuffle', 'Shuffle', () => playContainer(true));
+                }
                 if ((item.Type === 'MusicAlbum' || item.Type === 'Playlist') && pm() && pm().instantMix) button('mix', 'Instant mix', () => pm().instantMix(item));
             }
             if ((item.LocalTrailerCount || 0) > 0 || (item.RemoteTrailers || []).length) {
@@ -452,6 +465,7 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
             const opts = { userId: uid, Fields: 'PrimaryImageAspectRatio,UserData' };
             if (!live()) return;
             if (item.Type === 'Series') {
+                const entry = entryOf(item.Id);  // before the awaits: the entry this screen is on
                 if (S.next) section('nextup', 'Next up').append(card(client, S.next, 'wide', null, `S${S.next.ParentIndexNumber} E${S.next.IndexNumber}`));
                 let seasons = [];
                 try { seasons = (await client.getSeasons(item.Id, opts)).Items || []; } catch (e) { /* none */ }
@@ -462,6 +476,9 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                     const showSeason = async (season) => {
                         if (!season || shown === season.Id) return;
                         shown = season.Id;
+                        seasonShown.delete(entry);
+                        seasonShown.set(entry, season.Id);
+                        if (seasonShown.size > 100) seasonShown.delete(seasonShown.keys().next().value);
                         srow.querySelectorAll('.icefin-d-card').forEach((c) => c.classList.toggle('current', c.dataset.id === season.Id));
                         erow.parentElement.querySelector('h2').textContent = season.Name;
                         let eps = [];
@@ -476,7 +493,8 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                         c.addEventListener('icefin-focus', () => { clearTimeout(timer); timer = setTimeout(() => showSeason(s), 250); });
                         srow.append(c);
                     });
-                    await showSeason(seasons.find((s) => S.next && s.Id === S.next.SeasonId) || seasons.find((s) => !((s.UserData || {}).Played)) || seasons[0]);
+                    await showSeason(seasons.find((s) => s.Id === seasonShown.get(entry))
+                        || seasons.find((s) => S.next && s.Id === S.next.SeasonId) || seasons.find((s) => !((s.UserData || {}).Played)) || seasons[0]);
                 }
             } else if (item.Type === 'Season') {
                 let eps = [];
@@ -491,7 +509,15 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 const others = eps.filter((e) => e.Id !== item.Id);
                 if (others.length) {
                     const row = section('episodes', item.SeasonName || 'More from this season');
-                    eps.forEach((ep) => { const c = card(client, ep, 'wide', null, `E${ep.IndexNumber != null ? ep.IndexNumber : '?'}`); if (ep.Id === item.Id) c.classList.add('current'); row.append(c); });
+                    // The episode shown is marked; opening it would open this page again, so its press goes to the page's
+                    // first action (QA Media Center 3: the press changed nothing).
+                    const toActions = () => { const b = S.actions && S.actions.querySelector('.icefin-d-btn'); if (b) T.ctx.focus(b); };
+                    eps.forEach((ep) => {
+                        const here = ep.Id === item.Id;
+                        const c = card(client, ep, 'wide', here ? toActions : null, `E${ep.IndexNumber != null ? ep.IndexNumber : '?'}`);
+                        if (here) { c.classList.add('current'); c.setAttribute('aria-current', 'page'); }
+                        row.append(c);
+                    });
                 }
             } else if (item.Type === 'MusicAlbum' || item.Type === 'Playlist') {
                 let tracks = [];
@@ -521,6 +547,10 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                         }
                         r.addEventListener('click', () => {
                             if (S && S.moving) { placeAt(r); drop(); return; }
+                            // the song that is playing opens what's playing instead of starting it over unseen (QA 3, Plaza:
+                            // pressing it changed nothing on the screen)
+                            const now = T.ctx.nowPlaying && T.ctx.nowPlaying();
+                            if (now && now.item && now.item.Id === t.Id && (now.item.MediaType || '') === 'Audio') { T.ctx.navigate('#/queue'); return; }
                             const rows = order(), m = pm();
                             if (m) m.play({ ids: rows.map((x) => x.dataset.id), startIndex: rows.indexOf(r), serverId: sid });
                         });

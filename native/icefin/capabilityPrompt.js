@@ -61,7 +61,19 @@
             p.textContent = `${info.name ? info.name + ': ' : ''}${info.reason}. Choose how to play it.`;
             body.append(p);
             const remember = document.createElement('input');
-            const done = (choice, keep) => { container.remove(); resolve({ choice, remember: !!keep }); };
+            // A pad's or remote's Back goes through the theme engine, not a keydown here: without this hook it went to
+            // jellyfin-web's own Back, which left the page under the prompt (on the home, back to the sign-in page)
+            const E = window.icefinTheme && window.icefinTheme._engine;
+            let offBack = null;
+            const done = (choice, keep) => { if (offBack) offBack(); container.remove(); resolve({ choice, remember: !!keep }); };
+            if (E && E.addActionHook) {
+                offBack = E.addActionHook((a) => {
+                    if (a !== 'back' || !container.isConnected) return false;
+                    if (E.sound) E.sound('back');
+                    done('cancel', false);
+                    return true;
+                });
+            }
             for (const o of options) {
                 const b = document.createElement('button');
                 b.type = 'button';

@@ -20,7 +20,8 @@
 //                                     ctx.setShuffle(on) -> Promise true
 //   ctx.playTargets()              -> Promise [{id, name, kind ('this' | 'tv' | 'phone' | 'computer' | 'other'), app, current}]
 //   ctx.setPlayTarget(id)          -> Promise true when what plays next plays there (id of this device: back here)
-//   ctx.syncPlay.groups()          -> Promise [{id, name, people}]; join(id), create(name), leave() -> Promise true;
+//   ctx.syncPlay.groups()          -> Promise [{id, name, people (how many are in it), names [user names]}]; join(id), create(name),
+//                                     leave() -> Promise true;
 //   ctx.syncPlay.current()         -> {id, name} of the group this device is in, or null
 (function () {
     'use strict';
@@ -200,7 +201,7 @@
             if (!c) return [];
             let list = [];
             try { list = await c.getJSON(c.getUrl('SyncPlay/List')); } catch (e) { list = []; }
-            return (list || []).map((g) => ({ id: g.GroupId, name: g.GroupName || 'Group', people: (g.Participants || []).length }));
+            return (list || []).map((g) => ({ id: g.GroupId, name: g.GroupName || 'Group', people: (g.Participants || []).length, names: (g.Participants || []).filter((n) => typeof n === 'string') }));
         },
         async join(id) {
             const c = api();

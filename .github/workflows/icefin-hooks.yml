@@ -36,3 +36,8 @@ jobs:
           python3 -m venv /tmp/schema-venv
           /tmp/schema-venv/bin/pip install --quiet 'jsonschema>=4.18'
           /tmp/schema-venv/bin/python scripts/icefin/theme-schemas.py
+      - name: Add to Steam against a fake Steam root (Steam Shortcut Standard §8, D43)
+        run: |
+          python3 -m venv /tmp/steam-venv
+          /tmp/steam-venv/bin/pip install --quiet 'vdf==3.4'
+          /tmp/steam-venv/bin/python -I tests/icefin/steam/test_steam_shortcut.py
