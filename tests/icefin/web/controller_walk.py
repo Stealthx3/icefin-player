@@ -74,8 +74,9 @@ WALK_JS = r"""
 })()
 """
 
+# "Watched ✓" / "Played ✓": a theme's played switch once on (QA Almanac 1: the mouse un-marked a show and a film)
 DANGER = re.compile(r"sign ?out|log ?out|delete|remove|erase|clear|forget|reset|restart|shut ?down|uninstall|disconnect|"
-                    r"mark (as )?(un)?played|mark (as )?(un)?watched|favou?rite|like|dislike|rating|cancel|record|rename|"
+                    r"mark (as )?(un)?played|mark (as )?(un)?watched|(watched|played) ?✓|favou?rite|like|dislike|rating|cancel|record|rename|"
                     r"edit (metadata|images|subtitles)|identify|refresh metadata|switch user|change server|select server|"
                     r"add server|quick connect|password|pin|download|sync|delete", re.I)
 REQUIRED = [("Home", r"^/home$"), ("a library", r"^/(movies|tv|music|list|livetv|books|photos|musicvideos|homevideos)"),
