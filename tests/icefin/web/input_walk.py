@@ -134,7 +134,10 @@ IW_JS = r"""
         seen.add(e);
         const i = info(e); els.set(i.key, e);
         i.inview = rc.bottom > 0 && rc.right > 0 && rc.top < innerHeight && rc.left < innerWidth;
-        i.osk = !!e.closest('#icefin-osk, [data-icefin-osk], [role=application]');
+        // the on-screen keyboard only: [role=application] matched the engine's own theme root too, so every control of
+        // every themed screen counted as a key and the direct try at the controls a walk missed never ran on them
+        // (QA Tide 1: the pads reached 3 of the Shows column's 8 entries and never a series)
+        i.osk = !!e.closest('#icefin-osk, [data-icefin-osk]');
         out.push(i);
       }
       return out;
@@ -265,8 +268,21 @@ WALKER_GROUP = re.compile(r"\bqa-(keys|mouse|pad-[a-z0-9]+)\b", re.I)
 DLG_CHANGE = re.compile(r"create|new |add|edit|rename|delete|remove|identify|restart|shut|sign|password|playlist|collection|confirm|metadata|image", re.I)
 DLG_BTN = re.compile(r"^(ok|okay|save|apply|create|add|submit|yes|confirm|done|delete|remove|restart|continue|update)$", re.I)
 PREF_LABEL = re.compile(r"preferences|settings|profile|user|account|menu|avatar|cog|gear", re.I)
+# in a class name "user" and "menu" matched nearly everything (jellyfin-web's card-withuserdata cards, its action
+# sheets' MenuItem rows, every Almanac tab's al-menu-item), so Settings, the twelfth of Almanac's tabs, ranked with the
+# rest and fell to the per-kind limit (QA Almanac 1: no run reached the settings); a class counts with a settings word
+# of its own, and jellyfin-web's user and drawer buttons
+PREF_CLASS = re.compile(r"preferences|settings|prefs|profile|account|avatar|headerUserButton|barsMenuButton|(^|[-_ .])(cog|gear)([-_ .]|$)", re.I)
+
+
+def pref_control(c):
+    return bool(PREF_LABEL.search((c.get("label") or "") + " " + (c.get("action") or "")) or PREF_CLASS.search(c.get("cls") or ""))
+
+
+# the preferences menu, or a theme's own settings view in its place (QA Almanac 1: Almanac's Settings tab, ?al=settings)
+PREFS_MENU = r"^/mypreferencesmenu|[?&][a-z]+=settings(&|$)"
 PRIORITY_ROUTES = [("Home", r"^/home"), ("a library", r"^/(movies|tv|music|list|livetv|books|photos|musicvideos|homevideos)"), ("details", r"^/details"),
-                   ("search", r"^/search"), ("the preferences menu", r"^/mypreferencesmenu"), ("video playback", r"^/video"),
+                   ("search", r"^/search"), ("the preferences menu", PREFS_MENU), ("video playback", r"^/video"),
                    ("preferences: display", r"^/mypreferencesdisplay"), ("preferences: home", r"^/mypreferenceshome"),
                    ("preferences: playback", r"^/mypreferencesplayback"), ("preferences: subtitles", r"^/mypreferencessubtitles"),
                    ("now playing", r"^/(queue|nowplaying)")]
@@ -1635,13 +1651,13 @@ class Walker:
             for c in todo:
                 u = ukey(c)
                 counts[u] = counts.get(u, 0) + 1
-                ranked.append((0 if PREF_LABEL.search(c.get("label", "") + " " + c.get("cls", "") + " " + c.get("action", "")) else 1 if seed(c) else 2, counts[u], c))
+                ranked.append((0 if pref_control(c) else 1 if seed(c) else 2, counts[u], c))
             ranked.sort(key=lambda t: (t[0], t[1]))
             for _, n, c in ranked:
                 if self.late():
                     break
                 u = ukey(c)
-                if tried.get(u, 0) >= limit and not seed(c):
+                if tried.get(u, 0) >= limit and not seed(c) and not pref_control(c):
                     continue
                 why = skip_reason(c)
                 self.done.add((k, c["key"]))
@@ -1726,7 +1742,8 @@ class Walker:
                         if e.get("hover_focus") is False and not e.get("pointer"):     # the pointer's own control: no focus stop
                             self.finding("hover-no-focus", k, e["label"] or key, "hover moves focus on most controls of this theme, not on this one", shot=False, plugin=e.get("plugin", False))
         routes = [base(k).split(" ")[0] for k in self.screens]
-        missing = [n for n, rx in cw.REQUIRED if not any(re.search(rx, r) for r in routes)]
+        required = [(n, PREFS_MENU if n == "the preferences menu" else rx) for n, rx in cw.REQUIRED]
+        missing = [n for n, rx in required if not any(re.search(rx, r) for r in routes)]
         missing += [f"a {lib} library" for lib, rx in self.present["libraries"] if not any(re.search(rx, r) for r in routes)]
         missing += [f"details of a {t}" for t in self.present["types"] if not any(f"/details" in k and f"[{t}]" in k for k in self.screens)
                                                       and not any(sc["route"].startswith("/details") and (sc.get("sub") or {}).get("itype") == t for sc in self.screens.values())]
