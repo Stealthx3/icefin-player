@@ -68,8 +68,8 @@ Judged:
 ## Verified
 
 Re-walk 1 (lab `~/walks/qa-mc3v`; build main with #222, theme/media-center edcc9306, the walker's fixes): Media Center
-130 + 16 findings (from 150 + 20). Gone: Play, Shuffle and Instant mix on an album, an artist and a playlist (the
-notice shows), continue reading on Books, the hover findings on the wall, the strip and Live TV's tabs, the strip's
+130 + 16 findings (from 150 + 20). Gone: Play, Shuffle and Instant mix on an album, an artist and a playlist for the keys and pad runs (the
+notice shows), continue reading on Books, the hover findings on the wall's posters and the strip, the strip's
 "outside the viewport". Every keys and pad run now reached a season and an episode.
 
 Found by the re-walk, and fixed:
@@ -90,4 +90,38 @@ Found by the re-walk, the walker's (qa/7.6-walk), each traced:
 - Live TV not reached by the pad runs (budget): the walker ranked libraries as one required route, so after the first
   library Live TV waited behind the series. A library not explored yet now ranks with the required routes.
 
-Re-walk 2 (every fix above): to follow.
+Re-walk 2 (lab `~/walks/qa-mc3v2`; build main with #222 and #224, theme/media-center be709d44, the walker's fixes above):
+Media Center 91 + 11 findings (from 130 + 16). Gone: every obscured finding and the Live TV broken-backs after the mouse's
+Back button, the start strip's broken-backs. Display preferences opened in every keys and pad run, and Live TV was
+reached by every pad run.
+
+Found by re-walk 2, and fixed:
+- [x] Instant mix on an album and a playlist, and Play and Shuffle on a playlist of songs, started music with nothing on
+      screen to say so (dead-control, mouse): the "Playing …" notice covered Play, Shuffle and Resume on an album, an
+      artist or a song. Instant mix now says "Instant mix from …", and a playlist says "Playing …" once a song plays
+      here (a playlist of videos goes to the player). Checked in the lab on Test Tones and Icefin Mix.
+
+Found by re-walk 2, the walker's (qa/7.6-walk), each traced:
+- The player's eight controls dead on a Live TV channel (keys), and Play, Shuffle and Instant mix dead on the mouse after
+  15:58: the mouse joined the keys run's Watch together group ("Watch together, qa-keys") and clicked Harbour News in
+  the guide, which the group played on the keys run's player, a channel that run never chose. Re-walk 1's mouse had
+  joined qa-pad-xbox's group before the same Play and Shuffle findings. A walker no longer joins another walker's group.
+- Back after Watch now on a channel ending on the player (broken-back, keys and four pad runs): the channel connected
+  after the walker's late-change check, so it took the player for a level opened in place; Back with the player's
+  controls showing hides them first (Media Center's player, by design). The walker now waits while a channel connects.
+- Hover not focusing Live TV's guide and channels tabs and the libraries' date added and years pivots (hover-no-focus,
+  mouse): judged on the second click's hover, which lands while the chosen pivot slides along its row. A second click
+  keeps the first hover's verdict.
+- The mouse not reaching search, the preferences, a show, a book, the photos or a playlist (required-missing, 14, in
+  every walk of this pass): its run ended at 23 of its 40 minutes with nothing left to try. A closed start-strip row's
+  tiles were listed while the strip turned and are hidden afterwards; the click on the row's title showed them, but
+  the walker kept them without that click as their way in. A click that shows controls already listed is now their
+  way in.
+
+Judged:
+- Choose… in the Theme section (dead-control, every pad run): the wallpaper's file chooser, as above.
+- The Display page's theme drop-down, custom CSS box and "Learn how you can contribute." link not reached (Xbox and
+  Steam, unreachable-by-input): both reached the page in their last minutes and stepped drop-downs with Right, as on the
+  Playback page; the keys and the other pad runs reached every control there.
+
+Re-walk 3 (the fixes above): to follow.
