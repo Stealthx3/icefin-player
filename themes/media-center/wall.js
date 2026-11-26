@@ -118,8 +118,11 @@
             }
             await more();
             if (!W || W.root !== root) return;
-            const home = Mc && Mc.flyHome ? Mc.flyHome((id) => W.tiles.find((x) => x.dataset.id === id) || null) : null;
-            if (home) focusAt(W.tiles.indexOf(home), T.ctx); else if (W.tiles.length) T.ctx.focus(W.tiles[0]);
+            const flown = Mc && Mc.flyHome ? Mc.flyHome((id) => W.tiles.find((x) => x.dataset.id === id) || null) : null;
+            // no flight (a poster without art): Back still lands on the poster that opened the details (kit.js)
+            const back = flown || (Mc && Mc.returnTo ? Mc.returnTo(root) : null);
+            const home = back && W.tiles.includes(back) ? back : null;
+            if (home) focusAt(W.tiles.indexOf(home), T.ctx); else if (back) T.ctx.focus(back); else if (W.tiles.length) T.ctx.focus(W.tiles[0]);
             root.setAttribute('data-mc-ready', '1');
         },
         unmount() {

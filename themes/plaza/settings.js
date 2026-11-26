@@ -132,10 +132,16 @@
     }
 
     // the preference pages, drawn as Client Settings is (PLAN 9.62, D39); Home stays Plaza's own (prefs.js)
-    if (T.ui.settings.prefs) for (const r of T.ui.settings.prefsRoutes) T.registerScreen(r, T.ui.settings.prefs());
+    // pointer-first like Plaza's menus: hovering a control focuses it (QA 1)
+    const pointered = (s) => Object.assign(Object.create(s), {
+        mount(root, ctx) { T.ui.pointerFirst(true); return s.mount.call(s, root, ctx); },
+        unmount() { T.ui.pointerFirst(false); return s.unmount ? s.unmount.call(s) : undefined; }
+    });
+    if (T.ui.settings.prefs) for (const r of T.ui.settings.prefsRoutes) T.registerScreen(r, pointered(T.ui.settings.prefs()));
     const base = T.ui.settings.screen({ layout: 'tiles' });
     T.registerScreen('#/mypreferencesmenu', {
         mount(root, ctx) {
+            T.ui.pointerFirst(true);
             const r = base.mount.call(base, root, ctx);
             decorate(root);
             // the Client Settings page fills in a moment later
@@ -144,6 +150,6 @@
         },
         onAction: (a, ctx) => (base.onAction ? base.onAction.call(base, a, ctx) : false),
         onBack: () => (base.onBack ? base.onBack.call(base) : false),
-        unmount: () => (base.unmount ? base.unmount.call(base) : undefined)
+        unmount: () => { T.ui.pointerFirst(false); return base.unmount ? base.unmount.call(base) : undefined; }
     });
 })();

@@ -121,6 +121,9 @@ leases that `lab.sh` uses to find guest IPs.
 Guests are thin **qcow2 overlays** on a shared, read-only base volume, so creating one takes seconds and
 a few MB.
 
+- **Pool: `VMDisks`.** On the user's workstation every lab guest's disks and base volumes live in the
+  `VMDisks` pool (a data drive), never in libvirt's `default` pool on the system drive (the user,
+  2026-11-21). Set `LAB_POOL=VMDisks` in every `lab.env`.
 - Base volumes live in the configured pool and are named `lab-base-<distro><ver>.qcow2`
   (e.g. `lab-base-debian12.qcow2`). They are **never booted directly and never modified.**
 - Use the distro's official **generic cloud image** (Debian `genericcloud`, Ubuntu `cloudimg`,
@@ -129,8 +132,8 @@ a few MB.
 - Import a base (one-time, the user runs or approves this; download URL from the distro's site):
   ```bash
   qemu-img info ~/Downloads/debian-12-genericcloud-amd64.qcow2          # confirm format + virtual size
-  virsh -c qemu:///system vol-create-as default lab-base-debian12.qcow2 2G --format qcow2
-  virsh -c qemu:///system vol-upload --pool default lab-base-debian12.qcow2 ~/Downloads/debian-12-genericcloud-amd64.qcow2
+  virsh -c qemu:///system vol-create-as VMDisks lab-base-debian12.qcow2 2G --format qcow2
+  virsh -c qemu:///system vol-upload --pool VMDisks lab-base-debian12.qcow2 ~/Downloads/debian-12-genericcloud-amd64.qcow2
   ```
 - Match the base to the project's deploy target when there is one (deploys to Debian 12 → test on
   Debian 12). Otherwise default to the newest Debian stable.
@@ -143,7 +146,7 @@ LAB_PROJECT=myproject          # [a-z0-9-]; guest names become lab-<project>-<ro
 LAB_URI=qemu:///system
 LAB_KIND=vm                    # vm | lxc
 LAB_NET=default                # libvirt network (NAT). Never a host bridge unless the user asks.
-LAB_POOL=default
+LAB_POOL=VMDisks              # the workstation's lab pool (§4), not libvirt's default
 LAB_BASE_VOL=lab-base-debian12.qcow2
 LAB_OS_VARIANT=debian12        # osinfo-query os  → short id
 LAB_VCPUS=2
@@ -316,7 +319,7 @@ ENVF="${LAB_ENV:-lab.env}"; [[ "$ENVF" == /* ]] || ENVF="$ROOT/$ENVF"   # LAB_EN
 source "$ENVF"
 
 : "${LAB_PROJECT:?}" "${LAB_URI:=qemu:///system}" "${LAB_KIND:=vm}" "${LAB_NET:=default}"
-: "${LAB_POOL:=default}" "${LAB_BASE_VOL:=}" "${LAB_OS_VARIANT:=debian12}" "${LAB_VCPUS:=2}"
+: "${LAB_POOL:=VMDisks}" "${LAB_BASE_VOL:=}" "${LAB_OS_VARIANT:=debian12}" "${LAB_VCPUS:=2}"
 : "${LAB_RAM_MB:=4096}" "${LAB_DISK_GB:=20}" "${LAB_USER:=lab}" "${LAB_SSH_KEY:=$HOME/.ssh/id_ed25519.pub}"
 : "${LAB_DEST:=/home/$LAB_USER/src}" "${LAB_HOST_RESERVE_MB:=4096}" "${LAB_LXC_ROOTFS:=}"
 : "${LAB_GRAPHICS:=spice,listen=none}" "${LAB_AUTO_VIEW:=1}"
@@ -450,6 +453,7 @@ cmd_doctor() {
   else no "cannot connect $LAB_URI without sudo (libvirt group? libvirtd running?)"; fi
   virsh -q -c "$LAB_URI" net-info "$LAB_NET" 2>/dev/null | grep 'Active:.*yes' >/dev/null && ok "network $LAB_NET active" || no "network $LAB_NET not active"
   virsh -q -c "$LAB_URI" pool-info "$LAB_POOL" 2>/dev/null | grep 'State:.*running' >/dev/null && ok "pool $LAB_POOL running" || no "pool $LAB_POOL not running"
+  [ "$LAB_POOL" = default ] && no "LAB_POOL=default: lab disks belong in the VMDisks pool (§4)"
   if [ "$LAB_KIND" = vm ]; then
     [ -n "$LAB_BASE_VOL" ] && virsh -q -c "$LAB_URI" vol-info --pool "$LAB_POOL" "$LAB_BASE_VOL" >/dev/null 2>&1 \
       && ok "base volume $LAB_BASE_VOL" || no "base volume '$LAB_BASE_VOL' not in pool $LAB_POOL (VM-LAB-STANDARD §4)"

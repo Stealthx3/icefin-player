@@ -21,9 +21,11 @@
         return t;
     }
 
-    function textTile(label, go) {
+    function textTile(label, go, aria) {
         const t = el('div', 'mc-tile text', label);
         t.setAttribute('data-icefin-focus', '');
+        t.setAttribute('role', 'button');
+        if (aria) t.setAttribute('aria-label', aria);
         t.tabIndex = -1;
         t.addEventListener('click', go);
         return t;
@@ -40,7 +42,9 @@
         for (const v of views.Items || []) {
             try {
                 const latest = await client.getLatestItems({ userId: uid, parentId: v.Id, Limit: 12, Fields: 'PrimaryImageAspectRatio' });
-                if (latest.length) cats.push({ title: v.Name, items: latest, wide: false, view: v });
+                // A library with nothing new (the server leaves watched items out of Latest) keeps its row with its
+                // "All …" tile: without it, a library watched through had no way in from the start strip (QA 1)
+                if (latest.length || LIBRARY[v.CollectionType]) cats.push({ title: v.Name, items: latest, wide: false, view: v });
             } catch (e) { console.warn('Media Center: latest', v.Name, e); }
         }
         cats.push({ title: 'Tasks', links: [
@@ -51,7 +55,8 @@
             ['play on', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('play'); }],
             ['watch together', () => { const K = window.icefinMediaCenter; if (K && K.playOn) K.playOn('together'); }],
             ['classic home', () => { location.hash = '#/home?icefin=stock'; }],
-            ['close', () => askExit()]
+            // named in full for screen readers (and the walk's quit rule): "close" alone reads as closing a dialog
+            ['close', () => askExit(), 'Close IceFin Player']
         ] });
         return cats;
     }
@@ -126,11 +131,40 @@
 
             const cats = await categories(client);
             if (!root.contains(start)) return;  // replaced while loading
+            // a row for the pointer: its title clicked, or the wheel over the strip (one row a notch)
+            function openRow(cat) {
+                const g = grid ? grid.findIndex((x) => x.length && cat.contains(x[0])) : -1;
+                if (g < 0 || cat.classList.contains('current')) return;
+                T.ctx.focus(grid[g][Math.min(lastCol[g] || 0, grid[g].length - 1)]);
+                T.ctx.sound('focus');
+            }
+            let wheelAt = 0;
+            start.addEventListener('wheel', (e) => {  // on this mount's own element: the root outlives the screen
+                if (!grid || M.band.open || Math.abs(e.deltaY) < Math.abs(e.deltaX) || Date.now() - wheelAt < 250) return;
+                const f = T.ctx.focused();
+                const g = grid.findIndex((x) => x.includes(f));
+                const n = (g < 0 ? 0 : g) + (e.deltaY > 0 ? 1 : -1);
+                if (n < 0 || n >= grid.length) return;
+                e.preventDefault();
+                wheelAt = Date.now();
+                T.ctx.focus(grid[n][Math.min(lastCol[n] || 0, grid[n].length - 1)]);
+                T.ctx.sound('focus');
+            }, { passive: false });
             const rows = cats.map((c) => {
                 const cat = el('section', 'mc-cat');
-                cat.append(el('div', 'mc-cat-title', c.title));
+                // a title opens its row for the pointer (the remote's up and down; the rows other than the current one
+                // are closed, so a mouse had no way into them)
+                const head = el('div', 'mc-cat-title', c.title);
+                head.addEventListener('click', () => openRow(cat));
+                // a button for the pointer while the row is closed (the current row's title opens nothing); the remote
+                // changes rows by up and down, so the title is the pointer's way in only (QA 2: no walker click opened a row)
+                head.setAttribute('data-icefin-pointer-only', '');
+                head.setAttribute('aria-label', `Open ${c.title}`);
+                head.setAttribute('role', 'button');
+                cat.append(head);
                 const row = el('div', 'mc-row');
-                if (c.links) c.links.forEach(([label, go]) => row.append(textTile(label, go)));
+                cat.setAttribute('data-mc-group', c.title);  // Back finds the tile in its own row (kit.js M.backFocus)
+                if (c.links) c.links.forEach(([label, go, aria]) => row.append(textTile(label, go, aria)));
                 else c.items.forEach((it) => row.append(tile(client, it, c.wide)));
                 // The whole library on the poster wall (wall.js).
                 if (c.view && LIBRARY[c.view.CollectionType]) {
@@ -156,13 +190,24 @@
             // row's offset is worked out from these, not from offsetLeft, which is mid-animation while the lens moves.
             const restW = (t) => (t.classList.contains('wide') || t.classList.contains('text') ? 9.5 * 16 / 9 : 12 * 2 / 3) * vh();
             let cur = -1;
+            // A pointer that moves onto a tile focuses it (pointer-first): its row stays where it is, so the tile stays
+            // under the pointer and a click lands on it. The row slid to bring every focused tile to the lens, which moved
+            // the tile out from under the pointer (the walk's mouse run: clicks on the Live TV row's right end hit
+            // nothing, and a resting pointer then focused whatever slid under it).
+            const byPointer = () => document.documentElement.getAttribute('data-mc-input') === 'pointer';
+            const inView = (t) => { const b = t.getBoundingClientRect(); return b.left >= 0 && b.right <= window.innerWidth; };
             root.addEventListener('icefin-focus', (e) => {
                 const r = rows.findIndex((x) => x.cat.contains(e.target));
                 if (r < 0) return;
+                const g = grid ? grid.findIndex((x) => x.includes(e.target)) : -1;
+                if (g >= 0) lastCol[g] = grid[g].indexOf(e.target);
+                if (r === cur && byPointer() && inView(e.target)) return;
                 if (r !== cur) {
                     cur = r;
                     rows.forEach((x, k) => {
                         x.cat.classList.toggle('current', k === r);
+                        const h = x.cat.firstElementChild;
+                        if (k === r) h.removeAttribute('role'); else h.setAttribute('role', 'button');
                         x.cat.style.setProperty('--mc-dim', String(Math.max(0.22, 0.56 - 0.08 * Math.abs(k - r))));
                     });
                     strip.style.transform = `translateY(${Math.round(51 * vh() - r * 9 * vh())}px)`;
@@ -177,7 +222,9 @@
             });
             grid = rows.map((x) => [...x.row.querySelectorAll('[data-icefin-focus]')]).filter((row) => row.length);
             lastCol = grid.map(() => 0);
-            const first = strip.querySelector('[data-icefin-focus]');
+            // Back to the start strip: the tile that opened the screen left (kit.js), else the first one
+            const back = M.returnTo ? M.returnTo(strip) : null;
+            const first = back || strip.querySelector('[data-icefin-focus]');
             if (first) T.ctx.focus(first);
             root.setAttribute('data-mc-ready', String(rows.length));
 
