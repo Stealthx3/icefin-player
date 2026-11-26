@@ -233,7 +233,8 @@ def main():
                     "theme fixes then need no rebuild, so the binary and its stock control stay the same (D47)")
     ap.add_argument("--judged", default=JUDGED, help="findings judged in earlier passes (marked, left out of triage.md)")
     ap.add_argument("--shards", default=",".join(s[0] for s in SHARDS), help="which shards to run (default: all seven)")
-    ap.add_argument("--budget-min", type=float, default=25)
+    ap.add_argument("--budget-min", type=float, default=60, help="minutes per run (default 60: at 40 the keys and pad runs left Live TV, "
+                    "a song, an artist and Now playing unreached; the reused control pays for the rest, D47)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     out = os.path.abspath(os.path.expanduser(a.out))

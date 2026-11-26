@@ -35,7 +35,12 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
 
 **The walker**
 - A synthetic input (DevTools events) skips the app's native path: plan a real-input check for anything the native
-  layer handles (the mouse's Back button through Qt's event filter) (2026-11-26, plan review).
+  layer handles (the mouse's Back button through Qt's event filter) (2026-11-26, plan review). In the lab, xdotool on
+  the replay's own X display gives the real event; run the replay unbuffered (`python3 -u`) when a script waits on
+  its output (2026-11-26, re-walk 3).
+- Size the time budget from the required screens, not from the walk's length: a run that ends with required screens
+  unreached is a coverage gap, even when its findings fall (2026-11-26, re-walk 3: 40 minutes left the same four
+  screens unreached in every keys and pad run; walks now run 60).
 - Wait for asynchronous states to settle before judging (a channel connecting, a row sliding, a pivot moving); judge a
   control by its first observation, not a repeat (2026-11-26, re-walk 2).
 - A control the walker listed while hidden needs the click that shows it recorded as its way in (2026-11-26, re-walk 2:
@@ -95,6 +100,15 @@ re-read findings already judged. The user chose all five speed-ups (D47): themes
 reused, the next walk started at once, a second guest, judged findings carried, and fewer full re-walks. Estimate:
 the remaining QA from about 75 to about 20-25 hours of lab time.
 
+**2026-11-26: Media Center re-walk 3; the real Back button.** 48 + 7 findings (from 91 + 11); with the judged list,
+10 + 1 to triage, of which 7 were the budget. Coverage checked before reading the drop as progress: the keys and pad
+runs reached what re-walk 2 reached, and the mouse's closed-row fix halved its unreached screens (14 to 7). One real
+finding (the episode shown, pressed in its own season's row, did nothing; engine #229), two mouse Backs judged (start
+strip rows and library pivots are not levels). The walk ran on the walker from before D47, so its triage list was
+built afterwards from the reports. Checked in the lab with real input: #225 (Right walks a book's buttons through
+Add to favorites) and the mouse's Back button through Qt's filter (one step back, not two; an open menu closes first).
+Lesson: a lower count needs its coverage checked; and the budget must cover the required screens.
+
 ## Metrics
 
 | Theme | Pass | Walk | Findings (theme + Steam run) | Notes |
@@ -107,6 +121,7 @@ the remaining QA from about 75 to about 20-25 hours of lab time.
 | Media Center | 3 | pass 3 | 150 + 20 | 40-minute runs (pass 2 had 25) |
 | Media Center | 3 | re-walk 1 | 130 + 16 | |
 | Media Center | 3 | re-walk 2 | 91 + 11 | 45 left to triage with the judged list |
+| Media Center | 3 | re-walk 3 | 48 + 7 | 10 + 1 to triage, 7 of them the 40-minute budget; 1 real (#229) |
 
 Walk time: about 6 h a theme serially on the host (2026-11-16), about 85 min in parallel in the lab (D44), about
 45 min expected with the control reused (D47).
