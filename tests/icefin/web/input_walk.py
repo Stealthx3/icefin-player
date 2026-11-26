@@ -973,7 +973,8 @@ class Walker:
         key = c["key"]
         if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
             return True
-        if not self.drv.last and c.get("via") and depth < 3:
+        # gone, or there but hidden (a closed row's tiles: opacity 0): the clicks that showed it
+        if not (self.drv.last or {}).get("ok") and c.get("via") and depth < 3:
             for v in c["via"]:
                 if self.js(f"window.inputWalk.present({json.dumps(key)})"):
                     break
@@ -1420,7 +1421,16 @@ class Walker:
         via = list(c.get("via", [])) + [c["key"]]
         n = 0
         for i in self.enum(k):
-            if i["key"] in known or i["key"] in pre_keys:
+            if i["key"] in pre_keys:
+                continue
+            if i["key"] in known:
+                # known, hidden before this click and shown by it (a closed row's tiles, listed while the strip turned):
+                # this click is its way in (QA 3 re-walk 2, Media Center: the mouse never reached a show, a book,
+                # search or the settings, every walk, 14 required screens)
+                x = next((x for x in ctrls if x["key"] == i["key"]), None)
+                if x is not None and not x.get("via"):
+                    x["via"] = via
+                    self.done.discard((k, i["key"]))
                 continue
             ctrls.append(dict(i, via=via))
             known.add(i["key"])
