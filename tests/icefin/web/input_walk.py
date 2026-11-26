@@ -256,6 +256,7 @@ DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|
                     # quitting the app ends the walk (Exit IceFin Player, Quit the app, Close IceFin, Exit Application)
                     r"|\b(exit|quit)\b|close (icefin|the app)", re.I)
 DANGER_CLS = re.compile(r"delete|remove|sign-?out|log-?out|favorit|userrating|playstate|btnuserdata|restart|shut|btn(save|submit|apply)|btnplayed", re.I)
+SETTINGS_ENTRY = re.compile(r"^(display|subtitles?|audio|video|playback|theme)$", re.I)
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
 DLG_CHANGE = re.compile(r"create|new |add|edit|rename|delete|remove|identify|restart|shut|sign|password|playlist|collection|confirm|metadata|image", re.I)
 DLG_BTN = re.compile(r"^(ok|okay|save|apply|create|add|submit|yes|confirm|done|delete|remove|restart|continue|update)$", re.I)
@@ -300,7 +301,9 @@ def skip_reason(c, title=""):
         return "dashboard or external"
     if cw.WAYBACK.match(lab):
         return "a way back"
-    if PERSISTS.search(lab) and not hr:
+    # a settings entry named for its page (Display, Subtitles, Audio) opens that page or section, it chooses nothing
+    # (QA 3 re-walk, Media Center: its settings entries are buttons, so Display was never opened by any run)
+    if PERSISTS.search(lab) and not hr and not SETTINGS_ENTRY.match(lab.strip()):
         return "persists a view choice"
     if title and DLG_CHANGE.search(title) and DLG_BTN.match(lab.strip()):
         return "confirms a change"
@@ -1263,6 +1266,14 @@ class Walker:
             return
         pre = self.screen()
         prek = self.screen_key(pre)
+        if prek != k and " (dialog)" not in prek and prek.split(" > ")[0] == k.split(" > ")[0]:
+            # brought in by moving to another level of the same route (a strip's row turned by the wheel): it is that
+            # level's control now, exercised when that level is explored; activated from here, its Back is judged
+            # against the wrong level (QA 3 re-walk, Media Center: Back after a row opened left the home)
+            el["outcome"] = f"on {prek}"
+            self.tr("reached on another level", prek)
+            self.go_here(k)
+            return
         obscured = False
         if self.mouse:
             r = self.drv.last or {}
@@ -1633,11 +1644,15 @@ class Walker:
         for t, parents in self.PARENTS.items():
             if t in self.present.get("types", []) and t not in seen_t:
                 want |= set(parents)
+        libs = [rx for _, rx in self.present.get("libraries", []) if not any(re.search(rx, base(s).split(" ")[0]) for s in done)]
+
         def rank(k):
             b = base(k)
             if any(f"[{t}]" in b for t in want) and b not in done:
                 return 0
             if any(n not in got and re.search(rx, b.split(" ")[0]) for n, rx in PRIORITY_ROUTES):
+                return 1
+            if any(re.search(rx, b.split(" ")[0]) for rx in libs):    # a library not explored yet (Live TV, QA 3 re-walk)
                 return 1
             return 2
         i = min(range(len(self.queue)), key=lambda j: (rank(self.queue[j]), j))
