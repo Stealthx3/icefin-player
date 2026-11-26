@@ -67,4 +67,27 @@ Judged:
 
 ## Verified
 
-Re-walk (every fix above, engine #222, the walker's fixes): to follow.
+Re-walk 1 (lab `~/walks/qa-mc3v`; build main with #222, theme/media-center edcc9306, the walker's fixes): Media Center
+130 + 16 findings (from 150 + 20). Gone: Play, Shuffle and Instant mix on an album, an artist and a playlist (the
+notice shows), continue reading on Books, the hover findings on the wall, the strip and Live TV's tabs, the strip's
+"outside the viewport". Every keys and pad run now reached a season and an episode.
+
+Found by the re-walk, and fixed:
+- [x] Live TV, mouse: a channel clicked in the guide, then the mouse's Back button, left the "Connecting to …" dialog
+      over every screen the mouse went to for up to 40 s (obscured, 24: the wall, the album's and a collection's
+      buttons), and the channel then opened the player on the screen Back went to (broken-back, 15). A history
+      traversal while a channel connects cancels it, as Back on the remote did, and a cancelled channel that starts
+      late is stopped (engine #224). Checked in the lab: the dialog closes on the Back button and nothing plays in the
+      next 29 s.
+
+Found by the re-walk, the walker's (qa/7.6-walk), each traced:
+- Back after a start-strip row brought in by the wheel left the home (broken-back, 7, mouse): the row turned, the walker
+  activated the row's title from the level before and judged its Back against that level. A control reached on
+  another level of the same screen is now exercised from that level.
+- Display preferences never opened, by any run: the walker skipped a control named "Display" as a view choice that
+  persists; Media Center's settings entries are buttons, where the walker's exception was for links. A settings entry
+  named for its page now opens.
+- Live TV not reached by the pad runs (budget): the walker ranked libraries as one required route, so after the first
+  library Live TV waited behind the series. A library not explored yet now ranks with the required routes.
+
+Re-walk 2 (every fix above): to follow.
