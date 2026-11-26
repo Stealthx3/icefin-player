@@ -3,7 +3,7 @@
 
 Signed in with a theme on and its themed home up (as in the user's report), Client Settings shows:
   - sections in order: Main, Theme, Controllers, Subtitles, [Video tests | Video], [Audio test | Audio], Other,
-    (Saved Server), then the Close button; the two rows side by side;
+    (Saved Server), (Steam, where Add to Steam is available: D43), then the Close button; the two rows side by side;
   - Web GPU Buffers, Renderer and HDR Output leading Video, Nintendo Button Layout in Controllers, none left in Main,
     and no duplicates after nativeshell re-renders a section;
   - Icefin's Hardware section titled "Video tests";
@@ -70,7 +70,9 @@ def main():
         order = js(f"""JSON.stringify([...{C}.children].map(c => c.classList.contains('icefin-cs-row') ? 'row:' + [...c.children].map(f => f.querySelector(':scope > legend h2').textContent.trim().toLowerCase()).join('|')
             : c.tagName === 'FIELDSET' ? (c.querySelector(':scope > legend h2') || {{}}).textContent.trim().toLowerCase() : 'close'))""")
         order = json.loads(order)
-        check("sections in the new order, Close last", [x for x in order if x not in ("saved server",)] == ORDER + ["close"], json.dumps(order))
+        check("sections in the new order, Close last", [x for x in order if x not in ("saved server", "steam")] == ORDER + ["close"], json.dumps(order))
+        if "steam" in order:  # Add to Steam (D43): the last section, just above Close
+            check("Steam is the last section, above Close", order[-2:] == ["steam", "close"], json.dumps(order))
         side = json.loads(js("JSON.stringify([...document.querySelectorAll('.icefin-cs-row')].map(r => { const [a, b] = [...r.children].map(x => x.getBoundingClientRect()); return [Math.round(a.left), Math.round(b.left), Math.round(a.top - b.top)]; }))"))
         if a.out:
             import base64  # noqa: E402

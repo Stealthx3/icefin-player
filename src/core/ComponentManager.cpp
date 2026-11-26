@@ -20,6 +20,7 @@
 #include "icefin/render/RouterComponent.h"  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
 #include "icefin/input/GamepadComponent.h"  // ICEFIN-HOOK: controller layer (PLAN 7.x)
 #include "icefin/audio/AudioTest.h"  // ICEFIN-HOOK: audio test page (PLAN 3.8)
+#include "icefin/steam/SteamComponent.h"  // ICEFIN-HOOK: Add to Steam (PLAN 11.10)
 
 #ifdef KONVERGO_OPENELEC
 #include "system/openelec/OESystemComponent.h"
@@ -76,6 +77,7 @@ void ComponentManager::initialize()
   registerComponent(&Icefin::Render::RouterComponent::Get());  // ICEFIN-HOOK: capability prompt (PLAN 6.3)
   registerComponent(&Icefin::Input::GamepadComponent::Get());  // ICEFIN-HOOK: controller layer (PLAN 7.x)
   registerComponent(&Icefin::Audio::AudioTestComponent::Get());  // ICEFIN-HOOK: audio test page (PLAN 3.8)
+  registerComponent(&Icefin::Steam::SteamComponent::Get());  // ICEFIN-HOOK: Add to Steam (PLAN 11.10)
 
 #ifdef KONVERGO_OPENELEC
   registerComponent(&OESystemComponent::Get());

@@ -19,8 +19,54 @@ import os, select, struct, threading, time
 
 try:
     from evdev import UInput, AbsInfo, ecodes as e
-except ImportError:  # a host without python3-evdev: the HID pads still work
-    UInput = AbsInfo = e = None
+except ImportError:  # a host without python3-evdev (the user's workstation): a minimal uinput writer in the standard library
+    import collections, fcntl, types
+
+    AbsInfo = collections.namedtuple("AbsInfo", "value min max fuzz flat resolution")
+    # linux/input-event-codes.h and linux/uinput.h, only what UinputPad uses
+    e = types.SimpleNamespace(EV_SYN=0, EV_KEY=1, EV_ABS=3, SYN_REPORT=0, BUS_USB=0x03,
+                              BTN_A=0x130, BTN_B=0x131, BTN_X=0x133, BTN_Y=0x134, BTN_TL=0x136, BTN_TR=0x137,
+                              BTN_SELECT=0x13a, BTN_START=0x13b, BTN_MODE=0x13c, BTN_THUMBL=0x13d, BTN_THUMBR=0x13e,
+                              ABS_X=0, ABS_Y=1, ABS_Z=2, ABS_RX=3, ABS_RY=4, ABS_RZ=5, ABS_HAT0X=0x10, ABS_HAT0Y=0x11)
+    _UI_DEV_CREATE, _UI_DEV_DESTROY = 0x5501, 0x5502
+    _UI_SET_EVBIT, _UI_SET_KEYBIT, _UI_SET_ABSBIT = 0x40045564, 0x40045565, 0x40045567
+    _ABS_CNT = 64
+
+    class UInput:
+        """The part of evdev.UInput that UinputPad uses: the legacy uinput_user_dev setup, then input_event writes."""
+        def __init__(self, caps, name="vpad", vendor=0, product=0, version=0, bustype=0x03):
+            self.fd = os.open("/dev/uinput", os.O_WRONLY | os.O_NONBLOCK)
+            amax, amin, afuzz, aflat = [0] * _ABS_CNT, [0] * _ABS_CNT, [0] * _ABS_CNT, [0] * _ABS_CNT
+            for ev, items in caps.items():
+                fcntl.ioctl(self.fd, _UI_SET_EVBIT, ev)
+                for it in items:
+                    if ev == e.EV_ABS:
+                        code, info = it
+                        fcntl.ioctl(self.fd, _UI_SET_ABSBIT, code)
+                        amin[code], amax[code], afuzz[code], aflat[code] = info.min, info.max, info.fuzz, info.flat
+                    else:
+                        fcntl.ioctl(self.fd, _UI_SET_KEYBIT, it)
+            dev = struct.pack("80sHHHHi", name.encode()[:79], bustype, vendor, product, version, 0)
+            dev += struct.pack(f"{_ABS_CNT}i", *amax) + struct.pack(f"{_ABS_CNT}i", *amin)
+            dev += struct.pack(f"{_ABS_CNT}i", *afuzz) + struct.pack(f"{_ABS_CNT}i", *aflat)
+            os.write(self.fd, dev)
+            fcntl.ioctl(self.fd, _UI_DEV_CREATE)
+            time.sleep(0.3)  # let udev and the readers see the device before the first event
+
+        def write(self, etype, code, value):
+            t = time.time()
+            os.write(self.fd, struct.pack("llHHi", int(t), int((t % 1) * 1e6), etype, code, value))
+
+        def syn(self):
+            self.write(e.EV_SYN, e.SYN_REPORT, 0)
+
+        def close(self):
+            if self.fd is not None:
+                try:
+                    fcntl.ioctl(self.fd, _UI_DEV_DESTROY)
+                finally:
+                    os.close(self.fd)
+                    self.fd = None
 
 KINDS = ("xbox", "8bitdo", "steam", "dualsense", "switchpro")
 # What Icefin should call each pad (GamepadNames familyFor; the Steam pad's own family comes from Steam's ignore list).

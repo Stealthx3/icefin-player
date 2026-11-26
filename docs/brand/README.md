@@ -17,5 +17,6 @@ Elsewhere in the repo:
 | --- | --- |
 | `src/icefin/resources/icon.svg` | Scalable app icon (flat cut): installed as `io.github.stealthx3.IcefinPlayer.svg` and used as the window icon |
 | `src/icefin/icons/hicolor/` | 16–512 px PNG icons and the symbolic icon, installed by `src/icefin/IcefinInstallLinux.cmake` |
+| `packaging/steam/*.png` | The five Steam images from the kit's `deployment/steam/` (names unchanged), installed in the Flatpak for Add to Steam (D43, `docs/standards/STEAM-SHORTCUT-STANDARD.md`); they moved here from `docs/brand/steam/` |
 
 The project's name, summary, description and other metadata for marketing are kept in sync in the art kit's `brand/PROJECT-METADATA.md`. The sources of truth are `src/icefin/meta/` (AppStream metainfo and desktop entry) and this README.

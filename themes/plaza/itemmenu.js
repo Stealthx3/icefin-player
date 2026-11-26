@@ -26,6 +26,7 @@
     // ---- a notice: a pill above the bar for a few seconds ----
     P.toast = (text, bad) => {
         const t = el('div', 'pz-toast' + (bad ? ' pz-toast-bad' : ''), text);
+        t.setAttribute('data-icefin-layer', '');  // shown over Plaza's screens (the engine hides the rest of <body>)
         document.body.append(t);
         setTimeout(() => t.classList.add('pz-toast-out'), 2600);
         setTimeout(() => t.remove(), 3100);

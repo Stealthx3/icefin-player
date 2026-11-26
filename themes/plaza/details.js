@@ -214,6 +214,7 @@
     const onAction = screen.onAction;
     screen.onAction = function (action, ctx) {
         const self = this;
+        P.sawAction();
         if (action === 'menu' && P.itemMenu && !document.querySelector('.icefin-d-moving')) {
             const f = ctx.focused();
             const root = document.getElementById('icefin-theme-root');
@@ -235,5 +236,9 @@
         }
         return onAction ? onAction.call(this, action, ctx) : false;
     };
+    // pointer-first like Plaza's menus: hovering a control focuses it, so Back and the item menu return to it (QA 1)
+    const mount = screen.mount, unmount = screen.unmount;
+    screen.mount = function (root, ctx) { T.ui.pointerFirst(true); return mount.call(this, root, ctx); };
+    screen.unmount = function () { T.ui.pointerFirst(false); return unmount ? unmount.call(this) : undefined; };
     T.registerScreen('#/details', screen);
 })();

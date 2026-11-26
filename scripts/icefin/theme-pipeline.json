@@ -37,7 +37,8 @@
       "lumen"
     ],
     "passes": {
-      "plaza": 1
+      "plaza": 3,
+      "media-center": 3
     }
   }
 }

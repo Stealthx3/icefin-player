@@ -5,3 +5,6 @@ KERNEL=="uhid", GROUP="lab", MODE="0660"
 # emulated pad's HID device is named <bus>:<vendor>:<product>.<n>, so match that as well as a USB parent's vendor id.
 KERNEL=="hidraw*", ATTRS{idVendor}=="054c|057e|28de|2dc8", TAG+="uaccess"
 KERNEL=="hidraw*", KERNELS=="*:054C:*|*:057E:*|*:28DE:*|*:2DC8:*", TAG+="uaccess"
+# /dev/uinput for the lab user: the emulated Xbox, 8BitDo and Steam Virtual Gamepad (vpads.py). Without it the access
+# a test run set by hand is gone after the guest restarts.
+KERNEL=="uinput", GROUP="lab", MODE="0660"

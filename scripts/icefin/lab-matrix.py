@@ -10,7 +10,8 @@ Groups (default: all but "public"):
   hdr     the virtual HDR display (hdr_protocol.py, the Flatpak) and headless Gamescope (gamescope_hdr.py)
   public  the 40 public sinks (matrix.py --profiles public, ~40 min)
   walk    the controller walk over every screen, stock and every theme, a pad family each and one inside Steam (7.6,
-          up to ~2.5 h); the quick controller checks (every pad, inside Steam) run in "app"
+          up to ~2.5 h), and input_walk (11.7, D40: pad, keys and mouse, hours; --only input_walk);
+          the quick controller checks (every pad, inside Steam) run in "app"
 The low-spec budget runs in lab-icefin-htpcsim (tests/icefin/perf/perf_budget.py, docs/LAB.md); the VA-API import
 test runs on the workstation; the hardware rows are docs/BETA-CHECKLIST.md.
 
@@ -60,6 +61,8 @@ def entries(a):
     # The controller run (7.6): every pad family and Steam on every run; the walk over every screen only on request.
     add("controller_run", "app", ["python3", f"{web}/controller_run.py", "--app", B, "--server", "jf12", "--parts", "pads,steam"], 1800, native, out=True)
     add("controller_walk", "walk", ["python3", f"{web}/controller_run.py", "--app", B, "--server", "jf12", "--parts", "walk"], 10800, native, out=True)
+    # The QA crawler (11.7, D40): pad (every family, Steam's too), keys and mouse on every screen, stock and every theme. Hours.
+    add("input_walk", "walk", ["python3", f"{web}/input_walk.py", "--app", B, "--server", "jf12"], 172800, native, out=True)
 
     for f in sorted(glob.glob(f"{web}/theme_*.py") + glob.glob(f"{web}/plaza_*.py") + glob.glob(f"{web}/media_center_*.py")):
         t = os.path.basename(f)[:-3]
