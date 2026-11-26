@@ -33,6 +33,11 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
 - Keep the lab busy: the next unit walks while the last one is triaged and fixed. Add a second guest when the host has
   room (D47): measure first (the main guest averaged about 5 of its 12 vCPUs over a day of walks), and check what a
   cloned guest carries over (network identity, servers not started at boot; `docs/LAB.md`).
+- Run a long-lived helper on the host (a screen-lock hold) as a user service, not as a detached child of a tool's
+  shell: that child died within the hour (2026-11-26, Tide and Almanac 1).
+- Before blaming the host for a slow walk, compare presses per minute with an earlier walk: the walker's settle waits,
+  not the CPU, set the pace (2026-11-26, Tide and Almanac 1: the same rate with two guests and two other projects'
+  guests running, though half the guests' CPU time showed as steal).
 
 **The walker**
 - A synthetic input (DevTools events) skips the app's native path: plan a real-input check for anything the native
@@ -42,6 +47,13 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
 - Size the time budget from the required screens, not from the walk's length: a run that ends with required screens
   unreached is a coverage gap, even when its findings fall (2026-11-26, re-walk 3: 40 minutes left the same four
   screens unreached in every keys and pad run; walks now run 60).
+- Read each run's coverage per input and required screen before its findings, and set it beside the control's runs: a
+  run that ended with its queue empty and required screens missing is a walker fault until shown otherwise; a run cut
+  by the budget is a budget question (2026-11-26, Tide and Almanac 1).
+- Every pattern the walker matches on class names or roles is a guess about the page: check it against what the app and
+  the units really use, and diff a changed pattern against recent walks' elements before shipping it (2026-11-26: the
+  keyboard test matched the engine's own theme root; the settings ranking matched "menu" and "user" in almost every
+  class).
 - Wait for asynchronous states to settle before judging (a channel connecting, a row sliding, a pivot moving); judge a
   control by its first observation, not a repeat (2026-11-26, re-walk 2).
 - A control the walker listed while hidden needs the click that shows it recorded as its way in (2026-11-26, re-walk 2:
@@ -56,6 +68,9 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
 - Carry judged findings forward (`tests/icefin/web/qa-judged.json`): a walk lists only what is new (D47: 100 to 45).
 - Close every recheck with evidence from a walk, or keep it open with what is missing. A recheck left unticked hid a
   real bug for ten days (2026-11-26, plan review: the pad never reached a book's Add to favorites).
+- Check a fix made on one unit's branch on every unit that shares the code (2026-11-26: the Watch together fix reached
+  six themes' branches and missed four), and check each unit's branch for work stranded on side branches before its
+  walk (2026-11-26: three themes' pre-walk fixes sat on branches with no PR for nine days).
 
 **Verification and release**
 - Check a fix with a targeted replay in the lab (`tests/icefin/web/debug_seq.py`), and let the next pass be the full
@@ -117,6 +132,23 @@ network config named the original's MAC) and both guests' servers needed startin
 waiting. Tide and Almanac's first passes then started at once, one per guest, at 60 minutes a run. Lesson: a cloned
 guest is a new machine; check its identity and services before the first walk.
 
+**2026-11-26: Tide and Almanac pass 1; two walker faults; stranded branches.** Both walked at once, one per guest, at
+60 minutes a run. Coverage first: Tide reached 73 screens against stock's 191, Almanac 22 to 24 a pad run; no pad or
+keys run reached a series' seasons, the music details or the preferences. Two walker faults, both a pattern match:
+the keyboard test counted the engine's theme root (role=application) as an on-screen keyboard, so the walker never
+retried a control its walk missed on any themed screen, Plaza's and Media Center's passes included (Tide's Shows
+column: 3 of 8 entries reached); and the settings ranking matched "menu" in every Almanac tab's class, so Settings fell
+to a per-kind limit. Both fixed (#234); the Orbit walk that had just started on the old walker was restarted. The host
+looked overloaded (two other projects' guests too, half the guests' CPU as steal), but the press rate matched the
+single-guest walks. Getting Orbit's branch ready showed Orbit's, Mosaic's and Arcade's pre-walk fixes on side branches
+never merged, and the Watch together fix missing from four themes; both mended before those walks. Triage ran in
+parallel, one agent a theme, verified before fixing: Tide 148 findings (69 the walker's; real: the trail's own step
+did nothing, a picker sent focus to Play, idle controls said nothing, no notice on music, guide gaps, a level's mouse
+Back, settings focus on return), Almanac 117 (34 focus-lost were one cause: Back to a screen that waits for the server
+before it focuses, during a slow-server window). Fixes: both theme branches, engine #236, walker #235. The user asked
+for screen locking off during the QA run. Lesson: the coverage check is triage's first step, and every class or role
+pattern in the walker is a hypothesis about the page.
+
 ## Metrics
 
 | Theme | Pass | Walk | Findings (theme + Steam run) | Notes |
@@ -130,6 +162,8 @@ guest is a new machine; check its identity and services before the first walk.
 | Media Center | 3 | re-walk 1 | 130 + 16 | |
 | Media Center | 3 | re-walk 2 | 91 + 11 | 45 left to triage with the judged list |
 | Media Center | 3 | re-walk 3 | 48 + 7 | 10 + 1 to triage, 7 of them the 40-minute budget; 1 real (#229) |
+| Tide | 1 | pass 1 | 154 + 12 | 137 + 11 to triage; coverage cut by the walker (73 screens, stock 191) |
+| Almanac | 1 | pass 1 | 111 + 14 | 104 + 13 to triage; 22-24 screens a pad run |
 
 Walk time: about 6 h a theme serially on the host (2026-11-16), about 85 min in parallel in the lab (D44), about
 45 min expected with the control reused (D47).
