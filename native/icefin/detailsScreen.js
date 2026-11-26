@@ -509,7 +509,15 @@ html[data-icefin-motion="low"] .icefin-d-scroll, html[data-icefin-motion="low"] 
                 const others = eps.filter((e) => e.Id !== item.Id);
                 if (others.length) {
                     const row = section('episodes', item.SeasonName || 'More from this season');
-                    eps.forEach((ep) => { const c = card(client, ep, 'wide', null, `E${ep.IndexNumber != null ? ep.IndexNumber : '?'}`); if (ep.Id === item.Id) c.classList.add('current'); row.append(c); });
+                    // The episode shown is marked; opening it would open this page again, so its press goes to the page's
+                    // first action (QA Media Center 3: the press changed nothing).
+                    const toActions = () => { const b = S.actions && S.actions.querySelector('.icefin-d-btn'); if (b) T.ctx.focus(b); };
+                    eps.forEach((ep) => {
+                        const here = ep.Id === item.Id;
+                        const c = card(client, ep, 'wide', here ? toActions : null, `E${ep.IndexNumber != null ? ep.IndexNumber : '?'}`);
+                        if (here) { c.classList.add('current'); c.setAttribute('aria-current', 'page'); }
+                        row.append(c);
+                    });
                 }
             } else if (item.Type === 'MusicAlbum' || item.Type === 'Playlist') {
                 let tracks = [];
