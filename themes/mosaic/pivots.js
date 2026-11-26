@@ -90,10 +90,11 @@
         c.setAttribute('aria-label', [label(e), e.sub].filter(Boolean).join(', '));
         c.addEventListener('click', () => {
             const x = current();
+            remember(c);
             T.ctx.sound('select');
             if (x.go) x.go(); else if (x.item) D.openItem(x.item, c);
         });
-        c.addEventListener('icefin-focus', () => { slide(c); hints(current()); remember(); });
+        c.addEventListener('icefin-focus', () => { slide(c); hints(current()); remember(c); });
         return c;
     }
 
@@ -136,7 +137,14 @@
             t.push({ size: 'small', glyph: 'playlists', entry: { name: 'Playlists', go: () => T.ctx.navigate('#/playlists') } });
             if (resume.length) t.push({ size: 'small', glyph: 'resume', entry: { name: 'Continue watching', go: () => T.ctx.navigate('#/home?ms=resume') } });
             if (next.length) t.push({ size: 'small', glyph: 'tvshows', entry: { name: 'Next up', go: () => T.ctx.navigate('#/home?ms=nextup') } });
-            if (!t.length) t.push({ size: 'large', glyph: 'item', entry: { name: 'Nothing here yet', go: () => T.ctx.navigate('#/search') } });
+            // every library and Settings as places on the home itself, in the user's order (QA pre: a library opened only
+            // from its own pivot, so the home pivot was a dead end for anything that doesn't page the pivots)
+            for (const r of rows) {
+                const v = r.homeRow === 'onnow' ? views.find((x) => x.CollectionType === 'livetv') : views.find((x) => `latest:${x.Id}` === r.homeRow);
+                if (!v || v.CollectionType === 'playlists') continue;  // Playlists is above
+                t.push({ size: 'small', glyph: D.kindIcon(v.CollectionType), entry: { name: v.Name, okLabel: 'open', go: () => T.ctx.navigate(D.viewRoute(v)) } });
+            }
+            t.push({ size: 'small', glyph: 'settings', entry: { name: 'Settings', okLabel: 'open', go: () => T.ctx.navigate('#/mypreferencesmenu') } });
             return t;
         } });
         // one pivot per library, in the user's order
@@ -180,28 +188,62 @@
         const grid = el('div', 'pv-grid');
         view.append(grid);
         body.append(view);
-        const put = (tiles) => {
+        // the section's tiles; the first is focused, or after Back the one left from (S.memo, once: by its label, else its
+        // place), or the account. The Loading tile is never remembered (QA pre: focusing it wrote over the place, so Back
+        // always landed on the first tile).
+        const put = (tiles, loading) => {
             grid.textContent = '';
             grid.style.transform = '';
-            tiles.forEach((t, k) => grid.append(tile(t, k)));
+            tiles.forEach((t, k) => { const c = tile(t, k); if (loading) c.msLoading = true; grid.append(c); });
             if (S) S.root.setAttribute('data-pv-tiles', String(tiles.length));
-            const mem = D.memory.get('#/home:mosaic');
-            const at = mem && mem.section === sec.id ? mem.at : 0;
-            const f = grid.children[Math.min(at, grid.children.length - 1)];
+            const m = !loading && S && S.memo && S.memo.section === sec.id ? S.memo : null;
+            if (m) S.memo = null;
+            const kids = [...grid.children];
+            let f = kids[0];
+            if (m && m.acct && S.acct) f = S.acct;
+            else if (m) f = (m.label && kids.find((x) => x.getAttribute('aria-label') === m.label)) || kids[Math.min(m.at, kids.length - 1)];
             if (f && !(D.panel && D.panel.isOpen()) && !Gd.open) setTimeout(() => { if (f.isConnected) T.ctx.focus(f); }, 0);
         };
         if (sec.cache) { put(sec.cache); return; }
-        put([{ size: 'large', glyph: 'item', entry: { name: 'Loading' } }]);
+        put([{ size: 'large', glyph: 'item', entry: { name: 'Loading' } }], true);
         sec.load = sec.load || sec.tiles();
         sec.load.then((tiles) => { sec.cache = tiles; if (grid.isConnected) put(tiles); }, () => { if (grid.isConnected) put([]); });
     }
-    function remember() {
-        if (!S || !S.pivot) return;
+    // ---- Back to the home lands on what opened the screen (QA pre) ----
+    // Kept per history entry (the Navigation API's key: Back returns to the same key, a new visit is a new key): Back
+    // finds the pivot and the tile or the account it left from; Home, the guide's Home and a link start on the home
+    // pivot's first tile. Without the Navigation API it is kept per route, as before.
+    const homeMemo = new Map();
+    const entryKey = () => `${window.navigation && navigation.currentEntry ? navigation.currentEntry.key : ''} ${location.hash.split('?')[0]}`;
+    function remember(t) {
+        if (!S || !S.pivot || !S.sections || !S.entry) return;
+        const f = t || (T.ctx.focused && T.ctx.focused());
         const sec = S.sections[S.pivot.index()];
-        const f = T.ctx.focused && T.ctx.focused();
         const grid = f && f.parentElement;
-        if (!sec || !grid || !grid.classList.contains('pv-grid')) return;
-        D.memory.set('#/home:mosaic', { section: sec.id, at: [...grid.children].indexOf(f) });
+        const acct = !!f && f === S.acct;
+        if (!sec || (!acct && !(grid && grid.classList.contains('pv-grid')))) return;
+        homeMemo.delete(S.entry);
+        homeMemo.set(S.entry, { section: sec.id, acct, at: acct || f.msLoading ? 0 : [...grid.children].indexOf(f), label: acct || f.msLoading ? '' : f.getAttribute('aria-label') || '' });
+        if (homeMemo.size > 50) homeMemo.delete(homeMemo.keys().next().value);
+    }
+    // the pointer's wheel steps along the tiles, then into the next pivot (pointer-first, checklist 2.5)
+    function wheel(host) {
+        let acc = 0;
+        host.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (!S || !S.pivot) return;
+            acc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+            if (Math.abs(acc) < 40) return;
+            const d = acc > 0 ? 1 : -1;
+            acc = 0;
+            const grid = host.querySelector('.pv-grid');
+            const kids = grid ? [...grid.children] : [];
+            const i = kids.indexOf(T.ctx.focused());
+            const n = i < 0 ? 0 : i + d;
+            if (kids[n] && !kids[n].msLoading) { T.ctx.focus(kids[n]); T.ctx.sound('focus'); return; }
+            S.pivot.show(S.pivot.index() + d);
+            T.ctx.sound('navigate');
+        }, { passive: false });
     }
 
     function build(secs) {
@@ -212,8 +254,7 @@
             onChange: (i) => { if (S) { S.root.setAttribute('data-pv-section', secs[i].title); remember(); } }
         });
         S.root.setAttribute('data-pv-ready', String(secs.length));
-        const mem = D.memory.get('#/home:mosaic');
-        const start = Math.max(0, secs.findIndex((s) => s.id === (mem ? mem.section : 'home')));
+        const start = Math.max(0, secs.findIndex((s) => s.id === (S.memo ? S.memo.section : 'home')));
         if (start) S.pivot.show(start);
     }
     D.homeIndex = () => (S && S.sections ? Math.max(0, S.sections.findIndex((s) => s.id === 'home')) : 0);
@@ -229,7 +270,9 @@
         tx.append(name, srv);
         const av = el('span', 'ms-av', '');
         who.append(tx, av);
-        who.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.selectServer(); });
+        who.addEventListener('click', () => { remember(who); T.ctx.sound('select'); T.ctx.selectServer(); });
+        who.addEventListener('icefin-focus', () => remember(who));
+        if (S) S.acct = who;  // Back from Choose a server lands here (QA pre)
         const clock = el('div', 'pv-clock');
         box.append(who);
         root.append(box, clock);
@@ -430,9 +473,11 @@
             root.setAttribute('data-pv', 'home');
             root.setAttribute('data-ms-screen', 'home');
             root.classList.add('pv-home');
-            S = { root };
+            S = { root, entry: entryKey() };
+            S.memo = homeMemo.get(S.entry) || null;
             S.host = el('div', 'pv-host');
             root.append(S.host);
+            wheel(S.host);
             H.extra = [account(root), D.capsule(root)];
             D.pointerNav(root, () => D.exitAsk());
             root.mosaicBuild = (secs) => build(secs.map((s, i) => ({ id: `t${i}`, title: s.title, tiles: async () => (s.tiles || []).map((x) => ({ size: x.size || 'small', glyph: x.glyph, entry: x.entry || { name: x.label, go: x.go || (() => {}) } })) })));
