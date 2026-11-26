@@ -31,7 +31,8 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
 - Load the unit under test from a folder, never rebuild for a change to it, so the binary and its control stay the
   same; walk the control once per binary (D47: it was half of every walk).
 - Keep the lab busy: the next unit walks while the last one is triaged and fixed. Add a second guest when the host has
-  room (D47).
+  room (D47): measure first (the main guest averaged about 5 of its 12 vCPUs over a day of walks), and check what a
+  cloned guest carries over (network identity, servers not started at boot; `docs/LAB.md`).
 
 **The walker**
 - A synthetic input (DevTools events) skips the app's native path: plan a real-input check for anything the native
@@ -108,6 +109,13 @@ strip rows and library pivots are not levels). The walk ran on the walker from b
 built afterwards from the reports. Checked in the lab with real input: #225 (Right walks a book's buttons through
 Add to favorites) and the mouse's Back button through Qt's filter (one step back, not two; an open menu closes first).
 Lesson: a lower count needs its coverage checked; and the budget must cover the required screens.
+
+**2026-11-26: Media Center merged; the second guest; Tide and Almanac start.** Media Center's passes into main (#231)
+and its review asked; the test repo got the build (0.1.0-alpha.2+qa3, shared with another project's publish on the
+second guest, each in turn). The second guest took an hour, not 20 minutes: the clone booted with no address (its
+network config named the original's MAC) and both guests' servers needed starting by hand, which a walk only shows by
+waiting. Tide and Almanac's first passes then started at once, one per guest, at 60 minutes a run. Lesson: a cloned
+guest is a new machine; check its identity and services before the first walk.
 
 ## Metrics
 
