@@ -25,6 +25,18 @@
     const FOCUS = '[data-icefin-focus]';
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const focusable = (e) => { e.setAttribute('data-icefin-focus', ''); e.tabIndex = -1; return e; };
+    // where a settings screen was left from, per history entry: coming back focuses it again instead of the first control
+    // (QA Tide 1: Back from a preference page always landed on the first entry). Back and Home aren't remembered.
+    const left = new Map();
+    const entryKey = () => ((window.navigation && window.navigation.currentEntry && window.navigation.currentEntry.key) || '') + location.hash;
+    const remember = (wrap) => wrap.addEventListener('click', (e) => {
+        const t = e.target.closest && e.target.closest('[data-entry], [data-action], [data-page]');
+        if (!t || !wrap.contains(t)) return;
+        const n = ['entry', 'action', 'page'].find((x) => t.dataset[x] != null);
+        if (n === 'action' && (t.dataset.action === 'back' || t.dataset.action === 'home')) return;
+        left.set(entryKey(), `[data-${n}="${CSS.escape(t.dataset[n])}"]`);
+    }, true);
+    const cameFrom = (wrap) => { const q = left.get(entryKey()); const e = q && wrap.querySelector(q); return e && e.offsetParent !== null ? e : null; };
 
     const BASE = `
 .icefin-settings { position: absolute; inset: 0; overflow: clip; color: var(--icefin-color-text); font-size: 2.4vh; background: transparent; }
@@ -203,6 +215,7 @@
                 ensureStyle();
                 const wrap = el('div', 'icefin-details icefin-settings');
                 wrap.dataset.hub = o.layout === 'list' ? 'list' : 'tiles';
+                remember(wrap);
                 const nav = el('div', 'icefin-d-nav');
                 const navBtn = (action, label, go) => {
                     const b = focusable(el('div', 'icefin-d-btn icefin-d-navbtn', label));
@@ -258,7 +271,7 @@
                     }
                 } catch (e) { /* not signed in yet: no dashboard entry */ }
                 if (!root.contains(wrap)) return;
-                const first = wrap.querySelector('.icefin-s-entry');
+                const first = cameFrom(wrap) || wrap.querySelector('.icefin-s-entry');
                 if (first) T.ctx.focus(first);
                 root.setAttribute('data-icefin-settings-ready', String(entries.children.length));
             }
@@ -310,6 +323,7 @@
                 const route = prefsRoute();
                 const wrap = el('div', 'icefin-details icefin-settings icefin-prefs');
                 wrap.dataset.hub = 'list';
+                remember(wrap);
                 const nav = el('div', 'icefin-d-nav');
                 for (const [action, label, go] of [['back', '‹ Back', back], ['home', 'Home', () => T.ctx.navigate('#/home')]]) {
                     const b = focusable(el('div', 'icefin-d-btn icefin-d-navbtn', label));
@@ -406,7 +420,7 @@
                     for (const b of rail.children) b.classList.toggle('icefin-cs-here', b.dataset.section === here);
                 }, { passive: true });
                 refresh();
-                const first = [...form.querySelectorAll(FOCUS)].find((c) => c.offsetParent !== null) || rail.firstChild;
+                const first = cameFrom(wrap) || [...form.querySelectorAll(FOCUS)].find((c) => c.offsetParent !== null) || rail.firstChild;
                 if (first) T.ctx.focus(first);
                 root.setAttribute('data-icefin-prefs-ready', route);
             }

@@ -292,8 +292,11 @@
     const webDialogUp = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden');
     if (window.navigation && typeof window.navigation.addEventListener === 'function') {
         window.navigation.addEventListener('navigate', (e) => {
-            if (e.navigationType !== 'traverse' || !overlayEl || overlayClosing || webDialogUp()) return;
-            if (e.cancelable) { e.preventDefault(); overlayHook('back'); } else overlay.close();
+            if (e.navigationType !== 'traverse' || e.defaultPrevented) return;
+            // the second traversal of one mouse press, after one was taken in place (themeEngine.js)
+            if (e.cancelable && Date.now() < (window.__icefinBackHold || 0)) { e.preventDefault(); return; }
+            if (!overlayEl || overlayClosing || webDialogUp()) return;
+            if (e.cancelable) { e.preventDefault(); window.__icefinBackHold = Date.now() + 400; overlayHook('back'); } else overlay.close();
         });
     } else {
         window.addEventListener('popstate', () => { if (overlayEl && !overlayClosing && !webDialogUp()) overlay.close(); }, true);
@@ -761,8 +764,15 @@
                     if (p.end > t0 + span) cell.classList.add('icefin-guide-cut-end');
                     if (opts.renderProgram && !p.gap) opts.renderProgram(p, cell, ch); else if (!p.gap) cell.textContent = p.title || p.name || '';
                     else if (opts.emptyLabel) cell.textContent = opts.emptyLabel;
-                    cell.addEventListener('click', () => { if (!p.gap && opts.onSelect) opts.onSelect(p, ch); });
-                    cell.addEventListener('icefin-focus', () => { focusId = p.id; if (opts.onFocus) opts.onFocus(p, ch); });
+                    // opts.selectGaps: a theme that answers OK on a gap (watch the channel) gets it (QA Tide 1: OK on "No information" did nothing)
+                    cell.addEventListener('click', () => { if (opts.onSelect && (!p.gap || opts.selectGaps)) opts.onSelect(p, ch); });
+                    // the current cell follows focus however it came (the pointer, a script), so a redraw (the 30-s tick, a panel
+                    // closing) keeps it; an arrow move inside the cell keeps its own time (QA Almanac 1: focus jumped to row 0 at now)
+                    cell.addEventListener('icefin-focus', () => {
+                        focusId = p.id;
+                        if (!(top + k === cur.row && p.start <= cur.time && p.end > cur.time)) cur = { row: top + k, time: Math.max(p.start, t0) };
+                        if (opts.onFocus) opts.onFocus(p, ch);
+                    });
                     lane.append(cell);
                     if (top + k === cur.row && p.start <= cur.time && p.end > cur.time) focusEl = cell;
                 }
@@ -795,7 +805,9 @@
                 if (pv) { cur = { row: f.guideRow, time: Math.max(pv.start, t0) }; draw(); E.sound('focus'); return true; }
                 if (t0 <= earliest()) return false;
                 t0 = Math.max(earliest(), t0 - span / 2);
-                go(f.guideRow, Math.min(p.start - 1, t0 + span - 1));
+                // a programme that began before the new window too keeps focus inside it (QA Almanac 1: Left from a long one paged
+                // to a time before the window, and nothing was focused)
+                go(f.guideRow, clampTime(Math.min(p.start - 1, t0 + span - 1)));
                 E.sound('focus');
                 return true;
             }
