@@ -502,7 +502,11 @@
             const centre = dir === 'left' ? ax - bx : dir === 'right' ? bx - ax : dir === 'up' ? ay - by : by - ay;
             if (centre <= 0) continue;
             const overlap = horiz ? Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) : Math.min(a.right, b.right) - Math.max(a.left, b.left);
-            if (overlap > 0 && along > -1) {
+            // a neighbour the current element overlaps by less than half (a focused button scaled up, a bigger button
+            // beside smaller ones) is still the next one along the beam (QA: on a book's details, Left from More went
+            // to Mark played past Add to favorites, and Right from Play past Download; a pad never reached either)
+            const slack = Math.min(horiz ? a.width : a.height, horiz ? b.width : b.height) / 2;
+            if (overlap > 0 && along > -slack) {
                 if (along < beamDist) { beamDist = along; beamBest = e; }
                 continue;
             }
