@@ -258,6 +258,10 @@ DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|
 DANGER_CLS = re.compile(r"delete|remove|sign-?out|log-?out|favorit|userrating|playstate|btnuserdata|restart|shut|btn(save|submit|apply)|btnplayed", re.I)
 SETTINGS_ENTRY = re.compile(r"^(display|subtitles?|audio|video|playback|theme)$", re.I)
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
+# a Watch together group another parallel walker made (walk_parallel.py names its users qa-<shard>): joining it puts what
+# that walker plays on this one's screen (QA 3 re-walk 2, Media Center: the mouse joined qa-keys's group and its Live TV
+# channel opened the keys run's player, whose controls then judged dead)
+WALKER_GROUP = re.compile(r"\bqa-(keys|mouse|pad-[a-z0-9]+)\b", re.I)
 DLG_CHANGE = re.compile(r"create|new |add|edit|rename|delete|remove|identify|restart|shut|sign|password|playlist|collection|confirm|metadata|image", re.I)
 DLG_BTN = re.compile(r"^(ok|okay|save|apply|create|add|submit|yes|confirm|done|delete|remove|restart|continue|update)$", re.I)
 PREF_LABEL = re.compile(r"preferences|settings|profile|user|account|menu|avatar|cog|gear", re.I)
@@ -305,6 +309,8 @@ def skip_reason(c, title=""):
     # (QA 3 re-walk, Media Center: its settings entries are buttons, so Display was never opened by any run)
     if PERSISTS.search(lab) and not hr and not SETTINGS_ENTRY.match(lab.strip()):
         return "persists a view choice"
+    if title and WALKER_GROUP.search(lab):
+        return "another walker's group (parallel walk)"
     if title and DLG_CHANGE.search(title) and DLG_BTN.match(lab.strip()):
         return "confirms a change"
     if title and PERSISTS.search(title):
@@ -1280,11 +1286,17 @@ class Walker:
             obscured = not r.get("top")     # elementFromPoint at its centre is something else: try anyway, report only if the click did nothing
             f = self.focus_now()
             if not obscured:
-                self.hovered[1] += 1
                 # the same control found again by path, then label: a wall re-sorted (year, date added) moves a tile to
                 # another path, so the key alone said hover missed (QA 3, Media Center's wall)
                 hovered = bool(f and (f["key"] == c["key"] or self.js(f"window.inputWalk.isCur({json.dumps(c['key'])})")))
-                self.hovered[0] += hovered
+                if c.get("again"):
+                    # the second click keeps the first one's judgement: a pivot chosen slides along its row (Media
+                    # Center), and the hover that follows lands while it moves (QA 3 re-walk 2: guide, channels, date
+                    # added and years judged on the second hover alone)
+                    hovered = hovered or el.get("hover_focus") is not False
+                else:
+                    self.hovered[1] += 1
+                    self.hovered[0] += hovered
                 el["hover_focus"] = hovered
                 if hovered:
                     self.mark_off(k, None)
@@ -1332,7 +1344,12 @@ class Walker:
             self.finding("dead-control", k, label, "no screen, dialog or visible change", plugin=c.get("plugin", False))
             return
         if outcome == "in-place":
-            # a route that changes late (a channel that starts playing) is a new screen, not a level opened in place
+            # a route that changes late (a channel that starts playing) is a new screen, not a level opened in place;
+            # while a channel connects (html[data-icefin-live=connecting]) it resolves to the player or a failure, so
+            # wait it out (QA 3 re-walk 2: the player showed after the check, and Back judged on it hid its controls)
+            t0 = time.time()
+            while time.time() - t0 < 45 and self.js("document.documentElement.getAttribute('data-icefin-live') === 'connecting'"):
+                time.sleep(0.5)
             time.sleep(1.0)
             s2 = self.settle(t=2.5)
             if s2["route"] != s["route"]:
