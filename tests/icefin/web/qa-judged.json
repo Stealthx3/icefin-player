@@ -12,10 +12,15 @@
     {"kind": "^back-focus$", "screen": "\\[MusicAlbum\\]", "element": "LabArtist$", "why": "two controls for one person (artist and album artist): Back focuses the other", "doc": "media-center-3.md, plaza-3.md"},
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/home( > .*)?$", "element": "^Open ", "why": "the start strip's rows are not levels: the mouse's Back button goes back in history (the app's mapping, as on every page)", "doc": "media-center-3.md"},
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "\\?collectionType=", "detail": "^Back from /[a-z]+\\?collectionType=[a-z]+ > ", "why": "a library's pivot is a view choice, not a level: the mouse's Back button goes back in history", "doc": "media-center-3.md"},
+    {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "^IMG_\\d+$", "why": "jellyfin-web's photo slideshow has no controls and takes no focus: the walker pressed the theme's photo entry under it, which opens the photo already shown", "doc": "tide-1.md"},
     {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"}
   ],
   "media-center": [
     {"kind": "^shift-tab$", "why": "Media Center is a TV theme; Tab isn't one of its inputs", "doc": "media-center-3.md"}
+  ],
+  "almanac": [
+    {"kind": "^shift-tab$", "why": "Almanac is a TV (cable-guide) theme: its rows and guide take the arrows; Tab isn't one of its inputs", "doc": "almanac-1.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "element": "^Now playing: .*; open the queue$", "why": "the lab's songs are 15-s clips: the song line hides when the song ends, here between the hover and the click; clicked during a song it opens the queue", "doc": "almanac-1.md"}
   ],
   "plaza": [
     {"kind": "^shift-tab$", "why": "Plaza is a TV theme; Tab isn't one of its inputs (arrows are)", "doc": "plaza-3.md"}

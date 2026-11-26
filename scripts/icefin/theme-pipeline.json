@@ -36,9 +36,6 @@
       "harbor",
       "lumen"
     ],
-    "passes": {
-      "plaza": 3,
-      "media-center": 3
-    }
+    "passes": {"plaza": 3, "media-center": 3, "tide": 1, "almanac": 1}
   }
 }
