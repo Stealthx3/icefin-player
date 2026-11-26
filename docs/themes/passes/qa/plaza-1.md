@@ -23,11 +23,12 @@ From the lab smoke walk of input_walk.py (keys, mouse, pad-xbox, 4 min each; the
       switchpro) stopped at 8 screens and never opened a library, a list or a book: still open.
       Closed in pass 3: the list was a books library's, whose Play all and Shuffle had nothing to play (dead for
       every input); they show only where something plays now (engine #215). Every pad run opens a list and "All".
-- [ ] A book's "Add to favorites" (jellyfin-web's details page in Plaza's frame) not reached by the pad in the lab;
+- [x] A book's "Add to favorites" (jellyfin-web's details page in Plaza's frame) not reached by the pad in the lab;
       no exclusion rule matches. Recheck on the host walk with the focus trace. Not reached on the first host walk.
       Traced in pass 3's re-walk 2: the pads reached Play, Mark played and More, never Add to favorites or Download.
       The engine's picker skipped a neighbour the focused button overlaps by a few pixels: engine #225, checked in
       the app before it merges.
+      Closed: #225 merged; in the lab, Right from Play walks Download, Mark played, Add to favorites and More.
 
 From the host walk (plaza-qa1-20261116-1621; build 7b4c02c, so without engine #200/#201 or the fixes above):
 - [x] Details pages (Person, Season, Episode, Series; 137 focus-lost with the mouse): hovering a control on the
