@@ -19,7 +19,7 @@
 
     let pkg = null;           // activePackage() of the mounted theme, or null
     let generation = 0;       // bumps on every mount so late script loads from an old theme are ignored
-    let screens = {};         // route -> {mount(root, ctx), unmount?(), onBack?()}
+    let screens = {};         // route -> {mount(root, ctx), unmount?(), onBack?(), levelBack?() (pop an open level in place: true when it did)}
     let loadingTheme = null;  // id that registerScreen calls belong to while its scripts load
     let current = null;       // {route, screen}
     let actionHooks = [];     // engine capabilities (capabilities.js) that take actions first: (action) => handled
@@ -618,6 +618,24 @@
             default:
                 return false;
         }
+    }
+
+    // The mouse's Back button goes back in the web view's history, not through the actions: a screen with a level of its
+    // own open takes it as its Back (screen.levelBack() pops the level and returns true) where the Navigation API can
+    // cancel the traversal; at the screen's root, or with the overlay or a jellyfin-web dialog up (they keep their own
+    // Back), the traversal goes on (QA Tide 1: the mouse's Back left a library from three columns in)
+    if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+        window.navigation.addEventListener('navigate', (e) => {
+            if (e.navigationType !== 'traverse' || !e.cancelable || e.defaultPrevented || !current || !current.screen.levelBack) return;
+            const here = window.navigation.currentEntry, dest = e.destination;
+            if (!here || !dest || dest.index < 0 || dest.index >= here.index) return;     // back only
+            const ov = document.getElementById('icefin-theme-overlay');
+            if (ov && ov.childElementCount > 0 && ov.getClientRects().length) return;
+            if ([...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden')) return;
+            let used = false;
+            try { used = !!current.screen.levelBack(); } catch (err) { console.error('icefinTheme: levelBack', err); }
+            if (used) { e.preventDefault(); sound('back'); }
+        });
     }
 
     // Desktop mode hands most keys to the page instead of the input pipeline (EventFilter): take the navigation keys
