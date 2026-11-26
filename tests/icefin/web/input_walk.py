@@ -134,7 +134,10 @@ IW_JS = r"""
         seen.add(e);
         const i = info(e); els.set(i.key, e);
         i.inview = rc.bottom > 0 && rc.right > 0 && rc.top < innerHeight && rc.left < innerWidth;
-        i.osk = !!e.closest('#icefin-osk, [data-icefin-osk], [role=application]');
+        // the on-screen keyboard only: [role=application] matched the engine's own theme root too, so every control of
+        // every themed screen counted as a key and the direct try at the controls a walk missed never ran on them
+        // (QA Tide 1: the pads reached 3 of the Shows column's 8 entries and never a series)
+        i.osk = !!e.closest('#icefin-osk, [data-icefin-osk]');
         out.push(i);
       }
       return out;
