@@ -600,7 +600,9 @@
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },
             onAction(a) { return C ? C.onAction(a) : false; },
-            onBack() { return C ? C.onAction('back') : false; }
+            onBack() { return C ? C.onAction('back') : false; },
+            // the mouse's Back button (a history traversal) pops an open column in place; at the root it leaves (QA Tide 1)
+            levelBack() { return !!(C && C.back(false)); }
         }, spec.beforeSignIn ? { beforeSignIn: true } : {}));
     };
 })();

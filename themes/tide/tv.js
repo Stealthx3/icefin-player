@@ -184,6 +184,7 @@
             if (a === 'back') { T.ctx.sound('back'); T.ctx.navigate('#/livetv'); return true; }
             return false;
         },
-        onBack() { return G && G.C ? G.C.onAction('back') : false; }
+        onBack() { return G && G.C ? G.C.onAction('back') : false; },
+        levelBack() { return !!(G && G.C && G.C.back(false)); }  // the mouse's Back pops a column (QA Tide 1)
     });
 })();

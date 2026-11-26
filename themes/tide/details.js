@@ -253,7 +253,8 @@
             S = null;
         },
         onAction(a) { return S && S.C ? S.C.onAction(a) : a === 'back' ? false : true; },
-        onBack() { return S && S.C ? S.C.onAction('back') : false; }
+        onBack() { return S && S.C ? S.C.onAction('back') : false; },
+        levelBack() { return !!(S && S.C && S.C.back(false)); }  // the mouse's Back pops a column (QA Tide 1)
     });
     D.screenItem = () => (S && S.item) || null;
 })();
