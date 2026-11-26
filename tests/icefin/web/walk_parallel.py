@@ -7,12 +7,15 @@ DevTools port, config dir, Jellyfin user (so one walk's playback or Played toggl
 and SDL device filter (SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT: an app sees only its own pad model, keys and mouse
 see none). The shards then merge into the same per-theme reports input_walk.py writes, compared with stock.
 
-The stock control is walked once per build (--control reuses an earlier run's on the same app binary).
+The stock control is walked once per build: --control auto (the default) reuses the newest earlier run beside --out
+that walked stock on the same app binary. With --theme-path the themes come from a folder (ICEFIN_THEME_PATH, read
+before the bundled ones), so a theme fix needs no rebuild and the binary, and its control, stay the same (D47).
+Findings judged in earlier passes (qa-judged.json) are marked; each theme's triage.md lists only the rest.
 
-  python3 tests/icefin/web/walk_parallel.py --app ~/build-qa76/src/icefin-player --themes plaza --out ~/walks/x
-  python3 tests/icefin/web/walk_parallel.py --app ... --themes media-center --control ~/walks/x --out ~/walks/y
+  python3 tests/icefin/web/walk_parallel.py --app ~/build-qa76/src/icefin-player --themes plaza --theme-path ~/qa-themes --out ~/walks/x
+  python3 tests/icefin/web/walk_parallel.py --app ... --themes media-center --theme-path ~/qa-themes --out ~/walks/y   # reuses x's stock
 """
-import argparse, hashlib, json, os, secrets, signal, subprocess, sys, time
+import argparse, hashlib, json, os, re, secrets, signal, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -124,7 +127,59 @@ def load_run(d):
     return json.load(open(p)) if os.path.exists(p) else None
 
 
-def merge_theme(out, theme, control_root):
+JUDGED = os.path.join(HERE, "qa-judged.json")
+
+
+def load_judged(path):
+    """Findings already judged in a pass doc (D47): {"*" or theme id: [{kind, screen, element, input, detail, why, doc}]},
+    each field but why/doc a regex (absent: any). A walk marks them so the triage list holds only what is new."""
+    try:
+        return json.load(open(path))
+    except (OSError, ValueError):
+        return {}
+
+
+def mark_judged(m, theme, rules):
+    rs = list(rules.get("*", [])) + list(rules.get(theme, []))
+    for f in m["findings"]:
+        for r in rs:
+            if all(re.search(r[k], str(f.get(k) or ""), re.I) for k in ("kind", "screen", "element", "input", "detail") if k in r):
+                f["judged"] = r.get("why", "judged")
+                break
+
+
+def find_control(out, bid):
+    """The newest earlier run beside this one that walked stock on the same app binary (D47: theme fixes come from a
+    folder, so the binary and its stock control stay the same across a theme's walks)."""
+    best = None
+    root = os.path.dirname(out)
+    for d in os.listdir(root):
+        mp = os.path.join(root, d, "meta.json")
+        if os.path.join(root, d) == out or not os.path.exists(mp) or not os.path.exists(os.path.join(root, d, "stock", "report.json")):
+            continue
+        try:
+            meta = json.load(open(mp))
+        except ValueError:
+            continue
+        if meta.get("build") == bid and "stock" in meta.get("themes", []) and (best is None or meta.get("started", "") > best[0]):
+            best = (meta.get("started", ""), os.path.join(root, d))
+    return best[1] if best else ""
+
+
+def theme_hash(path, theme):
+    """A short hash of a theme folder's files (what the walk loaded), for meta.json."""
+    h = hashlib.sha256()
+    d = os.path.join(path, theme)
+    for base, _dirs, files in sorted(os.walk(d)):
+        for fn in sorted(files):
+            fp = os.path.join(base, fn)
+            h.update(os.path.relpath(fp, d).encode())
+            with open(fp, "rb") as f:
+                h.update(f.read())
+    return h.hexdigest()[:12]
+
+
+def merge_theme(out, theme, control_root, rules=None):
     """The shards' runs of one theme as input_walk.py's report: <theme>/report.json (plain) and <theme>/steam-env/."""
     groups = {"plain": {}, "steam-env": {}}
     for label, _inp, fam, _ in SHARDS:
@@ -149,11 +204,21 @@ def merge_theme(out, theme, control_root):
             cp = os.path.join(control_root, "stock", "report.json" if g == "plain" else os.path.join(g, "report.json"))
             if os.path.exists(cp):
                 iw.mark_control(m, json.load(open(cp)))
+            mark_judged(m, theme, rules or {})
+            todo = [f for f in m["findings"] if not f.get("also_in_control") and not f.get("judged")]
+            open(os.path.join(sdir, "triage.md"), "w").write(
+                f"# {theme} ({g}): {len(todo)} to triage (not in the control, not judged before)\n\n"
+                + "".join(f"- [{f['severity']}] {f['kind']} · {f['input']} ({f['run']}) · `{f['screen']}` · {f['element']}: {f.get('detail', '')}\n" for f in todo))
         json.dump(m, open(os.path.join(sdir, "report.json"), "w"), indent=1)
         open(os.path.join(sdir, "report.md"), "w").write(iw.markdown(m, reps, "" if g == "plain" else "../"))
         new = sum(1 for f in m["findings"] if not f.get("also_in_control"))
         high = sum(1 for f in m["findings"] if f["severity"] == "high" and not f.get("also_in_control"))
-        lines.append(f"- {theme} ({g}): {len(m['findings'])} findings, {new} not in the control ({high} high); runs {', '.join(m['runs'])}")
+        judged = sum(1 for f in m["findings"] if f.get("judged") and not f.get("also_in_control"))
+        if theme == "stock":
+            lines.append(f"- {theme} ({g}): {len(m['findings'])} findings; runs {', '.join(m['runs'])}")
+            continue
+        lines.append(f"- {theme} ({g}): {len(m['findings'])} findings, {new} not in the control ({high} high), {judged} of those judged before"
+                     f" ({new - judged} to triage: {os.path.relpath(os.path.join(sdir, 'triage.md'), out)}); runs {', '.join(m['runs'])}")
     return lines
 
 
@@ -162,7 +227,11 @@ def main():
     ap.add_argument("--app", default="~/build-qa76/src/icefin-player")
     ap.add_argument("--server", default="jf12")
     ap.add_argument("--themes", required=True, help="comma-separated theme ids (stock is added unless --control)")
-    ap.add_argument("--control", default="", help="an earlier walk_parallel run on the same build: its stock is the control")
+    ap.add_argument("--control", default="auto", help="an earlier walk_parallel run on the same build whose stock is the control; "
+                    "auto (default): the newest such run beside --out, else stock is walked here; none: walk stock here")
+    ap.add_argument("--theme-path", default="", help="a folder of theme packages loaded before the bundled ones (ICEFIN_THEME_PATH): "
+                    "theme fixes then need no rebuild, so the binary and its stock control stay the same (D47)")
+    ap.add_argument("--judged", default=JUDGED, help="findings judged in earlier passes (marked, left out of triage.md)")
     ap.add_argument("--shards", default=",".join(s[0] for s in SHARDS), help="which shards to run (default: all seven)")
     ap.add_argument("--budget-min", type=float, default=25)
     ap.add_argument("--out", required=True)
@@ -171,6 +240,17 @@ def main():
     os.makedirs(os.path.join(out, "shards"), exist_ok=True)
     bid = build_id(a.app)
     themes = [t for t in a.themes.split(",") if t and t != "stock"]
+    if a.control == "auto":
+        a.control = find_control(out, bid)
+        if a.control:
+            print(f"walk_parallel: stock control reused from {a.control} (same build {bid})", flush=True)
+    elif a.control == "none":
+        a.control = ""
+    tpath = os.path.abspath(os.path.expanduser(a.theme_path)) if a.theme_path else ""
+    if tpath:
+        missing = [t for t in themes if not os.path.isdir(os.path.join(tpath, t))]
+        if missing:
+            sys.exit(f"walk_parallel: no {', '.join(missing)} in {tpath}")
     control = os.path.abspath(os.path.expanduser(a.control)) if a.control else out
     if a.control:
         meta = json.load(open(os.path.join(control, "meta.json")))
@@ -180,6 +260,8 @@ def main():
         themes = ["stock"] + themes
     shards = [s for s in SHARDS if s[0] in a.shards.split(",")]
     json.dump({"build": bid, "app": a.app, "themes": themes, "control": control, "shards": [s[0] for s in shards],
+               "theme_path": tpath, "theme_files": {t: theme_hash(tpath, t) for t in themes if tpath and t != "stock"},
+               "walker": build_id(os.path.join(HERE, "input_walk.py")),
                "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, open(os.path.join(out, "meta.json"), "w"), indent=1)
     ensure_users(a.server, [f"qa-{s[0]}" for s in shards])
 
@@ -195,6 +277,8 @@ def main():
                    "--inputs", inp, "--family", fam or "xbox", "--steam-inputs", "pad" if fam == "steam" else ""]
             log = open(os.path.join(sdir, "walk.log"), "w")
             env = dict(os.environ, ICEFIN_LAB_DISPLAY=f":{110 + i}")    # session_play's own launches too
+            if tpath:
+                env["ICEFIN_THEME_PATH"] = tpath                          # the app reads it before its bundled themes
             procs.append((label, subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=env)))
             print(f"walk_parallel: {label} started ({', '.join(themes)}, display :{110 + i})", flush=True)
             time.sleep(20)      # staggered: seven WebEngines starting at once time out on the guest's CPUs
@@ -210,8 +294,9 @@ def main():
                     pass
     summary = [f"# walk_parallel {time.strftime('%Y-%m-%d %H:%M')} (build {bid}, budget {a.budget_min} min per run, shards {', '.join(s[0] for s in shards)})",
                f"Control: {'stock in this run' if control == out else control}", ""]
+    rules = load_judged(a.judged)
     for t in themes:
-        summary += merge_theme(out, t, control)
+        summary += merge_theme(out, t, control, rules)
     for label, _p in procs:
         w = os.path.join(out, "shards", label, "summary.md")
         if os.path.exists(w):
