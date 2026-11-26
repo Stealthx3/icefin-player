@@ -49,7 +49,7 @@
     const PAD = new Set(['up', 'down', 'left', 'right', 'enter', 'select', 'back', 'menu', 'search', 'home', 'play_pause', 'playpause', 'step_backward', 'step_forward', 'seek_backward', 'seek_forward']);
     B.sawAction = (a) => {
         if (PAD.has(a)) document.documentElement.setAttribute('data-bl-input', 'pad');
-        if (a !== 'back' && B.backFocus) B.backFocus.stop();  // the user moved on: Back's focus doesn't take it back
+        if (a !== 'back' && B.backFocus) { if (/^(up|down|left|right)$/.test(a)) B.backFocus.moved(); B.backFocus.stop(); }  // the user moved on: Back's focus doesn't take it back (a pad's move counts for the memo too, QA Baseline 1)
     };
     if (!window.icefinBaselineInput) {
         window.icefinBaselineInput = true;
@@ -57,6 +57,23 @@
         window.addEventListener('keydown', (e) => { if (/^(Arrow|Enter|Escape|Backspace)/.test(e.key)) document.documentElement.setAttribute('data-bl-input', 'pad'); }, true);
     }
     if (ui.keyboard) ui.keyboard.enable();
+    // Tab and Shift+Tab step through the screen's controls in page order, as stock's page does (QA Baseline 1: Tab moved
+    // nothing, every control being tabIndex -1). Moves the engine's focus rather than giving the controls a tab stop
+    if (!window.icefinBaselineTab) {
+        window.icefinBaselineTab = true;
+        window.addEventListener('keydown', (e) => {
+            if (e.key !== 'Tab' || e.ctrlKey || e.altKey || e.metaKey) return;
+            const r = document.getElementById('icefin-theme-root');
+            if (!r || r.hidden || B.layer() !== r) return;  // a panel (the overlay) keeps its own keys
+            const all = [...r.querySelectorAll('[data-icefin-focus]')].filter((x) => x.getClientRects().length);
+            if (!all.length) return;
+            const i = all.indexOf(T.ctx.focused());
+            const n = all[(i < 0 ? 0 : i + (e.shiftKey ? all.length - 1 : 1)) % all.length];
+            e.preventDefault();
+            T.ctx.focus(n);
+            T.ctx.sound('focus');
+        }, true);
+    }
     // hover moves focus (checklist 2.5, covered by the Focus board in the Gate 1 map; the engine's rule: only a pointer
     // that moves). QA pre-pass: without it the mouse left focus wherever the screen's arrival put it, and Back after a
     // click had nothing of the mouse's to come back to
@@ -385,7 +402,13 @@
         const shown = (e) => e.isConnected && e.getClientRects().length > 0;
         const same = (e, d) => e.classList[0] === d.cls && (d.id ? idOf(e) === d.id : labelOf(e) === d.label);
         let pending = null, obs = null, timer = null, raf = 0;
-        function record(t) {
+        // (QA Baseline 1) as the engine's stockMemo: a focus right after a route change is the screen's arrival, not the
+        // user's, and must not overwrite the opener's memo; a click, or a move by the user since the change, is
+        let navAt = 0, movedAt = 0;
+        const nav = () => { navAt = Date.now(); };
+        const moved = () => { movedAt = Date.now(); };
+        function record(t, user) {
+            if (!user && Date.now() - navAt < 2500 && movedAt <= navAt) return;
             const r = rootEl();
             const e = t && t.closest && t.closest('[data-icefin-focus]');
             if (!r || r.hidden || !e || !r.contains(e) || e.matches(NAV)) return;
@@ -426,8 +449,10 @@
         }
         const soon = () => { if (!raf) raf = requestAnimationFrame(attempt); };
         function routed() {
-            stop();
+            nav();
             const h = here();
+            if (pending && pending.hash === h) return;  // (QA Baseline 1) popstate then hashchange for one Back: keep the target already read
+            stop();
             const d = memo.get(h);
             if (!d) return;
             pending = { hash: h, d };
@@ -437,17 +462,20 @@
             setTimeout(soon, 0);
         }
         // the user's own move ends it (not Back, Escape or Backspace, which are how the user got here)
-        const onKey = (e) => { if (!/^(Escape|Backspace|Shift|Control|Alt|Meta)$/.test(e.key)) stop(); };
-        const onFocus = (e) => record(e.target);
-        const onMove = (e) => { if (e.movementX || e.movementY) stop(); };  // a moving pointer takes focus itself (pointer-first)
+        const onKey = (e) => { if (/^(Arrow|Tab)/.test(e.key)) moved(); if (!/^(Escape|Backspace|Shift|Control|Alt|Meta)$/.test(e.key)) stop(); };
+        const onFocus = (e) => record(e.target, false);
+        const onClick = (e) => record(e.target, true);
+        const onMove = (e) => { if (e.movementX || e.movementY) { moved(); stop(); } };  // a moving pointer takes focus itself (pointer-first)
+        const onDown = () => { moved(); stop(); };
         if (window.icefinBaselineBackFocusOff) window.icefinBaselineBackFocusOff();  // the theme loaded again: one set of listeners
-        const on = [[window, 'popstate', routed], [window, 'hashchange', routed], [document, 'icefin-focus', onFocus], [document, 'click', onFocus],
-            [window, 'keydown', onKey], [window, 'mousedown', stop], [window, 'mousemove', onMove], [window, 'wheel', stop]];
+        const on = [[window, 'popstate', routed], [window, 'hashchange', routed], [document, 'icefin-focus', onFocus], [document, 'click', onClick],
+            [window, 'keydown', onKey], [window, 'mousedown', onDown], [window, 'mousemove', onMove], [window, 'wheel', onDown]];
         // capture on window: before the engine's own route handler, so the entry is known as the screen mounts
         for (const [t, n, f] of on) t.addEventListener(n, f, true);
-        window.icefinBaselineBackFocusOff = () => { for (const [t, n, f] of on) t.removeEventListener(n, f, true); stop(); };
+        if (window.navigation) navigation.addEventListener('currententrychange', nav);
+        window.icefinBaselineBackFocusOff = () => { for (const [t, n, f] of on) t.removeEventListener(n, f, true); if (window.navigation) navigation.removeEventListener('currententrychange', nav); stop(); };
         return {
-            stop,
+            stop, moved,
             // the control Back should land on, when this screen is being returned to and it is drawn already
             target() { return pending && here() === pending.hash ? find(pending.d) : null; }
         };

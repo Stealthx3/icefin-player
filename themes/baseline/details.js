@@ -143,7 +143,10 @@
         wrap.style.minHeight = `${poster.offsetHeight + 16}px`;  // the full-width rows start under the poster
         await fullRows(me, page);
         if (S !== me) return;
-        B.arrive(root, first || btns.querySelector('.bl-dbtn'));
+        // (QA Baseline 1) after an item-menu action the redraw gives focus back to the control that had it
+        const kept = me.keep && [...root.querySelectorAll('.' + me.keep.cls)].find((x) => (x.getAttribute('aria-label') || x.textContent.trim()) === me.keep.label);
+        me.keep = null;
+        B.arrive(root, kept || first || btns.querySelector('.bl-dbtn'));
         root.setAttribute('data-icefin-details-ready', '1');
         root.setAttribute('data-bl-ready', '1');
         function redraw() { const f = document.activeElement; root.textContent = ''; draw(me); }
@@ -253,7 +256,7 @@
             me.item = it;
             me.source = (it.MediaSources || [])[0] || null;
             B.screenTabs = null;
-            B.refresher(async () => { if (S !== me) return; try { me.item = await fetchItem(id); } catch (e) { return; } root.textContent = ''; draw(me); });
+            B.refresher(async () => { if (S !== me) return; try { me.item = await fetchItem(id); } catch (e) { return; } const f = T.ctx.focused(); me.keep = f && f.classList[0] ? { cls: f.classList[0], label: f.getAttribute('aria-label') || f.textContent.trim() } : null; root.textContent = ''; draw(me); });
             await draw(me);
         },
         unmount() { S = null; B.hintsOff(); },

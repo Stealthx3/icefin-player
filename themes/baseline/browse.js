@@ -132,7 +132,8 @@
             renderProgram(p, cell) { cell.append(el('div', 'bl-gp-title', p.title || '')); if (p.item && p.item.TimerId) cell.append(B.icon('fiber_manual_record', 'bl-gp-rec')); },
             emptyLabel: 'No program information',
             onFocus() { B.hints([['OK', 'watch'], ['≡', 'record'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['L1 R1', 'tabs'], ['Back', '']]); },
-            onSelect(p, ch) { if (!p.gap && p.start <= Date.now() && p.end > Date.now()) playChannel({ ChannelId: ch.id }); else if (p.item) programmeMenu(p.item); }
+            selectGaps: true,  // (QA Baseline 1) a "No program information" cell can be chosen: OK watches the channel, as the hint says
+            onSelect(p, ch) { if (p.gap || (p.start <= Date.now() && p.end > Date.now())) playChannel({ ChannelId: ch.id }); else if (p.item) programmeMenu(p.item); }
         });
     }
     const TABFN = [
