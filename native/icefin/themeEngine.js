@@ -626,15 +626,19 @@
     // Back), the traversal goes on (QA Tide 1: the mouse's Back left a library from three columns in)
     if (window.navigation && typeof window.navigation.addEventListener === 'function') {
         window.navigation.addEventListener('navigate', (e) => {
-            if (e.navigationType !== 'traverse' || !e.cancelable || e.defaultPrevented || !current || !current.screen.levelBack) return;
+            if (e.navigationType !== 'traverse' || !e.cancelable || e.defaultPrevented) return;
             const here = window.navigation.currentEntry, dest = e.destination;
             if (!here || !dest || dest.index < 0 || dest.index >= here.index) return;     // back only
+            // one mouse press arrives as two back traversals (the web engine's own and the page's): once one was taken in
+            // place, the second is dropped too, or it goes two steps back (QA Tide 1, real-input check)
+            if (Date.now() < (window.__icefinBackHold || 0)) { e.preventDefault(); return; }
+            if (!current || !current.screen.levelBack) return;
             const ov = document.getElementById('icefin-theme-overlay');
             if (ov && ov.childElementCount > 0 && ov.getClientRects().length) return;
             if ([...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden')) return;
             let used = false;
             try { used = !!current.screen.levelBack(); } catch (err) { console.error('icefinTheme: levelBack', err); }
-            if (used) { e.preventDefault(); sound('back'); }
+            if (used) { e.preventDefault(); window.__icefinBackHold = Date.now() + 400; sound('back'); }
         });
     }
 

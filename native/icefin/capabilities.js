@@ -292,8 +292,11 @@
     const webDialogUp = () => [...document.querySelectorAll('.dialogContainer .dialog')].some((d) => d.getClientRects().length && getComputedStyle(d).visibility !== 'hidden');
     if (window.navigation && typeof window.navigation.addEventListener === 'function') {
         window.navigation.addEventListener('navigate', (e) => {
-            if (e.navigationType !== 'traverse' || !overlayEl || overlayClosing || webDialogUp()) return;
-            if (e.cancelable) { e.preventDefault(); overlayHook('back'); } else overlay.close();
+            if (e.navigationType !== 'traverse' || e.defaultPrevented) return;
+            // the second traversal of one mouse press, after one was taken in place (themeEngine.js)
+            if (e.cancelable && Date.now() < (window.__icefinBackHold || 0)) { e.preventDefault(); return; }
+            if (!overlayEl || overlayClosing || webDialogUp()) return;
+            if (e.cancelable) { e.preventDefault(); window.__icefinBackHold = Date.now() + 400; overlayHook('back'); } else overlay.close();
         });
     } else {
         window.addEventListener('popstate', () => { if (overlayEl && !overlayClosing && !webDialogUp()) overlay.close(); }, true);
