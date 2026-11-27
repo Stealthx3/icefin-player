@@ -84,29 +84,47 @@ Judged:
 ## Rechecks for pass 2
 
 Theme, each checked in the lab on the next walk's build:
+Checked against pass 2's walk (2026-11-27, `almanac-2.md`); what is ticked held, what is not says what is missing.
+
 - [ ] F1: throttle the server (or delay `getLiveTvChannels` by 3 s). Guide, Right to Movies, OK, Back: Movies is
-      focused before the grid appears.
+      focused before the grid appears. (Held at normal latency: no focus-lost in any run, pass 1: 27 on the guide, and the
+      mouse's 10 tab Backs from the guide are all `back_ok`. The throttled replay is open, since the walker's 4-s wait
+      hides latency.)
 - [ ] F2: Shows, Icefin Test Show, the Guide tab, Back: the Guide tab is focused as the page shows, with a 3-s server
-      delay.
-- [ ] F3: Guide, Search tab, Back, OK on a programme that is on now, wait for the player, Back: focus is on that
-      programme, not on Search.
-- [ ] F4: a later programme's panel opens on OK within a frame, with the recording defaults filling in.
-- [ ] F5: Test Tones, Play all, Shuffle shows "Shuffling Test Tones"; a series' Shuffle shows its notice at once.
+      delay. (Held at normal latency: no focus-lost on /details [Series], pass 1: 7. The throttled replay is open.)
+- [x] F3: Guide, Search tab, Back, OK on a programme that is on now, wait for the player, Back: focus is on that
+      programme, not on Search. (Small Worlds on the guide, /video, Back: `back_ok` in the mouse run.)
+- [x] F4: a later programme's panel opens on OK within a frame, with the recording defaults filling in. (Closed for the
+      rows view: "Tin Robots …" opens its dialog 2 s after OK in every pad run and the mouse. The guide's own later cell
+      was not pressed.)
+- [x] F5: Test Tones, Play all, Shuffle shows "Shuffling Test Tones"; a series' Shuffle shows its notice at once. (Play
+      all, Shuffle, Instant mix and a song's Play are in place on an album, a playlist and an artist; a Series' and a BoxSet's
+      Shuffle reach /video. No play dead-control, pass 1: 6.)
 - [ ] F6: a film, hover More like this' "Nothing here yet", click Options: the film's options open. Settings, Options:
-      the error sound plays.
-- [ ] F7: Settings, click the server line, mouse Back: the server line is focused.
-- [ ] F8: play a song, hover the song line: it takes the lime focus look.
-- [ ] The idle Now playing notice reads "Nothing is playing".
+      the error sound plays. (Options opens its dialog on 9 screens, a Movie among them. Settings' "No options here" case
+      was not tried: the walker left it unpositioned.)
+- [x] F7: Settings, click the server line, mouse Back: the server line is focused. (The server button opens /selectserver
+      with `back_ok` on /home and /home?al=settings.)
+- [x] F8: play a song, hover the song line: it takes the lime focus look. (Hover focused it and it opened /queue; its Back
+      is pass 2's F9.)
+- [x] The idle Now playing notice reads "Nothing is playing". (No /queue transport dead-control, pass 1: 5; not looked at
+      in a screenshot.)
 
 Engine (#236, with the next build):
 - [ ] E1: hover Lab Notes on the guide, press Options, wait for a minute boundary plus 30 s, close the panel: Lab
-      Notes keeps focus. With no panel, hover a cell and wait 30 s: focus stays.
+      Notes keeps focus. With no panel, hover a cell and wait 30 s: focus stays. (Open: no guide panel was open across a
+      30-s tick, and the mouse's guide cells sat under a failed channel card.)
 - [ ] E2: Guide, Down to Northwind Sports, Right until the window starts after Match Night's start, Left onto it,
-      Left again: the window pages back and focus stays in the grid; Back, the Guide tab, OK goes into the grid.
+      Left again: the window pages back and focus stays in the grid; Back, the Guide tab, OK goes into the grid. (Open: no
+      pad or keys run walked the guide grid; there is no "at nothing" in any trace, which proves nothing here.)
 
 Walker:
 - [ ] The preferences menu (Settings), the playlists library, a season, an episode, a song and the music details are
-      reached by the keys and pad runs at 60 minutes.
-- [ ] No walker user writes (a Watched ✓ press is skipped).
+      reached by the keys and pad runs at 60 minutes. (Open: Settings and the music album were reached by every run;
+      missing for pads were the playlists library, a season, an episode and a song. Fixed in #241 (the playlists
+      route) and #242 (W7, W8, W11); an episode also needed F11.)
+- [ ] No walker user writes (a Watched ✓ press is skipped). (Watched is skipped everywhere, but the mouse pressed New group
+      seven times and opened "Edit details…", toggling 14 locks without saving. #241 puts `new group` on the danger list;
+      W12 for "edit details".)
 
 Almanac's first pass is done; its second walks on the fixed walker with the engine build from #236.
