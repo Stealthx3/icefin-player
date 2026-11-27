@@ -107,25 +107,36 @@ notice; stock's opens a choice of views (Poster, Poster card, Thumb, List). A de
 ## Rechecks for pass 2
 
 Theme, each checked in the lab on the next walk's build:
-- [ ] F1: keys and a pad, Home, Movies, Back: focus on Movies. Home, header Settings, Back: on Settings. Home, an
+- [x] F1: keys and a pad, Home, Movies, Back: focus on Movies. Home, header Settings, Back: on Settings. Home, an
       album in a row, Back: on that album. The settings menu, Client Settings, Back: on Client Settings. /search,
-      Settings, Back: on Settings. A pad move right after the Back still wins.
-- [ ] F2: keys on the home, Tab five times, Shift+Tab twice: focus goes forward five controls and back two. On a
-      details page Tab reaches Play, the other buttons, then the rows.
+      Settings, Back: on Settings. Closed in pass 2: home back_ok 136 of 136 (keys 20, mouse 21, each pad 19), every
+      hub entry True, /search and /userprofile True. Missing: "a pad move right after the Back still wins" (the
+      walker judges before it moves; by eye, carried to pass 3).
+- [x] F2: keys on the home, Tab five times, Shift+Tab twice: focus goes forward five controls and back two. On a
+      details page Tab reaches Play, the other buttons, then the rows. Closed in pass 2: no shift-tab findings
+      (pass 1: 15); the keys Tab sweep ends "controls reached 24, walk complete" and its restore path uses Tab.
 - [ ] F3: an album, More, Play next: the panel closes and More stays focused. Mark played on a film: focus stays on the
-      switch (the gap above: it may fall back to Play, to look at).
-- [ ] F4: the guide, a gap, OK: "Connecting to Icefin One".
+      switch (the gap above: it may fall back to Play, to look at). Half closed in pass 2: a playlist's More, Play
+      next, More kept focus (mouse). Missing: Mark played on a film (the walker skips it; by hand).
+- [x] F4: the guide, a gap, OK: "Connecting to Icefin One". Closed in pass 2: OK on "No program information" reached
+      `/video`, twice (mouse). The text itself was not read.
 
 Pre-walk rechecks (`baseline-pre.md`), still open:
-- [ ] Back focus across the board: re-walk after F1, home back_ok True.
+- [x] Back focus across the board: re-walk after F1, home back_ok True. Closed in pass 2: home 136 of 136; the
+      other False back_ok are the walker's (WB, WC, WI) and one unsure (U1).
 - [ ] The now playing bar against stock's, from a pad screenshot with the bar and the hints up, and the side-by-side.
-- [ ] Hover moves focus: by eye, next to stock.
-- [ ] The mouse's Back with a panel open in the app itself: `xdotool click 8` on the lab display.
+      Missing: the pad screenshot and the side-by-side (the walk does not make them).
+- [ ] Hover moves focus: by eye, next to stock. Missing: the eye check (the walk's 3 hover-no-focus are pass 2's U2).
+- [ ] The mouse's Back with a panel open in the app itself: `xdotool click 8` on the lab display. Missing: the walker
+      still sends the CDP button.
 
 Walker:
 - [ ] The books and home-videos libraries, a season, a song, an artist and the preferences pages are reached at 60
-      minutes (the coverage question, with the user).
-- [ ] No walker user writes (a bare "Watched" press is skipped).
-- [ ] U1 replayed as above.
+      minutes (the coverage question, with the user). Missing: every run hit the budget again; pads reached 29 to 30
+      screens (24), keys 33 (26), mouse 44 (42), and the keys run lost 20 minutes to the quit.
+- [x] No walker user writes (a bare "Watched" press is skipped). Closed in pass 2 for played and favourites (Watched,
+      Mark played and Add to favorites all skipped). The keys run did quit the app and opened the dashboard
+      (read-only): see baseline-2.md.
+- [ ] U1 replayed as above. Missing: not replayed; it is pass 2's U2 and still unsure.
 
 Baseline's first pass is done; its second walks on the fixed walker.
