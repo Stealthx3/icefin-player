@@ -43,7 +43,9 @@ WALK_JS = r"""
         let i = 0, s = n; while ((s = s.previousElementSibling)) i++;
         path.unshift(n.tagName.toLowerCase() + ':' + i);
       }
-      return path.join('>') + '|' + (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+      // (QA Orbit 3, W-V) a live tile reads "<channel> · <programme> ... until 5:30": the programme rolls over, the channel stays its name
+      const lab = (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').replace(/^(\d+ ·) .*$/, '$1').slice(0, 40);
+      return path.join('>') + '|' + lab;
     },
     sig(e) {
       const cls = (n) => [...(n && n.classList || [])].filter((c) => !STATE.test(c)).sort().join('.');
@@ -84,7 +86,8 @@ WALK_JS = r"""
 # "Watched ✓" / "Played ✓": a theme's played switch once on (QA Almanac 1: the mouse un-marked a show and a film);
 # the whole label only: an item's label may end "· watched ✓" (QA Orbit 1); Baseline's reads plain "Watched" (QA Baseline 1)
 DANGER = re.compile(r"sign ?out|log ?out|delete|remove|erase|\bclear\b|forget|\breset\b|restart|shut ?down|uninstall|disconnect|"
-                    r"mark (as )?(un)?played|mark (as )?(un)?watched|^\s*(watched|played)( ?✓)?\s*$|favou?rite|\b(un|dis)?likes?d?\b|rating|cancel|\brecord\b|rename|"
+                    # (QA Mosaic 2, W-HEAD) "Favourites" (a place: a home tile, a library's tab) is not the favourite toggle; "Add to favourites" stays out
+                    r"mark (as )?(un)?played|mark (as )?(un)?watched|^\s*(watched|played)( ?✓)?\s*$|favou?rite(?!s\b)|add to favou?rites|\b(un|dis)?likes?d?\b|rating|cancel|\brecord\b|rename|"
                     r"edit (metadata|images|subtitles|details)|identify|refresh metadata|switch user|change server|select server|"
                     r"add server|quick connect|password|\bpin\b|download|\bsync(play)?\b|delete", re.I)
 # short words are whole words ("skipping" has a pin, "Recordings" is a place, "Synced" a state) (QA Mosaic 1)

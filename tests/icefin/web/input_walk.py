@@ -247,7 +247,10 @@ IW_JS = r"""
       for (const f of document.querySelectorAll('input:not([type=hidden]), textarea')) t += '|' + (f.value || '');
       const at = (n) => n ? [...n.attributes].map((a) => a.name + '=' + a.value).join(' ') + '#' + (n.textContent || '').trim().slice(0, 80) : '';
       const c = L.cur();
-      return { dom: hash(t), el: hash(at(e) + '|' + at(e && e.parentElement)), focus: c ? L.key(c) : '' };
+      // (QA Almanac 3, W18; QA Mosaic 2, W-N2) the notices on screen, read apart: a page that redraws every second (a song line)
+      // hides the DOM change a press's notice makes, and a new notice text still counts
+      const note = [...document.querySelectorAll('[role=status]')].filter(shown).map((n) => (n.textContent || '').trim()).join('|').slice(0, 200);
+      return { dom: hash(t), el: hash(at(e) + '|' + at(e && e.parentElement)), focus: c ? L.key(c) : '', note };
     },
     backKey() {
       for (const r of roots()) for (const e of r.querySelectorAll('[data-action=back], .headerBackButton, button, a, [role=button], [data-icefin-focus]')) {
@@ -276,9 +279,21 @@ DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|
                     r"|classic[ _-]?view|jellyfin[ _-]?web|stock (view|jellyfin)|(switch|change|choose|pick|select|use) (to )?(the |a |another )?(theme|stock)|"
                     r"(turn|switch) (off|the theme)|disable (the )?(theme|engine)|theme (picker|chooser|selector)"
                     # quitting the app ends the walk (Exit IceFin Player, Quit the app, Close IceFin, Exit Application)
-                    r"|(exit|quit)\b|close (icefin|the app)", re.I)  # no word boundary before: an icon's ligature text runs into the label ("closeExit Application" quit the app, QA Baseline 2)
+                    r"|(exit|quit)\b|close (icefin|the app)"  # no word boundary before: an icon's ligature text runs into the label ("closeExit Application" quit the app, QA Baseline 2)
+                    # (QA Almanac 3, W17; QA Tide 3) the metadata editor's field locks ("Lock tags", "Lock rating"): its Save is a danger word above
+                    r"|^\s*(un)?lock\b", re.I)
 DANGER_CLS = re.compile(r"delete|remove|sign-?out|log-?out|favorit|userrating|playstate|btnuserdata|restart|shut|btn(save|submit|apply)|btnplayed", re.I)
 SETTINGS_ENTRY = re.compile(r"^(display|subtitles?|audio|video|playback|theme)$", re.I)
+# (QA Almanac 3, W14) the Home entry of a settings list ("Home, which rows Home shows"): a seed, but only with a sub-line, as a bare
+# "Home" is a tab or a way back
+SETTINGS_HOME = re.compile(r"^home( screen)?$", re.I)
+# (QA Almanac 3, W17; QA Tide 3) a tab of an item panel that is the metadata editor (Details, Images, Identify): the walk stays out of
+# it whatever the panel's name for the section, so no field lock or Save is ever one click away
+EDITOR_TAB = re.compile(r"^\s*(details|images|identify|metadata|edit)\s*$", re.I)
+EDITOR_ROW = re.compile(r"^\s*(un)?lock\b", re.I)         # a field lock: only the editor has them
+# a label of one family that differs by digits only (IMG_101, IMG_102 ...): sampled, not walked entire (QA Orbit 3)
+def label_shape(s):
+    return re.sub(r"\d+", "#", s or "")
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
 # a Watch together group another parallel walker made (walk_parallel.py names its users qa-<shard>): joining it puts what
 # that walker plays on this one's screen (QA 3 re-walk 2, Media Center: the mouse joined qa-keys's group and its Live TV
@@ -324,7 +339,7 @@ def route_href(h):
     return p + ("?" + "&".join(sorted(q)) if q else "")
 
 
-def skip_reason(c, title=""):
+def skip_reason(c, title="", dlg=False):
     lab, hr = c.get("label", ""), c.get("href", "")
     if c.get("field"):
         return "text field (reaching it is enough)"
@@ -334,9 +349,18 @@ def skip_reason(c, title=""):
         return "submit"
     if c.get("disabled"):
         return "disabled"
-    if DANGER.search(lab) or DANGER_CLS.search((c.get("cls", "") + " " + c.get("action", ""))):
+    # (QA Almanac 3, W16; QA Mosaic 2, W-HEAD) a "…" opener ("More options…, add to a playlist, edit, media info, delete") opens a
+    # menu whose own rows are filtered as usual: only its head is tested, its sub-line names what the menu offers
+    opener = lab.split(",")[0].strip() if "," in lab else ""
+    if opener.endswith(("…", "...")):
+        danger = DANGER.search(opener)
+    else:
+        danger = DANGER.search(lab)
+    if danger or DANGER_CLS.search((c.get("cls", "") + " " + c.get("action", ""))):
         return "denylist"
-    if "dashboard" in hr or "configurationpage" in hr or hr.startswith("http"):
+    if dlg and EDITOR_TAB.match(lab):
+        return "the item editor's tab (the walk stays read-only)"
+    if "dashboard" in hr or "configurationpage" in hr or hr.startswith("http") or "edititem" in hr.lower():     # (QA Almanac 3, W17) jellyfin-web's item editor page
         return "dashboard or external"
     # (QA Tide 2) the menu's "Home" link to the home preferences page is not a way back
     if cw.WAYBACK.match(lab) and "mypreferences" not in hr:
@@ -446,6 +470,7 @@ class MouseDriver(Driver):
         r = self.js(f"window.inputWalk.rect({json.dumps(key)})")
         self.last = r
         if not r or not r.get("ok"):
+            self.tr("hover failed: not on the page" if not r else "hover failed: " + str(r.get("why", "")), key[-40:])     # (QA Orbit 3, W-T)
             return False
         # (QA Orbit 1, H2: a theme with pointer-first input ignores a move that has no movement; the pointer was already
         # at these coordinates, or this was the first event after a reload) approach from 4 px off, then land on the centre
@@ -587,6 +612,10 @@ class Walker:
         self.wheeled = None               # the screen key whose view the mouse turned one notch down (QA Orbit 1, W-C)
         self.wheel_n = 0                  # how many notches down that view is (QA Orbit 2, W-L)
         self.player_walked = False        # the player's controls were walked once this run (QA Orbit 2, W-N)
+        self.strip_tried = set()          # keys of controls pressed on any screen (QA Almanac 3, W9)
+        self.strip_done = {}              # key -> (screen, outcome, pivot) of a tab pressed that went to a screen: not pressed again on a shared strip
+        self.menu_seen = set()            # (item type, kind) pairs the pad's menu button was pressed on (QA Orbit 3, W-Q)
+        self.dlg_shapes = {}              # dialog id with its digits dropped -> passes (a slideshow's photos are sampled) (QA Orbit 3)
 
     # -------------------------------------------------------------- plumbing
     def tr(self, *x):
@@ -653,17 +682,19 @@ class Walker:
             # theme's pointer bar, a server line) matched any sub-level and the route's own level was never found again
             # A long list scrolled within the level draws other rows (other keys), so the level's own controls need only
             # partly be there (a quarter) once the level it opened from is gone
-            cur, best, bo = self.ckeys(), None, 0.2499
+            # (QA Tide 3, W-S) by label: a column that scrolls re-keys its rows by DOM index, the labels stay
+            labs = lambda keys: {x.split("|", 1)[-1] for x in keys}
+            cur, best, bo = labs(self.ckeys()), None, 0.2499
             for sk in self.subs[k]:
                 st = self.screens[sk]["sub"]
                 # (QA Tide 2) a way back is not part of a level's identity: every level of a route shows the same trail step
-                ks, pre = own_keys(set(st["keys"]) | set(st.get("seen", []))), own_keys(st["pre"])
+                ks, pre = labs(own_keys(set(st["keys"]) | set(st.get("seen", [])))), labs(own_keys(st["pre"]))
                 own, gone = ks - pre, pre - ks
                 if not own:
                     # an empty level (only ways back): it is on screen when the page has none of its own either
                     if gone and len(cur & gone) * 2 > len(gone):
                         continue
-                    if not (own_keys(cur) - pre) and ((set(st["keys"]) - own_keys(st["keys"])) & cur) and bo < 1.0:
+                    if not (own_keys(cur) - pre) and (labs(set(st["keys"]) - own_keys(st["keys"])) & cur) and bo < 1.0:
                         best, bo = sk, 1.0
                     continue
                 o = len(cur & own) / len(own)
@@ -699,7 +730,10 @@ class Walker:
         # most of the controls are ones this screen has shown already: a deck that slid to another of its panels (QA Mosaic 1)
         # (QA Tide 2) ways back are not part of a level's identity, here and below
         pk = own_keys(post)
-        if pk and len(pk & set(here["elements"])) * 2 >= len(pk):
+        # (QA Tide 3, W-Q) the deck test counts only the controls the level brought: a server line the screen keeps at every
+        # level was half of a one-entry level and refused it
+        pn = own_keys(post - pre) or pk
+        if pn and len(pn & set(here["elements"])) * 2 >= len(pn):
             return None
         rk = sup["rkey"] if sup else k
         for other in self.subs.get(rk, []):         # the way back to a level already known is not a new level
@@ -1322,17 +1356,31 @@ class Walker:
             return
         ctrls, seen, path = [], {}, []
         self.ctrls[k] = ctrls
+        # (QA Tide 3, W-R) a guide is one kind: a few cells per channel and 24 in all are taken (the 180 cells of a week's window
+        # cost 15 of the 60 minutes); a row with its few ends there, and the walk of the screen ends with the 24th
+        gseen, gfull, gcap = {}, [False], [False]
 
         def take(f, pth):
             if f["key"] in seen:
                 return False
             seen[f["key"]] = True
+            if f.get("guide"):
+                kp = f["key"].split("|", 1)[0]
+                ch = kp.split(":")[1] if kp.startswith("guide:") else kp.rsplit(">", 1)[0]
+                gseen[ch] = gseen.get(ch, 0) + 1
+                if gseen[ch] > 3:
+                    gcap[0] = True
+                    return False
+                if sum(gseen.values()) >= 24:
+                    gfull[0] = True
             ctrls.append(dict(f, path=list(pth)))
             self.reach(k, f)
             return True
 
         def step(d):
             moved_to[0] = False
+            if gfull[0]:
+                return None
             before = self.focus_now()
             self.drv.move(d)
             s = self.settle(t=1.0)
@@ -1357,7 +1405,29 @@ class Walker:
                 # logged only for now: on a theme whose rows scroll with focus (tiles, carousels) the same test may read a
                 # scroll as an opener; the trace shows whether it would misfire before it acts (QA Tide 2)
                 self.tr("  moving", d, "may have opened a level in place (logged, not acted on)")
+                # (QA Tide 3, W-Q) acted on when the move brought a way back (a "Back to …" / "Go back ›" the first view lacked): a
+                # level opened, credited to this screen otherwise (the music library's Albums, Artists and Songs, whose own OK was
+                # then refused). Never in a guide (its window pages), and a long column that only scrolls brings no way back
+                if not f2.get("guide") and any(WAY_BACK.match(x.split("|", 1)[-1]) for x in self.ckeys() - first_view):
+                    self.tr("  moving", d, "opened a level in place (a way back came): Back, not taken")
+                    if moved_to[0] and path:
+                        path.pop()
+                    if before and f2:
+                        try:
+                            self.edges[k][before["key"]][d].discard(f2["key"])
+                        except KeyError:
+                            pass
+                    self.drv.back(0)
+                    self.settle(t=1.5)
+                    if self.screen_key(self.screen()) != k:
+                        self.go_here(k)
+                    moved_to[0] = False
+                    return None
+            gcap[0] = False
             take(f2, path)
+            if gcap[0]:
+                moved_to[0] = False        # (QA Tide 3, W-R) a channel's row sampled enough: its end
+                return None
             return f2
 
         moved_to = [False]
@@ -1383,6 +1453,7 @@ class Walker:
         # the first view's controls are elements before the snake runs off it (a pivot's edge): check_unreached tries the
         # ones the snake missed (QA Mosaic 1)
         first_view.update(c["key"] for c in (self.enum(k) or []))
+        here["first_view"] = sorted(first_view)     # (QA Almanac 3, W15) activate() tells a level left open by it
         climb()
 
         cut = [False]
@@ -1421,7 +1492,7 @@ class Walker:
                 horiz = "left" if horiz == "right" else "right"
         snake("right")
         path.clear()
-        if not self.late() and self.restore(k, []):
+        if not self.late() and not gfull[0] and self.restore(k, []):
             climb()
             snake("left")
         if self.inp == "keys" and not self.late() and self.restore(k, []):
@@ -1440,13 +1511,16 @@ class Walker:
         """Try the input itself: from the current focus, the arrow/D-pad direction that cuts the distance to the element's centre, up to 25 presses."""
         trail = []
         blocked = set()     # (QA Almanac 2, W7) (focus, direction) pairs a press did not move
+        pairs = {}          # (QA Mosaic 2, W-CY) (focus, direction) pairs pressed: the third time is a cycle
         for _ in range(25):
             f = self.focus_now()
             if f and f["key"] == key:
                 return True
             cc = self.js(f"window.inputWalk.centers({json.dumps(key)})")
             if not cc:
-                return False
+                # (QA Tide 3, W-P; QA Orbit 3, QA Mosaic 2, W-GONE) not on the page now (another tab or column shown, a song line
+                # that ended): no verdict, which is not "unreachable"
+                return None
             trail.append(f["key"] if f else None)
             if cc["c"]:
                 dx, dy = cc["t"]["x"] - cc["c"]["x"], cc["t"]["y"] - cc["c"]["y"]
@@ -1463,6 +1537,9 @@ class Walker:
                     d = dv if horiz else dh
                     if (fk, d) in blocked:
                         return False
+                pairs[(fk, d)] = pairs.get((fk, d), 0) + 1
+                if pairs[(fk, d)] > 2:
+                    return False
             else:
                 d = "down"
             self.drv.move(d)
@@ -1519,6 +1596,9 @@ class Walker:
                 ok = self.direct_reach(key)
             except Exception as ex:  # noqa: BLE001
                 self.tr("direct reach error", key[-40:], ex)
+                continue
+            if ok is None:
+                self.tr("direct reach: not on the page now; no verdict", e.get("label") or key[-40:])
                 continue
             if ok:
                 e["reached"][self.inp] = True
@@ -1583,6 +1663,12 @@ class Walker:
                 off = bool(self.js(f"window.inputWalk.offscreen({json.dumps(c['key'])})"))
             except Exception:  # noqa: BLE001
                 off = False
+            # (QA Mosaic 2, W-PT) a tab of a tablist whose shown tab is marked slides out with the strip: not a finding
+            if off and c.get("role") == "tab":
+                try:
+                    off = not self.js("(() => { const e = window.inputWalk.live(" + json.dumps(c["key"]) + "); const l = e && e.closest('[role=tablist]'); return !!l && !!l.querySelector('[aria-selected=true]'); })()")
+                except Exception:  # noqa: BLE001
+                    pass
             if off:
                 self.finding("unpositioned", k, label, "entirely outside the viewport and scrolling does not bring it in", shot=False)
             return
@@ -1644,7 +1730,8 @@ class Walker:
         d2 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})") if pk == k else None
         if pk != k:
             outcome = "dialog" if pk == k + " (dialog)" else "screen"
-        elif (not noisy and d2["dom"] != d1["dom"]) or d2["el"] != d1["el"] or d2["focus"] != d1["focus"]:
+        elif (not noisy and d2["dom"] != d1["dom"]) or d2["el"] != d1["el"] or d2["focus"] != d1["focus"] \
+                or (d2.get("note") and d2.get("note") != d1.get("note")):     # (QA Almanac 3, W18) a new notice counts under a noisy page
             outcome = "in-place"
         else:
             outcome = "nothing"
@@ -1657,7 +1744,17 @@ class Walker:
         self.tr("activated", label, "again" if again else "", "->", res)
         if outcome == "nothing" and again:
             return                  # a second click that changes nothing (a tab already shown) is no finding
-        if outcome == "nothing" and not again and re.search(r"\b(play|resume|shuffle|watch|start|mix)\b|, \d+ min\b", label, re.I):
+        # (QA Orbit 3, W-R; QA Mosaic 2) a live channel connects first (html[data-icefin-live=connecting]): the player or a failure
+        # comes after it, so the press is judged once the card is gone, and a live tile ("5 · Lab Notes … until 5:30 AM", "on now")
+        # counts as one that plays
+        if outcome == "nothing" and not again and self.wait_live():
+            s2 = self.settle(t=2.5)
+            if self.screen_key(s2) != k:
+                s, pk = s2, self.screen_key(s2)
+                outcome = "dialog" if pk == k + " (dialog)" else "screen"
+                el["outcome"] = outcome if outcome == "dialog" else f"screen: {pk}"
+                self.tr("late change after the channel connected ->", pk)
+        if outcome == "nothing" and not again and re.search(r"\b(play|resume|shuffle|watch|start|mix|on now)\b|, \d+ min\b|\buntil \d{1,2}:\d{2}", label, re.I):
             # (QA Orbit 1, D6) a player that starts slowly: a press that plays, or a media item's entry (its running time, as a
             # video in a photo folder: "VID_100, 0 min"; QA Orbit 2), waits up to 3 s for /video before it is called dead;
             # other presses don't pay the wait
@@ -1720,6 +1817,8 @@ class Walker:
             if not sk:
                 if self.mouse:
                     self.reveal(k, here, c, pre_keys)
+                else:
+                    self.close_open_level(k, here, c, label)
                 return
             outcome, pk = "sub", sk       # a new level on the same route: Back is tested now, the level is explored later
             el["outcome"] = f"sub-screen: {sk}"
@@ -1741,6 +1840,13 @@ class Walker:
                 # (QA Baseline 1) a panel still open is closed by Back first: Enter on the opener would press a row in it
                 reopen = lambda: self.close_dialog() and self.position(k, cc) and (self.drv.activate(), self.settle(prev=k))[1] and self.screen_key(self.screen()) == pk
                 self.dialog_pass(k, pk, reopen, here["reached_by"] + [label])
+        # (QA Mosaic 2, W-PT) a pivot's header chosen by the mouse is a tab of the route (a view choice, no history entry): the mouse's
+        # Back leaves the route by design, so no Back check, and the pivot's own screen is queued like any other
+        if self.mouse and outcome == "screen" and " · " in pk and pk.split(" · ")[0] == k.split(" · ")[0].split(" > ")[0]:
+            el["outcome"], el["back_ok"] = f"screen: {pk}", None
+            self.tr("a pivot tab: a view of the same route, no Back check", label)
+            self.go_here(k)
+            return
         # a control that is itself a way back: the level it reaches is a level up, not one opened, so no Back check (QA Tide 1)
         if outcome in ("screen", "sub") and re.match(r"^\s*(back to |go back)", label, re.I):
             el["outcome"] = "a way back (no Back check)"
@@ -1780,6 +1886,76 @@ class Walker:
                 el["back_ok"] = True
         else:
             el["back_ok"] = True
+
+    def wait_live(self, t=45):
+        """(QA Orbit 3, W-R) Waits while a Live TV channel connects (html[data-icefin-live=connecting]); True when it waited."""
+        t0, waited = time.time(), False
+        while time.time() - t0 < t and self.js("document.documentElement.getAttribute('data-icefin-live') === 'connecting'"):
+            waited = True
+            time.sleep(0.5)
+        return waited
+
+    def close_open_level(self, k, here, c, label):
+        """(QA Almanac 3, W15; QA Tide 3, W-Q) A pad's press that opened a level in place and that sub_level refused (the level was
+        known already, or is half of one) leaves it open, and every later position() on this screen starts inside it, where a
+        theme's column memory reopens it. The first view's controls mostly gone and the opener too: Back once."""
+        fv = set(here.get("first_view") or [])
+        if not fv or len(self.ckeys() & fv) * 2 >= len(fv) or self.js(f"window.inputWalk.present({json.dumps(c['key'])})"):
+            return
+        self.tr("a level that was not taken is still open after", label, ": Back")
+        self.drv.back(0)
+        self.settle(t=2.0)
+        if self.screen_key(self.screen()) != k:
+            self.go_here(k)
+        elif len(self.ckeys() & fv) * 2 < len(fv):
+            self.reload()
+            self.go_here(k)
+        self.back_at = time.time()
+
+    def menu_probe(self, k, here):
+        """(QA Orbit 3, W-Q) The pad's Menu button (X: west) pressed on one entry of each kind on a details screen: a season row, an
+        episode, a track open their item menu, whose "Go to details" is the only way a theme offers to a Season or an Episode page.
+        The menu's rows are walked like any dialog's (the danger words apply). At most 6 presses a screen, once per (item type, kind).
+        Keys have no menu button; a playlist's tracks are left alone (Menu lifts a track to move it)."""
+        typ = re.search(r"\[(\w+)\]", k)
+        typ = typ.group(1) if typ else ""
+        if self.inp != "pad" or typ == "Playlist" or self.late():
+            return
+        n = 0
+        for c in list(self.ctrls.get(k, [])):
+            mk = (typ, c.get("sig", ""))
+            if mk in self.menu_seen or c.get("field") or c.get("stateful") or c.get("pointer") or skip_reason(c):
+                continue
+            if n >= 6 or self.late():
+                break
+            self.menu_seen.add(mk)
+            n += 1
+            label = c.get("label") or c["key"][-40:]
+            try:
+                if not self.position(k, c):
+                    continue
+                self.drv._press("west")
+                s = self.settle(prev=k, t=2.0)
+                pk = self.screen_key(s)
+                self.tr("menu pressed on", label, "->", pk)
+                if self.js("!!document.querySelector('[data-icefin-moving]')"):
+                    self.drv.back(0)        # a row lifted to move: cancelled, never dropped
+                    self.settle(t=1.0)
+                    continue
+                if pk == k + " (dialog)":
+                    self.add_screen(pk, s, here["reached_by"] + [label + " (menu)"], queue=False)
+                    if not self.dialog_done(pk) and not self.late():
+                        reopen = lambda c=c, pk=pk: self.close_dialog() and self.position(k, c) and (self.drv._press("west"), self.settle(prev=k))[1] and self.screen_key(self.screen()) == pk
+                        self.dialog_pass(k, pk, reopen, here["reached_by"] + [label + " (menu)"])
+                elif pk != k:
+                    self.add_screen(pk, s, here["reached_by"] + [label + " (menu)"])
+                if self.screen_key(self.screen()) != k:
+                    status, kk = self.back_out(k, pk)
+                    if status == "fail":
+                        self.go_here(k)
+            except Exception as ex:  # noqa: BLE001 (a probe never ends the screen's walk)
+                self.tr("menu probe error", label, ex)
+                self.go_here(k)
 
     def reveal(self, k, here, c, pre_keys):
         """The mouse changed the page in place without opening a level (a category chosen on a bar, a row's tab): the
@@ -1907,11 +2083,41 @@ class Walker:
         return dk + "|" + title
 
     def dialog_done(self, dk):
-        return self.dialog_id(dk) in self.screens[dk].setdefault("explored_titles", [])
+        did = self.dialog_id(dk)
+        if did in self.screens[dk].setdefault("explored_titles", []):
+            return True
+        # (QA Orbit 3) a family of dialogs that differ by digits only (a slideshow's IMG_101, IMG_102 ...): two are walked, the rest
+        # are the same dialog (51 + 21 photo passes cost 5 minutes of a pad run)
+        sh = self.dlg_shape(did)
+        return bool(sh) and self.dlg_shapes.get(sh, 0) >= 2
+
+    @staticmethod
+    def dlg_shape(did):
+        dk, _, t = did.partition("|")
+        return dk + "|" + label_shape(t) if re.search(r"\d", t) else None
+
+    def late_player(self, s, t=3.0):
+        """Waits up to `t` s for the route to become /video (a player that starts after the press); True when it did."""
+        t1 = time.time()
+        while not s["route"].startswith("/video") and time.time() - t1 < t:
+            time.sleep(0.4)
+            s = self.screen()
+        return s["route"].startswith("/video")
+
+    def shown_tab(self, key):
+        """(QA Tide 3, N1) The control is a tab or page marked as the one shown (aria-selected, aria-current): its press changes nothing by design."""
+        try:
+            return bool(self.js("(() => { const e = window.inputWalk.live(" + json.dumps(key) + "); if (!e) return false; const a = e.getAttribute('aria-current'); return e.getAttribute('aria-selected') === 'true' || (a !== null && a !== 'false'); })()"))
+        except Exception:  # noqa: BLE001
+            return False
 
     def dialog_pass(self, k, dk, reopen, via):
         self.screens[dk]["explored"] = True
-        self.screens[dk].setdefault("explored_titles", []).append(self.dialog_id(dk))
+        did = self.dialog_id(dk)
+        self.screens[dk].setdefault("explored_titles", []).append(did)
+        sh = self.dlg_shape(did)
+        if sh:
+            self.dlg_shapes[sh] = self.dlg_shapes.get(sh, 0) + 1
         title = self.js("window.inputWalk.title()") or ""
         rows = []
         if self.mouse:
@@ -1942,14 +2148,18 @@ class Walker:
                     self.reach(dk, f)
                 self.enum(dk, "dialog")
         self.tr("dialog", dk, title, "rows", len(rows))
-        tried = {}
+        # (QA Almanac 3, W17) a field lock among the rows: the item editor. Nothing in it is pressed; the dialog is closed below
+        if any(EDITOR_ROW.match(r.get("label") or "") for r in rows):
+            self.tr("the dialog is the metadata editor (a field lock among its rows): nothing pressed")
+            rows = []
+        tried, fam = {}, {}
         cap, i = (24 if self.mouse else 12), 0
         while i < min(len(rows), cap):      # (QA Orbit 1, W-B) a list: the mouse's in-place clicks add rows as it goes
             c = rows[i]
             i += 1
             if self.late():
                 break
-            why = skip_reason(c, title)
+            why = skip_reason(c, title, dlg=True)
             el = self.element(dk, c)
             if why:
                 el["outcome"] = "skipped: " + why
@@ -1957,6 +2167,13 @@ class Walker:
             uk = c.get("sig", "")
             if not self.mouse and tried.get(uk, 0) >= 2:
                 continue
+            # (QA Orbit 3) rows of one family that differ by digits only (the slideshow's photos): two are pressed
+            fam_k = label_shape(c["label"]) if re.search(r"\d", c["label"] or "") else None
+            if fam_k and fam.get(fam_k, 0) >= 2 and sum(1 for r in rows if label_shape(r["label"]) == fam_k) >= 4:
+                el["outcome"] = "skipped: sampled (a family of rows that differ by digits)"
+                continue
+            if fam_k:
+                fam[fam_k] = fam.get(fam_k, 0) + 1
             tried[uk] = tried.get(uk, 0) + 1
             if self.screen_key(self.screen()) != dk and not reopen():
                 break
@@ -1983,11 +2200,30 @@ class Walker:
             d1 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})")
             self.drv.activate()
             s = self.settle(prev=dk)
+            if self.wait_live():        # (QA Orbit 3, W-R; QA Mosaic 2, W-LV) a channel connecting is not a dead row, and its card covers the next click
+                s = self.settle(t=2.5)
             self.errors(dk, c["label"])
             pk = self.screen_key(s)
             if pk == dk:
                 d2 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})")
-                el["outcome"] = "in-place" if d2["dom"] != d1["dom"] or d2["el"] != d1["el"] else "nothing"
+                el["outcome"] = "in-place" if d2["dom"] != d1["dom"] or d2["el"] != d1["el"] or (d2.get("note") and d2.get("note") != d1.get("note")) else "nothing"
+                # (QA Orbit 3, W-Q2) the row swapped the dialog for another (the guide's "Play on…" row closes the guide and opens the
+                # Play on panel): its old rows are gone and the title is another. Noted as a dialog, closed, and the opener is
+                # replayed before the next row, which would otherwise be clicked at its old place on the new panel
+                t2 = self.js("window.inputWalk.title()") or ""
+                if t2 and t2 != title and rows:
+                    gone = sum(1 for r in rows[:8] if not self.js(f"window.inputWalk.present({json.dumps(r['key'])})"))
+                    if gone * 2 > min(len(rows), 8):
+                        el["outcome"] = "dialog"
+                        self.tr("the row swapped the dialog for", t2, "; closed, the opener is replayed")
+                        for _ in range(3):
+                            if not self.screen()["dialog"]:
+                                break
+                            self.drv.back(0)
+                            self.settle(t=1.5)
+                        continue
+                if el["outcome"] == "nothing" and self.shown_tab(c["key"]):
+                    el["outcome"] = "current (no change)"       # (QA Tide 3, N1) the shown tab of a panel changes nothing by design
                 if self.mouse and el["outcome"] == "in-place":
                     # (QA Orbit 1, W-B) a row that opened its list in the dialog (a blade's Library, Settings): the new rows
                     # are looked at too
@@ -1998,12 +2234,27 @@ class Walker:
                     new = [dict(r, via=list(c.get("via", [])) + [c["key"]]) for r in self.enum(dk, "dialog") if r["key"] not in known and r["label"] not in labels]
                     for r in new:
                         self.element(dk, r)["reached"]["mouse"] = True
+                    if any(EDITOR_ROW.match(r.get("label") or "") for r in new):
+                        self.tr("the click opened the metadata editor (a field lock among its rows): nothing more pressed")
+                        rows[i:] = []       # (QA Almanac 3, W17) the dialog is closed below
+                        new = []
                     rows[i:i] = new
                     cap = min(cap + len(new), 48)
                     if new:
                         self.tr("the click showed", len(new), "rows in the dialog")
                 if el["outcome"] == "nothing":
                     self.finding("dead-control", dk, c["label"], "no screen, dialog or visible change", plugin=c.get("plugin", False))
+            elif pk == k and re.search(r"\b(play|resume|watch|anyway|start|continue|shuffle)\b", (c["label"] or "") + " " + title, re.I) \
+                    and self.late_player(s):
+                # (QA Tide 3, W6) the row that plays (a capability prompt's "play anyway") closed the dialog and the player came after
+                # the settle: the walker's Back must not race it
+                s = self.screen()
+                pk = self.screen_key(s)
+                self.dlg_left = True
+                el["outcome"] = f"screen: {pk}"
+                self.add_screen(pk, s, via + [c["label"]])
+                self.video(pk)
+                self.go_here(k)
             elif pk == k:
                 el["outcome"] = "closes"
                 self.dlg_left = True
@@ -2043,12 +2294,30 @@ class Walker:
         # entries share one kind, so "All shows" waited behind empty ones for round two
         lack = [rx for t, rx in self.SEED_TYPES.items() if t in self.present.get("types", []) and not any(f"[{t}]" in s for s in self.screens)]
 
+        # (QA Almanac 3, W9) on how many screens each control is an element: a tab strip every screen shows is "shared"
+        shared = {}
+        for sc in self.screens.values():
+            for ek in sc["elements"]:
+                shared[ek] = shared.get(ek, 0) + 1
+        gtried = 0      # (QA Orbit 3) guide cells pressed on this screen
+
+        def settings_entry(c, lab, head):
+            # (QA Almanac 3, W14; QA Tide 3) a settings entry gets its own priority, past the per-kind limit it shared with the
+            # library entries (Albums, All shows): on the preferences menu by its page's name, elsewhere with its sub-line
+            # ("Display, language, dates"), and Home only with one ("Home, which rows Home shows")
+            on_menu = bool(re.search(PREFS_MENU, k))
+            sub = "," in lab
+            return bool((SETTINGS_ENTRY.match(head) and (on_menu or sub)) or (SETTINGS_HOME.match(head) and sub and (on_menu or not c.get("href"))))
+
         def seed(c):
             lab = (c.get("label") or "").strip().lower()
             head = lab.split(",")[0].strip()
             # (QA Almanac 2, W11) the settings view's page entries share one sig: each is a seed there
-            return lab in names or head in names or lab == "search" or any(re.search(rx, head) for rx in lack) \
-                or bool(SETTINGS_ENTRY.match(head) and re.search(PREFS_MENU, k))
+            # (QA Orbit 3, W-T) the item-type word may follow the comma ("Icefin Test Show, 2026 · 1 seasons" is a Series tile)
+            # (QA Almanac 3, W9) a strip tab not pressed on any screen yet is a seed on the first shared screen: Guide too
+            return lab in names or head in names or lab == "search" or any(re.search(rx, lab) for rx in lack) \
+                or settings_entry(c, lab, head) \
+                or (shared.get(c["key"], 0) >= 3 and c["key"] not in self.strip_tried and not c.get("guide"))
         for _pass in range(4):
             if self.mouse and _pass:
                 self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) controls that showed late since the last pass
@@ -2057,7 +2326,8 @@ class Walker:
             for c in todo:
                 u = ukey(c)
                 counts[u] = counts.get(u, 0) + 1
-                ranked.append((0 if pref_control(c) else 1 if seed(c) else 2, counts[u], c))
+                # (QA Orbit 3) a guide's cells go last in round two: the unreached seeds and the other screens' controls come first
+                ranked.append((0 if pref_control(c) else 1 if seed(c) else 3 if (c.get("guide") and limit == INF) else 2, counts[u], c))
             ranked.sort(key=lambda t: (t[0], t[1]))
             for _, n, c in ranked:
                 if self.late():
@@ -2070,11 +2340,31 @@ class Walker:
                 if why:
                     self.element(k, c)["outcome"] = "skipped: " + why
                     continue
+                # (QA Almanac 3, W9; QA Mosaic 2, W-PT) a tab that opened a screen (a library's tab, a pivot's header) on a strip every
+                # screen shows is pressed on the first screen it appears on; here its outcome is copied. A pivot's header
+                # of the same route counts at once (each header is clicked once), a library's tab once 3 screens share it
+                prev = self.strip_done.get(c["key"])
+                if prev and prev[0] != k and (prev[2] or shared.get(c["key"], 0) >= 3):
+                    self.element(k, c)["outcome"] = f"same tab as on {prev[0]}: {prev[1]}"
+                    self.tr("a tab pressed on", prev[0], "already:", c.get("label") or c["key"][-40:])
+                    continue
+                if c.get("guide"):
+                    # (QA Orbit 3, QA Tide 3) a guide's cells are one kind: a few are pressed per screen, not every cell
+                    gtried += 1
+                    if gtried > 6:
+                        self.element(k, c)["outcome"] = "skipped: sampled (a guide's cell)"
+                        continue
                 tried[u] = tried.get(u, 0) + 1
                 acted = True
+                self.strip_tried.add(c["key"])
                 self.activate(k, here, c)
+                o = str(self.screens[k]["elements"].get(c["key"], {}).get("outcome") or "")
+                if o.startswith("screen: ") and not o[8:].startswith(("/video", "/details")) and c["key"] not in self.strip_done:
+                    self.strip_done[c["key"]] = (k, o, o[8:].split(" · ")[0] == k.split(" · ")[0].split(" > ")[0] and " · " in o)
             if not acted or self.late() or not self.go_here(k):
                 break
+        if not self.mouse and k.startswith("/details") and limit != INF:
+            self.menu_probe(k, here)
         if not self.mouse:
             # the controls the mouse can use and this input never reached
             here["ctrl_count"] = len(self.ctrls.get(k, []))
@@ -2143,6 +2433,15 @@ class Walker:
             for k in order:
                 if self.late() or gone[0]:
                     break
+                # (QA Orbit 3) a screen round two found (a tab's list, a level) is explored as in round one before the next screen
+                # walks all its controls: the mouse spent 28 minutes on a guide's cells while four Live TV lists waited
+                while self.queue and not self.late() and not gone[0]:
+                    kq = self.priority_pop()
+                    order.append(kq)
+                    try:
+                        self.explore(kq, 2)
+                    except Exception as ex:  # noqa: BLE001
+                        failed(kq, ex)
                 try:
                     self.explore(k, INF)
                 except Exception as ex:  # noqa: BLE001
@@ -2163,7 +2462,9 @@ class Walker:
         missing = [n for n, rx in required if not any(re.search(rx, r) for r in routes)]
         missing += [f"a {lib} library" for lib, rx in self.present["libraries"] if not any(re.search(rx, r) for r in routes)]
         missing += [f"details of a {t}" for t in self.present["types"] if not any(f"/details" in k and f"[{t}]" in k for k in self.screens)
-                                                      and not any(sc["route"].startswith("/details") and (sc.get("sub") or {}).get("itype") == t for sc in self.screens.values())]
+                                                      and not any(sc["route"].startswith("/details") and (sc.get("sub") or {}).get("itype") == t for sc in self.screens.values())
+                                                      # (QA Almanac 3, W19) a series page that lists its seasons as a level ("All ›, Season 1") shows them
+                                                      and not (t == "Season" and any(" > " in k and k.startswith("/details [Series]") and re.search(r"\bseason\b", k.split(" > ", 1)[1], re.I) for k in self.screens))]
         missing += [n for n, rx in PRIORITY_ROUTES[6:] if not any(re.search(rx, r) for r in routes)]
         budget_out = self.late()
         if missing and budget_out:
