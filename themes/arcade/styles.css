@@ -268,7 +268,7 @@ html[data-ac-input="pointer"] .ac-pnav { opacity: 1; pointer-events: auto; }
 .ac-pnav-btn { display: flex; align-items: center; gap: 0.3vw; border: 0; padding: 0.4vh 0.7vw; border-radius: 1.4vh; background: rgb(0 0 0 / 0.35); color: var(--icefin-color-text); font: inherit; font-size: 0.82vw; cursor: pointer; }
 .ac-pnav-btn:hover { background: var(--ac-bar); color: var(--ac-ink); }
 .ac-pnav-btn svg { width: 1.8vh; height: 1.8vh; }
-.ac-has-tabs .ac-pnav { top: 7.6vh; }
+/* (QA Arcade 1, A1) no tab-screen override here: it outranked the frame's .ac-pnav below and laid the pointer line over the tab strip */
 
 /* ---- the panel: options, pickers, questions and dialogs (Menus board): a titled panel ---- */
 .ac-panel-host { position: fixed; inset: 0; z-index: 1001; font-family: "Noto Sans", "Open Sans", sans-serif; }
@@ -697,10 +697,12 @@ html[data-icefin-motion="low"] .ac-notice, html[data-icefin-motion="low"] .ac-hi
 [data-ac-mode="deck"] .ac-ttl, [data-ac-mode="deck"] .ac-tabs { display: none; }
 .ac-deck-bd { left: 0; right: 0; top: 0; height: 36vh; opacity: 1; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent); mask-image: linear-gradient(180deg, #000 55%, transparent); }
 .ac-deck::before { content: ""; position: absolute; left: 0; right: 0; top: 36vh; height: 9.4vh; background: #1b2028; z-index: 0; }
-.ac-dk-name { position: absolute; left: 10vw; right: 10vw; top: 13vh; z-index: 3; text-align: center; font-size: 5.4vh; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff;
+.ac-dk-name { position: absolute; left: 10vw; right: 10vw; top: 13vh; z-index: 60; text-align: center; font-size: 5.4vh; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff;
   text-shadow: 0 0.3vh 1.4vh rgb(0 0 0 / 0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ac-dk-name small { display: block; font-size: 1.6vh; font-weight: 600; letter-spacing: 0.06em; margin-top: 0.6vh; }
-.ac-dk-pivot { position: absolute; left: 0; right: 0; top: 47vh; z-index: 3; display: flex; justify-content: center; }
+/* (QA Arcade 1, A2) above the panels' inline z-index 50 - |d|, so a mouse reaches every section's head; only the heads take the pointer */
+.ac-dk-pivot { position: absolute; left: 0; right: 0; top: 47vh; z-index: 60; display: flex; justify-content: center; pointer-events: none; }
+.ac-dk-pivot .ac-dk-head { pointer-events: auto; }
 .ac-dk-heads { display: flex; gap: 0.6vw; transform: none !important; }
 .ac-dk-head { height: 3.7vh; line-height: 3.7vh; padding: 0 1.1vw; border: 0; border-radius: 99em; background: none; color: var(--icefin-color-text); font: inherit; font-size: 0.83vw; font-weight: 700;
   letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; }

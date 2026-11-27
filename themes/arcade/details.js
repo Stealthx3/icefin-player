@@ -25,7 +25,7 @@
     const shuffled = (list) => { const s = list.slice(); for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } return s; };
     async function shuffleOf(it) {
         const kids = await D.items(it.Type === 'MusicArtist' ? { ArtistIds: it.Id, IncludeItemTypes: 'Audio', Limit: 500 } : it.Type === 'Series' ? { ParentId: it.Id, IncludeItemTypes: 'Episode', Limit: 2000 } : { ParentId: it.Id, Limit: 500 });
-        if (kids.length) T.ctx.play({ items: shuffled(kids) });
+        if (kids.length) { D.notice(`Shuffling ${it.Name}`); T.ctx.play({ items: shuffled(kids) }); }  // says what started (QA Arcade 1, from Mosaic)
     }
     const streamLabel = (st) => st ? (st.DisplayTitle || [st.Language, st.Codec && st.Codec.toUpperCase(), st.ChannelLayout].filter(Boolean).join(' ')) : '';
 
@@ -54,9 +54,9 @@
             out.push(...eps);
         }
         if (it.Type === 'MusicAlbum' || it.Type === 'Playlist' || it.Type === 'BoxSet' || it.Type === 'PhotoAlbum' || it.Type === 'Folder' || it.Type === 'MusicArtist' || it.Type === 'MusicGenre') {
-            out.push({ name: 'Play all', icon: 'play', shape: 'icon', focusFirst: true, okLabel: 'play', go: () => T.ctx.play({ ids: [it.Id], serverId: D.sid() }) });
+            out.push({ name: 'Play all', icon: 'play', shape: 'icon', focusFirst: true, okLabel: 'play', go: () => { D.notice(`Playing ${it.Name}`); T.ctx.play({ ids: [it.Id], serverId: D.sid() }); } });
             out.push({ name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => shuffleOf(it) });
-            if (it.Type !== 'BoxSet' && it.Type !== 'PhotoAlbum' && it.Type !== 'Folder') out.push({ name: 'Instant mix', icon: 'mix', shape: 'icon', go: () => T.ctx.instantMix(it) });
+            if (it.Type !== 'BoxSet' && it.Type !== 'PhotoAlbum' && it.Type !== 'Folder') out.push({ name: 'Instant mix', icon: 'mix', shape: 'icon', go: () => { D.notice(`Instant mix from ${it.Name}`); T.ctx.instantMix(it); } });
         }
         if (it.Type === 'MusicAlbum' || it.Type === 'Playlist' || it.Type === 'BoxSet' || it.Type === 'PhotoAlbum' || it.Type === 'Folder') {
             const kids = await D.items(it.Type === 'MusicAlbum' ? { ParentId: it.Id, SortBy: 'ParentIndexNumber,IndexNumber,SortName', Recursive: true, IncludeItemTypes: 'Audio' }
@@ -67,7 +67,7 @@
                 if (it.Type === 'MusicAlbum') { e.name = `${k.IndexNumber || n + 1}. ${k.Name}`; e.sub = [(k.Artists || []).join(', ') !== it.AlbumArtist ? (k.Artists || []).join(', ') : '', k.RunTimeTicks ? D.clockTicks(k.RunTimeTicks) : ''].filter(Boolean).join(' · '); e.shape = 'icon'; e.icon = 'song'; e.art = ''; }
                 // a song is a row of its own (DetailsAlbum board): Play from here, its artist, its length
                 if (k.MediaType === 'Audio') { e.row = `${k.IndexNumber || n + 1} · ${k.Name}`; e.cellName = '▶ Play from here'; e.cellSub = k.RunTimeTicks ? D.clockTicks(k.RunTimeTicks) : ''; e.okLabel = 'play from here'; }
-                if (k.MediaType === 'Audio' || k.Type === 'Photo') e.go = () => T.ctx.play({ items: kids, startIndex: n });
+                if (k.MediaType === 'Audio' || k.Type === 'Photo') e.go = () => { if (k.MediaType === 'Audio') D.notice(`Playing ${k.Name}`); T.ctx.play({ items: kids, startIndex: n }); };
                 e.menu = () => D.itemMenu(k, where);
                 out.push(e);
             });
@@ -231,7 +231,8 @@
             S = null;
         },
         onAction(a) { return S && S.C ? S.C.onAction(a) : a === 'back' ? false : true; },
-        onBack() { return S && S.C ? S.C.onAction('back') : false; }
+        onBack() { return S && S.C ? S.C.onAction('back') : false; },
+        levelBack() { return !!(S && S.C && S.C.S && S.C.S.stack.length > 1 && S.C.back(false)); }  // the mouse's Back pops a level (QA Arcade 1, from Mosaic)
     });
     D.screenItem = () => (S && S.item) || null;
 })();

@@ -121,8 +121,8 @@
     };
     // Play all and Shuffle at the top of a drill-down's column (checklist 1.3)
     D.playAllHead = (q) => (list) => (list.length ? [
-        { name: 'Play all', icon: 'play', shape: 'icon', go: () => T.ctx.play({ items: list.slice(0, 500) }), okLabel: 'play' },
-        { name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => { const s = list.slice(); for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } T.ctx.play({ items: s.slice(0, 500) }); }, okLabel: 'shuffle' }
+        { name: 'Play all', icon: 'play', shape: 'icon', go: () => { D.notice('Playing all'); T.ctx.play({ items: list.slice(0, 500) }); }, okLabel: 'play' },  // says what started (QA Arcade 1, from Mosaic)
+        { name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => { D.notice('Shuffling'); const s = list.slice(); for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } T.ctx.play({ items: s.slice(0, 500) }); }, okLabel: 'shuffle' }
     ] : []);
     // A genre, studio or person's items (#/list's keys, checklist 1.3)
     D.dropLevel = (title, icon, q, o) => D.listLevel(title, icon, Object.assign({ IncludeItemTypes: 'Movie,Series,MusicAlbum,MusicVideo,Video,Book' }, q), Object.assign({ head: D.playAllHead(q) }, o || {}));

@@ -447,6 +447,7 @@
             return false;
         },
         onBack() { if (H && H.C) return H.C.onAction('back'); return this.onAction('back', T.ctx); },
+        levelBack() { return !!(H && H.C && H.C.S.stack.length > 1 && H.C.back(false)); },  // the mouse's Back pops a level (QA Arcade 1, from Mosaic)
         async mount(root) {
             const sub = D.params().get('ac');
             H = { root };

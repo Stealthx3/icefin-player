@@ -167,7 +167,7 @@
         if (o.sub) t.append(el('small', 'ac-row-sub', o.sub));
         r.append(t);
         if (o.value != null && o.value !== '') r.append(el('span', 'ac-row-value', o.value));
-        if (o.on) r.append(D.svg('check', 'ac-row-check'));
+        if (o.on) { r.append(D.svg('check', 'ac-row-check')); r.setAttribute('aria-current', 'true'); }  // the chosen row says so (QA Arcade 1, from Mosaic)
         r.setAttribute('role', 'button');
         r.setAttribute('aria-label', [label, o.sub, o.value].filter(Boolean).join(', '));
         if (o.go) r.addEventListener('click', () => { for (const x of (r.parentElement || r).querySelectorAll('.ac-chosen')) x.classList.remove('ac-chosen'); r.classList.add('ac-chosen'); o.go(); });
@@ -227,9 +227,12 @@
     // A panel's sections along its top (the wide panel's Details · Images · Identify · …); the shoulder buttons step them
     D.tabs = (list, at, pick) => {
         const t = el('div', 'ac-ptabs');
+        t.setAttribute('role', 'tablist');  // the shown section says so (QA Arcade 1, from Mosaic)
         for (const [id, label] of list) {
             const b = D.focusable(el('button', 'ac-ptab' + (id === at ? ' on' : ''), label));
             b.type = 'button';
+            b.setAttribute('role', 'tab');
+            b.setAttribute('aria-selected', String(id === at));
             b.addEventListener('click', () => { if (id !== at) pick(id); });
             t.append(b);
         }
