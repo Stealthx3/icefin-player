@@ -110,32 +110,50 @@ Judged (rules proposed for `qa-judged.json`, doc `orbit-1.md`):
 ## Rechecks for pass 2
 
 Theme, each checked in the lab on the next walk's build:
-- [ ] F1: Test Tones, Play all shows "Playing Test Tones"; Shuffle shows "Shuffling Test Tones"; a song's Play shows its
-      notice; a BoxSet's Play all changes in place.
-- [ ] F2: Live TV, Schedule (empty), click Options: "No options here" with the error sound. On a guide programme Options
-      still opens its panel.
-- [ ] F3: Guide, a later row's on-now programme, wait for the player, Back: that cell is lit, not Harbour Lights. A later
-      programme's panel opens on OK within a frame.
-- [ ] F4: Live TV, Channels, the Guide tab, mouse Back: the Guide tab is lit. Series, Schedule tab, Open the guide, Back:
-      Schedule's list with "Open the guide" focused.
-- [ ] F5: hover the pointer bar's Options, Play on and Watch together: each takes the focus look.
-- [ ] F6: the channel titles on the home and the season tabs are not listed as unreachable; a pad's shoulders still change
-      season.
-- [ ] F7: home, Up on the top channel: the account is lit; A opens Choose a server; Down returns to live tv.
-- [ ] F8: Movies, Right to Continue watching (empty), Down: "Go back" is lit.
-- [ ] The idle Now playing notice reads "Nothing is playing" (Play, Shuffle, Previous, Next and Repeat on /queue).
-- [ ] The wheel test passes in `theme_orbit.py`.
-- [ ] The Watch together row: names and count show.
+Checked against pass 2's walk (2026-11-27, `orbit-2.md`); what is ticked held, what is not says what is missing.
 
-Walker (the follow-up PR):
+- [x] F1: Test Tones, Play all shows "Playing Test Tones"; Shuffle shows "Shuffling Test Tones"; a song's Play shows its
+      notice; a BoxSet's Play all changes in place. (No dead-control on an album's, an artist's or a playlist's Play all
+      or Shuffle, or on /music's Shuffle in 7 runs, pass 1: 35; a BoxSet's Play all reached /video. One gap: `/details
+      [Audio]` Play is still silent, also in the stock control; carried to pass 3.)
+- [x] F2: Live TV, Schedule (empty), click Options: "No options here" with the error sound. On a guide programme Options
+      still opens its panel. (Options on the empty Schedule list answers in place in three mouse runs, not dead.)
+- [ ] F3: Guide, a later row's on-now programme, wait for the player, Back: that cell is lit, not Harbour Lights. A later
+      programme's panel opens on OK within a frame. (The played cell held: Copper Docs lit after Back. The panel half
+      could not be tried: the lab's guide had no programme data. The remaining back-focus findings are the walker's, W-O.)
+- [ ] F4: Live TV, Channels, the Guide tab, mouse Back: the Guide tab is lit. Series, Schedule tab, Open the guide, Back:
+      Schedule's list with "Open the guide" focused. (The Guide tab held. The second half failed: the tab's zone was
+      written only when a tab was chosen; fixed in 9f38bb3c, recheck in pass 3.)
+- [x] F5: hover the pointer bar's Options, Play on and Watch together: each takes the focus look. (No hover-no-focus in
+      the mouse run, pass 1: 7.)
+- [ ] F6: the channel titles on the home and the season tabs are not listed as unreachable; a pad's shoulders still change
+      season. (The titles held. The lab's show has one season, so the shoulders were not exercised.)
+- [x] F7: home, Up on the top channel: the account is lit; A opens Choose a server; Down returns to live tv. (Steam: Up,
+      the account, A opened /selectserver; no unreachable finding on any run. "Down returns to live tv" was not tried. The
+      walk found the way back from Choose a server stuck; fixed in 9f38bb3c, recheck in pass 3.)
+- [x] F8: Movies, Right to Continue watching (empty), Down: "Go back" is lit. (No unreachable "Go back", pass 1: 9; `/tv`'s
+      Go back reached.)
+- [ ] The idle Now playing notice reads "Nothing is playing" (Play, Shuffle, Previous, Next and Repeat on /queue). (Open:
+      no run reached /queue.)
+- [ ] The wheel test passes in `theme_orbit.py`. (Open: not run in this walk; the behaviour was seen, a wheel notch moved
+      live tv to movies.)
+- [ ] The Watch together row: names and count show. (Open: no other group was listed; the mouse's own group showed "You
+      are in".)
+
+Walker (the follow-up PR; pass 2 walked #239, and #241 and #242 carry the rest):
 - [ ] The mouse reaches every channel (the wheel and the pointer bar's Guide) and the screens behind them: details,
       Search through the Media blade, every library, the preferences menu and its pages, Now playing; no
-      required-missing with budget left.
+      required-missing with budget left. (Open: 26 screens, 17 missing with 26 minutes left; the Guide blades' rows are
+      never tried and the wheel turns one notch. W-K, W-L and W-J in #242.)
 - [ ] Pads and keys reach the playlists library, a season, an episode and the preferences' Display, Playback and
-      Subtitles pages at 60 minutes.
-- [ ] No walker user writes ("Watched ✓" and "Played ✓" are skipped, and a played film is not).
+      Subtitles pages at 60 minutes. (Open: 7 missing in all 6 runs. #241 fixes the playlists route and the Display and
+      Playback skips; the snake and the time are W-M and W-N in #242; a season and an episode needed Go to details,
+      now in 9f38bb3c.)
+- [ ] No walker user writes ("Watched ✓" and "Played ✓" are skipped, and a played film is not). (Watched is skipped in
+      every run and played films opened normally, but the mouse pressed New group five times; #241 puts it on the danger
+      list, to confirm on the next walk.)
 
 Unsure group:
-- [ ] The programme panel's back-focus, as above.
+- [ ] The programme panel's back-focus, as above. (Open: not testable, no programme data in the lab's guide.)
 
 Orbit's first pass is done; its second walks on the fixed walker.
