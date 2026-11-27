@@ -212,6 +212,7 @@
     // Content moving under a resting cursor sends events without movement: those never take focus.
     D.pointerFocus = (b) => {
         b.addEventListener('mousemove', (e) => { if ((e.movementX || e.movementY) && T.ctx.focused && T.ctx.focused() !== b) T.ctx.focus(b); });
+        b.setAttribute('data-icefin-pointer-only', '');  // the pointer's own; a pad has the same action elsewhere (QA Almanac 2)
         return b;
     };
     if (ui.keyboard) ui.keyboard.enable();  // the on-screen keyboard for every text field (checklist 1.12)

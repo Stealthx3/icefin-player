@@ -156,10 +156,14 @@
         const list = (r && r.Items) || [];
         let first = list.findIndex((e) => e.Id === focusId);
         if (first < 0) first = list.findIndex((e) => !(e.UserData || {}).Played);
-        return list.map((ep, k) => Object.assign(D.entry(ep, { inSeason: true }), {
-            name: `${ep.IndexNumber != null ? `${ep.IndexNumber} · ` : ''}${ep.Name}`, focusFirst: k === Math.max(0, first), okLabel: 'play',
-            go: () => D.playItem(ep, true), open: null, details: () => D.details(ep.Id)
-        }));
+        // an episode is a row of its own: ▶ Play and Details, so its page has a way for every input (QA Almanac 2)
+        return list.flatMap((ep, k) => {
+            const name = `${ep.IndexNumber != null ? `${ep.IndexNumber} · ` : ''}${ep.Name}`;
+            return [Object.assign(D.entry(ep, { inSeason: true }), {
+                name, row: name, cellName: '▶ Play', focusFirst: k === Math.max(0, first), okLabel: 'play',
+                go: () => D.playItem(ep, true), open: null, details: () => D.details(ep.Id)
+            }), { name: `Details, ${name}`, row: name, cellName: 'Details', cellSub: '', icon: 'info', shape: 'icon', okLabel: 'details', go: () => D.details(ep.Id) }];
+        });
     }
     const seasonLevel = (s, nu) => ({ title: s.Name, icon: 'episodes', art: D.artOf(s), load: () => episodes(s, nu && nu.SeasonId === s.Id ? nu.Id : null) });
     const chapterLevel = (S) => ({

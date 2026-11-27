@@ -133,7 +133,7 @@
             const t = ev.target && ev.target.closest ? ev.target.closest('button, [data-icefin-focus]') : null;
             if (!t || !rootEl.contains(t)) return;
             if (tabEls.includes(t)) S.opener = { zone: 'tabs', label: labelOf(t) };
-            else if (t.matches('.al-pnav-btn, .al-server') && !/^(Back|Home)$/.test(labelOf(t))) S.opener = { zone: 'extra', cls: t.classList[0], label: labelOf(t) };
+            else if (t.matches('.al-pnav-btn, .al-server, .al-song-label') && !/^(Back|Home)$/.test(labelOf(t))) S.opener = { zone: 'extra', cls: t.classList[0], label: labelOf(t) };
             else S.opener = null;
             save();
         }, true);
@@ -464,7 +464,9 @@
             drawEmpty();
             // Back to this screen from what a button on the pointer's line or the server button opened: that button again
             if (S.back && S.back.zone === 'extra') {
-                const b = [...rootEl.querySelectorAll(`.${S.back.cls}`)].find((x) => labelOf(x) === S.back.label);
+                // the song line's label changes as songs move on: the only one of its class is it (QA Almanac 2)
+                const all = [...rootEl.querySelectorAll(`.${S.back.cls}`)];
+                const b = all.find((x) => labelOf(x) === S.back.label) || (all.length === 1 ? all[0] : null);
                 if (b && !(D.panel && D.panel.isOpen())) T.ctx.focus(b);
             }
             S.back = null;
