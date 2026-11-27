@@ -43,6 +43,14 @@ Host:  python3 input_walk.py --host --out <dir> [--themes a,b]   (the installed 
 """
 import argparse, base64, datetime, json, os, re, signal, subprocess, sys, tempfile, time
 
+WAY_BACK = re.compile(r"^\s*(‹\s*)?(back to |go back\b)", re.I)
+
+
+def own_keys(keys):
+    """A level's controls without the ways back every level of its route shows (a trail step, an empty column's way) (QA Tide 2)."""
+    return {x for x in keys if not WAY_BACK.match(x.split("|", 1)[-1])}
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "..", "servers"))
@@ -330,7 +338,8 @@ def skip_reason(c, title=""):
         return "denylist"
     if "dashboard" in hr or "configurationpage" in hr or hr.startswith("http"):
         return "dashboard or external"
-    if cw.WAYBACK.match(lab):
+    # (QA Tide 2) the menu's "Home" link to the home preferences page is not a way back
+    if cw.WAYBACK.match(lab) and "mypreferences" not in hr:
         return "a way back"
     # a settings entry named for its page (Display, Subtitles, Audio) opens that page or section, it chooses nothing
     # (QA 3 re-walk, Media Center: its settings entries are buttons, so Display was never opened by any run)
@@ -645,9 +654,15 @@ class Walker:
             cur, best, bo = self.ckeys(), None, 0.2499
             for sk in self.subs[k]:
                 st = self.screens[sk]["sub"]
-                ks, pre = set(st["keys"]) | set(st.get("seen", [])), set(st["pre"])
+                # (QA Tide 2) a way back is not part of a level's identity: every level of a route shows the same trail step
+                ks, pre = own_keys(set(st["keys"]) | set(st.get("seen", []))), own_keys(st["pre"])
                 own, gone = ks - pre, pre - ks
                 if not own:
+                    # an empty level (only ways back): it is on screen when the page has none of its own either
+                    if gone and len(cur & gone) * 2 > len(gone):
+                        continue
+                    if not (own_keys(cur) - pre) and ((set(st["keys"]) - own_keys(st["keys"])) & cur) and bo < 1.0:
+                        best, bo = sk, 1.0
                     continue
                 o = len(cur & own) / len(own)
                 if gone and len(cur & gone) * 2 > len(gone):
@@ -675,13 +690,19 @@ class Walker:
         if len(pre & post) * 2 >= len(pre) or f["key"] not in post or f["key"] in pre:
             return None
         # most of the controls are ones this screen has shown already: a deck that slid to another of its panels (QA Mosaic 1)
-        if post and len(post & set(here["elements"])) * 2 >= len(post):
+        # (QA Tide 2) ways back are not part of a level's identity, here and below
+        pk = own_keys(post)
+        if pk and len(pk & set(here["elements"])) * 2 >= len(pk):
             return None
         rk = sup["rkey"] if sup else k
         for other in self.subs.get(rk, []):         # the way back to a level already known is not a new level
             st = self.screens[other]["sub"]
-            for ref in (set(st["pre"]), set(st["keys"])):
-                if ref and len(post & ref) * 2 >= len(ref):
+            if not pk:                              # an empty level looks like every other empty one of the route
+                if not own_keys(st["keys"]) - own_keys(st["pre"]) and set(st["keys"]) & post:
+                    return None
+                continue
+            for ref in (own_keys(st["pre"]), own_keys(st["keys"])):
+                if ref and len(pk & ref) * 2 >= len(ref):
                     return None
         sk = f"{k} > {label}"
         if sk in self.screens:
@@ -926,8 +947,16 @@ class Walker:
         sub = here["sub"]
         ok = self.go_here(sub["parent"]) and self.position(sub["parent"], sub["opener"])
         if ok:
+            pre = self.ckeys()
             self.drv.activate()
-            ok = self.screen_key(self.settle(prev=sub["parent"])) == k
+            s = self.settle(prev=sub["parent"])
+            ok = self.screen_key(s) == k
+            # (QA Tide 2) a level opened that the walker doesn't recognise, on the parent's route: close it, or a theme that
+            # remembers its levels (by route) reopens it on the next visit and the walker believes it is on the root
+            if not ok and sub["parent"].startswith(s["route"]) and self.ckeys() != pre:
+                self.tr("closing the level that did not match", k)
+                self.drv.back(0)
+                self.settle(t=2.0)
         if not ok:
             here["unreachable"] = True
             self.tr("sub-screen unreachable", k)
@@ -1297,10 +1326,18 @@ class Walker:
             self.tr("  at", (f2 or {}).get("key", "nothing")[-48:], "" if moved_to[0] else "(did not move)", "(seen)" if f2 and f2["key"] in seen else "")
             if not f2 or f2["key"] in seen:
                 return None
+            # (QA Tide 2) a move that opens a level in place (a theme's right opens the focused entry): the new focus is not
+            # among the first view's controls and under half of those remain. An opener, not a control: Back, not taken
+            if first_view and f2["key"] not in first_view and len(self.ckeys() & first_view) * 2 < len(first_view) \
+                    and self.js("!!(window.icefinTheme && window.icefinTheme._engine && window.icefinTheme._engine.hasScreen())"):     # themed screens only: stock lists scroll
+                # logged only for now: on a theme whose rows scroll with focus (tiles, carousels) the same test may read a
+                # scroll as an opener; the trace shows whether it would misfire before it acts (QA Tide 2)
+                self.tr("  moving", d, "may have opened a level in place (logged, not acted on)")
             take(f2, path)
             return f2
 
         moved_to = [False]
+        first_view = set()
 
         def climb():
             # up to the top, over controls already seen too (each snake starts at the top: a bar of categories over a
@@ -1321,7 +1358,7 @@ class Walker:
             take(f, path)
         # the first view's controls are elements before the snake runs off it (a pivot's edge): check_unreached tries the
         # ones the snake missed (QA Mosaic 1)
-        self.enum(k)
+        first_view.update(c["key"] for c in (self.enum(k) or []))
         climb()
 
         cut = [False]
@@ -1899,6 +1936,9 @@ class Walker:
                 self.finding("broken-back", k, dk, f"Back from the dialog '{title}' ended on {kk}")
                 self.go_here(k)
 
+    SEED_TYPES = {"Series": r"\b(shows|series)\b", "MusicAlbum": r"\balbums?\b", "MusicArtist": r"\bartists?\b",
+                  "Audio": r"\bsongs?\b", "Season": r"\bseasons?\b", "Episode": r"\bepisodes?\b"}
+
     # -------------------------------------------------------------- one screen
     def explore(self, k, limit):
         here = self.screens[k]
@@ -1915,9 +1955,14 @@ class Walker:
         # categories shares one kind, and each opens its own screen)
         names = {n.strip().lower() for n in self.present.get("names", [])}
 
+        # an entry that leads to an item type the server has and no screen shows yet is a seed too (QA Tide 2): a column's
+        # entries share one kind, so "All shows" waited behind empty ones for round two
+        lack = [rx for t, rx in self.SEED_TYPES.items() if t in self.present.get("types", []) and not any(f"[{t}]" in s for s in self.screens)]
+
         def seed(c):
             lab = (c.get("label") or "").strip().lower()
-            return lab in names or lab.split(",")[0].strip() in names or lab == "search"
+            head = lab.split(",")[0].strip()
+            return lab in names or head in names or lab == "search" or any(re.search(rx, head) for rx in lack)
         for _pass in range(4):
             if self.mouse and _pass:
                 self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) controls that showed late since the last pass

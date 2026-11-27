@@ -33,6 +33,8 @@ WALK_JS = r"""
     key(e) {
       const path = [];
       for (let n = e; n && n !== document.body && path.length < 7; n = n.parentElement) {
+        // anchored at the nearest ancestor with an id: a reload that shifts the root's index among body's children keeps every key (QA Tide 2)
+        if (n !== e && n.id) { path.unshift('#' + n.id); break; }
         let i = 0, s = n; while ((s = s.previousElementSibling)) i++;
         path.unshift(n.tagName.toLowerCase() + ':' + i);
       }
