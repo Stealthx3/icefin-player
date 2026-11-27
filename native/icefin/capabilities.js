@@ -156,6 +156,7 @@
         el.classList.add('icefin-pivot');
         const headers = document.createElement('div');
         headers.className = 'icefin-pivot-headers';
+        headers.setAttribute('role', 'tablist');  // the headers are the pivot's tabs (QA Mosaic 1: neither a mouse walk nor a screen reader saw them)
         headers.style.cssText = 'display:flex;gap:1.5em;white-space:nowrap;transition:transform var(--icefin-pivot-ms,300ms) ease';
         const body = document.createElement('div');
         body.className = 'icefin-pivot-body';
@@ -164,13 +165,15 @@
             const h = document.createElement('div');
             h.className = 'icefin-pivot-header';
             h.textContent = s.title;
+            h.setAttribute('role', 'tab');
+            h.setAttribute('data-icefin-pointer-only', '');  // a pad pages with the shoulders or ◀ ▶ at the edge
             h.addEventListener('click', () => show(i));
             headers.append(h);
             return h;
         });
         function show(i) {
             index = (i + sections.length) % sections.length;
-            hs.forEach((h, k) => h.classList.toggle('active', k === index));
+            hs.forEach((h, k) => { h.classList.toggle('active', k === index); h.setAttribute('aria-selected', String(k === index)); });
             const offset = hs[index].offsetLeft - hs[0].offsetLeft;
             headers.style.setProperty('--icefin-pivot-ms', `${motion.duration(opts.ms || 300)}ms`);
             headers.style.transform = `translateX(${-offset}px)`;  // the headers slide with the content

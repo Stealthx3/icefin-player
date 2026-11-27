@@ -62,6 +62,10 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
   would have taken them all out of the walk (2026-11-26, Orbit 1).
 - Check a fix that depends on the native layer with real input in a build of the branch before it merges: one press of
   the mouse's Back button is two back steps, which shows only once the first is cancelled (2026-11-26, engine #236).
+- Before asking for longer walks, measure where a run's hour goes: here dead-end presses and look-alike levels took
+  about half of it (2026-11-27, passes 2).
+- Give a walker change one full walk, with a look at its first minutes, before it merges; a rule that only logs at
+  first shows whether it would misfire (2026-11-27: the in-place opener check, 97 false openers a run on Mosaic).
 - Every walker fix is found by tracing a finding to its cause, and is re-checked by the next walk.
 
 **Triage**
@@ -169,6 +173,22 @@ caught a rule added hours before (#235): "watched ✓" matched every played film
 them; fixed (#238) and the two walks then running restarted on it. Lessons: real input finds what synthetic input
 can't; a danger rule is anchored to the whole label; review an implementer's diff line by line.
 
+**2026-11-27: second passes (Tide, Almanac, Orbit, Baseline) and Mosaic's first; where the hour goes.** The second
+walks fell to 56 to 99 findings a theme (from 111 to 257), and pass 1's fixes held where walked (Baseline: Back to
+the home found its opener 136 times of 136, against about 1 of 99). Coverage barely rose, so each triage measured
+where a controller run's hour went: 17 to 18 minutes on a direct try pressing a direction that never moved focus (31
+on stock), 14 to 15 stuck in levels a shared tab strip made look like their parent, 9 to 10 re-pressing tabs;
+Tide's columns were all named after the first empty one (a level's "Back to …" counted as its own control), and a
+reload moved the theme root and killed every DOM-path key. Mosaic's home pivot was crossed as if it were a move. The
+fixes landed as walker #241 (pivots as screens, keys anchored at an id, a way back not a level's identity, whole-word
+danger words) and #242 (the hour's dead ends), each tested by the next full walk with an early look at its first
+minutes before it merged: on #241 Mosaic's pads reached in 15 minutes what pass 1 reached in an hour. A test of the
+walker's own new opener check showed it would misfire 97 times a run on a tiled theme, so it stays off. One keys run
+lost its last 20 minutes: the walker pressed Exit (an icon's ligature text, "closeExit Application", slipped past a
+whole-word rule) and every later screen waited out a reconnect; a run now ends at the first app-quit. Lessons: measure
+the hour before adding minutes; check a new walker rule against every theme's labels; give a walker change one full
+walk with an early look before it merges.
+
 ## Metrics
 
 | Theme | Pass | Walk | Findings (theme + Steam run) | Notes |
@@ -186,6 +206,11 @@ can't; a danger rule is anchored to the whole label; review an implementer's dif
 | Almanac | 1 | pass 1 | 111 + 14 | 104 + 13 to triage; 22-24 screens a pad run |
 | Baseline | 1 | pass 1 | 221 + 36 to triage | 99 one bug (Back to the home); about 24 screens a pad run |
 | Orbit | 1 | pass 1 | 224 + 31 to triage | the mouse saw one channel (12 screens); pads about 30 |
+| Mosaic | 1 | pass 1 | 446 + 71 to triage | pads 25-32 screens, queue empty: the walker crossed the home's pivot as a move |
+| Tide | 2 | pass 2 | 98 + 20 | 67 + 16 to triage; levels named after the first empty one |
+| Orbit | 2 | pass 2 | 51 + 7 to triage | the mouse 26 screens (pass 1: 12) |
+| Almanac | 2 | pass 2 | 111 + 23 | 99 + 23 to triage; 108 the walker's |
+| Baseline | 2 | pass 2 | 116 + 24 | 56 + 12 to triage; F1 held 136 of 136 |
 
 Walk time: about 6 h a theme serially on the host (2026-11-16), about 85 min in parallel in the lab (D44), about
 45 min expected with the control reused (D47).
