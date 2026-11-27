@@ -959,7 +959,14 @@
     // Only a field the remote moves to (focus arriving while the action is handled): a screen focusing its first field as
     // it mounts, a separate task, doesn't open the keyboard.
     document.addEventListener('focusin', (e) => { if (oskOn && inAction && isText(e.target)) setTimeout(() => { if (document.activeElement === e.target) oskOpen(e.target); }, 0); }, true);
-    document.addEventListener('mousedown', (e) => { lastSource = 'pointer'; if (osk && !osk.panel.contains(e.target)) oskClose(); }, true);
+    document.addEventListener('mousedown', (e) => {
+        lastSource = 'pointer';
+        if (osk && !osk.panel.contains(e.target)) {
+            // the mouse's Back button closes only the keyboard: the traversal it starts is held (QA Mosaic 2)
+            if (e.button === 3) window.__icefinBackHold = Date.now() + 400;
+            oskClose();
+        }
+    }, true);
     document.addEventListener('mousedown', (e) => {
         const k = osk && e.target.closest && e.target.closest('[data-icefin-key]');
         if (k) { e.preventDefault(); oskFocus(k); oskPress(k); }  // pointer users can type on it too; keeps the field's focus

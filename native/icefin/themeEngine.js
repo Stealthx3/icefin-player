@@ -493,7 +493,7 @@
         const a = cur.getBoundingClientRect();
         const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
         const horiz = dir === 'left' || dir === 'right';
-        let beamBest = null, beamDist = Infinity, best = null, bestScore = Infinity;
+        let beamBest = null, beamDist = Infinity, beamOff = Infinity, best = null, bestScore = Infinity;
         for (const e of all) {
             const b = e.getBoundingClientRect();
             const bx = b.left + b.width / 2, by = b.top + b.height / 2;
@@ -506,8 +506,13 @@
             // beside smaller ones) is still the next one along the beam (QA: on a book's details, Left from More went
             // to Mark played past Add to favorites, and Right from Play past Download; a pad never reached either)
             const slack = Math.min(horiz ? a.width : a.height, horiz ? b.width : b.height) / 2;
-            if (overlap > 0 && along > -slack) {
-                if (along < beamDist) { beamDist = along; beamBest = e; }
+            // the beam needs a real overlap, a quarter of the smaller one across it: a focused tile scaled past the grid's
+            // gap overlaps the next column's tiles above and below by a pixel or two, and the first of those in the page
+            // won (QA Mosaic 2: a pad never reached the home's lower tiles). Among tiles as near, the one most in line wins.
+            const cross = Math.min(horiz ? a.height : a.width, horiz ? b.height : b.width) / 4;
+            if (overlap > cross && along > -slack) {
+                const off = horiz ? Math.abs(by - ay) : Math.abs(bx - ax);
+                if (along < beamDist - 1 || (along < beamDist + 1 && off < beamOff)) { beamDist = Math.min(beamDist, along); beamOff = off; beamBest = e; }
                 continue;
             }
             // Off the beam a candidate must lie mostly in the direction of travel: a neighbour below doesn't count as
