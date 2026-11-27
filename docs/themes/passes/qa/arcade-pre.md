@@ -73,3 +73,31 @@ From Harbor's QA pre (a6454c91 on theme/harbor), where Arcade's forked kit had t
   Back to the home landing on the entry that left it, hover included (menus.js `onFocused`); the home's rows can't be
   scrolled by a focus, so nothing is snapped back under the pointer (styles.css `overflow: clip`).
 - Not taken: Harbor's pointer-line placement and Live TV route are Harbor's own layout; panel history is the engine's (#204).
+
+## Rechecks (pass 1 walk, 2026-11-27, `arcade-1.md`)
+
+Checked by the first pass's walk on main with engines #236 and #240, seven runs of 60 minutes:
+- [x] The home was a navigation dead end: every pad and keys run opened Search, Movies, Music, Shows, Books,
+      Collections, Photos, Playlists and Live TV from the pills, 33 screens each.
+- [x] No focus look on the top bar: no no-focus-indicator finding in 7 runs.
+- [x] The pointer's line covered the home's top bar: closed on the home (Quick access opens its panel). The same
+      collision moved to the library tab strip on screens with tabs; fixed in pass 1 (A1), recheck listed in `arcade-1.md`.
+- [x] Back to the home lost the control that opened the screen: no back-focus or focus-lost on /home in 7 runs.
+- [x] The pointer hovered and clicked the wrong capsule: no hover-no-focus, focus-lost or back-focus on a capsule.
+- [x] The mouse's Back left an options panel open (engine #204): the mouse pressed Back from 19 or more dialog
+      screens with no broken-back from an open panel. The one guide case was a panel already closing.
+- [ ] Back stayed on Choose a server: closed for the mouse (`/home` to `/selectserver`, Back returns). Pads and keys
+      never pressed the account button (the walker keyed it by text that changes once the server's name is known), so
+      not exercised by them.
+- [ ] The pointer's Back did nothing on a screen's first level: not exercised; the walker skips the line's Back and Home.
+- [ ] Picking a track left focus on Play: not exercised; "Subtitles, Off" had no outcome in any run.
+- [ ] Watch together's "you are in" row: not exercised; no group was made ("new group" is denied).
+- [ ] Low motion in quick access as a switch: not exercised; the walker skips a state control, no finding.
+- [x] Harbor port, a deck panel that loads late takes focus: no focus-lost in 7 runs.
+- [ ] Harbor port, the options panel's lower level takes a click: no finding either way; the traces cannot tell.
+- [ ] Host: the mouse's Back cancellable through Qt's goBack. Open, host only.
+- [ ] Host: the home after Back from playback, no flicker. Open, by eye; the focus part is closed (no back-focus on /home).
+- [x] Low: shift-tab ×2: no shift-tab finding.
+- [ ] Low: obscured ×3 (the deck's pivot heads): 6 obscured; cause found (the panels' inline z-index covered the
+      pivot), fixed in pass 1 (A2), recheck listed in `arcade-1.md`.
+- [ ] Low: hover-no-focus on the pointer's line: 51 findings; fixed in pass 1 (F5), recheck listed in `arcade-1.md`.
