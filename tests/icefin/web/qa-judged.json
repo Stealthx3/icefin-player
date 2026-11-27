@@ -8,13 +8,16 @@
     {"kind": "^dead-control$", "screen": "\\[Book\\].*\\(dialog\\)", "element": "^Previous$", "why": "the book reader's Previous on its first page: nothing comes before it (stock is the same)", "doc": "media-center-3.md, plaza-3.md"},
     {"kind": "^dead-control$", "screen": "\\[(PhotoAlbum|Photo)\\]", "element": "^Play$", "why": "a photo album's Play starts a slideshow on its own timing", "doc": "media-center-3.md"},
     {"kind": "^no-focus-indicator$", "screen": "^/home\\?icefin=stock", "element": "^Icefin Test (Book|Document)$", "why": "jellyfin-web's own classic home: its book cards", "doc": "media-center-3.md, plaza-3.md"},
-    {"kind": "^dead-control$", "screen": "^/mypreferencesmenu\\?pane=client", "element": "^Play (DTS|Dolby)", "why": "the Audio test's Play buttons pressed while a clip plays, when they are busy", "doc": "media-center-3.md"},
+    {"kind": "^dead-control$", "screen": "^/mypreferencesmenu\\?pane=client", "element": "^Play (DTS|Dolby|PCM)", "why": "the Audio test's Play buttons pressed while a clip plays, when they are busy", "doc": "media-center-3.md, tide-2.md"},
     {"kind": "^back-focus$", "screen": "\\[MusicAlbum\\]", "element": "LabArtist$", "why": "two controls for one person (artist and album artist): Back focuses the other", "doc": "media-center-3.md, plaza-3.md"},
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/home( > .*)?$", "element": "^Open ", "why": "the start strip's rows are not levels: the mouse's Back button goes back in history (the app's mapping, as on every page)", "doc": "media-center-3.md"},
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "\\?collectionType=", "detail": "^Back from /[a-z]+\\?collectionType=[a-z]+ > ", "why": "a library's pivot is a view choice, not a level: the mouse's Back button goes back in history", "doc": "media-center-3.md"},
     {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "^IMG_\\d+$", "why": "jellyfin-web's photo slideshow has no controls and takes no focus: the walker pressed the theme's photo entry under it, which opens the photo already shown", "doc": "tide-1.md"},
     {"kind": "^script-error$", "screen": "^/mypreferencesmenu$", "detail": "\\[userprofile\\] Unexpected null page reference", "why": "jellyfin-web's own profile page logs it as it opens, under any theme; the stock control logs it on Profile in every run", "doc": "baseline-1.md"},
-    {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"}
+    {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "element": "^Now playing: .*; open the queue$", "why": "the lab's songs are 15-s clips: the song line hides when the song ends, here between the hover and the click; clicked during a song it opens the queue", "doc": "almanac-1.md, mosaic-1.md, tide-2.md"},
+    {"kind": "^dead-control$", "screen": "\\[Book\\].*\\(dialog\\)", "element": "^Next$", "why": "the book reader turns the page inside its own frame or on a canvas, which the walker's change check doesn't see (page 1, Next, page 2)", "doc": "mosaic-1.md, baseline-2.md"},
+    {"kind": "^dead-control$", "input": "^(keys|pad)$", "screen": "^/music\\?", "element": "^Shuffle$", "why": "a library's Shuffle fetches its items before it plays, and the now playing bar comes after the walker's settle; stock's control reads the same", "doc": "baseline-2.md"}
   ],
   "baseline": [
     {"kind": "^dead-control$", "screen": "^/(movies|tv|music|livetv)(\\?|$)", "element": "^(Movies|Shows|Albums|Programs|Series)$", "why": "the tab you are on: a press on the selected tab does nothing, as stock's", "doc": "baseline-1.md, baseline-pre.md"},
@@ -22,7 +25,8 @@
     {"kind": "^dead-control$", "screen": "^/search", "element": "^Search$", "why": "the header's Search on the search page: the page you are on", "doc": "baseline-1.md"},
     {"kind": "^dead-control$", "input": "^mouse$", "screen": "^(/details \\[(MusicAlbum|Playlist)\\]|/music\\?)", "element": "^(Instant Mix|Shuffle|Previous Track)$|[AE](440|660)", "why": "the lab's 2-song music pressed while it already plays, Previous on the first song, or the bar's song as the 15-s clip ends; stock's album shows the same dead presses", "doc": "baseline-1.md"},
     {"kind": "^back-focus$", "screen": "^/mypreferencesmenu$", "detail": "focus is on '(person)?Profile'", "why": "stock's settings menu also lands on Profile after Back from any entry", "doc": "baseline-1.md"},
-    {"kind": "^back-focus$", "screen": "^/details \\[(MusicAlbum|Playlist)\\]", "element": ", Icefin Lab$", "detail": "after Back from /queue", "why": "the opener was the now playing bar's song; the lab's 15-s clip ended, so the bar and its button were gone", "doc": "baseline-1.md"}
+    {"kind": "^back-focus$", "screen": "^/details \\[(MusicAlbum|Playlist)\\]", "element": ", Icefin Lab$", "detail": "after Back from /queue", "why": "the opener was the now playing bar's song; the lab's 15-s clip ended, so the bar and its button were gone", "doc": "baseline-1.md"},
+    {"kind": "^dead-control$", "screen": "^/details \\[[A-Za-z]+\\] \\(dialog\\)$", "element": " · .*, (Video|Audio|Subtitle|Data|EmbeddedImage)$", "why": "Media info's stream rows are text to read, focusable so a pad can scroll them; OK does nothing, as stock's media info", "doc": "baseline-2.md"}
   ],
   "orbit": [
     {"kind": "^shift-tab$", "why": "Orbit is a console dashboard: its channels, decks and guide take the arrows and a pad; every control is tabIndex -1 and nothing takes Tab", "doc": "orbit-1.md"},
@@ -35,9 +39,13 @@
   ],
   "almanac": [
     {"kind": "^shift-tab$", "why": "Almanac is a TV (cable-guide) theme: its rows and guide take the arrows; Tab isn't one of its inputs", "doc": "almanac-1.md"},
-    {"kind": "^dead-control$", "input": "^mouse$", "element": "^Now playing: .*; open the queue$", "why": "the lab's songs are 15-s clips: the song line hides when the song ends, here between the hover and the click; clicked during a song it opens the queue", "doc": "almanac-1.md"}
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "\\(dialog\\)$", "element": "^Details$", "why": "the item's wide panel opens on its Details section (Edit details…); choosing the section already shown redraws it in place", "doc": "almanac-2.md"}
   ],
   "plaza": [
     {"kind": "^shift-tab$", "why": "Plaza is a TV theme; Tab isn't one of its inputs (arrows are)", "doc": "plaza-3.md"}
+  ],
+  "mosaic": [
+    {"kind": "^shift-tab$", "why": "Mosaic is a pad-first console dashboard: its tiles, decks and guide take the arrows and a pad; every control is tabIndex -1 and nothing takes Tab", "doc": "mosaic-1.md"},
+    {"kind": "^dead-control$", "screen": "^/details \\[PhotoAlbum\\] \\(dialog\\)$", "element": "^(Play all|Shuffle)$", "why": "jellyfin-web's photo slideshow covers the screen and has no controls; the walker pressed the album's own Play all under it, which starts the slideshow already showing", "doc": "mosaic-1.md, mosaic-pre.md"}
   ]
 }
