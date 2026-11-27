@@ -402,6 +402,8 @@
                         const b = focusable(el('div', 'icefin-d-btn', names[i]));
                         b.dataset.section = names[i];
                         b.addEventListener('click', () => {
+                            // the press answers at once, even where the section can't scroll any further (QA Orbit 3)
+                            for (const x of rail.children) x.classList.toggle('icefin-cs-here', x === b);
                             const sec = h.closest('.verticalSection, fieldset') || h;
                             sec.scrollIntoView({ block: 'start' });
                             const first = [...sec.querySelectorAll(FOCUS)].find((c) => c.offsetParent !== null && !rail.contains(c));
