@@ -1010,7 +1010,9 @@ html:not([data-hr-input="pad"]):not([data-icefin-couch]) .hr-hints, html[data-ic
 .hr-row { border-radius: 0; min-height: 4.6vh; }
 .hr-row.icefin-focused, .hr-level-under .hr-row.hr-chosen { background: var(--hr-band); }
 .hr-btn { border-radius: 0; background: rgb(240 240 240 / 0.08); font-weight: 400; }
-.hr-btn.icefin-focused, .hr-btn.on.icefin-focused { background: var(--hr-band); box-shadow: none; }
+.hr-btn.icefin-focused { background: var(--hr-band); box-shadow: none; }
+/* an "on" button already wears the band, so its focus needs the ring (QA Harbor 1: the empty list's Go back) */
+.hr-btn.on.icefin-focused { box-shadow: var(--hr-ring); }
 .hr-btn.on { background: var(--hr-band); }
 .hr-switch.on { background: var(--icefin-color-focus); }
 .hr-input { border-radius: 0; }

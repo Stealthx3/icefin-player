@@ -448,6 +448,7 @@
             }
             return false;
         },
+        levelBack() { return closeInfo(); },  // the mouse's Back closes the open info card in place (QA Harbor 1)
         mount(root, ctx) {
             root.setAttribute('data-hb', 'home');
             const fan = [el('div', 'hb-fanart'), el('div', 'hb-fanart')];

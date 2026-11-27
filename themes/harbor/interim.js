@@ -23,6 +23,7 @@
         },
         unmount() { if (H) { if (H.engine && engine) engine.unmount(); if (H.C) H.C.stop(); if (H.cap) H.cap.stop(); } H = null; D.hintsOff(); },
         onAction(a, cx) { if (H && H.engine) return engine.onAction ? engine.onAction(a, cx) : false; return H && H.C ? H.C.onAction(a) : false; },
-        onBack(cx) { if (H && H.engine) return engine.onBack ? engine.onBack(cx) : false; return H && H.C ? H.C.onAction('back') : false; }
+        onBack(cx) { if (H && H.engine) return engine.onBack ? engine.onBack(cx) : false; return H && H.C ? H.C.onAction('back') : false; },
+        levelBack() { return !!(H && H.C && H.C.S.stack.length > 1 && H.C.back(false)); }  // the mouse's Back pops a level (QA Harbor 1, from Mosaic)
     });
 })();

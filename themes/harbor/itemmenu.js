@@ -33,6 +33,8 @@
                     const label = a.dialog && a.id !== 'delete' && a.id !== 'mediaInfo' ? `${a.label}…` : a.label;
                     body.append(D.row(label, { danger: a.danger, go: () => act(a, item, where, m) }));
                 }
+                // an episode's own page, from its series' list or anywhere its options open (QA Harbor 1, from Mosaic)
+                if (item.Type === 'Episode' && item.Id && !location.hash.includes(`id=${item.Id}`)) body.append(el('div', 'hr-rule'), D.row('Open its page', { icon: 'info', go: () => { D.panel.close(); D.details(item.Id); } }));
             }
         });
     }
