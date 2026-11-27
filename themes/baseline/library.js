@@ -193,6 +193,23 @@
         });
     }
 
+    // Up from the grid's first row reaches the toolbar (Sort by, Filter, More), the nearest control across (QA Baseline 3)
+    B.onAction((a, ctx) => {
+        if (a !== 'up') return false;
+        const f = ctx.focused && ctx.focused();
+        const g = f && f.classList.contains('bl-card') && f.closest('.bl-items-grid');
+        const first = g && g.querySelector('.bl-card');
+        if (!first || f.offsetTop !== first.offsetTop) return false;
+        const bar = g.parentElement.querySelector('.bl-toolbar');
+        const x = f.getBoundingClientRect().left;
+        const near = (e) => Math.abs(e.getBoundingClientRect().left - x);
+        const t = bar && [...bar.querySelectorAll('[data-icefin-focus]')].filter((e) => !e.hidden && e.getClientRects().length).sort((p, q) => near(p) - near(q))[0];
+        if (!t) return false;
+        T.ctx.focus(t);
+        T.ctx.sound('focus');
+        return true;
+    });
+
     // ---- #/list: a folder (a library without tabs, a collection, playlists), a genre's, a studio's, a person's items ----
     let LS = null;
     // jellyfin-web's own route for a home videos and photos library: Baseline draws it as #/list, as stock's TV layout does

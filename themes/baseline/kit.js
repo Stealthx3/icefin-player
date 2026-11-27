@@ -210,6 +210,8 @@
         if (it.Type === 'TvChannel') { B.playWith({ ids: [it.Id], serverId: B.sid() }); return; }
         if (it.Type === 'Photo') { B.playWith({ ids: [it.Id], serverId: B.sid() }); return; }
         if (it.Type === 'Genre' || it.Type === 'MusicGenre' || it.Type === 'Studio') { B.go(`#/list?${it.Type === 'Studio' ? 'studioId' : (it.Type === 'MusicGenre' ? 'musicGenreId' : 'genreId')}=${it.Id}&serverId=${B.sid()}`); return; }
+        // a plain folder (books) opens as stock's list, not a details page with a Play that errors (QA Baseline 3, F5)
+        if (it.Type === 'Folder') { B.go(`#/list?parentId=${it.Id}&serverId=${B.sid()}`); return; }
         B.details(it);
     };
     const ROUTE = { movies: 'movies', tvshows: 'tv', music: 'music', livetv: 'livetv' };  // stock's tabbed libraries; the rest are #/list
