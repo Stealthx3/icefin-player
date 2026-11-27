@@ -19,7 +19,7 @@
     const items = (r) => (r && r.Items) || [];
     const fail = (e) => { console.error('tide: live tv', e); D.notice('That didn’t work', true); };
 
-    const watch = (ch) => T.ctx.play({ ids: [ch.Id || ch.ChannelId], serverId: D.sid() });
+    const watch = (ch) => { if (G && G.file) G.file(); return T.ctx.play({ ids: [ch.Id || ch.ChannelId], serverId: D.sid() }); };  // (QA Tide 3: files the guide's cell first)
     const chanEntry = (ch) => {
         const p = ch.CurrentProgram;
         const s = p ? Date.parse(p.StartDate) : 0, e = p ? Date.parse(p.EndDate) : 0;
@@ -171,11 +171,14 @@
                     if (!p.gap) cell.append(el('div', 'td-gp-time', `${hm(p.start)}–${hm(p.end)}${p.item && p.item.TimerId ? ' · ● recording' : ''}`));
                 },
                 emptyLabel: 'No information',
-                // the row focused is kept per history entry: Back from the player lands on its channel (QA Tide 2)
-                onFocus(p, ch) { const r = chans.findIndex((x) => x.Id === ch.id); if (r >= 0) D.memory.set(gkey(), { row: r }); D.hints([['OK', 'watch or record'], ['≡', 'options'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['Back', '']]); },
+                // the focused cell is noted; watch() files it (channel id and start) under this history entry (QA Tide 3)
+                onFocus(p, ch) { me.at = { id: ch.id, start: p.start, end: p.end }; D.hints([['OK', 'watch or record'], ['≡', 'options'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['Back', '']]); },
                 onSelect(p, ch) { if (p.gap || !p.id || p.start > Date.now()) { if (p.id && !p.gap) programmeOptions(p.id, ch.ch); else watch(ch.ch); return; } programmeOptions(p.id, ch.ch); }
             });
-            if (gm && gm.row > 0) me.guide.focus(gm.row);
+            me.file = () => { if (me.at) D.memory.set(gkey(), me.at); };
+            // Back from the player: the played channel's row (grid row = index in all channels) at the programme's start, or now if it has ended (QA Tide 3)
+            const gr = gm && gm.id ? chans.findIndex((x) => x.Id === gm.id) : -1;
+            if (gr >= 0) me.guide.focus(gr, gm.end > Date.now() ? gm.start : Date.now());
             D.hints([['OK', 'watch or record'], ['≡', 'options'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['Back', '']]);
         },
         unmount() { if (G) { if (G.C) G.C.stop(); if (G.stop) G.stop(); } G = null; D.hintsOff(); },
