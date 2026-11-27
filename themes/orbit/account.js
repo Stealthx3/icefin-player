@@ -251,7 +251,7 @@
         return {
             beforeSignIn: true,
             mount(root) {
-                C = D.columns(root, { name: 'signin', key: '#/signin', fresh: true, leave: false, root: { bar: [usersCat(), serversCat()], at } });
+                C = D.columns(root, { name: 'signin', key: '#/signin', fresh: true, leave: !!D.uid(), root: { bar: [usersCat(), serversCat()], at } });
                 if (location.hash.startsWith('#/addserver')) setTimeout(() => addServer(C), 400);
             },
             unmount() { if (C) C.stop(); C = null; },

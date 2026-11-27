@@ -230,6 +230,8 @@
         for (const [id, label] of list) {
             const b = D.focusable(el('button', 'or-ptab' + (id === at ? ' on' : ''), label));
             b.type = 'button';
+            b.setAttribute('role', 'tab');
+            b.setAttribute('aria-selected', String(id === at));  // the shown tab (QA Orbit 2)
             b.addEventListener('click', () => { if (id !== at) pick(id); });
             t.append(b);
         }

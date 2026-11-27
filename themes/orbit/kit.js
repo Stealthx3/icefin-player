@@ -176,6 +176,7 @@
         line.hidden = true;
         const label = D.el('button', 'or-song-label');
         label.type = 'button';
+        label.setAttribute('data-icefin-pointer-only', '');  // the pointer's way; a pad has the capsule's ♪ and the guide's Now playing (QA Orbit 2)
         label.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/queue'); });
         const bar = D.el('div', 'or-song-bar');
         const fill = D.el('div', 'or-song-fill');

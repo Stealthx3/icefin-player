@@ -18,6 +18,8 @@
 
     async function menu(ref, where) {
         let m;
+        const own = where && where.details;  // a season's or episode's own details page, first in its options (QA Orbit 2)
+        if (own) { where = Object.assign({}, where); delete where.details; }
         try { m = await I.menu(ref, where || {}); } catch (e) { fail(e); return; }
         if (!m.actions.length) { D.notice('Nothing to do with this item', true); return; }
         const item = m.item;
@@ -26,6 +28,7 @@
             hints: [['OK', 'choose'], ['Back', 'close']],
             render(body) {
                 if (where && where.sortWith && D.sortRow) body.append(D.sortRow(where.sortWith), el('div', 'or-rule'));
+                if (own) body.append(D.row('Go to details', { go: () => { D.panel.close(); own(); } }), el('div', 'or-rule'));  // (QA Orbit 2)
                 let group = null;
                 for (const a of m.actions) {
                     if (group !== null && a.group !== group) body.append(el('div', 'or-rule'));

@@ -47,7 +47,8 @@
             try { const r = await Promise.resolve(c().getNextUpEpisodes({ UserId: uid(), SeriesId: it.Id, Limit: 1, Fields: D.FIELDS })); nu = r && r.Items && r.Items[0]; } catch (e) { nu = null; }
             if (nu) out.push(Object.assign(D.entry(nu, { resume: true }), { name: `Next up: S${nu.ParentIndexNumber} · E${nu.IndexNumber}`, sub: nu.Name, okLabel: 'play', focusFirst: true, go: () => D.playItem(nu, true) }));
             const seasons = await D.items({ ParentId: it.Id, IncludeItemTypes: 'Season', SortBy: 'SortName', Recursive: false });
-            for (const s of seasons) out.push(Object.assign(D.entry(s), { asRow: true, open: () => seasonLevel(s, nu) }));
+            for (const s of seasons) out.push(Object.assign(D.entry(s), { asRow: true, open: () => seasonLevel(s, nu),
+                menu: (C) => D.itemMenu(s, { column: C, details: () => D.details(s.Id) }) }));  // ≡ gives the season's own details (QA Orbit 2)
             out.push({ name: 'Shuffle', icon: 'shuffle', shape: 'icon', go: () => shuffleOf(it) });
         }
         if (it.Type === 'Season') {
@@ -158,7 +159,8 @@
         if (first < 0) first = list.findIndex((e) => !(e.UserData || {}).Played);
         return list.map((ep, k) => Object.assign(D.entry(ep, { inSeason: true }), {
             name: `${ep.IndexNumber != null ? `${ep.IndexNumber} · ` : ''}${ep.Name}`, focusFirst: k === Math.max(0, first), okLabel: 'play',
-            go: () => D.playItem(ep, true), open: null, details: () => D.details(ep.Id)
+            go: () => D.playItem(ep, true), open: null, details: () => D.details(ep.Id),
+            menu: (C) => D.itemMenu(ep, { column: C, details: () => D.details(ep.Id) })  // ≡ gives the episode's own details (QA Orbit 2)
         }));
     }
     const seasonLevel = (s, nu) => ({ title: s.Name, icon: 'episodes', art: D.artOf(s), load: () => episodes(s, nu && nu.SeasonId === s.Id ? nu.Id : null) });

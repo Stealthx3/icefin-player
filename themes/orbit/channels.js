@@ -103,6 +103,7 @@
         });
         S.root.setAttribute('data-ob-ready', String(S.rows.length));
         S.index = -1;
+        if (S.who) D.focusable(S.who);  // the account takes focus only once the channels are in, so Back never lands on it mid-load (QA Orbit 2)
         const mem = D.memory.get('#/home:orbit');
         if (S.rows.length) focusChannel(mem ? Math.max(0, S.rows.findIndex((r) => r.id === mem.id)) : 0, mem ? mem.at : 0);
         if (mem && mem.acct && S.who && S.who.isConnected) { T.ctx.focus(S.who); S.acct = true; }
@@ -143,7 +144,7 @@
     // ---- the account (top right) and the music capsule (bottom right) ----
     function account(root) {
         const box = el('div', 'ob-acct');
-        const who = D.focusable(el('button', 'ob-acct-who'));
+        const who = el('button', 'ob-acct-who');  // made focusable in fill() (QA Orbit 2)
         who.type = 'button';
         const name = el('span', 'ob-acct-name', '');
         const srv = el('span', 'or-server', `● ${D.serverName || '…'}`);

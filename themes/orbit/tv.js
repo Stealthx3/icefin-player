@@ -160,7 +160,10 @@
             G = { g };
             return g.mount(root, ctx);
         },
-        unmount() { if (G) { if (G.C) G.C.stop(); if (G.g) G.g.unmount(); } G = null; D.hintsOff(); },
+        unmount() { if (G) {
+            // leaving from the list (a row, the empty state's button) must come back on it, not the tabs (QA Orbit 2)
+            if (G.C && G.C.S && D.liveBar && !D.liveBar.guide) D.liveBar.tabs = G.C.S.zone === 'tabs';
+            if (G.C) G.C.stop(); if (G.g) G.g.unmount(); } G = null; D.hintsOff(); },
         onAction(a, ctx) {
             if (G && G.C) return G.C.onAction(a);
             if (G && G.g) return G.g.onAction(a, ctx);

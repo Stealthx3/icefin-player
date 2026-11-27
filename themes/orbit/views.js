@@ -642,6 +642,7 @@
                 if (i >= 0 && i !== deck.at) { deck.at = i; place(); V = deck.panels[i].view; cur().deckAt = i; }
             }
             if (V && V.sync(f)) S.zone = 'main';
+            else if (f.closest && f.closest('.or-main')) S.zone = 'main';  // the empty state's button is the list (QA Orbit 2)
         }
         function remember() { if (V && content && !deck) content.pos = V.at; }
 
