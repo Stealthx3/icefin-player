@@ -147,7 +147,9 @@ def mark_judged(m, theme, rules):
     rs = list(rules.get("*", [])) + list(rules.get(theme, []))
     for f in m["findings"]:
         for r in rs:
-            if all(re.search(r[k], str(f.get(k) or ""), re.I) for k in ("kind", "screen", "element", "input", "detail") if k in r):
+            # a pad finding's input is "pad" or "pad-<family>" depending on the kind: a rule for "pad" matches either (QA Harbor 1)
+            fv = lambda k: [str(f.get(k) or "")] + (["pad"] if k == "input" and str(f.get(k) or "").startswith("pad-") else [])
+            if all(any(re.search(r[k], v, re.I) for v in fv(k)) for k in ("kind", "screen", "element", "input", "detail") if k in r):
                 f["judged"] = r.get("why", "judged")
                 break
 
