@@ -75,3 +75,33 @@ overlay.
 - The new pointer bar's place on now playing (music), the guide and the sign-in screens.
 - Unexplained, not touched: an unstyled "OK choose Back" line top left on the inner screens and bottom left on the
   home in several screenshots (for example mouse/list.png, finding_018). It doesn't match any `D.hints` output.
+
+## Rechecks (pass 1 walk, 2026-11-27, `harbor-1.md`)
+
+Checked by the first pass's walk on main with engines #236 and #240, seven runs of 60 minutes:
+- [x] Back to the home keeps the entry, shelf and poster: no back-focus on /home among 253 findings; the mouse clicked
+      all 12 rail entries and the tiles with Back returning, and pads did the same for Live TV, Movies and every tile
+      and poster.
+- [x] The home with a mouse (pin, wheel, adopt) and Play on… / Watch together…: no focus-lost in any run. The mouse
+      reached the off-view Settings, Search and Classic home; Play on… opened its panel.
+- [x] Details, keys (fillPanel): no focus-lost in keys or the four pad runs (6 in the pre walk).
+- [x] Details back-focus (keepAt): closed for its cause, no back-focus after an arrowed press inside a panel. A new
+      cause (a scripted focus in another deck panel, G4) was fixed in pass 1 (F12).
+- [x] The options panel's Back (engine overlay Back): no broken-back from an open panel; the mouse reached 19 dialog
+      screens and pressed Back from each.
+- [x] The options panel's level under takes a click: Find subtitles… acts in place and Copy stream URL closes, on
+      /movies and a BoxSet's panel. Edit details… is skipped as dangerous.
+- [x] /movies Studios and /tv Networks (pointer bar placement): both act in place, no focus-lost.
+- [x] Live TV from the home: "activated Live TV" opens /livetv.
+- [x] Judged: focus-lost after the pointer's Options, Play on, Watch together: superseded. No focus-lost now; the same
+      buttons were 32 hover-no-focus findings, fixed in pass 1 (F5).
+- [ ] Judged: dead-control "overview": reopened as real (trivial). The behaviour is by design, but the head on show
+      lacked `aria-selected`; fixed in pass 1 (F6), recheck listed in `harbor-1.md`.
+- [x] Judged: book reader Previous and Next: filtered by the `*` rules.
+- [ ] Judged: audio actions dead: reopened as real (13). Play notices added in pass 1 (F1); confirm by ear on the host.
+- [x] Judged: the panel's own section tab: filtered by the `*` rule (9 hidden).
+- [ ] Host: the mouse's Back with the panel open, through Qt's goBack. Open, host only.
+- [ ] Host: the home with a mouse. Partly: the lab's wheel and positioning reach the off-view rail entries and Back to
+      the rail entry holds; the wheel over the shelves is not exercised. By hand.
+- [ ] Host: the pointer bar on now playing, the guide and sign-in. Open, by eye.
+- [ ] Host: the unstyled "OK choose Back" line. Open; this walk had no screenshots.
