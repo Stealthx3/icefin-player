@@ -63,6 +63,7 @@
     function entryEl(e) {
         const d = el('button', `td-e shape-${e.shape || 'icon'}`);
         d.type = 'button';
+        if (e.item && e.item.Id) d.setAttribute('data-id', e.item.Id);  // the item it opens (QA Tide 2)
         const text = el('div', 'td-e-text');
         text.append(el('div', 'td-e-name', e.name || ''));
         if (e.sub) text.append(el('div', 'td-e-sub', e.sub));
@@ -94,6 +95,7 @@
         const clock = D.clock(rootEl);
         D.pointerNav(rootEl, () => C.back(true), opts.nav);
         const trail = el('div', 'td-trail');
+        trail.setAttribute('data-icefin-pointer-only', '');  // the pointer's way back; a pad has Back (QA Tide 2)
         const bar = el('div', 'td-bar');
         const col = el('div', 'td-col');
         const letters = el('div', 'td-letters');
@@ -144,6 +146,7 @@
                 const on = i === S.barIndex;
                 b.classList.toggle('current', on);
                 b.style.setProperty('--td-i', String(i - S.barIndex));
+                b.toggleAttribute('data-icefin-pointer-only', !list[i].go);  // a category with no screen of its own (QA Tide 2)
                 if (on && list[i].go) D.focusable(b);
                 else { b.removeAttribute('data-icefin-focus'); if (S.at !== 'cat') b.classList.remove('icefin-focused'); }
             });

@@ -150,6 +150,8 @@
             chans.sort((a, b) => (parseFloat(a.ChannelNumber) || 1e9) - (parseFloat(b.ChannelNumber) || 1e9) || String(a.Name).localeCompare(b.Name));
             root.setAttribute('data-td-guide', String(chans.length));
             if (!chans.length) { box.append(el('div', 'td-empty-title', 'This server has no Live TV channels')); return; }
+            const gkey = () => 'guide|' + ((window.navigation && navigation.currentEntry && navigation.currentEntry.key) || location.hash);
+            const gm = D.memory.get(gkey());
             me.guide = ui.guideGrid(box, {
                 channels: chans.map((ch) => ({ id: ch.Id, name: ch.Name, ch })),
                 rows: 7, span: 120, focus: true, selectGaps: true,  // a gap between programmes can be chosen (QA Tide 1)
@@ -169,9 +171,11 @@
                     if (!p.gap) cell.append(el('div', 'td-gp-time', `${hm(p.start)}–${hm(p.end)}${p.item && p.item.TimerId ? ' · ● recording' : ''}`));
                 },
                 emptyLabel: 'No information',
-                onFocus() { D.hints([['OK', 'watch or record'], ['≡', 'options'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['Back', '']]); },
+                // the row focused is kept per history entry: Back from the player lands on its channel (QA Tide 2)
+                onFocus(p, ch) { const r = chans.findIndex((x) => x.Id === ch.id); if (r >= 0) D.memory.set(gkey(), { row: r }); D.hints([['OK', 'watch or record'], ['≡', 'options'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['Back', '']]); },
                 onSelect(p, ch) { if (p.gap || !p.id || p.start > Date.now()) { if (p.id && !p.gap) programmeOptions(p.id, ch.ch); else watch(ch.ch); return; } programmeOptions(p.id, ch.ch); }
             });
+            if (gm && gm.row > 0) me.guide.focus(gm.row);
             D.hints([['OK', 'watch or record'], ['≡', 'options'], ['▲ ▼', 'channels'], ['◀ ▶', 'time'], ['Back', '']]);
         },
         unmount() { if (G) { if (G.C) G.C.stop(); if (G.stop) G.stop(); } G = null; D.hintsOff(); },
