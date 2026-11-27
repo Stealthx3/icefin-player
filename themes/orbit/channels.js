@@ -333,7 +333,7 @@
             const f = ctx.focused();
             const r = S.rows.findIndex((row) => row.cells.includes(f));
             if (action === 'back') { D.exitAsk(); return true; }
-            if (r < 0) { if (action === 'down' || action === 'up' || action === 'left') { focusChannel(S.index); return true; } return false; }
+            if (r < 0) { if (action === 'down' || action === 'up' || action === 'left') { S.acct = false; focusChannel(S.index); remember(); return true; } return false; }  // leaving the account is remembered (QA Orbit 3)
             if (action === 'up' || action === 'down') {
                 const n = r + (action === 'down' ? 1 : -1);
                 if (n >= 0 && n < S.rows.length) { focusChannel(n); ctx.sound('navigate'); remember(); }

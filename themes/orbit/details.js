@@ -40,7 +40,7 @@
         const reading = it.Type === 'Book';
         if (playable) {
             if (pos) out.push({ name: reading ? 'Continue reading' : 'Resume', sub: `from ${D.clockTicks(pos)}${it.RunTimeTicks ? ` · ${D.left(it)}` : ''}`, progress: ud.PlayedPercentage / 100, icon: 'resume', shape: 'icon', okLabel: reading ? 'read' : 'resume', focusFirst: true, go: () => T.ctx.play(playOpts(S, { startPositionTicks: pos })) });
-            out.push({ name: pos ? (reading ? 'From the start' : 'Play from the start') : (reading ? 'Read' : 'Play'), icon: pos ? 'restart' : 'play', shape: 'icon', okLabel: 'play', focusFirst: !pos, go: () => T.ctx.play(playOpts(S, { startPositionTicks: 0 })) });
+            out.push({ name: pos ? (reading ? 'From the start' : 'Play from the start') : (reading ? 'Read' : 'Play'), icon: pos ? 'restart' : 'play', shape: 'icon', okLabel: 'play', focusFirst: !pos, go: () => { if (it.MediaType === 'Audio') D.notice(`Playing ${it.Name}`); T.ctx.play(playOpts(S, { startPositionTicks: 0 })); } });  // a song's Play says so (QA Orbit 3)
         }
         if (it.Type === 'Series') {
             let nu = null;
@@ -234,7 +234,8 @@
             S = null;
         },
         onAction(a) { return S && S.C ? S.C.onAction(a) : a === 'back' ? false : true; },
-        onBack() { return S && S.C ? S.C.onAction('back') : false; }
+        onBack() { return S && S.C ? S.C.onAction('back') : false; },
+        levelBack() { return !!(S && S.C) && S.C.back(false); }  // the mouse's Back pops a level (QA Orbit 3)
     });
     D.screenItem = () => (S && S.item) || null;
 })();

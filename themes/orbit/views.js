@@ -807,7 +807,8 @@
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },
             onAction(a) { return C ? C.onAction(a) : false; },
-            onBack() { return C ? C.onAction('back') : false; }
+            onBack() { return C ? C.onAction('back') : false; },
+            levelBack() { return !!C && C.back(false); }  // the mouse's Back pops a level, as the remote's does (QA Orbit 3)
         }, spec.beforeSignIn ? { beforeSignIn: true } : {}));
     };
 
