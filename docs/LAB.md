@@ -18,6 +18,7 @@ _Standard: VM-LAB-STANDARD v1.2 · Created 2026-11-07_
 |---|---|---|---|---|---|
 | lab-icefin-main | vm | lab-base-debian13 | 12 / 24 GB, 80 GB disk (raised from 8 / 16 GB for parallel walks, D44) | native + Flatpak builds, unit tests, Jellyfin servers | clean, provisioned, servers |
 | lab-icefin-qa2 | vm | clone of lab-icefin-main (D47) | 10 / 20 GB, 80 GB disk | a second QA walk in parallel; test-repo Flatpak builds | none (virt-clone drops them) |
+| lab-icefin-qa3 | vm | clone of lab-icefin-qa2 | 8 / 16 GB, 80 GB disk | a third QA walk in parallel | none (virt-clone drops them) |
 | lab-icefin-htpcsim | vm | lab-base-debian13 | 4 / 6 GB, 40 GB disk | stand-in HTPC (`lab.htpcsim.env`, `tests/icefin/htpc/sim-provision.sh`) | clean, provisioned |
 
 Sized above the 2/4 default: Qt WebEngine/QML builds and flatpak-builder with the KDE SDK need it.
@@ -34,6 +35,10 @@ about 15 minutes for 80 GB). Three things the clone needs that aren't obvious:
   boot (a walk otherwise waits for the server without a word), and `livetv.py` to move the guide to now.
 - Its `~/icesuite-site` is a copy of the original's, behind the published site: `icesuite.py sync` first; where sync
   refuses, `git checkout -f -B gh-pages origin/gh-pages && git clean -fd` in it (the published site is the truth).
+
+A third guest, `lab-icefin-qa3`, was made the same way on 2026-11-27, copied from `lab-icefin-qa2` while qa2 was shut
+down. Its MAC swap was done by a script: give the clone the original's MAC, boot, change the netplan MAC, hostname,
+machine-id and SSH host keys, power off, restore its MAC. Each guest needs `servers.sh up` after boot.
 
 ## Jellyfin servers (PLAN 1.7, inside lab-icefin-main)
 - `tests/icefin/servers/servers.sh up|down|status|reset`: rootless podman, config in `tests/icefin/servers/servers.json`.
