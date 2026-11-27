@@ -123,25 +123,44 @@ Judged (rules proposed for `qa-judged.json`, doc `orbit-2.md`; each is dropped w
 
 ## To recheck in pass 3
 
-Each is replayed in the lab on the build with theme commit 9f38bb3c and the walker of #242; tick when it holds.
-- [ ] BB1: home, Up, the account, A, B: back on the home with the account lit (by pad, and by keys).
+Each is replayed in the lab on the build with theme commit 9f38bb3c and the walker of #242; tick when it holds. Checked
+in pass 3 (`orbit-3.md`), walked 2026-11-27 on the build 5b32846881478656 with the walker of #242.
+- [x] BB1: home, Up, the account, A, B: back on the home with the account lit (by pad, and by keys). Keys (Escape) and
+      DualSense (B) left Choose a server with `back_ok: true` and no back-focus. The Xbox, Switch Pro, 8BitDo and Steam
+      runs never opened it (the account's label changed between draws, a walker key fault, W-V).
 - [ ] B2: Back from a channel's player, with the load throttled: that tile is lit, never the account; Down from the
-      account returns to the same channel.
+      account returns to the same channel. Back from a tile held in all 7 runs (no back-focus onto the account; pass 2: 6)
+      with four home tiles played a pad run. Missing: the throttled load, and Down from the account (not walked); the
+      memory half is fixed in pass 3's commit 25169b17 and awaits a replay by hand.
 - [ ] B3: Series, Schedule tab, Open the guide, Back: "Open the guide" is lit. Schedule, Channels tab, a channel, the
-      player, Back: that channel's row is lit. Channels, Guide tab, Back: the Guide tab is lit.
-- [ ] U2: a pad run leaves no finding on the song line; the mouse still opens /queue with it.
-- [ ] T1: the Details section of a Movie's panel is not reported dead on the mouse (needs W-P).
+      player, Back: that channel's row is lit. Channels, Guide tab, Back: the Guide tab is lit. Not exercised: the mouse
+      reached the four `?or=` screens but the budget cut their exploration, and the pads never got to Live TV.
+- [x] U2: a pad run leaves no finding on the song line; the mouse still opens /queue with it. No unreachable-by-input on
+      the song line in any pad run; the mouse opened `/queue` through it.
+- [x] T1: the Details section of a Movie's panel is not reported dead on the mouse (needs W-P). No Details or Images
+      dead-control; both read "in-place" on all three wide panels.
 - [ ] Go to details: a Series, a season's ≡, Go to details opens /details [Season]; an episode's ≡ opens /details
-      [Episode]; the walker reaches both and counts them.
+      [Episode]; the walker reaches both and counts them. Missing: the walker never presses ≡ (W-Q), so no run reached
+      either. The code path is there; a person checks it (`orbit-3.md`, For your review).
 - [ ] Guide items, on a refreshed guide: a later programme's panel opens on OK within a frame; Back from a panel puts focus
       on the programme (pass 1's unsure group, then once with a row pressed); the played cell is lit after Back (W-O).
+      Closed for the mouse (programme cells open their panel, Back gives no back-focus finding, played cells come back
+      lit, no "No information" finding). Missing: the pads, whose Live TV came last and was cut.
 - [ ] Walker (#242): the mouse reaches every channel through the wheel and the Guide blades, every library, the
       preferences menu and its pages, and Now playing, with budget left; pads reach the playlists library, a season, an
-      episode, and the preferences' Display, Playback and Subtitles in 60 minutes.
-- [ ] Walker: no walker user writes (Watched and New group are skipped; Favourites places are not).
+      episode, and the preferences' Display, Playback and Subtitles in 60 minutes. Mostly: the mouse reached 58 screens,
+      every library, every preference page and `/queue`; pads reached the playlists library, Display, Playback,
+      Subtitles and Controls. Missing: Season and Episode (W-Q), Now playing for pads (15-s songs), the mouse's Series
+      and MusicArtist (W-T), and the mouse's home ring (W-J, 17 unpositioned).
+- [x] Walker: no walker user writes (Watched and New group are skipped; Favourites places are not). Watched, Mark as
+      watched, New group, Leave the group, the favourites toggles and Save were never pressed. The mouse toggled "Lock
+      tags/studios/countries" in Edit details, which take effect only on Save, never pressed.
 - [ ] The open rechecks carried from orbit-1.md: the idle Now playing notice, the `theme_orbit.py` wheel test, the Watch
       together row (a group made by another user), the F6 shoulders with a show of two seasons, F7's Down back to the
-      channel, `/details [Audio]` Play.
-- [ ] The unsure group above.
+      channel, `/details [Audio]` Play. None walked (the wheel works, shown by the mouse run; one season in the lab; no
+      other user's group); `/details [Audio]` Play is fixed in pass 3's commit 25169b17.
+- [ ] The unsure group above. S1 (MediaSources after Instant mix, pressed 17 times) and BF1 (Steam's Shuffle, pressed 7
+      times) did not reproduce. W2 is the walker's (the next guide row clicked on the swapped panel). Missing: the
+      resting pointer and the sliding ring (the mouse never hovered a receding tile, W-J).
 
 Orbit's second pass is done; its third walks on the walker of #242.
