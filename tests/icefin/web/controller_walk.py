@@ -76,10 +76,11 @@ WALK_JS = r"""
 
 # "Watched ✓" / "Played ✓": a theme's played switch once on (QA Almanac 1: the mouse un-marked a show and a film);
 # the whole label only: an item's label may end "· watched ✓" (QA Orbit 1); Baseline's reads plain "Watched" (QA Baseline 1)
-DANGER = re.compile(r"sign ?out|log ?out|delete|remove|erase|clear|forget|reset|restart|shut ?down|uninstall|disconnect|"
-                    r"mark (as )?(un)?played|mark (as )?(un)?watched|^\s*(watched|played)( ?✓)?\s*$|favou?rite|like|dislike|rating|cancel|record|rename|"
+DANGER = re.compile(r"sign ?out|log ?out|delete|remove|erase|\bclear\b|forget|\breset\b|restart|shut ?down|uninstall|disconnect|"
+                    r"mark (as )?(un)?played|mark (as )?(un)?watched|^\s*(watched|played)( ?✓)?\s*$|favou?rite|\b(un|dis)?likes?d?\b|rating|cancel|\brecord\b|rename|"
                     r"edit (metadata|images|subtitles)|identify|refresh metadata|switch user|change server|select server|"
-                    r"add server|quick connect|password|pin|download|sync|delete", re.I)
+                    r"add server|quick connect|password|\bpin\b|download|\bsync(play)?\b|delete", re.I)
+# short words are whole words ("skipping" has a pin, "Recordings" is a place, "Synced" a state) (QA Mosaic 1)
 REQUIRED = [("Home", r"^/home$"), ("a library", r"^/(movies|tv|music|list|livetv|books|photos|musicvideos|homevideos)"),
             ("details", r"^/details"), ("search", r"^/search"), ("the preferences menu", r"^/mypreferencesmenu"),
             ("video playback", r"^/video")]
