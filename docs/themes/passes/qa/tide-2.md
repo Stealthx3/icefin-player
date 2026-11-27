@@ -94,20 +94,37 @@ Judged (rules in `qa-judged.json`):
 
 ## To recheck in pass 3
 
-Each is replayed in the lab on the build with theme commit 2da145ee and the walker of #241; tick when it holds.
-- [ ] T1: keys, #/livetv?td=guide, ▼ to channel 3, OK, the player opens, Back: focus is on channel 3's cell.
-- [ ] T2: mouse, #/queue with nothing playing → Shuffle, Previous, Play or pause, Next and Repeat show "Nothing is
-      playing" with the error sound. With a song playing, Next moves on.
-- [ ] T3: mouse, a playlist's details, focus E660, click Shuffle above it: "Shuffling …".
-- [ ] Pointer marks: pad and keys runs leave no "Back to <level>" finding and none for /selectserver's Users and
-      Servers; the mouse still pops a level with the trail.
-- [ ] `data-id`: a season's level counts as a Season in the walker's report.
+Each is replayed in the lab on the build with theme commit 2da145ee and the walker of #241; tick when it holds. Checked
+by pass 3's walk (`tide-3.md`, 2026-11-27).
+- [ ] T1: keys, #/livetv?td=guide, ▼ to channel 3, OK, the player opens, Back: focus is on channel 3's cell. Open: pass 3
+      had 6 back-focus findings. The row was kept, not the time (the opener was a gap a day ahead, on the 7th row), and
+      the row looked wrong too. Fixed in theme/tide 7af887c6 (channel id and programme start per history entry); needs
+      the replay.
+- [x] T2: mouse, #/queue with nothing playing → Shuffle, Previous, Play or pause, Next and Repeat show "Nothing is
+      playing" with the error sound. With a song playing, Next moves on. Closed: all five are in-place on the mouse
+      (pass 2: 5 dead). The sound is a by-ear check, listed for review.
+- [x] T3: mouse, a playlist's details, focus E660, click Shuffle above it: "Shuffling …". Closed: Shuffle on the
+      playlist's details is in-place with the hover focus true.
+- [x] Pointer marks: pad and keys runs leave no "Back to <level>" finding and none for /selectserver's Users and
+      Servers; the mouse still pops a level with the trail. Closed: no such finding on any pad or keys run; the mouse
+      still pops a level ("Back to Live TV", in-place).
+- [ ] `data-id`: a season's level counts as a Season in the walker's report. Open, not exercised: pads never opened a
+      season level (budget), and the mouse's "Season 1" press was refused by #241's deck test. A season's page came
+      through Options › Go to season.
 - [ ] Coverage: pads and keys reach a series, a season, an episode, an album and a song on the walker of #241
-      (`screen /details [Series]`, `> Season`, `[Episode]`, `[MusicAlbum]`, `[Audio]` in the traces).
-- [ ] The open rechecks carried from tide-1.md: F3 (Options with nothing to offer), the guide's current cell and Left
-      from a long programme (needs guide data), the Watch together row (a group made by another user), the settings
-      focus on return by pad (after U1), Favourite and Mark as watched keep focus
-      (by hand), the overlay's focus look on the current "Play on" tab (by eye).
-- [ ] U1 to U3 as above; also the preference page's saved value after a tab press.
+      (`screen /details [Series]`, `> Season`, `[Episode]`, `[MusicAlbum]`, `[Audio]` in the traces). Partly: a series,
+      an episode, an album and an artist on every pad and keys run; a season and a song not (the guide ate 14 minutes,
+      and the deck test refused Tide's levels).
+- [x] F3 (from tide-1.md): Options with nothing to offer. Closed: Options on the empty Series timers level answered in
+      place (pass 2: never exercised). The notice and its sound are a by-ear check.
+- [ ] The guide's current cell and Left from a long programme. Open, now testable: the guide has programmes. The walk's
+      ◀ on window-start cells did not move, which fits paging back inside a 2-hour programme; a person should look.
+- [ ] The Watch together row (a group made by another user). Open: no group by another user.
+- [ ] The settings focus on return by pad (after U1). Blocked: the hub's link is still not reachable by pad or keys.
+- [ ] Favourite and Mark as watched keep focus (by hand; danger words for the walker).
+- [ ] The overlay's focus look on the current "Play on" tab (by eye).
+- [ ] U1 to U3 as above; also the preference page's saved value after a tab press. Open: U1 (the hub's link) and U3 (the
+      script error) reproduce unchanged, and U2 now includes the Localization entry; the saved value is not checkable
+      from traces.
 
 Tide's second pass is done; its third walks on the walker of #241.
