@@ -118,19 +118,22 @@ deliberate cut, or a gap to fill?
 ## Rechecks for pass 3
 
 Each is replayed in the lab on the walker of #242.
-- [ ] F5: a books folder, Play: not offered, or plays without a "Playback Error" or a rejection; a folder with films still
-      plays. Compare with stock's page first.
-- [ ] The quit: keys run, the settings menu's Exit Application: skipped as dangerous; no walk-error line; if the app ever
-      goes, one app-quit finding and the run ends.
-- [ ] WD: Schedule, Select view and `/list` More count as in-place (hash or notice), or take the pass 1 rule.
-- [ ] WE and WF: `/list` Sort by, Filter, More, `/tv` Upcoming, Genres, TV Networks, and the client settings' switches
-      are reached.
-- [ ] WG: `/music` Shuffle on keys and pads reads as in-place (the bar), or the stopgap rule is in.
-- [ ] WI: Back from the player on a series lands on the episode pressed.
-- [ ] Coverage: books and home-videos libraries, a season, an episode, a song, an album and an artist are reached at 60
-      minutes on every run (the coverage question, with the user).
-- [ ] U1: both "Old Maps" cards, the focused card's item id before and after Back.
-- [ ] U2: hover a bar button 2 s after the bar is up, during a song, and read `.bl-npbar .icefin-focused`.
+- [ ] F5: still open when pass 3 walked (same theme files; 4 + 1 rejections). Stock's control opens the folder as a list,
+      and its Play All gives the same "Playback Error" without a rejection. Fixed since (T1, theme/baseline 52502b79);
+      missing: a replay showing no rejection and a film folder still playing (`baseline-3.md`).
+- [x] The quit: closed. Pass 3 had no walk-error or app-quit in any run, and the mouse skipped "closeExit Application" as
+      dangerous. Note: keys and pads never pressed it, so the keys case itself is not re-proven (carried to pass 3's list).
+- [x] WD: closed for Select view and `/list` More (in-place on every run; keys `/list` More too). Schedule was not pressed
+      from an empty tab in pass 3, so that case is carried.
+- [x] WF: closed. No unreachable finding on the client settings' switches in pass 3.
+- [ ] WE: `/list` Sort by, Filter, More are the theme's (T2, fixed in 52502b79, replay missing). `/tv` Upcoming, Genres, TV
+      Networks are the walker's (the tab row is reachable; the greedy try cycled): W4 is meant to reach them.
+- [ ] WG: not exercised in pass 3 (`/music` Shuffle was unpositioned on keys and pads; the mouse's case is judged).
+- [ ] WI: not exercised (Series never reached); the same mechanism recurred as W-F.
+- [ ] Coverage: open, worse (13 screens walked a run; the type seeds pressed library tabs and the walker never switched
+      back). W1 to W5 are meant to fix it; needs a rerun.
+- [ ] U1: recurred 3 times (W-H); likely the walker's twin-label test. Needs the replay by item id, or the W-H fix.
+- [ ] U2: recurred as pass 3's U3 (Previous Track, 3 of 3). Needs the hover check by eye.
 - [ ] F3, the renamed-switch gap: Mark played on a film keeps focus on the switch (by hand; the walker skips it).
 - [ ] F1: a pad move right after the Back still wins (by eye; the walker judges before it moves).
 - [ ] F4: the guide gap's own text, "Connecting to Icefin One", read.
