@@ -44,7 +44,9 @@ WALK_JS = r"""
         path.unshift(n.tagName.toLowerCase() + ':' + i);
       }
       // (QA Orbit 3, W-V) a live tile reads "<channel> · <programme> ... until 5:30": the programme rolls over, the channel stays its name
-      const lab = (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').replace(/^(\d+ ·) .*$/, '$1').slice(0, 40);
+      // (QA Arcade 1, W-V) an account button reads "You: choose a server", then "<user> on <server name>; choose a
+      // server" once the name is known: one key, so a pad's press finds it again
+      const lab = (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').replace(/^(\d+ ·) .*$/, '$1').replace(/^.*[;:] choose a server$/i, 'account; choose a server').slice(0, 40);
       return path.join('>') + '|' + lab;
     },
     sig(e) {

@@ -85,7 +85,10 @@ IW_JS = r"""
   const STATEFUL = 'input[type=checkbox], input[type=radio], input[type=range], select, [role=switch], [role=checkbox], [role=radio], [role=slider], [role=combobox], [aria-haspopup=listbox], .emby-select, .emby-checkbox';
   const DLG = '.dialogContainer .dialog, .actionSheet, [role=dialog], .icefin-dd-list, .icefin-d-picker';
   const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h; };
-  const label = (e) => (e.getAttribute('aria-label') || e.title || e.textContent || e.getAttribute('placeholder') || e.value || '').toString().trim().replace(/\s+/g, ' ').slice(0, 60);
+  // (QA Baseline 3, W3) the text without the icon ligatures a theme marks aria-hidden ("play_circle_filledPlayback" reads "Playback");
+  // a control with nothing else keeps its whole text
+  const txt = (e) => { const t = e.textContent || ''; if (!e.querySelector('[aria-hidden=true]')) return t; const c = e.cloneNode(true); c.querySelectorAll('[aria-hidden=true]').forEach((n) => n.remove()); return (c.textContent || '').trim() ? c.textContent : t; };
+  const label = (e) => (e.getAttribute('aria-label') || e.title || txt(e) || e.getAttribute('placeholder') || e.value || '').toString().trim().replace(/\s+/g, ' ').slice(0, 60);
   // what a server plugin draws: not IceFin's own roots, not jellyfin-web's own markup
   const OWN = '#icefin-theme-root, #icefin-stock-chrome, #icefin-theme-overlay, #icefin-osk, #icefin-live, .skinHeader, .mainAnimatedPage, .page, .dialogContainer, .actionSheet, #reactRoot, .mainDrawer, .nowPlayingBar, #videoOsdPage, .videoOsdBottom, .osdHeader, .backgroundContainer';
   const info = (e) => ({ plugin: !e.closest(OWN), key: L.key(e), sig: L.sig(e), label: label(e), tag: e.tagName.toLowerCase(), role: e.getAttribute('role') || '', type: e.getAttribute('type') || '',
@@ -169,6 +172,18 @@ IW_JS = r"""
       const e = window.inputWalk.live(key); if (!e || !e.isConnected || !shown(e)) return null;
       const c = L.cur(), f = (n) => { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
       return { t: f(e), c: c ? f(c) : null };
+    },
+    // (QA Baseline 3, W4) of `keys`, the one nearest to the element: where a direct try starts
+    nearest(key, keys) {
+      const t = window.inputWalk.live(key); if (!t) return null;
+      const r = t.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      let best = null, bd = Infinity;
+      for (const k of keys) {
+        const e = els.get(k); if (!e || !e.isConnected || !shown(e)) continue;
+        const q = e.getBoundingClientRect(), d = Math.hypot(q.left + q.width / 2 - cx, q.top + q.height / 2 - cy);
+        if (d < bd) { bd = d; best = k; }
+      }
+      return best;
     },
     rect(key) {
       const e = window.inputWalk.live(key); if (!e || !e.isConnected) return null;
@@ -294,6 +309,49 @@ EDITOR_ROW = re.compile(r"^\s*(un)?lock\b", re.I)         # a field lock: only t
 # a label of one family that differs by digits only (IMG_101, IMG_102 ...): sampled, not walked entire (QA Orbit 3)
 def label_shape(s):
     return re.sub(r"\d+", "#", s or "")
+
+
+# (QA Baseline 3, W2) a programme card's label carries its time ("Old Maps, 8:30 AM - 9:30 AM"): its key goes stale at the next half
+# hour (6 to 9 minutes of failed navigates a run), so these cards are sampled like a guide's cells
+PROGRAMME = re.compile(r"\b\d{1,2}:\d{2}\s*(?:[ap]\.?m\.?)?\s*[-–]\s*\d{1,2}:\d{2}\s*(?:[ap]\.?m\.?)?", re.I)
+
+
+def programme(label):
+    return bool(PROGRAMME.search(label or ""))
+
+
+def jump_letter(c):
+    """(QA Baseline 3, W1, W6) a one-character control: a letter of a jump list (when its siblings are 8 or more of them)."""
+    return len((c.get("label") or "").strip()) == 1
+
+
+def jump_parent(key):
+    return key.split("|", 1)[0].rsplit(">", 1)[0]
+
+
+def dom_index(key):
+    """The index of a control among its siblings, from its key's path (tag:index>tag:index|label)."""
+    try:
+        return int(key.split("|", 1)[0].rsplit(">", 1)[-1].rsplit(":", 1)[1])
+    except (IndexError, ValueError):
+        return 0
+
+
+def strip_item(c):
+    """(QA Baseline 3, W1) a tab of a strip or a letter of a jump list: pressing it changes what its own screen shows, in place."""
+    return c.get("role") == "tab" or jump_letter(c) or bool(re.search(r"(^|[\s_.-])tabs?($|[\s_.-])", c.get("cls") or "", re.I))
+
+
+def own_q(h):
+    """The parameters of a hash the screen key does not drop as ids (a library's tab, a page number): what an in-place press can change."""
+    out = {}
+    for part in (h.split("?", 1)[1].split("&") if "?" in (h or "") else []):
+        n, _, v = part.partition("=")
+        if n and not re.search(r"id$", n, re.I) and not re.match(r"^([0-9a-f]{32}|[0-9a-f-]{36})$", v, re.I):
+            out[n] = v
+    return out
+
+
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
 # a Watch together group another parallel walker made (walk_parallel.py names its users qa-<shard>): joining it puts what
 # that walker plays on this one's screen (QA 3 re-walk 2, Media Center: the mouse joined qa-keys's group and its Live TV
@@ -616,6 +674,10 @@ class Walker:
         self.strip_done = {}              # key -> (screen, outcome, pivot) of a tab pressed that went to a screen: not pressed again on a shared strip
         self.menu_seen = set()            # (item type, kind) pairs the pad's menu button was pressed on (QA Orbit 3, W-Q)
         self.dlg_shapes = {}              # dialog id with its digits dropped -> passes (a slideshow's photos are sampled) (QA Orbit 3)
+        self.dlg_seen = {}                # (title, row labels) -> (screen, dialog id) walked first: the same menu is walked once a run (QA Arcade 1, W-MM)
+        self.lib_ids = {k.lower(): v for k, v in (present.get("lib_ids") or {}).items()}   # library id -> tag (QA Harbor 1, W-LIST)
+        self.jump_n = {}                  # screen key -> letters of its jump list pressed (QA Baseline 3, W6)
+        self.gone_key = None              # the control position() found gone from the page (QA Baseline 3, W2)
 
     # -------------------------------------------------------------- plumbing
     def tr(self, *x):
@@ -673,6 +735,12 @@ class Walker:
         k = s["route"]
         if k.startswith("/details") and s.get("item"):
             k += f" [{self.item_type(s['item'])}]"
+        # (QA Harbor 1, W-LIST) a library drawn as #/list?parentId=<its id> (books, home videos, playlists) is a screen of its own,
+        # not one of every /list
+        if k.startswith("/list") and self.lib_ids:
+            m = re.search(r"[?&]parentId=([0-9a-fA-F]{32})", s.get("hash") or "")
+            if m and m.group(1).lower() in self.lib_ids:
+                k += f" [lib:{self.lib_ids[m.group(1).lower()]}]"
         # a theme's active pivot is part of the screen: "/home · music" (no pivot header: no suffix) (QA Mosaic 1)
         if s.get("pivot"):
             k += f" · {s['pivot']}"
@@ -884,8 +952,8 @@ class Walker:
             e["plugin"] = True
         if c.get("pointer"):
             e["pointer"] = True
-        if c.get("guide"):
-            e["guide"] = True       # (QA Orbit 1, U5) a guide cell: left out of check_unreached
+        if c.get("guide") or programme(c.get("label")):
+            e["guide"] = True       # (QA Orbit 1, U5) a guide cell: left out of check_unreached; (QA Baseline 3, W2) so is a programme card
         if "inview" in c:
             e["inview"], e["osk"] = c["inview"], c.get("osk", False)
         return e
@@ -930,12 +998,26 @@ class Walker:
             time.sleep(0.5)
 
     # -------------------------------------------------------------- positioning
+    @staticmethod
+    def drifted(here, s):
+        """(QA Baseline 3, W1) The page is on the screen's route but its hash differs in a parameter the key does not tell apart
+        (a library's ?tab=), which an in-place press changed."""
+        w = here.get("hash") or ""
+        return bool(w) and s.get("route") == here.get("route") and s.get("hash") != w and own_q(s.get("hash") or "") != own_q(w)
+
     def go_here(self, k):
         here = self.screens[k]
         if self.screen()["dialog"]:
             self.dismiss()
         s = self.screen()
         cur = self.screen_key(s)
+        if cur == k and self.drifted(here, s):
+            # (QA Baseline 3, W1) the key matches but an in-place press left another tab shown (pass 3: the queued cards were gone,
+            # 100 s of failed navigates each): the screen's own hash goes back
+            self.tr("back to the screen's own hash", here["hash"][-60:])
+            self.js(f"location.hash = {json.dumps(here['hash'])}; true")
+            s = self.settle(prev=k, t=3.0)
+            cur = self.screen_key(s)
         if cur == k:
             return True
         if here.get("sub"):
@@ -1032,6 +1114,7 @@ class Walker:
                 return False
             self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) a control that came late joins the screen's
             return self.mouse_reach(k, c)
+        self.gone_key = None
         f = self.focus_now()
         if f and f["key"] == c["key"]:
             return True
@@ -1045,6 +1128,18 @@ class Walker:
             f = self.focus_now()
             if f and (f["key"] == c["key"] or self.js(f"window.inputWalk.isCur({json.dumps(c['key'])})")):
                 return True
+        if not self.js(f"window.inputWalk.present({json.dumps(c['key'])})"):
+            # (QA Baseline 3, W1) not on the page: an in-place press (a tab) may have left the screen on another state; its own
+            # hash goes back before any pressing is planned
+            if self.go_here(k) and self.drv.focus(c["key"]):
+                f = self.focus_now()
+                if f and (f["key"] == c["key"] or self.js(f"window.inputWalk.isCur({json.dumps(c['key'])})")):
+                    return True
+            # (QA Baseline 3, W2) a programme card whose time has passed is gone, not far: no navigating toward it (50 s, twice)
+            if programme(c.get("label")) and not self.js(f"window.inputWalk.present({json.dumps(c['key'])})"):
+                self.tr("gone: not on the page now; no verdict", c.get("label"))
+                self.gone_key = c["key"]
+                return False
         if self.navigate(k, c["key"]):
             return True
         if not self.restore(k, c.get("path", [])):
@@ -1101,8 +1196,11 @@ class Walker:
         if not self.edges.get(k):
             return False
         bad = set()
-        for _ in range(budget):
-            if self.late():
+        limit, sized = budget, -1
+        for it in range(budget):
+            # (QA Baseline 3, W2) a plan that has not brought the target in within twice its length is lost (a target that is
+            # gone from the page cost the full 40 presses, about 50 s, twice a card)
+            if self.late() or it >= limit:
                 return False
             f = self.focus_now()
             cur = f["key"] if f else None
@@ -1129,6 +1227,8 @@ class Walker:
             if not steps:
                 self.tr("no way to", target[-40:], "from", cur[-40:])
                 return False
+            if sized != len(bad):       # the first plan, and each plan again after a move went elsewhere (the budget still holds)
+                sized, limit = len(bad), min(budget, it + 2 * len(steps) + 4)
             d, want = steps[0]
             self.drv.move(d)
             s = self.settle(t=1.0)
@@ -1249,6 +1349,8 @@ class Walker:
         self.ensure()
         items = self.js(f"window.inputWalk.enumerate({json.dumps(scope)})") or []
         for c in items:
+            if programme(c.get("label")):
+                c["guide"] = True       # (QA Baseline 3, W2) a programme card is sampled like a guide's cell (the mouse pressed 168)
             self.element(k, c)
         return items
 
@@ -1266,7 +1368,7 @@ class Walker:
         v = self.js(f"window.inputWalk.vis({json.dumps(before['key'])})")
         if v is False:
             # the unfocused look may still be mid-transition: look again 200 ms later before judging it the same (QA Mosaic 1)
-            time.sleep(0.2)
+            time.sleep(0.35)     # (QA Harbor 1, W-N) four presses in 2 s were looked at mid-move: settle 350 ms before the second look
             if not self.js(f"window.inputWalk.off({json.dumps(before['key'])})"):
                 return
             v = self.js(f"window.inputWalk.vis({json.dumps(before['key'])})")
@@ -1359,11 +1461,16 @@ class Walker:
         # (QA Tide 3, W-R) a guide is one kind: a few cells per channel and 24 in all are taken (the 180 cells of a week's window
         # cost 15 of the 60 minutes); a row with its few ends there, and the walk of the screen ends with the 24th
         gseen, gfull, gcap = {}, [False], [False]
+        jlists, jseen = set(), {}       # (QA Baseline 3, W6) the jump lists of the screen, and the letters of each taken
 
         def take(f, pth):
             if f["key"] in seen:
                 return False
             seen[f["key"]] = True
+            # (QA Baseline 3, W2) a programme card is sampled like a guide cell, but its 24 in all don't end the screen's walk
+            prog = not f.get("guide") and programme(f.get("label"))
+            if prog:
+                f = dict(f, guide=True)
             if f.get("guide"):
                 kp = f["key"].split("|", 1)[0]
                 ch = kp.split(":")[1] if kp.startswith("guide:") else kp.rsplit(">", 1)[0]
@@ -1371,8 +1478,15 @@ class Walker:
                 if gseen[ch] > 3:
                     gcap[0] = True
                     return False
-                if sum(gseen.values()) >= 24:
+                if not prog and sum(gseen.values()) >= 24:
                     gfull[0] = True
+            elif jlists and jump_letter(f) and jump_parent(f["key"]) in jlists:
+                # (QA Baseline 3, W6) after 3 letters a jump list counts as walked (check_unreached takes the rest as it)
+                jp = jump_parent(f["key"])
+                jseen[jp] = jseen.get(jp, 0) + 1
+                if jseen[jp] > 3:
+                    gcap[0] = True
+                    return False
             ctrls.append(dict(f, path=list(pth)))
             self.reach(k, f)
             return True
@@ -1454,6 +1568,7 @@ class Walker:
         # ones the snake missed (QA Mosaic 1)
         first_view.update(c["key"] for c in (self.enum(k) or []))
         here["first_view"] = sorted(first_view)     # (QA Almanac 3, W15) activate() tells a level left open by it
+        jlists.update(self.jump_lists(k))
         climb()
 
         cut = [False]
@@ -1490,11 +1605,32 @@ class Walker:
                 if not dn and not moved:
                     break
                 horiz = "left" if horiz == "right" else "right"
+        def column():
+            # (QA Harbor 1, W-RAIL) the opening column, down only: a home whose left column is a menu (a rail of sections) was
+            # swept 1 or 2 entries deep, because the row sweeps leave it for the content beside it. Over entries already taken
+            # (up to 20 presses) while focus stays in the first control's parent; each press may swap the content, which is expected
+            fk = here.get("first_key")
+            if not fk or not self.drv.focus(fk):
+                return
+            par, old = jump_parent(fk), 0
+            for _ in range(20):
+                if self.late() or gfull[0]:
+                    break
+                old = 0 if step("down") else old + 1
+                if not moved_to[0] or old > 4:      # focus stopped, or 5 presses on controls taken already (a grid's first column)
+                    break
+                f = self.focus_now()
+                if not f or jump_parent(f["key"]) != par:
+                    break
+
         snake("right")
         path.clear()
         if not self.late() and not gfull[0] and self.restore(k, []):
             climb()
             snake("left")
+        if not self.late() and not gfull[0] and here.get("first_key") and self.restore(k, []):
+            path.clear()
+            column()
         if self.inp == "keys" and not self.late() and self.restore(k, []):
             self.tab_sweep(k, take)
         self.enum(k)    # after the scrolling: lazy rows are in
@@ -1559,20 +1695,26 @@ class Walker:
         when the mouse can use them). At most 20 per screen."""
         els = self.screens[k]["elements"]
         # (QA Almanac 2, W10) a scrolling row window lists the same cell at another index: a label this input reached is not missed
-        got = {(e.get("label") or "") for e in els.values() if e["reached"].get(self.inp)} - {""}
-        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("label") not in got and e.get("inview") and not e.get("osk") and not e.get("pointer") and not e.get("guide")
+        # (QA Harbor 1, W-RAIL) the label rule holds within one kind of control: a home's tile does not stand for the rail entry of
+        # the same name (Music, Shows, Books ... were dropped as reached)
+        gk = lambda e: ((e.get("label") or ""), (e.get("kinds") or ""))
+        got = {gk(e) for e in els.values() if e["reached"].get(self.inp) and gk(e)[0]}
+        # (QA Harbor 1, W-RAIL) a control out of its column's view (a list scrolled by transform: Search and Settings under a rail)
+        # with a sibling this input reached is tried: moving in the column brings it in
+        sib = {jump_parent(key) for key, e in els.items() if e["reached"].get(self.inp)}
+        # a parent with more than 15 controls is a shelf or grid: its off-view cards are not tried (they took all 20 tries, #242's pattern)
+        psize = {}
+        for key in els:
+            psize[jump_parent(key)] = psize.get(jump_parent(key), 0) + 1
+        offs = {key for key, e in els.items() if not e.get("inview") and jump_parent(key) in sib and psize[jump_parent(key)] <= 15}
+        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and gk(e) not in got and (e.get("inview") or key in offs) and not e.get("osk") and not e.get("pointer") and not e.get("guide")
                 and not str(e.get("outcome", "")).startswith("skipped: disabled")]
+        todo.sort(key=lambda t: t[0] in offs)       # the ones in view first (the list is cut at 20)
         # (QA Baseline 3, W-J) a jump list (8 or more one-character siblings: # and A to Z) is one control: a letter this input
         # reached, or one direct try, stands for the rest (pass 3 spent up to 30 s a letter, 20 letters a library screen)
         def jump(key, e):
-            lab = (e.get("label") or "").strip()
-            return key.split("|", 1)[0].rsplit(">", 1)[0] if len(lab) == 1 else None
-        size = {}
-        for key, e in els.items():
-            p = jump(key, e)
-            if p:
-                size[p] = size.get(p, 0) + 1
-        lists = {p for p, n in size.items() if n >= 8}
+            return jump_parent(key) if jump_letter(e) else None
+        lists = self.jump_lists(k)
         done = {jump(key, e) for key, e in els.items() if e["reached"].get(self.inp)} & lists
         kept = []
         for key, e in todo:
@@ -1588,9 +1730,21 @@ class Walker:
             if self.late():
                 here["complete"], here["walk"] = False, "cut by the budget"
                 break
+            # (QA Arcade 1, W-GOT) a label reached by an earlier try (a photo day shown in two shelves) is reached
+            if gk(e) in got:
+                continue
             if not self.go_here(k):
                 break
-            if here.get("first_key"):
+            # (QA Baseline 3, W4) the try starts from the reached control nearest the target, not the screen's first (a /tv tab row
+            # was a 7-press cycle from the first card)
+            start = None
+            cands = [x["key"] for x in self.ctrls.get(k, []) if x["key"] != key][:400]
+            if cands:
+                try:
+                    start = self.js(f"window.inputWalk.nearest({json.dumps(key)}, {json.dumps(cands)})")
+                except Exception:  # noqa: BLE001
+                    start = None
+            if not (start and self.drv.focus(start)) and here.get("first_key"):
                 self.drv.focus(here["first_key"])
             try:
                 ok = self.direct_reach(key)
@@ -1602,18 +1756,31 @@ class Walker:
                 continue
             if ok:
                 e["reached"][self.inp] = True
+                got.add(gk(e))
                 self.tr("direct reach worked", e.get("label") or key[-40:])
                 f = self.focus_now()     # reached: one of this input's controls, to activate like the rest
                 if f and f["key"] == key and not any(x["key"] == key for x in self.ctrls.get(k, [])):
                     self.ctrls.setdefault(k, []).append(dict(f, path=[]))
+            elif key in offs:
+                # (QA Harbor 1, W-RAIL) out of the column's view: a long list may need more presses than a try has; no verdict
+                self.tr("direct reach failed, out of view; no verdict", e.get("label") or key[-40:])
             else:
                 e["unreach"] = True
                 self.tr("direct reach failed", e.get("label") or key[-40:])
         self.go_here(k)
 
+    def jump_lists(self, k):
+        """(QA Baseline 3, W1, W6) The parents of the screen's jump lists: 8 or more one-character controls side by side (# and A to Z)."""
+        size = {}
+        for key, e in self.screens[k]["elements"].items():
+            if len((e.get("label") or "").strip()) == 1:
+                size[jump_parent(key)] = size.get(jump_parent(key), 0) + 1
+        return {p for p, n in size.items() if n >= 8}
+
     def tab_sweep(self, k, take):
         n, last, miss = 0, None, 0
         seen = set()    # distinct controls Tab reached
+        lists, jn = self.jump_lists(k), {}
         for i in range(40):
             self.drv.move("tab")
             n += 1
@@ -1626,6 +1793,15 @@ class Walker:
             last = f["key"]
             seen.add(last)
             take(f, ["tab"] * n)
+            if lists and jump_letter(f) and jump_parent(last) in lists:
+                # (QA Baseline 3, W6) the third letter of a jump list: focus goes to its last letter by script, so Tab goes on past it
+                # (520 Tab presses and 3.3 minutes a keys run went on the letters); the Tab count keeps the letters jumped over
+                jn[jump_parent(last)] = jn.get(jump_parent(last), 0) + 1
+                if jn[jump_parent(last)] == 3:
+                    row = sorted((x for x in self.screens[k]["elements"] if jump_parent(x) == jump_parent(last)), key=dom_index)
+                    if last in row and row[-1] != last and self.drv.focus(row[-1]):
+                        n += len(row) - 1 - row.index(last)
+                        last = row[-1]
         if last:
             self.drv.move("shift-tab")
             # Shift+Tab is judged only when Tab reached two or more distinct controls: from the only one there is nowhere back (QA Tide 1)
@@ -1657,6 +1833,11 @@ class Walker:
         el = self.element(k, c)
         label = c.get("label") or c["key"]
         if not self.position(k, c):
+            if self.gone_key == c["key"]:
+                # (QA Baseline 3, W2) a programme card that is no longer on the page: no verdict, no finding
+                el["outcome"] = "gone: not on the page now (no verdict)"
+                self.gone_key = None
+                return
             # per-screen data (the element's outcome); a finding only when it lies wholly outside the viewport with no way to scroll it in
             el["outcome"] = "unpositioned"
             try:
@@ -1818,7 +1999,8 @@ class Walker:
                 if self.mouse:
                     self.reveal(k, here, c, pre_keys)
                 else:
-                    self.close_open_level(k, here, c, label)
+                    if not self.close_open_level(k, here, c, label):
+                        self.undo_press(k, here, c, pre_keys)
                 return
             outcome, pk = "sub", sk       # a new level on the same route: Back is tested now, the level is explored later
             el["outcome"] = f"sub-screen: {sk}"
@@ -1845,6 +2027,13 @@ class Walker:
         if self.mouse and outcome == "screen" and " · " in pk and pk.split(" · ")[0] == k.split(" · ")[0].split(" > ")[0]:
             el["outcome"], el["back_ok"] = f"screen: {pk}", None
             self.tr("a pivot tab: a view of the same route, no Back check", label)
+            self.go_here(k)
+            return
+        # (QA Harbor 1, W-HEAD) a tab of the page (role=tab: a deck's head) that slid to a level of the same route is a view choice,
+        # no history entry: the mouse's Back leaves the page by design, so no Back check
+        if self.mouse and outcome == "sub" and c.get("role") == "tab":
+            el["back_ok"] = None
+            self.tr("a tab of the page: a view of the same route, no Back check", label)
             self.go_here(k)
             return
         # a control that is itself a way back: the level it reaches is a level up, not one opened, so no Back check (QA Tide 1)
@@ -1879,7 +2068,7 @@ class Walker:
                 el["back_ok"] = False
                 self.finding("focus-lost", k, label, f"after Back from {pk} nothing is focused")
             # the same control redrawn at another path (a row window that scrolled) is the opener (QA Almanac 1)
-            elif f["key"] != want and not self.js(f"window.inputWalk.isCur({json.dumps(want)})"):
+            elif f["key"] != want and not self.js(f"window.inputWalk.isCur({json.dumps(want)})") and not self.same_item(iid):
                 el["back_ok"] = False
                 self.finding("back-focus", k, label, f"after Back from {pk} focus is on '{f['label']}', not the control that opened it")
             else:
@@ -1901,7 +2090,7 @@ class Walker:
         theme's column memory reopens it. The first view's controls mostly gone and the opener too: Back once."""
         fv = set(here.get("first_view") or [])
         if not fv or len(self.ckeys() & fv) * 2 >= len(fv) or self.js(f"window.inputWalk.present({json.dumps(c['key'])})"):
-            return
+            return False
         self.tr("a level that was not taken is still open after", label, ": Back")
         self.drv.back(0)
         self.settle(t=2.0)
@@ -1911,6 +2100,38 @@ class Walker:
             self.reload()
             self.go_here(k)
         self.back_at = time.time()
+        return True
+
+    def undo_press(self, k, here, c, pre_keys):
+        """(QA Baseline 3, W1) A pad's or key's press that changed the page in place and opened no level (a library's tab, which sets
+        ?tab= in the hash; a jump list's letter, which filters the grid) leaves the screen in another state, and the cards queued
+        from its first view are gone (pass 3: about 100 s of failed navigates a card, 15 to 19 minutes a run). The screen's own hash goes
+        back; a letter is pressed again (Baseline's toggle), and the page is reloaded when its controls do not come back."""
+        try:
+            if self.drifted(here, self.screen()):
+                self.go_here(k)
+                return
+            # a letter of a jump list only (8 or more one-character siblings), never an on-screen keyboard key or a lone
+            # one-character control ("+", "×", "−" would step or remove a second time)
+            el = self.screens[k]["elements"].get(c["key"]) or {}
+            if el.get("osk") or not jump_letter(c) or jump_parent(c["key"]) not in self.jump_lists(k):
+                return
+            if self.js(f"window.inputWalk.present({json.dumps(c['key'])})") and self.drv.focus(c["key"]):
+                self.drv.activate()
+                self.settle(prev=k, t=2.0)
+                if pre_keys and len(self.ckeys() & pre_keys) * 2 < len(pre_keys):
+                    self.tr("the letter did not toggle back; reloading")
+                    self.reload()
+                    self.go_here(k)
+        except Exception as ex:  # noqa: BLE001 (a restore never ends the screen's walk)
+            self.tr("undo press error", ex)
+
+    def same_item(self, iid):
+        """(QA Baseline 3, W-H) Focus is on a control of the item the press opened from (its data-id), though the row was redrawn and a
+        twin carries its label."""
+        if not iid:
+            return False
+        return bool(self.js("(() => { const e = window.labWalk.cur(); const n = e && e.closest('[data-id], [data-itemid]'); return !!n && (n.getAttribute('data-id') || n.getAttribute('data-itemid')) === " + json.dumps(iid) + "; })()"))
 
     def menu_probe(self, k, here):
         """(QA Orbit 3, W-Q) The pad's Menu button (X: west) pressed on one entry of each kind on a details screen: a season row, an
@@ -2152,6 +2373,13 @@ class Walker:
         if any(EDITOR_ROW.match(r.get("label") or "") for r in rows):
             self.tr("the dialog is the metadata editor (a field lock among its rows): nothing pressed")
             rows = []
+        # (QA Arcade 1, W-MM) the same menu (its title and rows) on another screen: walked once a run, the later screens only open
+        # and close it (the mouse spent 21.6 of its 60 minutes on one 14-row main menu, on 19 screens)
+        if len(rows) >= 3:
+            sigk = (title, tuple(sorted(r.get("label") or "" for r in rows)))
+            if self.dlg_seen.setdefault(sigk, (dk, did)) != (dk, did):
+                self.tr("the same dialog as on", self.dlg_seen[sigk][0], ": opened and closed, not walked again")
+                rows = []
         tried, fam = {}, {}
         cap, i = (24 if self.mouse else 12), 0
         while i < min(len(rows), cap):      # (QA Orbit 1, W-B) a list: the mouse's in-place clicks add rows as it goes
@@ -2281,6 +2509,8 @@ class Walker:
             return
         if not here["collected"]:
             self.collect(k, here)
+        t0 = time.time()      # the 5-minute round-one cap counts presses, not the screen's walk (collect, its column and off-view tries)
+        jl = self.jump_lists(k)       # (QA Baseline 3, W6) the screen's jump lists: 3 letters are pressed a screen
         # the seeds first (the preferences menu), then the first of each kind, then the rest; again while activations show
         # more controls (the mouse: a category chosen shows its column)
         def ukey(c):
@@ -2318,6 +2548,7 @@ class Walker:
             return lab in names or head in names or lab == "search" or any(re.search(rx, lab) for rx in lack) \
                 or settings_entry(c, lab, head) \
                 or (shared.get(c["key"], 0) >= 3 and c["key"] not in self.strip_tried and not c.get("guide"))
+        capped = False
         for _pass in range(4):
             if self.mouse and _pass:
                 self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) controls that showed late since the last pass
@@ -2327,10 +2558,20 @@ class Walker:
                 u = ukey(c)
                 counts[u] = counts.get(u, 0) + 1
                 # (QA Orbit 3) a guide's cells go last in round two: the unreached seeds and the other screens' controls come first
-                ranked.append((0 if pref_control(c) else 1 if seed(c) else 3 if (c.get("guide") and limit == INF) else 2, counts[u], c))
+                rk = 0 if pref_control(c) else 1 if seed(c) else 3 if (c.get("guide") and limit == INF) else 2
+                # (QA Baseline 3, W1) the tabs and jump-list letters of a screen go after its cards: an item-type seed matched the
+                # library's own tabs (Episodes, Songs, Albums), and a tab that changes the page in place hid the cards queued behind it
+                if rk in (1, 2) and k != self.root and strip_item(c):
+                    rk = 2.5
+                ranked.append((rk, counts[u], c))
             ranked.sort(key=lambda t: (t[0], t[1]))
-            for _, n, c in ranked:
+            for rk, n, c in ranked:
                 if self.late():
+                    break
+                # (QA Baseline 3, cap) round one gives a screen 5 minutes (walk and presses) past its seeds; the rest waits for round two
+                if limit != INF and rk >= 2 and time.time() - t0 > 300:
+                    capped = True
+                    self.tr("screen", k, "round one: 5 minutes used; the rest waits for round two")
                     break
                 u = ukey(c)
                 if tried.get(u, 0) >= limit and not seed(c) and not pref_control(c):
@@ -2340,6 +2581,12 @@ class Walker:
                 if why:
                     self.element(k, c)["outcome"] = "skipped: " + why
                     continue
+                # (QA Baseline 3, W6) a jump list is sampled: 3 letters a screen (27 letters a library screen, 3 presses and a toggle each)
+                if jump_letter(c) and jump_parent(c["key"]) in jl:
+                    self.jump_n[k] = self.jump_n.get(k, 0) + 1
+                    if self.jump_n[k] > 3:
+                        self.element(k, c)["outcome"] = "skipped: sampled (a jump list's letter)"
+                        continue
                 # (QA Almanac 3, W9; QA Mosaic 2, W-PT) a tab that opened a screen (a library's tab, a pivot's header) on a strip every
                 # screen shows is pressed on the first screen it appears on; here its outcome is copied. A pivot's header
                 # of the same route counts at once (each header is clicked once), a library's tab once 3 screens share it
@@ -2361,7 +2608,7 @@ class Walker:
                 o = str(self.screens[k]["elements"].get(c["key"], {}).get("outcome") or "")
                 if o.startswith("screen: ") and not o[8:].startswith(("/video", "/details")) and c["key"] not in self.strip_done:
                     self.strip_done[c["key"]] = (k, o, o[8:].split(" · ")[0] == k.split(" · ")[0].split(" > ")[0] and " · " in o)
-            if not acted or self.late() or not self.go_here(k):
+            if not acted or capped or self.late() or not self.go_here(k):
                 break
         if not self.mouse and k.startswith("/details") and limit != INF:
             self.menu_probe(k, here)
@@ -2460,7 +2707,10 @@ class Walker:
         routes = [base(k).split(" ")[0] for k in self.screens]
         required = [(n, PREFS_MENU if n == "the preferences menu" else rx) for n, rx in cw.REQUIRED]
         missing = [n for n, rx in required if not any(re.search(rx, r) for r in routes)]
-        missing += [f"a {lib} library" for lib, rx in self.present["libraries"] if not any(re.search(rx, r) for r in routes)]
+        # (QA Baseline 3, W5; QA Harbor 1, W-LIST) a library drawn as #/list?parentId=<its id> (books, home videos) is its screen "/list [lib:<name>]"
+        tags = self.present.get("lib_tags") or {}
+        missing += [f"a {lib} library" for lib, rx in self.present["libraries"] if not any(re.search(rx, r) for r in routes)
+                    and not any(f"[lib:{t}]" in s for s in self.screens for t in tags.get(lib, []))]
         missing += [f"details of a {t}" for t in self.present["types"] if not any(f"/details" in k and f"[{t}]" in k for k in self.screens)
                                                       and not any(sc["route"].startswith("/details") and (sc.get("sub") or {}).get("itype") == t for sc in self.screens.values())
                                                       # (QA Almanac 3, W19) a series page that lists its seasons as a level ("All ›, Season 1") shows them
@@ -2529,9 +2779,13 @@ def merge(theme, reps):
 
 def mark_control(m, control):
     """D41: a finding the same walk on stock jellyfin-web also has is also_in_control (the theme didn't cause it)."""
-    have = {(f["input"], f["kind"], rt(f["screen"]), f["element"]) for f in control["findings"]}
+    # (QA Baseline 3, W-K) the screen with its item type: stock's Series Play error is not a Folder's
+    def typed(s):
+        t = re.match(r"\S+ (\[\w+\])", base(s))
+        return rt(s) + (" " + t.group(1) if t else "")
+    have = {(f["input"], f["kind"], typed(f["screen"]), f["element"]) for f in control["findings"]}
     for f in m["findings"]:
-        f["also_in_control"] = (f["input"], f["kind"], rt(f["screen"]), f["element"]) in have
+        f["also_in_control"] = (f["input"], f["kind"], typed(f["screen"]), f["element"]) in have
 
 
 def markdown(m, reps, prefix=""):
@@ -2880,18 +3134,43 @@ def use_theme(page, theme):
 
 def what_is_there(page):
     """What the server has, so 'required' means what it holds: library kinds and item types."""
-    libs, types, names = [], [], []
+    libs, types, names, lib_ids, lib_tags = [], [], [], {}, {}
     try:
-        views = page.eval("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => r.Items.map(v => [v.CollectionType || 'mixed', v.Name || '']))") or []
+        views = page.eval("window.ApiClient.getUserViews({}, window.ApiClient.getCurrentUserId()).then(r => r.Items.map(v => [v.CollectionType || 'mixed', v.Name || '', v.Id || '']))") or []
         kinds = [v[0] for v in views]
         names = [v[1] for v in views if v[1]]
         libs = [(t, LIBRARY[t]) for t in dict.fromkeys(kinds) if t in LIBRARY]
+        # (QA Harbor 1, W-LIST) each library's id with a tag of its name: its #/list?parentId=<id> screen is keyed by it
+        for v in views:
+            if len(v) > 2 and v[2] and v[1]:
+                tag = re.sub(r"\W+", "_", v[1]).strip("_") or v[0]
+                lib_ids[v[2].lower()] = tag
+                lib_tags.setdefault(v[0], []).append(tag)
         for t in ITEM_TYPES[:7]:
             if page.eval(f"window.ApiClient.getItems(window.ApiClient.getCurrentUserId(), {{IncludeItemTypes: '{t}', Recursive: true, Limit: 1}}).then(r => (r.Items || []).length > 0).catch(() => false)"):
                 types.append(t)
     except Exception:  # noqa: BLE001
         pass
-    return {"libraries": libs, "types": types, "names": names}
+    return {"libraries": libs, "types": types, "names": names, "lib_ids": lib_ids, "lib_tags": lib_tags}
+
+
+def pad_wrong(page, kind, t=12):
+    """(QA Arcade 1, L-2) '' when the app lists a pad of the family the one plugged in should be (the log's "Icefin gamepad: connected
+    <name> (<family>)"; a DualSense under SDL's database name "PS5 Controller" is not it: its Cross arrives as Menu, and a DualSense run
+    that shared a guest with another walk was lost whole), else what the app listed. Polls up to `t` s."""
+    want, t0, why = vpads.FAMILY.get(kind, ""), time.time(), ""
+    while True:
+        try:
+            pads = page.eval("new Promise(r => window.api.gamepads.list((l) => r(l)))") or []
+        except Exception:  # noqa: BLE001
+            pads = []
+        mine = [p for p in pads if p.get("family") == want and not (kind == "dualsense" and (p.get("name") or "").strip() == "PS5 Controller")]
+        if mine:
+            return ""
+        why = f"expected a {want} pad, the app lists " + (", ".join(f"{p.get('name')} ({p.get('family')})" for p in pads) or "none")
+        if time.time() - t0 > t:
+            return why
+        time.sleep(1)
 
 
 def main():
@@ -3032,6 +3311,34 @@ def main():
                                     summary.append(f"- {msg}")
                                     app.unplug()
                                     continue
+                                if scenario == "plain":
+                                    # (QA Arcade 1, L-2) the app saw the pad this run plugged in? Else the pad is plugged in again, then the
+                                    # app started again, once; still wrong: one finding and no run (not 32 findings of a pad that never worked)
+                                    bad = pad_wrong(page, plug_as)
+                                    if bad:
+                                        print(f"input_walk: {theme} / {label}: {bad}; plugging the pad in again", flush=True)
+                                        app.unplug()
+                                        time.sleep(2)
+                                        pad = app.plug(plug_as)
+                                        bad = pad_wrong(page, plug_as)
+                                    if bad:
+                                        print(f"input_walk: {theme} / {label}: {bad}; starting the app again", flush=True)
+                                        app.reopen()
+                                        app.use_theme(theme)
+                                        page = app.page
+                                        if a.host:
+                                            size_window(page)
+                                        pad = app.plug(plug_as)
+                                        bad = pad_wrong(page, plug_as)
+                                    if bad:
+                                        msg = f"{theme}: {label} skipped: {bad}"
+                                        print("input_walk:", msg, flush=True)
+                                        summary.append(f"- {msg}")
+                                        reps.setdefault("_app", {"input": "app", "family": "", "screens": {}, "findings": []})["findings"].append(
+                                            {"severity": "high", "kind": "walk-error", "screen": "", "element": "pad", "run": label,
+                                             "detail": f"the app did not see the pad plugged in for this run: {bad}"})
+                                        app.unplug()
+                                        continue
                             idir = os.path.join(tdir, label)
                             # every input starts from the same page: the home, freshly loaded (a theme keeps where each
                             # screen was, a category chosen or a level open, which the walk before left behind)
