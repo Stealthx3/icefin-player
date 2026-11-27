@@ -1484,7 +1484,28 @@ class Walker:
         # (QA Almanac 2, W10) a scrolling row window lists the same cell at another index: a label this input reached is not missed
         got = {(e.get("label") or "") for e in els.values() if e["reached"].get(self.inp)} - {""}
         todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("label") not in got and e.get("inview") and not e.get("osk") and not e.get("pointer") and not e.get("guide")
-                and not str(e.get("outcome", "")).startswith("skipped: disabled")][:20]
+                and not str(e.get("outcome", "")).startswith("skipped: disabled")]
+        # (QA Baseline 3, W-J) a jump list (8 or more one-character siblings: # and A to Z) is one control: a letter this input
+        # reached, or one direct try, stands for the rest (pass 3 spent up to 30 s a letter, 20 letters a library screen)
+        def jump(key, e):
+            lab = (e.get("label") or "").strip()
+            return key.split("|", 1)[0].rsplit(">", 1)[0] if len(lab) == 1 else None
+        size = {}
+        for key, e in els.items():
+            p = jump(key, e)
+            if p:
+                size[p] = size.get(p, 0) + 1
+        lists = {p for p, n in size.items() if n >= 8}
+        done = {jump(key, e) for key, e in els.items() if e["reached"].get(self.inp)} & lists
+        kept = []
+        for key, e in todo:
+            p = jump(key, e)
+            if p in lists:
+                if p in done:
+                    continue
+                done.add(p)
+            kept.append((key, e))
+        todo = kept[:20]
         self.cur_screen_key = k
         for key, e in todo:
             if self.late():
