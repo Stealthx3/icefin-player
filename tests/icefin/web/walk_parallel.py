@@ -117,7 +117,11 @@ def sync_users(s, admin_id, uids):
             body.setdefault("Played", False)
             body.setdefault("PlaybackPositionTicks", 0)
             body.setdefault("IsFavorite", False)
-            s.call("POST", f"/UserItems/{iid}/UserData?userId={uid}", body)
+            try:
+                s.call("POST", f"/UserItems/{iid}/UserData?userId={uid}", body)
+            except Exception as ex:  # noqa: BLE001 (an item gone since the listing, a programme the guide refresh replaced, is skipped)
+                print(f"walk_parallel: user {uid[:8]}: item {iid[:8]} not synced ({ex})", flush=True)
+                continue
             n += 1
         print(f"walk_parallel: user {uid[:8]} synced with the admin ({n} items' user data)", flush=True)
 
