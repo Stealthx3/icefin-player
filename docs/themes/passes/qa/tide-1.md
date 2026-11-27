@@ -118,28 +118,51 @@ Judged:
 ## To recheck in pass 2
 
 Each is replayed in the lab on the engine build from #236 and the fixed walker; tick when it holds.
-- [ ] F1: mouse on #/movies: the library's own icon in the trail has no "Back to Movies" label and the walker doesn't
+Triaged after pass 2 (tide-2.md): the ticked ones held; the others carry to pass 3.
+- [x] F1: mouse on #/movies: the library's own icon in the trail has no "Back to Movies" label and the walker doesn't
       list it. Open Collections: "Back to Movies" (the step below) still pops to the library, and "Collections" (the top)
       is a label. On a movie's details the poster in the trail is a label.
-- [ ] F2: keys, a movie's details → Down to Subtitles → Enter → Enter on "Off" → focus is on Subtitles. Then Down to "Add
+      Held: no "Back to <self>" finding in any run (pass 1: 22); "Back to Movies" on Collections and "Back to Test
+      Tones" on an album's Cast and crew pop their level.
+- [x] F2: keys, a movie's details → Down to Subtitles → Enter → Enter on "Off" → focus is on Subtitles. Then Down to "Add
       to favourites" → Enter → focus stays on "Favourite ✓".
+      Held for the picker: Subtitles → Off leaves no back-focus on keys, Xbox and DualSense (pass 1: 6). Favourite and
+      Mark as watched are on the walker's denylist: still to check by hand (carried).
 - [ ] F3: mouse, #/movies → Studios (empty) → Options shows "No options here" with the error sound. On a movie entry
       Options still opens its panel.
+      Open: not exercised; the pointer line's Options was unpositioned for the mouse on the screens that had it.
 - [ ] F4: mouse, #/queue with nothing playing → Shuffle shows "Nothing is playing". With a song playing, Previous goes
       back.
-- [ ] F5: keys on Icefin Mix: Play all, then E660, then Shuffle; each shows a notice under the clock.
-- [ ] F6: keys, #/livetv?td=guide, OK on "No information" → "Connecting to Icefin One" (the walker sees the card now,
+      Open: still dead on the mouse (5 findings); the idle test never fired because the engine's state is not null
+      when idle. Fixed in pass 2's commit; to replay.
+- [x] F5: keys on Icefin Mix: Play all, then E660, then Shuffle; each shows a notice under the clock.
+      Held on keys and pads (Xbox: Play all, E660, Shuffle, A440 all in-place; pass 1: dead). The mouse's Shuffle on a
+      playlist was the details' facts block taking the click (fixed in pass 2).
+- [x] F6: keys, #/livetv?td=guide, OK on "No information" → "Connecting to Icefin One" (the walker sees the card now,
       W1).
-- [ ] Engine, settings: pad, Settings › Your profile and preferences, then Back → "Your profile and preferences"
+      Held: OK on a gap connects and plays the channel. New in pass 2: Back from the player lost the row (fixed).
+- [x] Engine, settings: pad, Settings › Your profile and preferences, then Back → "Your profile and preferences"
       focused. Display → Playback tab, then Back → the Playback tab focused.
+      Held on the mouse: every hub and preference-tab opener returns focus to itself (pass 1: 9). The pad replay is
+      still to do: pads did not reach the profile link (U1 in tide-2.md).
 - [ ] Engine, the guide: the current cell follows focus, and Left from a long programme keeps focus.
-- [ ] levelBack: real input (the native Back button skips DevTools): xdotool `click 8` on the lab's display. Shows →
+      Open: the lab's guide has no programmes (every cell is a gap), so a long programme can't be tested. Needs guide
+      data in the lab or a check by hand.
+- [x] levelBack: real input (the native Back button skips DevTools): xdotool `click 8` on the lab's display. Shows →
       Genres → mouse Back → back on Shows' column with Genres focused; a second mouse Back leaves #/tv. Also /home >
       Channels, an album's Cast and crew and an artist's Appears on. At a screen's root the button leaves as before.
+      Held through DevTools: no broken-back on any level (pass 1: 11). Real input, 2026-11-26 in a build of #236:
+      Shows → Genres → xdotool `click 8` came back to Shows' column on #/tv; one press arrives as two back traversals,
+      and the engine now drops the second (it had gone two entries back, to the sign-in page).
 - [ ] Watch together row: names and count show (commit 9c287793).
+      Open: no group existed but the walker's own, which showed only "You are in". Needs a group made by another user.
 - [ ] The walker (#234, #235): Tide reaches a series' seasons and episodes, an album, an artist, a song, Display
       preferences and Now playing on keys and pad runs; the walker's own fixes (W1 to W7) leave no finding of those kinds.
+      Open: every run still missed a series, season, episode and song (five more walker faults, tide-2.md); W1 to W7
+      left no finding of their kinds.
 - [ ] U1, as above.
+      Open: the same error came back in the other direction (Subtitles → Playback); the stack is not recorded yet.
 - [ ] The overlay's focus look on the current "Play on" tab, by eye (W5).
+      Open: a human check, not done.
 
 Tide's first pass is done; its second walks on the fixed walker with the engine build from #236.
