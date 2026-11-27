@@ -36,6 +36,6 @@
       "harbor",
       "lumen"
     ],
-    "passes": {"plaza": 3, "media-center": 3, "tide": 2, "almanac": 2, "baseline": 2, "orbit": 2, "mosaic": 1}
+    "passes": {"plaza": 3, "media-center": 3, "tide": 3, "almanac": 3, "baseline": 2, "orbit": 3, "mosaic": 2}
   }
 }

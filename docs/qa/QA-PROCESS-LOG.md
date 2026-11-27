@@ -66,6 +66,8 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
   about half of it (2026-11-27, passes 2).
 - Give a walker change one full walk, with a look at its first minutes, before it merges; a rule that only logs at
   first shows whether it would misfire (2026-11-27: the in-place opener check, 97 false openers a run on Mosaic).
+- A walker change merges only after a full walk shows coverage up on every input, not just on the theme it was written
+  for (2026-11-27: #242 helped Orbit and Almanac and cost Baseline half its pad screens).
 - Every walker fix is found by tracing a finding to its cause, and is re-checked by the next walk.
 
 **Triage**
@@ -73,6 +75,9 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
 - Trace every new finding before fixing anything; most are the walker's, and the real ones are often not where the
   finding points (2026-11-26: a "dead" Instant mix was a missing notice; dead player controls were another run's
   channel).
+- A finding blamed on the walker is replayed by hand before it is closed as walker (2026-11-27: Mosaic's unreachable
+  tiles were an engine bug).
+- Per-app volume in the sound server is the first thing to check when an app is silent (2026-11-27).
 - Carry judged findings forward (`tests/icefin/web/qa-judged.json`): a walk lists only what is new (D47: 100 to 45).
 - Close every recheck with evidence from a walk, or keep it open with what is missing. A recheck left unticked hid a
   real bug for ten days (2026-11-26, plan review: the pad never reached a book's Add to favorites).
@@ -188,6 +193,22 @@ lost its last 20 minutes: the walker pressed Exit (an icon's ligature text, "clo
 whole-word rule) and every later screen waited out a reconnect; a run now ends at the first app-quit. Lessons: measure
 the hour before adding minutes; check a new walker rule against every theme's labels; give a walker change one full
 walk with an early look before it merges.
+
+**2026-11-27: passes 3 (Tide, Almanac, Orbit), Mosaic 2, a third guest.** Walker #242's first walks: Orbit's mouse
+reached 58 screens (26 before), Almanac's pads and keys 37 (21 to 22), failed direct tries fell from 18 to 2.4 minutes
+and the "All ›" thrash from 13 to 4. But Baseline's pads fell from 29 to 16 screens: a direct try for every letter of
+stock's A to Z jump list (up to 30 s each, 68 a run). Fixed (one letter stands for the list), and Baseline pass 3 walks
+again as #242's check. Mosaic 2 found a real engine bug that pass 1 had blamed on the walker: the arrows' beam took any
+overlap and broke ties by page order, so a focused tile scaled past the grid gap sent Right up a row and pads never
+reached the home's lower tiles (36 findings). Fixed in #244 and checked in the lab by a replay of the same presses on
+both builds. Every themed screen with in-place levels needs the engine's levelBack hook for the mouse's Back: Orbit and
+Almanac lacked it (13 mouse broken-backs); the walks decide per theme. The mouse reached the metadata editor through
+Media info's Details tab and toggled field locks (unsaved); the walker now stays out of the item editor. A third lab
+guest (8 cores, 16 GB, a copy of the second) walked at the same pace as two: in the first 12 minutes, pads made 371 to
+376 presses against 356, keys 416 to 427 against 483. Outside the walks, IceFin on the workstation was near silent
+because PipeWire had saved its stream at 13% (-53 dB); the app was fine. The user does the human reviews once the
+automated walks are finished. Lessons: a walker change needs a full walk on every input before it merges; replay a
+finding blamed on the walker before closing it; check the sound server's per-app volume before the app.
 
 ## Metrics
 

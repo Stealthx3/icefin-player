@@ -17,7 +17,9 @@
     {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"},
     {"kind": "^dead-control$", "input": "^mouse$", "element": "^Now playing: .*; open the queue$", "why": "the lab's songs are 15-s clips: the song line hides when the song ends, here between the hover and the click; clicked during a song it opens the queue", "doc": "almanac-1.md, mosaic-1.md, tide-2.md"},
     {"kind": "^dead-control$", "screen": "\\[Book\\].*\\(dialog\\)", "element": "^Next$", "why": "the book reader turns the page inside its own frame or on a canvas, which the walker's change check doesn't see (page 1, Next, page 2)", "doc": "mosaic-1.md, baseline-2.md"},
-    {"kind": "^dead-control$", "input": "^(keys|pad)$", "screen": "^/music\\?", "element": "^Shuffle$", "why": "a library's Shuffle fetches its items before it plays, and the now playing bar comes after the walker's settle; stock's control reads the same", "doc": "baseline-2.md"}
+    {"kind": "^dead-control$", "input": "^(keys|pad)$", "screen": "^/music\\?", "element": "^Shuffle$", "why": "a library's Shuffle fetches its items before it plays, and the now playing bar comes after the walker's settle; stock's control reads the same", "doc": "baseline-2.md"},
+    {"kind": "^unreachable-by-input$", "input": "^(pad|keys)$", "element": "^Now playing: .*; open the queue$", "why": "the lab's songs are 15-s clips: the song line hides when the song ends, here before the walker's direct try", "doc": "tide-3.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "^/mypreferences", "element": "^Localization$", "why": "the preference page's first section link: that section is already at the top, so the click scrolls nothing (a pad's or the keys' press moves focus to its first field); the engine's settings hub, in every theme", "doc": "almanac-3.md"}
   ],
   "baseline": [
     {"kind": "^dead-control$", "screen": "^/(movies|tv|music|livetv)(\\?|$)", "element": "^(Movies|Shows|Albums|Programs|Series)$", "why": "the tab you are on: a press on the selected tab does nothing, as stock's", "doc": "baseline-1.md, baseline-pre.md"},
@@ -31,6 +33,9 @@
   "orbit": [
     {"kind": "^shift-tab$", "why": "Orbit is a console dashboard: its channels, decks and guide take the arrows and a pad; every control is tabIndex -1 and nothing takes Tab", "doc": "orbit-1.md"},
     {"kind": "^dead-control$", "screen": "^/details \\[PhotoAlbum\\] \\(dialog\\)$", "element": "^(Play all|Shuffle)$", "why": "jellyfin-web's photo slideshow covers the screen and has no controls; the walker pressed the album's own Play all under it, which starts the slideshow already showing", "doc": "orbit-1.md, orbit-pre.md"},
+    {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "\\d{3,4}×\\d{3,4}( · |$)|, (Video|Audio|Subtitle|Data|EmbeddedImage)$", "why": "Media info's stream rows are text to read, focusable so a pad can scroll them; OK does nothing, as stock's media info (the walker's 60-character label cut drops the ', Video' Baseline's rule matches)", "doc": "orbit-3.md"},
+    {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/(movies|books|tv|music)$", "element": "\\(\\d{4}\\)|, \\d+ min", "why": "Orbit's library tabs follow a pad's focus; the walker's snake left another tab shown and its direct try ran with the tile off the page (keys reached every tile; a pad reaches them from All movies) until the walker replays the collecting tab (W-S)", "doc": "orbit-3.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "^/home \\(dialog\\)$", "element": "^Watch together…$", "why": "the guide's Play on… row before it swaps the guide for the Play on panel, and the walker clicks the next guide row's point on that panel; Watch together… opens the panel on its Watch together tab (channels.js) until the dialog pass notices a swapped dialog (W-Q2)", "doc": "orbit-2.md, orbit-3.md"},
     {"kind": "^dead-control$", "input": "^mouse$", "screen": "^/home$", "element": ": the channel$", "why": "the current channel's title brings its first tile back; with that tile already in front there is nothing to change", "doc": "orbit-1.md"},
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/livetv\\?or=", "element": "^(Channels|Guide|Recordings|Schedule|Series)$", "why": "Live TV's tabs on a list screen switch the view in place (as a library's pivot); Back goes back in history, as a pad's Back does there", "doc": "orbit-1.md"}
   ],
@@ -39,13 +44,27 @@
   ],
   "almanac": [
     {"kind": "^shift-tab$", "why": "Almanac is a TV (cable-guide) theme: its rows and guide take the arrows; Tab isn't one of its inputs", "doc": "almanac-1.md"},
-    {"kind": "^dead-control$", "input": "^mouse$", "screen": "\\(dialog\\)$", "element": "^Details$", "why": "the item's wide panel opens on its Details section (Edit details…); choosing the section already shown redraws it in place", "doc": "almanac-2.md"}
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "\\(dialog\\)$", "element": "^Details$", "why": "the item's wide panel opens on its Details section (Edit details…); choosing the section already shown redraws it in place", "doc": "almanac-2.md"},
+    {"kind": "^dead-control$", "element": "^Nothing (here yet|new|up next|in progress|to continue)\\b", "why": "an empty row's note: focusable so a pad can land on the row and read it, with no OK hint; OK answers with the error sound only", "doc": "almanac-3.md"},
+    {"kind": "^broken-back$", "screen": "^/[a-z]+ > ", "detail": "^Back from (/[a-z]+) ended on .*\\(want \\1 > ", "why": "the tab of the library you are in, pressed inside one of its levels, goes to the library's top in place (the tab's OK) with no history entry, so Back then leaves the library, for every input", "doc": "almanac-3.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "^/details \\[(MusicAlbum|MusicArtist|Playlist)\\]$", "element": "^(Instant mix|Shuffle)$", "why": "pressed while the lab's 15-s song plays: the song line redraws every second, so the walker counts only focus moving and misses the notice the press shows (drop with W18)", "doc": "almanac-3.md"}
   ],
   "plaza": [
     {"kind": "^shift-tab$", "why": "Plaza is a TV theme; Tab isn't one of its inputs (arrows are)", "doc": "plaza-3.md"}
   ],
   "mosaic": [
     {"kind": "^shift-tab$", "why": "Mosaic is a pad-first console dashboard: its tiles, decks and guide take the arrows and a pad; every control is tabIndex -1 and nothing takes Tab", "doc": "mosaic-1.md"},
-    {"kind": "^dead-control$", "screen": "^/details \\[PhotoAlbum\\] \\(dialog\\)$", "element": "^(Play all|Shuffle)$", "why": "jellyfin-web's photo slideshow covers the screen and has no controls; the walker pressed the album's own Play all under it, which starts the slideshow already showing", "doc": "mosaic-1.md, mosaic-pre.md"}
+    {"kind": "^dead-control$", "screen": "^/details \\[PhotoAlbum\\] \\(dialog\\)$", "element": "^(Play all|Shuffle)$", "why": "jellyfin-web's photo slideshow covers the screen and has no controls; the walker pressed the album's own Play all under it, which starts the slideshow already showing", "doc": "mosaic-1.md, mosaic-pre.md"},
+    {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/home · ", "detail": "^Back from /home · ", "why": "a pivot header is a tab of the home: switching pivots adds no history entry, so the mouse's Back button goes back in history (Metro's pivot; as Media Center's library pivots); the pad's B returns to the home pivot. Until the walker stops checking Back after a pivot tab (W-PT)", "doc": "mosaic-2.md"},
+    {"kind": "^unpositioned$", "input": "^mouse$", "screen": "^/home · ", "why": "the pivot's headers slide so the current one sits at the grid's left; the ones before it trail off the left and the last off the right by design, and the visible headers and the wheel page to them", "doc": "mosaic-2.md"},
+    {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "^(Details|Images|Identify|Media info|Refresh)$", "why": "the item panel's shown section: a click on it redraws nothing by design; until the panel tabs carry aria-selected (T3) and the dialog pass honours it (W-P)", "doc": "mosaic-2.md"},
+    {"kind": "^unreachable-by-input$", "screen": "^/home · ", "element": "^(Previous|Play or pause|Next|Open Now playing)$", "why": "the now playing capsule shows only while music plays; the lab's 15-s clips had ended before the direct try, which found the control gone (no press made); until W-GONE", "doc": "mosaic-2.md"},
+    {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/movies$", "element": ", \\d+ min", "why": "the posters belong to the All movies tab; the snake's ◀ ▶ along the tab bar changed the tab in place, so they were gone at the direct try (no press made); until W-GONE", "doc": "mosaic-2.md"},
+    {"kind": "^required-missing$", "element": "^details of a Season$", "why": "Mosaic shows a season as a panel of the Series deck (details.js, views.js season tabs), not a screen of its own", "doc": "mosaic-2.md"}
+  ],
+  "tide": [
+    {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "(^|, )(Video|Audio|Subtitle|Lyric|EmbeddedImage|Data|Attachment)$", "why": "a row of the item panel's Media info: information, with nothing to do on OK", "doc": "tide-3.md"},
+    {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "^Details$", "why": "the wide item panel opens on Details: its own tab, already shown, changes nothing", "doc": "tide-3.md"},
+    {"kind": "^unreachable-by-input$", "input": "^(pad|keys)$", "element": ": (online|not answering); choose a server$", "why": "the server line under the clock is the pointer's on a level, where ▲ ▼ step the column; a pad chooses a server from Settings › Server: … choose another, the same action", "doc": "tide-2.md"}
   ]
 }
