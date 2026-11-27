@@ -111,21 +111,34 @@ Judged (rule proposed for `qa-judged.json`, doc `almanac-2.md`):
 
 ## To recheck in pass 3
 
-Each is replayed in the lab on the build with theme commit 12b429a7 and the walker of #242; tick when it holds.
+Each is replayed in the lab on the build with theme commit 12b429a7 and the walker of #242; tick when it holds. Checked
+in pass 3 (`almanac-3.md`), walked 2026-11-27 on the build 3ac4c01ac61a20a4 with the walker of #242.
 - [ ] F9: play Test Tones, hover the song line, click it, mouse Back: the song line is lime-focused. With the song moved on
-      (a 15-s clip), Back still lands on it.
-- [ ] F10: pad and keys runs leave no unreachable finding on the server button; the pointer line and the song line stay
-      reachable by the mouse.
-- [ ] F11: Shows, Icefin Test Show, Season 1, Right on S01E01, OK on Details: /details [Episode] opens; the walker reaches an
-      episode on a pad and keys.
+      (a 15-s clip), Back still lands on it. Failed: 4 back-focus and 1 focus-lost on the song line (mouse), the song
+      still playing each time. Pass 3's commit 4fe3723a adds F13 (focus kept across a late redraw); a lab replay is missing.
+- [x] F10: pad and keys runs leave no unreachable finding on the server button; the pointer line and the song line stay
+      reachable by the mouse. No unreachable-by-input finding in any of the 7 runs (pass 2: 94); the mouse's server
+      button reached /selectserver with `back_ok: true`, and the song line reached /queue on 4 pages.
+- [x] F11: Shows, Icefin Test Show, Season 1, Right on S01E01, OK on Details: /details [Episode] opens; the walker reaches an
+      episode on a pad and keys. All 7 runs: "Details" on S01E01 opened `/details [Episode]` with `back_ok: true`, on the
+      Series page and on its "All ›, Season 1" level; Play on the same row went to /video.
 - [ ] Coverage: pad and keys runs reach 30 or more screens, press the Guide tab and collect the guide, open "All ›, All
       shows" and "All ›, Albums", and reach the playlists library, a season, an episode, a song, the music details,
       and Display, Home, Playback and Subtitles; read the collect times on #242 (the two-way row sweep adds 1 to 3
-      presses a row).
+      presses a row). Mostly: 37 screens; all 7 reached All shows, the playlists library, an episode, a song, the album,
+      Display, Playback and Subtitles; collect time 24 min a run. Missing: the Guide tab (never pressed, W9), "All ›,
+      Albums" for pads (the press was credited to the Playlists level, fixed by F12), a season's own page (a level by
+      design, W19), the pads' MusicArtist (W9, W16) and preferences: home (W14).
 - [ ] The open rechecks carried from almanac-1.md: F1 and F2 on a server throttled by 3 s (held at normal latency; the
       walker's 4-s wait hides latency), F6's "No options here" on Settings, E1 (a guide panel open across a 30-s tick, hover
       Lab Notes, Options, wait), E2 (Left from a programme that began before the window, with focus staying in the grid).
-- [ ] No walker user writes (Watched and New group are skipped; "Edit details…" is never opened, W12).
-- [ ] E3 (#240): hover the "Couldn't start" card's Close with the mouse.
+      Open: no throttled run, F6 not exercised (the mouse's Settings Options was unpositioned), E2 not walked (no pad or
+      keys run moved in the guide). E1 held for the mouse (two panels open about 50 s across a tick, Back returned to the
+      cell); pads and keys never explored the guide.
+- [ ] No walker user writes (Watched and New group are skipped; "Edit details…" is never opened, W12). Held with a gap:
+      Watched, Favourite, New group, Record, Save and "Edit details…" were skipped, but the mouse entered the metadata
+      editor through Media info's Details section and toggled 3 locks twice, unsaved (W17).
+- [ ] E3 (#240): hover the "Couldn't start" card's Close with the mouse. Not exercised: no channel failed (9 mouse and 7
+      pad starts reached /video).
 
 Almanac's second pass is done; its third walks on the walker of #242.
