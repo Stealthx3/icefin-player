@@ -84,7 +84,9 @@ IW_JS = r"""
     cls: (typeof e.className === 'string' ? e.className : '').slice(0, 120), action: e.getAttribute('data-action') || '', href: e.getAttribute('href') || '',
     field: e.matches(FIELD), stateful: e.matches(STATEFUL), submit: e.matches('[type=submit]'), disabled: !!e.disabled || e.getAttribute('aria-disabled') === 'true',
     // a control that is only the pointer's way in (the remote has another: a row title the remote changes by up and down)
-    pointer: !!e.closest('[data-icefin-pointer-only]') });
+    pointer: !!e.closest('[data-icefin-pointer-only]'),
+    // a guide grid cell: drawn per time window, so it comes and goes (QA Orbit 1, U5: direct_reach chased cells that were redrawn away)
+    guide: !!e.closest('.icefin-guide') });
   const roots = () => {
     // #icefin-live (the engine's Live TV "Connecting to ..." card) counts as a change (QA Tide 1: a channel press that showed it was judged dead)
     const r = ['icefin-theme-root', 'icefin-stock-chrome', 'icefin-theme-overlay', 'icefin-osk', 'icefin-live'].map((i) => document.getElementById(i)).filter((e) => e && shown(e));
@@ -430,12 +432,26 @@ class MouseDriver(Driver):
         self.last = r
         if not r or not r.get("ok"):
             return False
+        # (QA Orbit 1, H2: a theme with pointer-first input ignores a move that has no movement; the pointer was already
+        # at these coordinates, or this was the first event after a reload) approach from 4 px off, then land on the centre
+        self.x, self.y = max(0, int(r["x"]) - 4), max(0, int(r["y"]) - 4)
+        self._mouse("mouseMoved")
         self.x, self.y = r["x"], r["y"]
         self.hkey = key
         self.tr("hover", key[-40:])
         self._mouse("mouseMoved")
         time.sleep(0.4)
         return True
+
+    def nudge(self):
+        """Two moves to different points, then 250 ms (QA Orbit 1, M1: a theme that draws its pointer bar only after the
+        pointer has moved showed none on the first collect, so the mouse never saw it)."""
+        w, h = int(self.js("innerWidth") or 800), int(self.js("innerHeight") or 600)
+        for fx, fy in ((0.42, 0.45), (0.58, 0.55)):
+            self.x, self.y = int(w * fx), int(h * fy)
+            self._mouse("mouseMoved")
+            time.sleep(0.03)
+        time.sleep(0.25)
 
     def activate(self):
         # where the control is now: a list still sliding (a column redrawn after Back, the hover bringing it in) moves it
@@ -444,11 +460,46 @@ class MouseDriver(Driver):
             r = self.js(f"window.inputWalk.rect({json.dumps(self.hkey)})") if getattr(self, "hkey", None) else None
             if not r or not r.get("ok") or (abs(r["x"] - self.x) < 3 and abs(r["y"] - self.y) < 3):
                 break
+            # (QA Orbit 1, M3: hovering a receding tile turns the ring by design, and chasing it ran the pointer along the
+            # tiles) wait until the rect holds still over two reads 150 ms apart; a control already focused is clicked where the pointer is
+            for _ in range(6):
+                time.sleep(0.15)
+                r2 = self.js(f"window.inputWalk.rect({json.dumps(self.hkey)})")
+                if not r2 or not r2.get("ok"):
+                    r = r2
+                    break
+                steady = abs(r2["x"] - r["x"]) < 3 and abs(r2["y"] - r["y"]) < 3
+                r = r2
+                if steady:
+                    break
+            if not r or not r.get("ok") or (abs(r["x"] - self.x) < 3 and abs(r["y"] - self.y) < 3):
+                break
+            if self.js(f"window.inputWalk.isCur({json.dumps(self.hkey)})"):
+                # focused already: click where the control is now, not where the pointer was (the smoke walk: a click
+                # at the old point landed on the next channel's tile after the ring slid)
+                self.x, self.y = r["x"], r["y"]
+                self.last = r
+                break
             self.x, self.y = r["x"], r["y"]
             self.last = r
             self.tr("moved under the pointer; hover again")
             self._mouse("mouseMoved")
             time.sleep(0.35)
+        # the target itself under the pointer, or wait for the slide a hover started (a hovered tile of another channel
+        # makes that channel current and the stack moves; the smoke walk's clicks landed on the next channel's tile)
+        if getattr(self, "hkey", None):
+            for _ in range(3):
+                hit = self.js(f"(() => {{ const e = window.inputWalk.live({json.dumps(self.hkey)}); const t = document.elementFromPoint({self.x}, {self.y}); return !!e && !!t && (t === e || e.contains(t)); }})()")
+                if hit:
+                    break
+                time.sleep(0.35)
+                r = self.js(f"window.inputWalk.rect({json.dumps(self.hkey)})")
+                if not r or not r.get("ok"):
+                    break
+                self.x, self.y, self.last = r["x"], r["y"], r
+                self.tr("not under the pointer; to it again")
+                self._mouse("mouseMoved")
+                time.sleep(0.2)
         self.tr("click", self.x, self.y)
         self._mouse("mousePressed", button="left", buttons=1, clickCount=1)
         time.sleep(0.06)
@@ -518,6 +569,7 @@ class Walker:
         self.errs_seen = set()
         self.subs = {}                    # route key -> keys of its in-place sub-screens
         self.edges = {}                   # screen key -> {focused key: {direction: {key focus went to}}} (pad, keys)
+        self.wheeled = None               # the screen key whose view the mouse turned one notch down (QA Orbit 1, W-C)
 
     # -------------------------------------------------------------- plumbing
     def tr(self, *x):
@@ -758,6 +810,8 @@ class Walker:
             e["plugin"] = True
         if c.get("pointer"):
             e["pointer"] = True
+        if c.get("guide"):
+            e["guide"] = True       # (QA Orbit 1, U5) a guide cell: left out of check_unreached
         if "inview" in c:
             e["inview"], e["osk"] = c["inview"], c.get("osk", False)
         return e
@@ -873,7 +927,7 @@ class Walker:
                 return True
             if not self.go_here(k):
                 return False
-            self.enum(k)
+            self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) a control that came late joins the screen's
             return self.mouse_reach(k, c)
         f = self.focus_now()
         if f and f["key"] == c["key"]:
@@ -993,11 +1047,43 @@ class Walker:
         first by the clicks that showed it (c['via']: a category chosen, a level opened); one outside the viewport is
         brought in by clicking the visible control nearest to it, up to 6 times (a carousel slides)."""
         key = c["key"]
-        if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
+        if depth == 0 and self.wheeled == k and "wheel" not in c.get("via", []):
+            # (QA Orbit 1, W-C) the view is one notch down from a control reached by the wheel: back up for the others
+            self.wheeled = None
+            self.drv.wheel(-120)
+            time.sleep(0.45)
+        wheel_via = "wheel" in c.get("via", [])
+        # a control the wheel showed counts only when it is on top: turned back, it stays in the page under the shown
+        # channel, and a click at its centre lands on the tile above it (the smoke walk: "Photos, Open library" opened a
+        # playlist)
+        if self.drv.focus(key) and (self.drv.last or {}).get("cin") and (not wheel_via or (self.drv.last or {}).get("top")):
             return True
         # gone, or there but hidden (a closed row's tiles: opacity 0): the clicks that showed it
-        if not (self.drv.last or {}).get("ok") and c.get("via") and depth < 3:
+        if (not (self.drv.last or {}).get("ok") or wheel_via) and c.get("via") and depth < 3:
             for v in c["via"]:
+                if v == "wheel":
+                    # (QA Orbit 1, W-C) the wheel at the window's centre, a notch at a time until the control is on top
+                    # (up to 4: a theme may come back on another channel than the probe's); back up if it never is
+                    for n in range(4):
+                        r = self.js(f"window.inputWalk.rect({json.dumps(key)})")
+                        if r and r.get("ok") and r.get("top") and r.get("cin"):
+                            break
+                        self.tr("showing", key[-40:], "by the wheel")
+                        self.drv.wheel(120)
+                        self.wheeled = k
+                        time.sleep(0.45)
+                        kk = self.screen_key(self.screen())
+                        if kk != k and kk.split(" > ")[0] != k.split(" > ")[0]:
+                            self.go_here(k)
+                            return False
+                    else:
+                        r = self.js(f"window.inputWalk.rect({json.dumps(key)})")
+                        if not (r and r.get("ok") and r.get("top") and r.get("cin")):
+                            self.tr("the wheel never brought", key[-40:], "on top")
+                            self.go_here(k)
+                            self.wheeled = None
+                            return False
+                    continue
                 if self.js(f"window.inputWalk.present({json.dumps(key)})"):
                     break
                 vc = next((x for x in self.ctrls.get(k, []) if x["key"] == v), None)
@@ -1008,8 +1094,10 @@ class Walker:
                 if self.screen_key(self.settle(prev=k, t=3.0)) != k:
                     self.go_here(k)
                     return False
-            if self.drv.focus(key) and (self.drv.last or {}).get("cin"):
+            if self.drv.focus(key) and (self.drv.last or {}).get("cin") and (not wheel_via or (self.drv.last or {}).get("top")):
                 return True
+            if wheel_via:
+                return False
         same = lambda kk: kk.split(" > ")[0] == k.split(" > ")[0]   # another level of the same route, opened in place
         r = self.drv.last
         h = self.js("innerHeight") or 0
@@ -1086,13 +1174,59 @@ class Walker:
                 return
         el["focus_visible"] = v
 
+    def adopt(self, k, items, via=None):
+        """(QA Orbit 1, W-A) The mouse's controls seen now that the screen's list does not hold yet (a pointer bar that showed
+        late, a label that came late) join it, to be activated like the rest. Returns how many."""
+        ctrls = self.ctrls.setdefault(k, [])
+        known = {x["key"] for x in ctrls}
+        n = 0
+        for i in items:
+            if i["key"] in known:
+                continue
+            ctrls.append(dict(i, via=list(via)) if via else dict(i))
+            known.add(i["key"])
+            self.element(k, i)["reached"]["mouse"] = True
+            n += 1
+        if n:
+            self.tr("adopted", n, "controls seen late", via or "")
+        return n
+
+    def wheel_probe(self, k, items):
+        """(QA Orbit 1, W-C) One notch of the wheel down at the window's centre, once per screen. A theme that moves between
+        its channels or rows by the wheel (the controls below are hidden until then) shows controls no hover or click
+        reaches; they join the screen's list with via ['wheel'], which mouse_reach replays. Then the notch back up."""
+        if self.late():
+            return
+        before = {c["key"] for c in items}
+        self.drv.wheel(120)
+        time.sleep(0.45)
+        kk = self.screen_key(self.screen())
+        if kk != k and kk.split(" > ")[0] != k.split(" > ")[0]:
+            self.tr("the wheel left the screen:", kk)
+            self.go_here(k)
+            return
+        after = self.enum(k)
+        if {c["key"] for c in after} == before:
+            return              # nothing changed in place: no notch to undo worth the wait
+        n = self.adopt(k, [c for c in after if c["key"] not in before], via=["wheel"])
+        self.tr("the wheel showed", n, "controls")
+        self.drv.wheel(-120)
+        time.sleep(0.45)
+        now = self.ckeys()
+        if self.screen_key(self.screen()) != k or len(before - now) > max(1, len(before) // 5):
+            self.tr("the wheel did not turn back; reloading")
+            self.reload()
+            self.go_here(k)
+
     def collect(self, k, here):
         here["collected"] = True
         if self.mouse:
+            self.drv.nudge()        # (QA Orbit 1, W-A) the pointer moves before the first look, so a pointer bar is drawn
             items = self.enum(k)
             for c in items:
                 self.element(k, c)["reached"]["mouse"] = True
             self.ctrls[k] = items
+            self.wheel_probe(k, items)
             return
         ctrls, seen, path = [], {}, []
         self.ctrls[k] = ctrls
@@ -1188,6 +1322,7 @@ class Walker:
 
     def direct_reach(self, key):
         """Try the input itself: from the current focus, the arrow/D-pad direction that cuts the distance to the element's centre, up to 25 presses."""
+        trail = []
         for _ in range(25):
             f = self.focus_now()
             if f and f["key"] == key:
@@ -1195,9 +1330,14 @@ class Walker:
             cc = self.js(f"window.inputWalk.centers({json.dumps(key)})")
             if not cc:
                 return False
+            trail.append(f["key"] if f else None)
             if cc["c"]:
                 dx, dy = cc["t"]["x"] - cc["c"]["x"], cc["t"]["y"] - cc["c"]["y"]
-                d = ("right" if dx > 0 else "left") if abs(dx) >= abs(dy) else ("down" if dy > 0 else "up")
+                horiz = abs(dx) >= abs(dy)
+                # (QA Orbit 1, U5) focus went A -> B -> A: that axis is stuck (a guide's wrong row), so the other one this press
+                if len(trail) >= 3 and trail[-1] and trail[-1] == trail[-3] != trail[-2] and (abs(dy) if horiz else abs(dx)) > 0:
+                    horiz = not horiz
+                d = ("right" if dx > 0 else "left") if horiz else ("down" if dy > 0 else "up")
             else:
                 d = "down"
             self.drv.move(d)
@@ -1214,7 +1354,7 @@ class Walker:
         Each gets one direct attempt; the ones the input can't reach either are flagged unreach (merge() reports them
         when the mouse can use them). At most 20 per screen."""
         els = self.screens[k]["elements"]
-        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("inview") and not e.get("osk") and not e.get("pointer")
+        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("inview") and not e.get("osk") and not e.get("pointer") and not e.get("guide")
                 and not str(e.get("outcome", "")).startswith("skipped: disabled")][:20]
         self.cur_screen_key = k
         for key, e in todo:
@@ -1334,6 +1474,13 @@ class Walker:
         d1 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})")
         noisy = d0["dom"] != d1["dom"]
         pre_keys, iid = set(), ""
+        was_sel = False
+        if self.mouse:
+            # (QA Orbit 1, BB2) a tab already shown: its click redraws the same view, which is not a level opened
+            try:
+                was_sel = bool(self.js("(() => { const e = window.inputWalk.live(" + json.dumps(c["key"]) + "); return !!e && e.getAttribute('aria-selected') === 'true'; })()"))
+            except Exception:  # noqa: BLE001
+                was_sel = False
         if True:                # for the in-place new-level check (a folder opened on the same route)
             pre_keys = self.ckeys()
             try:
@@ -1360,6 +1507,17 @@ class Walker:
         self.tr("activated", label, "again" if again else "", "->", res)
         if outcome == "nothing" and again:
             return                  # a second click that changes nothing (a tab already shown) is no finding
+        if outcome == "nothing" and not again and re.search(r"\b(play|resume|shuffle|watch|start|mix)\b", label, re.I):
+            # (QA Orbit 1, D6) a player that starts slowly: a press that plays waits up to 3 s for /video, as the in-place
+            # branch does, before it is called dead
+            t1, s2 = time.time(), s
+            while not s2["route"].startswith("/video") and time.time() - t1 < 3.0:
+                time.sleep(0.4)
+                s2 = self.screen()
+            if s2["route"].startswith("/video"):
+                s, pk, outcome = s2, self.screen_key(s2), "screen"
+                el["outcome"] = f"screen: {pk}"
+                self.tr("late change ->", pk)
         if outcome == "nothing":
             if not self.mouse and not self.stable_focus():
                 self.finding("focus-lost", k, label, "nothing focused after the action (waited up to 1.5 s for it to settle)")
@@ -1398,6 +1556,11 @@ class Walker:
                 outcome = "dialog" if pk == k + " (dialog)" else "screen"
                 el["again" if again else "outcome"] = outcome if outcome == "dialog" else f"screen: {pk}"
                 self.tr("late change ->", pk)
+        if outcome == "in-place" and was_sel:
+            # (QA Orbit 1, BB2) the shown tab redrew its own view: no level, no Back check
+            el["again" if again else "outcome"] = "in-place (the shown tab redrawn)"
+            self.tr("a shown tab redrew in place; not a level")
+            return
         if outcome == "in-place":
             f2 = self.stable_focus()
             if not self.mouse and not f2:
@@ -1615,7 +1778,10 @@ class Walker:
                 self.enum(dk, "dialog")
         self.tr("dialog", dk, title, "rows", len(rows))
         tried = {}
-        for c in rows[:24 if self.mouse else 12]:
+        cap, i = (24 if self.mouse else 12), 0
+        while i < min(len(rows), cap):      # (QA Orbit 1, W-B) a list: the mouse's in-place clicks add rows as it goes
+            c = rows[i]
+            i += 1
             if self.late():
                 break
             why = skip_reason(c, title)
@@ -1646,6 +1812,17 @@ class Walker:
             if pk == dk:
                 d2 = self.js(f"window.inputWalk.digest({json.dumps(c['key'])})")
                 el["outcome"] = "in-place" if d2["dom"] != d1["dom"] or d2["el"] != d1["el"] else "nothing"
+                if self.mouse and el["outcome"] == "in-place":
+                    # (QA Orbit 1, W-B) a row that opened its list in the dialog (a blade's Library, Settings): the new rows
+                    # are looked at too
+                    known = {r["key"] for r in rows}
+                    new = [r for r in self.enum(dk, "dialog") if r["key"] not in known]
+                    for r in new:
+                        self.element(dk, r)["reached"]["mouse"] = True
+                    rows.extend(new)
+                    cap = min(cap + len(new), 48)
+                    if new:
+                        self.tr("the click showed", len(new), "rows in the dialog")
                 if el["outcome"] == "nothing":
                     self.finding("dead-control", dk, c["label"], "no screen, dialog or visible change", plugin=c.get("plugin", False))
             elif pk == k:
@@ -1682,6 +1859,8 @@ class Walker:
             lab = (c.get("label") or "").strip().lower()
             return lab in names or lab.split(",")[0].strip() in names or lab == "search"
         for _pass in range(4):
+            if self.mouse and _pass:
+                self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) controls that showed late since the last pass
             todo = [c for c in self.ctrls.get(k, []) if (k, c["key"]) not in self.done]
             counts, ranked, acted = {}, [], False
             for c in todo:

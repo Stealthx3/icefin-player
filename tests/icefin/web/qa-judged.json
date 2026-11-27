@@ -13,7 +13,22 @@
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/home( > .*)?$", "element": "^Open ", "why": "the start strip's rows are not levels: the mouse's Back button goes back in history (the app's mapping, as on every page)", "doc": "media-center-3.md"},
     {"kind": "^broken-back$", "input": "^mouse$", "screen": "\\?collectionType=", "detail": "^Back from /[a-z]+\\?collectionType=[a-z]+ > ", "why": "a library's pivot is a view choice, not a level: the mouse's Back button goes back in history", "doc": "media-center-3.md"},
     {"kind": "^dead-control$", "screen": "\\(dialog\\)$", "element": "^IMG_\\d+$", "why": "jellyfin-web's photo slideshow has no controls and takes no focus: the walker pressed the theme's photo entry under it, which opens the photo already shown", "doc": "tide-1.md"},
+    {"kind": "^script-error$", "screen": "^/mypreferencesmenu$", "detail": "\\[userprofile\\] Unexpected null page reference", "why": "jellyfin-web's own profile page logs it as it opens, under any theme; the stock control logs it on Profile in every run", "doc": "baseline-1.md"},
     {"kind": "^unreachable-by-input$", "input": "^pad$", "screen": "^/mypreferences(playback|display)", "element": "Mbps|kbps|Screen Resolution|Learn how you can contribute|textarea|Apple TV", "why": "Right on a drop-down steps its value; the runs that move with Down reach every control there", "doc": "media-center-3.md"}
+  ],
+  "baseline": [
+    {"kind": "^dead-control$", "screen": "^/(movies|tv|music|livetv)(\\?|$)", "element": "^(Movies|Shows|Albums|Programs|Series)$", "why": "the tab you are on: a press on the selected tab does nothing, as stock's", "doc": "baseline-1.md, baseline-pre.md"},
+    {"kind": "^dead-control$", "screen": "^/mypreferencesmenu$", "element": "^Settings$", "why": "the header's Settings on the settings menu: the page you are on", "doc": "baseline-1.md, baseline-pre.md"},
+    {"kind": "^dead-control$", "screen": "^/search", "element": "^Search$", "why": "the header's Search on the search page: the page you are on", "doc": "baseline-1.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "^(/details \\[(MusicAlbum|Playlist)\\]|/music\\?)", "element": "^(Instant Mix|Shuffle|Previous Track)$|[AE](440|660)", "why": "the lab's 2-song music pressed while it already plays, Previous on the first song, or the bar's song as the 15-s clip ends; stock's album shows the same dead presses", "doc": "baseline-1.md"},
+    {"kind": "^back-focus$", "screen": "^/mypreferencesmenu$", "detail": "focus is on '(person)?Profile'", "why": "stock's settings menu also lands on Profile after Back from any entry", "doc": "baseline-1.md"},
+    {"kind": "^back-focus$", "screen": "^/details \\[(MusicAlbum|Playlist)\\]", "element": ", Icefin Lab$", "detail": "after Back from /queue", "why": "the opener was the now playing bar's song; the lab's 15-s clip ended, so the bar and its button were gone", "doc": "baseline-1.md"}
+  ],
+  "orbit": [
+    {"kind": "^shift-tab$", "why": "Orbit is a console dashboard: its channels, decks and guide take the arrows and a pad; every control is tabIndex -1 and nothing takes Tab", "doc": "orbit-1.md"},
+    {"kind": "^dead-control$", "screen": "^/details \\[PhotoAlbum\\] \\(dialog\\)$", "element": "^(Play all|Shuffle)$", "why": "jellyfin-web's photo slideshow covers the screen and has no controls; the walker pressed the album's own Play all under it, which starts the slideshow already showing", "doc": "orbit-1.md, orbit-pre.md"},
+    {"kind": "^dead-control$", "input": "^mouse$", "screen": "^/home$", "element": ": the channel$", "why": "the current channel's title brings its first tile back; with that tile already in front there is nothing to change", "doc": "orbit-1.md"},
+    {"kind": "^broken-back$", "input": "^mouse$", "screen": "^/livetv\\?or=", "element": "^(Channels|Guide|Recordings|Schedule|Series)$", "why": "Live TV's tabs on a list screen switch the view in place (as a library's pivot); Back goes back in history, as a pad's Back does there", "doc": "orbit-1.md"}
   ],
   "media-center": [
     {"kind": "^shift-tab$", "why": "Media Center is a TV theme; Tab isn't one of its inputs", "doc": "media-center-3.md"}

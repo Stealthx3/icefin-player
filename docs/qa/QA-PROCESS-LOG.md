@@ -58,6 +58,10 @@ What a QA effort on this kind of app needs, as learned here. Each point names th
   control by its first observation, not a repeat (2026-11-26, re-walk 2).
 - A control the walker listed while hidden needs the click that shows it recorded as its way in (2026-11-26, re-walk 2:
   the mouse missed 14 required screens in every walk of a pass).
+- A danger rule (controls never pressed) matches the whole label: a fragment matched every played item's title and
+  would have taken them all out of the walk (2026-11-26, Orbit 1).
+- Check a fix that depends on the native layer with real input in a build of the branch before it merges: one press of
+  the mouse's Back button is two back steps, which shows only once the first is cancelled (2026-11-26, engine #236).
 - Every walker fix is found by tracing a finding to its cause, and is re-checked by the next walk.
 
 **Triage**
@@ -149,6 +153,22 @@ before it focuses, during a slow-server window). Fixes: both theme branches, eng
 for screen locking off during the QA run. Lesson: the coverage check is triage's first step, and every class or role
 pattern in the walker is a hypothesis about the page.
 
+**2026-11-26/27: Baseline and Orbit pass 1; the engine checked with real input; a walker regression caught.** Both
+walked on the walker with the keyboard-test fix (Orbit restarted at once on the settings-ranking fix). Coverage was
+still thin: about 24 to 34 screens a controller run, every run cut by the budget; stock's own controller runs reach
+about 30. The four controller families walk the same screens in the same order, so the user was asked whether they
+should split the app between them (Decisions page). Orbit's mouse run never left its first channel: Orbit draws its
+pointer bar only after a pointer move, and the walker looked before moving the pointer and never turned the wheel
+(walker fixes, this entry's PR). Triage, one agent a theme, then fixes on each branch and a review of every diff before
+it was committed (one implementer had commented out the rest of a line; another left a sound order wrong): Baseline
+257 findings, 99 of them one bug (Back to the home always landed on its first control: the screen's arrival focus
+overwrote the opener); Orbit 255, 78 real, mostly the same kit bugs Tide and Almanac had. Engine #236 was checked in a
+side build before it merged: a real mouse Back press arrives as two back steps, which only showed once the first was
+taken in place (it went from a Tide column to the sign-in page); the engine now drops the second. The Orbit triage
+caught a rule added hours before (#235): "watched ✓" matched every played film's label, so walks would have skipped
+them; fixed (#238) and the two walks then running restarted on it. Lessons: real input finds what synthetic input
+can't; a danger rule is anchored to the whole label; review an implementer's diff line by line.
+
 ## Metrics
 
 | Theme | Pass | Walk | Findings (theme + Steam run) | Notes |
@@ -164,6 +184,8 @@ pattern in the walker is a hypothesis about the page.
 | Media Center | 3 | re-walk 3 | 48 + 7 | 10 + 1 to triage, 7 of them the 40-minute budget; 1 real (#229) |
 | Tide | 1 | pass 1 | 154 + 12 | 137 + 11 to triage; coverage cut by the walker (73 screens, stock 191) |
 | Almanac | 1 | pass 1 | 111 + 14 | 104 + 13 to triage; 22-24 screens a pad run |
+| Baseline | 1 | pass 1 | 221 + 36 to triage | 99 one bug (Back to the home); about 24 screens a pad run |
+| Orbit | 1 | pass 1 | 224 + 31 to triage | the mouse saw one channel (12 screens); pads about 30 |
 
 Walk time: about 6 h a theme serially on the host (2026-11-16), about 85 min in parallel in the lab (D44), about
 45 min expected with the control reused (D47).
