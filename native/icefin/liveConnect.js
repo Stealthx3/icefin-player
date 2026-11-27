@@ -81,6 +81,8 @@ html[data-icefin-motion="low"] #${ID}, html[data-icefin-motion="low"] #${ID} * {
             b.setAttribute('role', 'button');
             b.tabIndex = -1;
             b.addEventListener('click', go);
+            // a pointer that moves over a button focuses it, as on every other screen (QA Mosaic 1)
+            b.addEventListener('mousemove', (e) => { if ((e.movementX || e.movementY) && cur && cur.buttons) focusButton(cur.buttons.indexOf(b)); });
             cur.buttonBox.append(b);
             return b;
         });
