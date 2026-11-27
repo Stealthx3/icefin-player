@@ -32,7 +32,12 @@ WALK_JS = r"""
     },
     key(e) {
       const path = [];
-      for (let n = e; n && n !== document.body && path.length < 7; n = n.parentElement) {
+      // (QA Orbit 2, W-O) a guide cell is named by its channel and programme, not its DOM row: the grid draws a window of rows,
+      // so the same cell comes up at another row after the player and Back
+      const gc = e.guideChannel, gp = e.guideProgramme;
+      const named = !!(gc && gc.id);
+      if (named) path.push('guide:' + gc.id + ':' + ((gp && (gp.id || gp.start || gp.StartDate)) || ''));
+      for (let n = e; !named && n && n !== document.body && path.length < 7; n = n.parentElement) {
         // anchored at the nearest ancestor with an id: a reload that shifts the root's index among body's children keeps every key (QA Tide 2)
         if (n !== e && n.id) { path.unshift('#' + n.id); break; }
         let i = 0, s = n; while ((s = s.previousElementSibling)) i++;
@@ -80,7 +85,7 @@ WALK_JS = r"""
 # the whole label only: an item's label may end "· watched ✓" (QA Orbit 1); Baseline's reads plain "Watched" (QA Baseline 1)
 DANGER = re.compile(r"sign ?out|log ?out|delete|remove|erase|\bclear\b|forget|\breset\b|restart|shut ?down|uninstall|disconnect|"
                     r"mark (as )?(un)?played|mark (as )?(un)?watched|^\s*(watched|played)( ?✓)?\s*$|favou?rite|\b(un|dis)?likes?d?\b|rating|cancel|\brecord\b|rename|"
-                    r"edit (metadata|images|subtitles)|identify|refresh metadata|switch user|change server|select server|"
+                    r"edit (metadata|images|subtitles|details)|identify|refresh metadata|switch user|change server|select server|"
                     r"add server|quick connect|password|\bpin\b|download|\bsync(play)?\b|delete", re.I)
 # short words are whole words ("skipping" has a pin, "Recordings" is a place, "Synced" a state) (QA Mosaic 1)
 REQUIRED = [("Home", r"^/home$"), ("a library", r"^/(movies|tv|music|list|livetv|books|photos|musicvideos|homevideos)"),

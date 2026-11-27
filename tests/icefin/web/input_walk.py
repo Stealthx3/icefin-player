@@ -585,6 +585,8 @@ class Walker:
         self.subs = {}                    # route key -> keys of its in-place sub-screens
         self.edges = {}                   # screen key -> {focused key: {direction: {key focus went to}}} (pad, keys)
         self.wheeled = None               # the screen key whose view the mouse turned one notch down (QA Orbit 1, W-C)
+        self.wheel_n = 0                  # how many notches down that view is (QA Orbit 2, W-L)
+        self.player_walked = False        # the player's controls were walked once this run (QA Orbit 2, W-N)
 
     # -------------------------------------------------------------- plumbing
     def tr(self, *x):
@@ -687,7 +689,12 @@ class Walker:
         if depth > 4 or not pre or not f:
             return None
         post = self.ckeys()
-        if len(pre & post) * 2 >= len(pre) or f["key"] not in post or f["key"] in pre:
+        # (QA Almanac 2, W8) a strip every level shows (a control on the parent and on 3 other screens' elements) is no part of
+        # the level's identity: left out of both sets before the half test and the deck test
+        chrome = {x for x in pre if sum(x in s["elements"] for s in self.screens.values()) >= 3}
+        fk = f["key"]
+        pre, post = pre - chrome, post - chrome
+        if not pre or len(pre & post) * 2 >= len(pre) or fk not in post or fk in pre:
             return None
         # most of the controls are ones this screen has shown already: a deck that slid to another of its panels (QA Mosaic 1)
         # (QA Tide 2) ways back are not part of a level's identity, here and below
@@ -1112,8 +1119,10 @@ class Walker:
         if depth == 0 and self.wheeled == k and "wheel" not in c.get("via", []):
             # (QA Orbit 1, W-C) the view is one notch down from a control reached by the wheel: back up for the others
             self.wheeled = None
-            self.drv.wheel(-120)
-            time.sleep(0.45)
+            for _ in range(max(1, self.wheel_n)):
+                self.drv.wheel(-120)
+                time.sleep(0.45)
+            self.wheel_n = 0
         wheel_via = "wheel" in c.get("via", [])
         # a control the wheel showed counts only when it is on top: turned back, it stays in the page under the shown
         # channel, and a click at its centre lands on the tile above it (the smoke walk: "Photos, Open library" opened a
@@ -1126,13 +1135,14 @@ class Walker:
                 if v == "wheel":
                     # (QA Orbit 1, W-C) the wheel at the window's centre, a notch at a time until the control is on top
                     # (up to 4: a theme may come back on another channel than the probe's); back up if it never is
-                    for n in range(4):
+                    for n in range(max(4, c["via"].count("wheel") + 1)):    # (QA Orbit 2, W-L) as many as the probe turned
                         r = self.js(f"window.inputWalk.rect({json.dumps(key)})")
                         if r and r.get("ok") and r.get("top") and r.get("cin"):
                             break
                         self.tr("showing", key[-40:], "by the wheel")
                         self.drv.wheel(120)
                         self.wheeled = k
+                        self.wheel_n += 1
                         time.sleep(0.45)
                         kk = self.screen_key(self.screen())
                         if kk != k and kk.split(" > ")[0] != k.split(" > ")[0]:
@@ -1143,7 +1153,7 @@ class Walker:
                         if not (r and r.get("ok") and r.get("top") and r.get("cin")):
                             self.tr("the wheel never brought", key[-40:], "on top")
                             self.go_here(k)
-                            self.wheeled = None
+                            self.wheeled, self.wheel_n = None, 0
                             return False
                     continue
                 if self.js(f"window.inputWalk.present({json.dumps(key)})"):
@@ -1266,20 +1276,34 @@ class Walker:
         if self.late():
             return
         before = {c["key"] for c in items}
-        self.drv.wheel(120)
-        time.sleep(0.45)
-        kk = self.screen_key(self.screen())
-        if kk != k and kk.split(" > ")[0] != k.split(" > ")[0]:
-            self.tr("the wheel left the screen:", kk)
-            self.go_here(k)
+        known, notches, n = set(before), 0, 0
+        # (QA Orbit 2, W-L) notch after notch while each one shows controls not seen yet, up to 6 (a ring of channels:
+        # one notch showed 2 of 12); each batch joins with one 'wheel' per notch turned so far
+        for _ in range(6):
+            self.drv.wheel(120)
+            notches += 1
+            time.sleep(0.45)
+            kk = self.screen_key(self.screen())
+            if kk != k and kk.split(" > ")[0] != k.split(" > ")[0]:
+                self.tr("the wheel left the screen:", kk)
+                self.go_here(k)
+                return
+            after = self.enum(k)
+            fresh = [c for c in after if c["key"] not in known]
+            if not fresh:
+                notches -= 1 if {c["key"] for c in after} == known else 0    # a notch that changed nothing is not turned back
+                break
+            known |= {c["key"] for c in after}
+            n += self.adopt(k, fresh, via=["wheel"] * notches)
+        if not n:
+            for _ in range(max(0, notches)):    # nothing new in place: back up the notches that moved something
+                self.drv.wheel(-120)
+                time.sleep(0.45)
             return
-        after = self.enum(k)
-        if {c["key"] for c in after} == before:
-            return              # nothing changed in place: no notch to undo worth the wait
-        n = self.adopt(k, [c for c in after if c["key"] not in before], via=["wheel"])
-        self.tr("the wheel showed", n, "controls")
-        self.drv.wheel(-120)
-        time.sleep(0.45)
+        self.tr("the wheel showed", n, "controls in", notches, "notches")
+        for _ in range(notches):
+            self.drv.wheel(-120)
+            time.sleep(0.45)
         now = self.ckeys()
         if self.screen_key(self.screen()) != k or len(before - now) > max(1, len(before) // 5):
             self.tr("the wheel did not turn back; reloading")
@@ -1385,7 +1409,14 @@ class Walker:
                         break
                     if self.late():
                         break
-                if not step("down") and not moved:
+                dn = step("down")
+                # (QA Orbit 2, W-M) down onto a control already taken (a menu's first entry under the climb) goes on past it,
+                # up to 3, as the sweep does
+                over = 0
+                while not dn and moved_to[0] and over < 3 and not self.late():
+                    over += 1
+                    dn = step("down")
+                if not dn and not moved:
                     break
                 horiz = "left" if horiz == "right" else "right"
         snake("right")
@@ -1408,6 +1439,7 @@ class Walker:
     def direct_reach(self, key):
         """Try the input itself: from the current focus, the arrow/D-pad direction that cuts the distance to the element's centre, up to 25 presses."""
         trail = []
+        blocked = set()     # (QA Almanac 2, W7) (focus, direction) pairs a press did not move
         for _ in range(25):
             f = self.focus_now()
             if f and f["key"] == key:
@@ -1422,13 +1454,23 @@ class Walker:
                 # (QA Orbit 1, U5) focus went A -> B -> A: that axis is stuck (a guide's wrong row), so the other one this press
                 if len(trail) >= 3 and trail[-1] and trail[-1] == trail[-3] != trail[-2] and (abs(dy) if horiz else abs(dx)) > 0:
                     horiz = not horiz
-                d = ("right" if dx > 0 else "left") if horiz else ("down" if dy > 0 else "up")
+                dh, dv = ("right" if dx > 0 else "left"), ("down" if dy > 0 else "up")
+                d = dh if horiz else dv
+                # (QA Almanac 2, W7; QA Orbit 2) a press that moved nothing blocks that direction here: the other axis, then
+                # give up (a stalled press repeated 25 times cost 38 s a target)
+                fk = f["key"] if f else None
+                if (fk, d) in blocked:
+                    d = dv if horiz else dh
+                    if (fk, d) in blocked:
+                        return False
             else:
                 d = "down"
             self.drv.move(d)
             if self.screen_key(self.settle(t=1.0)) != self.cur_screen_key:
                 return False
             f2 = self.focus_now()
+            if f and f2 and f2["key"] == f["key"]:
+                blocked.add((f["key"], d))
             if f and f2:
                 self.edge(self.cur_screen_key, f["key"], d, f2["key"])
         f = self.focus_now()
@@ -1439,7 +1481,9 @@ class Walker:
         Each gets one direct attempt; the ones the input can't reach either are flagged unreach (merge() reports them
         when the mouse can use them). At most 20 per screen."""
         els = self.screens[k]["elements"]
-        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("inview") and not e.get("osk") and not e.get("pointer") and not e.get("guide")
+        # (QA Almanac 2, W10) a scrolling row window lists the same cell at another index: a label this input reached is not missed
+        got = {(e.get("label") or "") for e in els.values() if e["reached"].get(self.inp)} - {""}
+        todo = [(key, e) for key, e in els.items() if not e["reached"].get(self.inp) and e.get("label") not in got and e.get("inview") and not e.get("osk") and not e.get("pointer") and not e.get("guide")
                 and not str(e.get("outcome", "")).startswith("skipped: disabled")][:20]
         self.cur_screen_key = k
         for key, e in todo:
@@ -1592,9 +1636,10 @@ class Walker:
         self.tr("activated", label, "again" if again else "", "->", res)
         if outcome == "nothing" and again:
             return                  # a second click that changes nothing (a tab already shown) is no finding
-        if outcome == "nothing" and not again and re.search(r"\b(play|resume|shuffle|watch|start|mix)\b", label, re.I):
-            # (QA Orbit 1, D6) a player that starts slowly: a press that plays waits up to 3 s for /video, as the in-place
-            # branch does, before it is called dead
+        if outcome == "nothing" and not again and re.search(r"\b(play|resume|shuffle|watch|start|mix)\b|, \d+ min\b", label, re.I):
+            # (QA Orbit 1, D6) a player that starts slowly: a press that plays, or a media item's entry (its running time, as a
+            # video in a photo folder: "VID_100, 0 min"; QA Orbit 2), waits up to 3 s for /video before it is called dead;
+            # other presses don't pay the wait
             t1, s2 = time.time(), s
             while not s2["route"].startswith("/video") and time.time() - t1 < 3.0:
                 time.sleep(0.4)
@@ -1807,7 +1852,11 @@ class Walker:
             elif self.mouse:
                 for c in self.enum(pk):
                     self.element(pk, c)["reached"]["mouse"] = True
+            elif getattr(self, "player_walked", False):
+                # (QA Orbit 2, W-N) the player's controls are the same on every play: walked once per run
+                self.tr("the player's controls were walked already")
             else:
+                self.player_walked = True
                 self.enum(pk)
                 seen = set()
                 for d in ["right"] * 5 + ["down"] * 3 + ["left"] * 5:
@@ -1891,7 +1940,18 @@ class Walker:
             if self.screen_key(self.screen()) != dk and not reopen():
                 break
             if self.mouse:
+                if not self.drv.focus(c["key"]) and c.get("via"):
+                    # (QA Orbit 2, W-K) a row a click showed (a blade's rows) is not on screen: its openers are clicked first
+                    for vk in c["via"]:
+                        if not self.drv.focus(vk):
+                            break
+                        self.drv.activate()
+                        self.settle(prev=dk)
+                    if self.screen_key(self.screen()) != dk:
+                        continue
+                    self.drv.focus(c["key"])
                 if not self.drv.focus(c["key"]) or not (self.drv.last or {}).get("top"):
+                    self.tr("row not shown:", c["label"])
                     continue
             else:
                 for p in c["path"]:
@@ -1910,11 +1970,14 @@ class Walker:
                 if self.mouse and el["outcome"] == "in-place":
                     # (QA Orbit 1, W-B) a row that opened its list in the dialog (a blade's Library, Settings): the new rows
                     # are looked at too
+                    # (QA Orbit 2, W-K) the new rows go right after the clicked one (the next blade's click would redraw the
+                    # list first), the re-keyed ones with a known label are left out, each notes its openers
                     known = {r["key"] for r in rows}
-                    new = [r for r in self.enum(dk, "dialog") if r["key"] not in known]
+                    labels = {r["label"] for r in rows}
+                    new = [dict(r, via=list(c.get("via", [])) + [c["key"]]) for r in self.enum(dk, "dialog") if r["key"] not in known and r["label"] not in labels]
                     for r in new:
                         self.element(dk, r)["reached"]["mouse"] = True
-                    rows.extend(new)
+                    rows[i:i] = new
                     cap = min(cap + len(new), 48)
                     if new:
                         self.tr("the click showed", len(new), "rows in the dialog")
@@ -1962,7 +2025,9 @@ class Walker:
         def seed(c):
             lab = (c.get("label") or "").strip().lower()
             head = lab.split(",")[0].strip()
-            return lab in names or head in names or lab == "search" or any(re.search(rx, head) for rx in lack)
+            # (QA Almanac 2, W11) the settings view's page entries share one sig: each is a seed there
+            return lab in names or head in names or lab == "search" or any(re.search(rx, head) for rx in lack) \
+                or bool(SETTINGS_ENTRY.match(head) and re.search(PREFS_MENU, k))
         for _pass in range(4):
             if self.mouse and _pass:
                 self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) controls that showed late since the last pass
