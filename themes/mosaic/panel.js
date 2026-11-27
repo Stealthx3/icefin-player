@@ -167,7 +167,7 @@
         if (o.sub) t.append(el('small', 'ms-row-sub', o.sub));
         r.append(t);
         if (o.value != null && o.value !== '') r.append(el('span', 'ms-row-value', o.value));
-        if (o.on) r.append(D.svg('check', 'ms-row-check'));
+        if (o.on) { r.append(D.svg('check', 'ms-row-check')); r.setAttribute('aria-current', 'true'); }  // the chosen row says so (QA Mosaic 1)
         r.setAttribute('role', 'button');
         r.setAttribute('aria-label', [label, o.sub, o.value].filter(Boolean).join(', '));
         if (o.go) r.addEventListener('click', () => { for (const x of (r.parentElement || r).querySelectorAll('.ms-chosen')) x.classList.remove('ms-chosen'); r.classList.add('ms-chosen'); o.go(); });

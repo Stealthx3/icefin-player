@@ -17,6 +17,8 @@
     const hm = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
     let S = null;
+    // What opened the next screen, filed under this history entry: Back returns to the tab or the played cell (QA Mosaic 1)
+    let opener = null;
 
     function info(p, ch) {
         if (!S) return;
@@ -61,7 +63,7 @@
     function screen() {
         return {
             onAction(action, ctx) {
-                if (!S || !S.ready) return false;
+                if (!S || (!S.ready && S.menu.indexOf(ctx.focused()) < 0)) return false;  // the tab strip answers while the channels load (QA Mosaic 1)
                 D.sawAction && D.sawAction(action);
                 const f = ctx.focused();
                 if (action === 'menu') { if (S.at && S.at.p && S.at.p.item && !S.at.p.gap && D.liveOptions) { D.liveOptions(S.at.p.item); return true; } return false; }
@@ -83,7 +85,10 @@
                 root.setAttribute('data-al', 'guide');
                 root.setAttribute('data-ms-screen', 'guide');
                 D.pointerNav(root);
-                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0 };
+                const entry = D.entryKey ? D.entryKey() : '';
+                const back = opener && D.isReturn && D.isReturn(opener.entry) ? opener.label : null;
+                const cellBack = opener && opener.cell && D.isReturn && D.isReturn(opener.entry) ? opener.cell : null;
+                S = { client: T.ctx.apiClient(), root, menu: [], ready: false, zone: 'guide', menuIndex: 0, entry };
                 const top = el('div', 'ms-top');
                 const inf = el('div', 'ms-info');
                 S.clock = el('div', 'ms-clock');
@@ -113,11 +118,13 @@
                     const b = el('div', 'ms-menu-item ms-tab' + (x.current ? ' current' : ''), x.label);
                     b.setAttribute('data-icefin-focus', '');
                     b.tabIndex = -1;
-                    b.addEventListener('click', () => { if (!x.current) x.go(); else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
+                    b.addEventListener('click', () => { if (!x.current) { opener = { entry, label: x.label }; x.go(); } else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
                     if (x.current) S.menuIndex = i;
+                    if (back === x.label) S.menuIndex = i;
                     menu.append(b);
                     return b;
                 });
+                if (back) focusMenu();  // Back from a tab: its tab at once, before the channels return
 
                 const res = await Promise.resolve(c.getLiveTvChannels({ UserId: uid, EnableImages: true, ImageTypeLimit: 1, Limit: 1000, EnableUserData: false })).catch(() => null);
                 if (!S || S.root !== root) return;
@@ -142,13 +149,16 @@
                     renderChannel(ch, cell) { cell.append(el('span', 'ms-chno', ch.ch.ChannelNumber || ''), el('span', 'ms-chname', ch.name)); },
                     renderProgram(p, cell) { cell.textContent = p.title; if (p.item && p.item.TimerId) cell.append(el('span', 'ms-rec', ' ●')); },
                     emptyLabel: 'No information',
-                    onFocus(p, ch) { info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
+                    focus: back ? false : undefined,  // Back from a tab's screen: the tab, not the grid
+                    onFocus(p, ch) { opener = null; info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
                     onSelect(p, ch) {
-                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
+                        if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { opener = { entry: S.entry, cell: { id: ch.id, time: p.start } }; stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
                         else if (D.liveOptions && p.item) D.liveOptions(p.item);
                         else location.hash = `#/details?id=${p.id}&serverId=${c.serverId()}`;
                     }
                 });
+                if (back && !(E.focused() && S.guideEl.contains(E.focused()))) focusMenu();
+                if (cellBack) { const row = S.channels.findIndex((x) => x.id === cellBack.id); if (row >= 0) S.guide.focus(row, Math.max(cellBack.time, Date.now())); }  // Back from the player: its cell
             },
             unmount() {
                 D.screenHints = null;

@@ -175,7 +175,8 @@
     D.songLine = (host) => {
         const line = D.el('div', 'ms-song');
         line.hidden = true;
-        const label = D.el('button', 'ms-song-label');
+        const label = D.pointerFocus(D.el('button', 'ms-song-label'));  // (QA Mosaic 1)
+        label.setAttribute('data-icefin-pointer-only', '');
         label.type = 'button';
         label.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/queue'); });
         const bar = D.el('div', 'ms-song-bar');
@@ -220,6 +221,20 @@
         }, true);
     }
     ui.pointerFirst(true);  // hover moves focus on every screen (checklist 2.5)
+    // Back lands on what opened the next screen: the history entry's key (QA Mosaic 1); without the Navigation API,
+    // a mount within 2 s of a popstate counts as Back.
+    if (!window.icefinMosaicPop) {
+        window.icefinMosaicPop = true;
+        window.addEventListener('popstate', () => { window.icefinMosaicPopAt = Date.now(); }, true);
+    }
+    D.entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '');
+    D.isReturn = (key) => (window.navigation && navigation.currentEntry ? !!key && key === navigation.currentEntry.key : Date.now() - (window.icefinMosaicPopAt || 0) < 2000);
+    // A control outside a screen's own rows takes focus from the pointer that moves over it, without becoming a stop
+    // for the arrows; content moving under a resting cursor never does (QA Mosaic 1).
+    D.pointerFocus = (b) => {
+        b.addEventListener('mousemove', (e) => { if ((e.movementX || e.movementY) && T.ctx.focused && T.ctx.focused() !== b) T.ctx.focus(b); });
+        return b;
+    };
     if (ui.keyboard) ui.keyboard.enable();  // the on-screen keyboard for every text field (checklist 1.12)
 
     // ---- hints (the Input board: page-aware, bottom left, the pad's own keys) ----
@@ -261,18 +276,18 @@
     // ---- the pointer's Back and Home (Decisions board): a quiet line at the top left, while the mouse moves ----
     D.pointerNav = (root, back, extra) => {
         const nav = D.el('div', 'ms-pnav');
-        const b = D.el('button', 'ms-pnav-btn');
+        const b = D.pointerFocus(D.el('button', 'ms-pnav-btn'));  // (QA Mosaic 1)
         b.type = 'button';
         b.append(D.svg('back'), document.createTextNode(' Back'));
         b.addEventListener('click', () => { T.ctx.sound('back'); if (back) back(); else history.back(); });
-        const h = D.el('button', 'ms-pnav-btn');
+        const h = D.pointerFocus(D.el('button', 'ms-pnav-btn'));
         h.type = 'button';
         h.append(D.svg('home'), document.createTextNode(' Home'));
         h.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/home'); });
         nav.append(b, h);
         // what a pad has keys for and a mouse doesn't: the options (≡), Play on, Watch together, and a screen's own
-        const add = (icon, label, go) => { const x = D.el('button', 'ms-pnav-btn'); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
-        add('reorder', 'Options', () => { if (T.handleAction) T.handleAction('menu'); });
+        const add = (icon, label, go) => { const x = D.pointerFocus(D.el('button', 'ms-pnav-btn')); x.type = 'button'; x.append(D.svg(icon), document.createTextNode(` ${label}`)); x.setAttribute('aria-label', label); x.addEventListener('click', () => { T.ctx.sound('select'); go(); }); nav.append(x); return x; };
+        add('reorder', 'Options', () => { if (!(T.handleAction && T.handleAction('menu')) && D.notice) D.notice('No options here', true); });  // always answers (QA Mosaic 1)
         add('cast', 'Play on', () => D.playOn && D.playOn('play', null));
         add('together', 'Watch together', () => D.playOn && D.playOn('together', null));
         for (const x of (extra || [])) add(x.icon || 'item', x.label, x.go);

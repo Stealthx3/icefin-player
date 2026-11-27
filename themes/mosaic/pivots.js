@@ -155,7 +155,7 @@
             out.push({ id: r.homeRow, title: v.Name.toLowerCase(), tiles: async () => {
                 const list = (await levelOf(r)).filter((x) => !x.libraryOf);
                 const t = [];
-                if (list.length) t.push({ size: 'large', live: list.slice(0, 8), entry: { name: 'Latest' } });
+                if (list.length) t.push({ size: 'large', live: list.slice(0, 8), entry: { name: 'Latest', sub: v.Name } });  // names its library (QA Mosaic 1)
                 t.push({ size: 'small', glyph: D.kindIcon(v.CollectionType), entry: { name: `All ${v.Name}`, okLabel: 'open', go: () => T.ctx.navigate(D.viewRoute(v)) } });
                 list.slice(0, 6).forEach((x) => t.push({ size: 'small', entry: x }));
                 t.push({ size: 'small', glyph: 'search', entry: { name: 'Search', go: () => T.ctx.navigate('#/search') } });
@@ -459,6 +459,7 @@
             return false;
         },
         onBack() { if (H && H.C) return H.C.onAction('back'); return this.onAction('back', T.ctx); },
+        levelBack() { return !!(H && H.C && H.C.S.stack.length > 1 && H.C.back(false)); },  // the mouse's Back pops a level (QA Mosaic 1)
         mount(root) {
             const p = D.params();
             const sub = p.get('ms');

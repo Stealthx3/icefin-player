@@ -191,7 +191,8 @@
                 lastRow = e.row;
                 const b = o.mode === 'grid' ? tileEl(e, o.kind) : rowEl(e);
                 b.addEventListener('click', () => { V.at = k; o.activate(e, b); });
-                b.addEventListener('mouseenter', () => { if (document.documentElement.getAttribute('data-ms-input') !== 'pointer' || V.at === k) return; V.at = k; V.focus(true); });
+                // only a pointer that moves takes focus; content moving under a resting one doesn't (QA Mosaic 1)
+                b.addEventListener('mousemove', (ev) => { if (!(ev.movementX || ev.movementY) || V.at === k) return; V.at = k; V.focus(true); });
                 inner.append(b);
                 els.push(b);
             }
@@ -353,7 +354,11 @@
         const top = () => S.stack[S.stack.length - 1];
         const isBar = () => !!top().bar;
         const cur = () => (isBar() ? top().bar[Math.max(0, Math.min(S.barIndex, top().bar.length - 1))] : top());
-        function save() { D.memory.set(key, { stack: S.stack, barIndex: S.barIndex }); }
+        function save() {
+            D.memory.delete(key);
+            D.memory.set(key, { stack: S.stack, barIndex: S.barIndex });
+            if (D.memory.size > 60) D.memory.delete(D.memory.keys().next().value);  // capped, oldest first (QA Mosaic 1)
+        }
 
         // the level shown in the panels: a level marked tabs (a library's root) whose entries are all folders shows the
         // chosen folder's level under its tabs
@@ -500,6 +505,8 @@
                 const h = el('button', 'ms-dk-head', (p.title || '').toLowerCase());
                 h.type = 'button';
                 h.tabIndex = -1;
+                h.setAttribute('role', 'tab');  // the pointer's way; a pad changes panels with ◀ ▶ (QA Mosaic 1)
+                h.setAttribute('data-icefin-pointer-only', '');
                 h.addEventListener('click', () => deckGo(i));
                 row.append(h);
             });
@@ -529,6 +536,9 @@
                     const b = el('button', 'ms-tab' + (k === si ? ' on' : ''), s.item.Name || s.name);
                     b.type = 'button';
                     b.tabIndex = -1;
+                    b.setAttribute('role', 'tab');  // the pointer's way; a pad uses LB RB (QA Mosaic 1)
+                    b.setAttribute('aria-selected', String(k === si));
+                    b.setAttribute('data-icefin-pointer-only', '');
                     b.addEventListener('click', () => { T.ctx.sound('navigate'); fillPanel(p, k).then(() => { if (deck && deck.panels[deck.at] === p) focusDeck(true); }); });
                     p.tabsEl.append(b);
                 });
@@ -594,7 +604,7 @@
             deck.count.textContent = '';
             if (deck.heads) {
                 const hs = [...deck.heads.children];
-                hs.forEach((h, k) => h.classList.toggle('on', k === deck.at));
+                hs.forEach((h, k) => { h.classList.toggle('on', k === deck.at); h.setAttribute('aria-selected', String(k === deck.at)); });
                 const off = hs[deck.at] ? hs[deck.at].offsetLeft - (hs[0] ? hs[0].offsetLeft : 0) : 0;
                 deck.heads.style.transform = `translateX(${-off}px)`;
             }
@@ -686,11 +696,18 @@
             if (ti >= 0) { S.zone = 'tabs'; S.tabAt = ti; return; }
             if (deck) {
                 const i = deck.panels.findIndex((p) => p.el && p.el.contains(f));
-                if (i >= 0 && i !== deck.at) { deck.at = i; place(); V = deck.panels[i].view; }
+                if (i >= 0 && i !== deck.at) { deck.at = i; cur().deckAt = i; place(); V = deck.panels[i].view; }  // Back returns to the panel focused (QA Mosaic 1)
             }
             if (V && V.sync(f)) S.zone = 'main';
         }
         function remember() { if (V && content && !deck) content.pos = V.at; }
+        // a tab that leaves the screen (Live TV's Guide) is passed over by ◀ ▶, not clicked; OK on it still opens it (QA Mosaic 1)
+        function passTab(n) {
+            const t = isBar() && top().bar[n];
+            if (!t || !t.leaves) return false;
+            S.tabAt = n; T.ctx.focus(tabEls[n]); T.ctx.sound('focus'); hintsFor(null);
+            return true;
+        }
 
         const C = {
             S, rootEl,
@@ -740,6 +757,7 @@
             replaceTop(level) {
                 const old = top();
                 level.pos = old.pos; level.deckAt = deck ? deck.at : old.deckAt;
+                level.deckMemo = old.deckMemo;  // the places in each panel stay (QA Mosaic 1)
                 S.stack[S.stack.length - 1] = level;
                 return C.redraw('none');
             },
@@ -759,12 +777,14 @@
                     if (a === 'left' || a === 'right') {
                         const n = S.tabAt + (a === 'right' ? 1 : -1);
                         if (n < 0 || n >= tabEls.length) { T.ctx.sound('error'); return true; }
+                        if (passTab(n)) return true;
                         tabEls[n].click();
                         return true;
                     }
-                    if (a === 'down') { S.zone = 'main'; if (V) V.focus(); return true; }
+                    // (QA Mosaic 1) ▼ from the tabs of an empty list reaches its button
+                    if (a === 'down') { S.zone = 'main'; if (V) V.focus(); else { const w = rootEl.querySelector('.ms-main .ms-empty .ms-btn'); if (w) T.ctx.focus(w); else T.ctx.sound('error'); } return true; }
                     if (a === 'up') { T.ctx.sound('error'); return true; }
-                    if (a === 'step_backward' || a === 'step_forward') { const n = S.tabAt + (a === 'step_forward' ? 1 : -1); if (n >= 0 && n < tabEls.length) tabEls[n].click(); else T.ctx.sound('error'); return true; }
+                    if (a === 'step_backward' || a === 'step_forward') { const n = S.tabAt + (a === 'step_forward' ? 1 : -1); if (n >= 0 && n < tabEls.length) { if (!passTab(n)) tabEls[n].click(); } else T.ctx.sound('error'); return true; }
                     if (a !== 'back' && a !== 'menu') return false;  // OK: the engine clicks the tab
                 }
                 if (['up', 'down', 'left', 'right'].includes(a)) {
@@ -854,7 +874,8 @@
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },
             onAction(a) { return C ? C.onAction(a) : false; },
-            onBack() { return C ? C.onAction('back') : false; }
+            onBack() { return C ? C.onAction('back') : false; },
+            levelBack() { return !!(C && C.S.stack.length > 1 && C.back(false)); }  // the mouse's Back pops a level (QA Mosaic 1)
         }, spec.beforeSignIn ? { beforeSignIn: true } : {}));
     };
 
