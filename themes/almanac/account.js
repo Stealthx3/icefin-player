@@ -256,7 +256,8 @@
             },
             unmount() { if (C) C.stop(); C = null; },
             onAction(a) { D.sawAction(a); return C ? C.onAction(a) : false; },
-            onBack() { return C ? C.onAction('back') : false; }
+            onBack() { return C ? C.onAction('back') : false; },
+            levelBack() { return !!(C && C.back(false)); } // (QA Almanac 3)
         };
     }
     T.registerScreen('#/login', signInScreen(0));

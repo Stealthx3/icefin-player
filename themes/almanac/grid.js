@@ -351,9 +351,9 @@
             const b = x && x.cells[colIn(row, p)];
             // never take focus from the list box or the keyboard (a row that loads late redraws under them)
             const busy = (D.panel && D.panel.isOpen()) || (ui.keyboard && ui.keyboard.isOpen && ui.keyboard.isOpen());
-            // nor from a button on the pointer's line the pointer rests on (a row that loads late redraws)
+            // nor from a button on the pointer's line the pointer rests on (a row that loads late redraws); the song line too (QA Almanac 3)
             const f = T.ctx.focused && T.ctx.focused();
-            const onLine = !!(f && f.closest && f.closest('.al-pnav, .al-server')) && document.documentElement.getAttribute('data-al-input') === 'pointer';
+            const onLine = !!(f && f.closest && f.closest('.al-pnav, .al-server, .al-song-label')) && document.documentElement.getAttribute('data-al-input') === 'pointer';
             if (b && !busy && !onLine) T.ctx.focus(b);
             const e = litEntry();
             drawPane(e);
@@ -447,7 +447,10 @@
                 lv.entries = list;
                 lv.reload = false;
                 const old = lv.rows;
+                // the lit row is kept by its name: a row added above (Now playing) moves the rest (QA Almanac 3)
+                const litRow = old && lv.pos && old[lv.pos.r] && old[lv.pos.r].label ? old[lv.pos.r].label : null;
                 lv.rows = buildRows(lv, list);
+                if (litRow != null) { const r = lv.rows.findIndex((x) => x.label === litRow); if (r >= 0 && r !== lv.pos.r) { lv.top = Math.max(0, (lv.top || 0) + r - lv.pos.r); lv.pos.r = r; } }
                 // folder rows already loaded keep their cells until they reload in view
                 if (old) for (const r of lv.rows) { const o = old.find((x) => x.kind === 'folder' && x.label === r.label); if (o && r.kind === 'folder') { r.offset = o.offset; } }
                 if (lv.focus != null || !lv.pos) placeFocus(lv, list);
@@ -672,7 +675,9 @@
             },
             unmount() { if (C) C.stop(); C = null; if (spec.unmounted) spec.unmounted(); },
             onAction(a) { return C ? C.onAction(a) : false; },
-            onBack() { return C ? C.onAction('back') : false; }
+            onBack() { return C ? C.onAction('back') : false; },
+            // the mouse's Back pops a level, the engine plays the sound (QA Almanac 3)
+            levelBack() { return !!(C && C.back(false)); }
         }, spec.beforeSignIn ? { beforeSignIn: true } : {}));
     };
 

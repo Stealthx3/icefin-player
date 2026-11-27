@@ -180,7 +180,8 @@
                     emptyLabel: 'No information',
                     focus: back ? false : undefined,  // Back from a tab's screen: the tab, not the grid
                     // (onFocus clears the stale tab opener: a cell focused means the user left the strip; QA Almanac 1)
-                    onFocus(p, ch) { opener = null; info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
+                    // (QA Almanac 3: only a tab's opener; the played cell's filing survives focus moves before the player opens)
+                    onFocus(p, ch) { if (opener && !opener.cell) opener = null; info(p, ch.ch); S.at = { p, ch }; if (!(D.panel && D.panel.isOpen())) D.hints(HINTS); D.screenHints = () => D.hints(HINTS); },
                     onSelect(p, ch) {
                         if (p.start <= Date.now() && p.end > Date.now() && T.ctx.canPlay()) { fileCell(ch, p); stopPreview(); T.ctx.play({ ids: [ch.id], serverId: c.serverId() }); }
                         else if (D.liveOptions && p.item) D.liveOptions(p.item);

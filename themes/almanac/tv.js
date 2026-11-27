@@ -150,6 +150,7 @@
             if (G && G.g) return G.g.onAction(a, ctx);
             return false;
         },
-        onBack() { return G && G.C ? G.C.onAction('back') : false; }
+        onBack() { return G && G.C ? G.C.onAction('back') : false; },
+        levelBack() { return !!(G && G.C && G.C.back(false)); } // (QA Almanac 3)
     });
 })();
