@@ -122,46 +122,74 @@ Judged (rules proposed for `qa-judged.json`, doc `mosaic-1.md`):
 
 ## Rechecks for pass 2
 
-Theme, each checked in the lab on the next walk's build:
-- [ ] F1: Test Tones, Play all shows "Playing Test Tones"; Shuffle shows "Shuffling Test Tones"; a song's Play and
-      Instant mix show their notices; /music's Shuffle shows its notice.
-- [ ] F2: the preferences menu, click Options: "No options here" with the error sound. On a details deck Options still
-      opens the item's options.
+Theme, each checked in the lab on the next walk's build. Checked by pass 2's walk (`mosaic-2.md`, 2026-11-27):
+- [x] F1: Test Tones, Play all shows "Playing Test Tones"; Shuffle shows "Shuffling Test Tones"; a song's Play and
+      Instant mix show their notices; /music's Shuffle shows its notice. Closed: no dead Play all, Shuffle or Instant
+      mix in 7 runs (pass 1: 35); song rows are in-place in 15 of 17 and the other is walker noise (the page was noisy
+      while music played).
+- [x] F2: the preferences menu, click Options: "No options here" with the error sound. On a details deck Options still
+      opens the item's options. Closed: Options answers in place on the mouse (pass 1: 3 dead). The sound is a by-ear
+      check.
 - [ ] F3: Guide, Schedule tab, Back: Schedule is lit. A later row's on-now programme, wait for the player, Back: that
-      cell is lit. A later programme's panel opens on OK within a frame.
-- [ ] F4: Channels, row 5, the player, Back: row 5 is lit. Schedule (mouse), click Channels, a channel, Back: Channels
-      with that channel.
-- [ ] F5: hover the pointer bar's Options, Play on and Watch together, and the song line: each takes the focus look.
-- [ ] F6: the deck heads, the season tabs and the song line are not listed as unreachable or hover-no-focus; a pad's
-      shoulders still change panel; the head already shown is not a dead control.
-- [ ] F7: Channels, Up, Right twice: Recordings opens; Right again: Schedule. OK on Guide opens the guide.
-- [ ] F8: an empty list, Down from the tabs: "Open the guide" is lit.
-- [ ] F9: Watch together with a group joined: the row says it is current.
-- [ ] F10: /queue idle, Previous, Next and Repeat: "Nothing is playing".
-- [ ] F11: a film, move the pointer to another tile's place, mouse Back: the film is lit.
-- [ ] F12: BoxSet details, focus a card in "in this collection", OK, Back: the card is lit.
-- [ ] F13: a film, Subtitles, Off: focus stays on Subtitles.
-- [ ] F14: Music, Artists, Icefin Lab, mouse Back: back on Artists (needs #236 in the build).
-- [ ] F15: each library pivot's live tile reads "latest, <library>".
-- [ ] An episode's options open its own page, from a pad and by the mouse.
+      cell is lit. A later programme's panel opens on OK within a frame. Open, one gap: Series → Back passes and the
+      panel opens at once, but Channels → Back landed on Guide (the current tab overwrote the opener's; T1, fixed in
+      pass 2). The played cell is refocused; the misses were the walker's row keys (fixed by #242).
+- [x] F4: Channels, row 5, the player, Back: row 5 is lit. Schedule (mouse), click Channels, a channel, Back: Channels
+      with that channel. Closed for rows: no back-focus on channel rows after the player (pass 1: 49). The Guide tab's own
+      Back is T2 (fixed in pass 2).
+- [x] F5: hover the pointer bar's Options, Play on and Watch together, and the song line: each takes the focus look.
+      Closed: no hover-no-focus finding (pass 1: 37).
+- [x] F6: the deck heads, the season tabs and the song line are not listed as unreachable or hover-no-focus; a pad's
+      shoulders still change panel; the head already shown is not a dead control. Closed, except the pad's shoulders,
+      not exercised (pass 1: 102 findings, now none).
+- [x] F7: Channels, Up, Right twice: Recordings opens; Right again: Schedule. OK on Guide opens the guide. Closed: pads
+      reach Recordings in the list's tab bar, and its screen is in every pad report.
+- [x] F8: an empty list, Down from the tabs: "Open the guide" is lit. Closed: ▼ from the tabs reaches "Go back" and "Go
+      to All movies".
+- [ ] F9: Watch together with a group joined: the row says it is current. Open, not exercised: no group was made (#241
+      skips "new group"), so the row never showed.
+- [x] F10: /queue idle, Previous, Next and Repeat: "Nothing is playing". Closed for Previous (in-place on the mouse); Next
+      and Repeat were not pressed.
+- [x] F11: a film, move the pointer to another tile's place, mouse Back: the film is lit. Closed: no back-focus on
+      /movies, /homevideos or BoxSet tiles after the mouse's Back (pass 1: 18).
+- [x] F12: BoxSet details, focus a card in "in this collection", OK, Back: the card is lit. Closed: no BoxSet, album or
+      PhotoAlbum back-focus (pass 1: 28).
+- [x] F13: a film, Subtitles, Off: focus stays on Subtitles. Closed, weakly: "Subtitles, Off" opened its panel on Switch
+      Pro and there is no back-focus on Subtitles.
+- [ ] F14: Music, Artists, Icefin Lab, mouse Back: back on Artists (needs #236 in the build). Open, not exercised: the
+      mouse opened no column level in this walk.
+- [x] F15: each library pivot's live tile reads "latest, <library>". Closed: the reports show "latest, Music", "latest,
+      Books", "latest, Photos" and the rest.
+- [ ] An episode's options open its own page, from a pad and by the mouse. Open: pads never press ≡ and "More options…"
+      was denylisted (W-HEAD); the mouse never reached a series (the pivot headers took its budget).
 
 Engine, with the next build:
-- [ ] E1 (#236): hover a guide cell, press Options, wait for a minute boundary plus 30 s, close the panel: the cell keeps
-      focus. A programme reached by script, OK, Back: that programme is lit, not another.
-- [ ] E-P (#240): the pivot headers are tabs: the mouse reaches Search; a pad's shoulders still page.
-- [ ] E-L (#240): hover the live card's Close: it takes the focus look.
+- [x] E1 (#236): hover a guide cell, press Options, wait for a minute boundary plus 30 s, close the panel: the cell keeps
+      focus. A programme reached by script, OK, Back: that programme is lit, not another. Closed: no back-focus after a
+      programme panel closed (pass 1: 16).
+- [x] E-P (#240): the pivot headers are tabs: the mouse reaches Search; a pad's shoulders still page. Closed for the
+      mouse (Search is reached through its header, and the headers are now walker screens, with P1 and P2 as a side
+      effect). The pad's shoulders were not exercised.
+- [ ] E-L (#240): hover the live card's Close: it takes the focus look. Open, not exercised: no failed live card in this
+      walk.
 
 Walker (#241, once it lands):
 - [ ] Pads and keys reach every library (movies, tvshows, books, playlists) and the preferences menu with its Display,
-      Home, Playback and Subtitles pages at 60 minutes, with no required-missing and budget to spare.
-- [ ] The mouse reaches Search through the pivot header.
+      Home, Playback and Subtitles pages at 60 minutes, with no required-missing and budget to spare. Open: movies,
+      tvshows and playlists, and the Playback, Subtitles and Controls pages are reached; books, home videos, the
+      preferences menu, Display and Home are not (engine bug E-B, fixed in #244, then time).
+- [x] The mouse reaches Search through the pivot header. Closed (E-P).
 - [ ] A pad reaches every home place tile by arrows alone (movies, shows, books, playlists, photos, settings) without
-      leaving the home pivot.
-- [ ] No walker user writes ("Watched ✓", "Played ✓" and "new group" are skipped).
+      leaving the home pivot. Failed: real engine bug (movies, books, photos and settings unreachable), fixed in engine
+      PR #244.
+- [x] No walker user writes ("Watched ✓", "Played ✓" and "new group" are skipped). Closed: Watched, Mark as watched,
+      favourites, Record and New playlist were all skipped, and no group was made. Only plays, which change play state.
 
 Unsure groups:
-- [ ] /queue's Shuffle, as above.
-- [ ] The guide's Matinee focus-lost, as above.
-- [ ] Season and Episode details reached, as above.
+- [x] /queue's Shuffle, as above. Closed, not reproduced: Shuffle pressed again was in-place, with no broken-back from
+      /queue.
+- [x] The guide's Matinee focus-lost, as above. Closed, not reproduced: no focus-lost finding in 7 runs.
+- [ ] Season and Episode details reached, as above. Open: a season is a deck panel by design (the judged rule), and the
+      episode needs W-HEAD and a mouse run that reaches a series.
 
 Mosaic's first pass is done; its second walks on the walker of #241 with the engine of #240.
