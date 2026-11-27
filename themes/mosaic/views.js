@@ -333,7 +333,7 @@
     D.columns = function (rootEl, opts) {
         const key = opts.key || location.hash.split('?')[0];
         const saved = opts.fresh ? null : D.memory.get(key);
-        const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0), zone: 'main', tabAt: 0 };
+        const S = { key, rootEl, stack: saved ? saved.stack : [opts.root], entries: [], loading: 0, alive: true, barIndex: saved ? saved.barIndex : (opts.root.at || 0), backTab: saved ? saved.backTab : null, zone: 'main', tabAt: 0 };  // backTab: the tab that left the screen (QA Mosaic 2)
         rootEl.setAttribute('data-ms-screen', opts.name || 'browse');
         rootEl.classList.add('ms-screen');
         const ttl = el('div', 'ms-ttl');
@@ -356,7 +356,7 @@
         const cur = () => (isBar() ? top().bar[Math.max(0, Math.min(S.barIndex, top().bar.length - 1))] : top());
         function save() {
             D.memory.delete(key);
-            D.memory.set(key, { stack: S.stack, barIndex: S.barIndex });
+            D.memory.set(key, { stack: S.stack, barIndex: S.barIndex, backTab: S.backTab });
             if (D.memory.size > 60) D.memory.delete(D.memory.keys().next().value);  // capped, oldest first (QA Mosaic 1)
         }
 
@@ -674,7 +674,9 @@
             if (opts.onLevel) opts.onLevel(lv, C);
             if (lv.details) deckOpen(lv, entries, how);
             else browse(content, entries, how);
-            if (S.zone === 'tabs' && tabEls.length) focusTab(S.tabAt, true);
+            if (D.songBack && D.songBack()) S.zone = 'main';  // Back from the queue: the song line (QA Mosaic 2)
+            else if (S.backTab != null && tabEls[S.backTab]) { const b = S.backTab; S.backTab = null; focusTab(b, true); }  // Back from the tab that left (QA Mosaic 2)
+            else if (S.zone === 'tabs' && tabEls.length) focusTab(S.tabAt, true);
             else S.zone = 'main';
             rootEl.setAttribute('data-ms-ready', String(S.stack.length));
             rootEl.setAttribute('data-ms-count', String(entries.length));
@@ -720,6 +722,7 @@
                 if (i < 0 || i >= top().bar.length) { T.ctx.sound('error'); return true; }
                 remember();
                 const dir = i > S.barIndex ? 'r' : 'l';
+                if (top().bar[i] && top().bar[i].leaves) { S.backTab = i; save(); }  // Back returns to the tab that left (QA Mosaic 2)
                 S.barIndex = i;
                 T.ctx.sound('navigate');
                 const z = S.zone;

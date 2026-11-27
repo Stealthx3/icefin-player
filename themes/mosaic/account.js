@@ -258,7 +258,8 @@
             },
             unmount() { if (C) C.stop(); C = null; },
             onAction(a) { D.sawAction(a); return C ? C.onAction(a) : false; },
-            onBack() { return C ? C.onAction('back') : false; }
+            onBack() { return C ? C.onAction('back') : false; },
+            levelBack() { return !!(C && C.S.stack.length > 1 && C.back(false)); }  // the mouse's Back pops a level (QA Mosaic 2)
         };
     }
     T.registerScreen('#/login', signInScreen(0));

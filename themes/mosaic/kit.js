@@ -178,7 +178,7 @@
         const label = D.pointerFocus(D.el('button', 'ms-song-label'));  // (QA Mosaic 1)
         label.setAttribute('data-icefin-pointer-only', '');
         label.type = 'button';
-        label.addEventListener('click', () => { T.ctx.sound('select'); T.ctx.navigate('#/queue'); });
+        label.addEventListener('click', () => { D.songFrom = D.entryKey(); T.ctx.sound('select'); T.ctx.navigate('#/queue'); });
         const bar = D.el('div', 'ms-song-bar');
         const fill = D.el('div', 'ms-song-fill');
         bar.append(fill);
@@ -229,6 +229,16 @@
     }
     D.entryKey = () => (window.navigation && navigation.currentEntry ? navigation.currentEntry.key : '');
     D.isReturn = (key) => (window.navigation && navigation.currentEntry ? !!key && key === navigation.currentEntry.key : Date.now() - (window.icefinMosaicPopAt || 0) < 2000);
+    // Back from the queue focuses the song line that opened it (QA Mosaic 2)
+    D.songBack = () => {
+        const k = D.songFrom;
+        if (!k || !D.isReturn(k)) return false;
+        D.songFrom = null;
+        const b = document.querySelector('#icefin-theme-root .ms-song-label');
+        if (!b || b.closest('[hidden]')) return false;
+        T.ctx.focus(b);
+        return true;
+    };
     // A control outside a screen's own rows takes focus from the pointer that moves over it, without becoming a stop
     // for the arrows; content moving under a resting cursor never does (QA Mosaic 1).
     D.pointerFocus = (b) => {

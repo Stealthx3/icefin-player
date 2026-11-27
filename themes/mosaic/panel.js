@@ -227,9 +227,12 @@
     // A panel's sections along its top (the wide panel's Details · Images · Identify · …); the shoulder buttons step them
     D.tabs = (list, at, pick) => {
         const t = el('div', 'ms-ptabs');
+        t.setAttribute('role', 'tablist');  // the shown section says so (QA Mosaic 2)
         for (const [id, label] of list) {
             const b = D.focusable(el('button', 'ms-ptab' + (id === at ? ' on' : ''), label));
             b.type = 'button';
+            b.setAttribute('role', 'tab');
+            b.setAttribute('aria-selected', String(id === at));
             b.addEventListener('click', () => { if (id !== at) pick(id); });
             t.append(b);
         }

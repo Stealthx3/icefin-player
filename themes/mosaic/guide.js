@@ -119,7 +119,7 @@
                     b.setAttribute('data-icefin-focus', '');
                     b.tabIndex = -1;
                     b.addEventListener('click', () => { if (!x.current) { opener = { entry, label: x.label }; x.go(); } else if (S.guide) { S.zone = 'guide'; S.guide.refocus(); } });
-                    if (x.current) S.menuIndex = i;
+                    if (x.current && !back) S.menuIndex = i;  // the opener's tab wins over the current one (QA Mosaic 2)
                     if (back === x.label) S.menuIndex = i;
                     menu.append(b);
                     return b;

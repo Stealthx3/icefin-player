@@ -459,7 +459,12 @@
             return false;
         },
         onBack() { if (H && H.C) return H.C.onAction('back'); return this.onAction('back', T.ctx); },
-        levelBack() { return !!(H && H.C && H.C.S.stack.length > 1 && H.C.back(false)); },  // the mouse's Back pops a level (QA Mosaic 1)
+        levelBack() {  // the mouse's Back pops a level (QA Mosaic 1), or returns to the home pivot as B does (QA Mosaic 2)
+            if (H && H.C) return !!(H.C.S.stack.length > 1 && H.C.back(false));
+            const h = D.homeIndex();
+            if (S && S.pivot && S.pivot.index() !== h) { S.pivot.show(h); return true; }
+            return false;
+        },
         mount(root) {
             const p = D.params();
             const sub = p.get('ms');
