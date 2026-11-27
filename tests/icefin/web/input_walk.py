@@ -276,7 +276,7 @@ DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|
                     r"|classic[ _-]?view|jellyfin[ _-]?web|stock (view|jellyfin)|(switch|change|choose|pick|select|use) (to )?(the |a |another )?(theme|stock)|"
                     r"(turn|switch) (off|the theme)|disable (the )?(theme|engine)|theme (picker|chooser|selector)"
                     # quitting the app ends the walk (Exit IceFin Player, Quit the app, Close IceFin, Exit Application)
-                    r"|\b(exit|quit)\b|close (icefin|the app)", re.I)
+                    r"|(exit|quit)\b|close (icefin|the app)", re.I)  # no word boundary before: an icon's ligature text runs into the label ("closeExit Application" quit the app, QA Baseline 2)
 DANGER_CLS = re.compile(r"delete|remove|sign-?out|log-?out|favorit|userrating|playstate|btnuserdata|restart|shut|btn(save|submit|apply)|btnplayed", re.I)
 SETTINGS_ENTRY = re.compile(r"^(display|subtitles?|audio|video|playback|theme)$", re.I)
 PERSISTS = re.compile(r"\b(sort|filters?|layout|group by|order by|view mode|language|quality|bitrate|speed|subtitle|audio|display|theme|colou?r|version)\b", re.I)
@@ -310,7 +310,7 @@ LIBRARY = {"movies": r"^/movies", "tvshows": r"^/tv", "music": r"^/music", "live
 ITEM_TYPES = ["Movie", "Series", "Season", "Episode", "Audio", "MusicAlbum", "MusicArtist", "Person", "Playlist", "BoxSet", "Book", "Photo"]
 SEVERITY = {"broken-back": "high", "back-focus": "medium", "dead-control": "medium", "no-focus-indicator": "high", "unreachable-by-input": "medium",
             "focus-lost": "high", "obscured": "low", "script-error": "high", "required-missing": "medium", "hover-no-focus": "low", "shift-tab": "low",
-            "unpositioned": "low", "walk-error": "high", "plugin": "info", "budget": "info"}
+            "unpositioned": "low", "walk-error": "high", "app-quit": "high", "plugin": "info", "budget": "info"}
 
 
 def base(k):
@@ -2096,31 +2096,42 @@ class Walker:
         self.shot(k0)
         self.queue.append(k0)
         order = []
-        while self.queue and not self.late():
+        gone = [False]
+
+        def failed(k, ex):
+            # (QA Baseline 2) the app gone (a press quit it): one finding, and the run ends, where each queued screen had
+            # thrown at once and then waited out a 60-s reconnect (20 of the run's 60 minutes)
+            if gone[0]:
+                return
+            self.finding("walk-error", k, "", f"{type(ex).__name__}: {ex}")
+            try:
+                self.page.reconnect()
+            except Exception:  # noqa: BLE001
+                gone[0] = True
+                self.finding("app-quit", k, "", "the app's page went away and did not come back; the run ends here", shot=False)
+                self.tr("the app is gone: the run ends")
+
+        while self.queue and not self.late() and not gone[0]:
             k = self.priority_pop()
             order.append(k)
             try:
                 self.explore(k, 2)
             except Exception as ex:  # noqa: BLE001 (a screen that breaks the walk is a finding; the walk goes on)
-                self.finding("walk-error", k, "", f"{type(ex).__name__}: {ex}")
-                try:
-                    self.page.reconnect()
-                except Exception:  # noqa: BLE001
-                    pass
-        if True:           # round two: EVERY element, in discovery order, as the budget allows (every input: touch every element, D40)
+                failed(k, ex)
+        if not gone[0]:    # round two: EVERY element, in discovery order, as the budget allows (every input: touch every element, D40)
             for k in order:
-                if self.late():
+                if self.late() or gone[0]:
                     break
                 try:
                     self.explore(k, INF)
                 except Exception as ex:  # noqa: BLE001
-                    self.finding("walk-error", k, "", f"{type(ex).__name__}: {ex}")
-            while self.queue and not self.late():
+                    failed(k, ex)
+            while self.queue and not self.late() and not gone[0]:
                 k = self.priority_pop()
                 try:
                     self.explore(k, INF)
                 except Exception as ex:  # noqa: BLE001
-                    self.finding("walk-error", k, "", f"{type(ex).__name__}: {ex}")
+                    failed(k, ex)
             if self.hovered[1] >= 6 and self.hovered[0] / self.hovered[1] >= 0.5:
                 for k, sc in self.screens.items():
                     for key, e in sc["elements"].items():
