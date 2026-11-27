@@ -43,6 +43,14 @@ Host:  python3 input_walk.py --host --out <dir> [--themes a,b]   (the installed 
 """
 import argparse, base64, datetime, json, os, re, signal, subprocess, sys, tempfile, time
 
+WAY_BACK = re.compile(r"^\s*(‹\s*)?(back to |go back\b)", re.I)
+
+
+def own_keys(keys):
+    """A level's controls without the ways back every level of its route shows (a trail step, an empty column's way) (QA Tide 2)."""
+    return {x for x in keys if not WAY_BACK.match(x.split("|", 1)[-1])}
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "..", "servers"))
@@ -95,7 +103,9 @@ IW_JS = r"""
     for (const e of document.body.children) if (shown(e) && !e.matches(OWN) && !e.matches('script, style, link, template, #reactRoot') && !e.querySelector(OWN) && !r.includes(e)) r.push(e);
     return r;
   };
-  const dialogOpen = () => [...document.querySelectorAll(DLG)].some(shown) || ['icefin-theme-overlay', 'icefin-osk'].some((i) => { const e = document.getElementById(i); return e && shown(e) && e.childElementCount > 0; });
+  // a Live TV card that failed is a dialog too (Back closes it) (QA Mosaic 1)
+  const liveFailed = () => { const e = document.getElementById('icefin-live'); return !!e && shown(e) && (document.documentElement.getAttribute('data-icefin-live') === 'failed' || e.getAttribute('data-state') === 'failed'); };
+  const dialogOpen = () => liveFailed() || [...document.querySelectorAll(DLG)].some(shown) || ['icefin-theme-overlay', 'icefin-osk'].some((i) => { const e = document.getElementById(i); return e && shown(e) && e.childElementCount > 0; });
   const snap = (e) => {
     const cs = getComputedStyle(e), p = e.parentElement, ps = p ? getComputedStyle(p) : cs;
     const cls = [...e.classList].filter((c) => c !== 'icefin-focused').sort().join('.');
@@ -114,7 +124,10 @@ IW_JS = r"""
     return false;
   };
   window.inputWalk = {
-    screen() { const s = L.screen(); s.dialog = s.dialog || dialogOpen(); return s; },
+    // the active pivot header (a theme with pivots shows another pivot in place on one route; none: '') (QA Mosaic 1)
+    screen() { const s = L.screen(); s.dialog = s.dialog || dialogOpen();
+      const ph = document.querySelector('#icefin-theme-root .icefin-pivot-header.active');
+      s.pivot = ph && shown(ph) ? (ph.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase() : ''; return s; },
     now() {
       const n = L.now(); if (!n) return null;
       const e = L.cur(); els.set(n.key, e);
@@ -256,7 +269,7 @@ IW_JS = r"""
 """
 
 # ---------------------------------------------------------------- the read-only rules
-DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|create|new playlist|add to|rate|scan|refresh|shut ?down|import|upload|"
+DANGER = re.compile(cw.DANGER.pattern + r"|\b(save|apply|ok|okay|submit|confirm|create|new playlist|new group|add to|rate|scan|refresh|shut ?down|import|upload|"
                     r"mark|unfavou?rite|empty|stop server|install|update)\b"
                     # controls that switch the theme for the session or turn the engine off (the walk would continue on stock);
                     # "Classic home" (jellyfin-web's home inside the theme) stays allowed
@@ -293,7 +306,7 @@ PRIORITY_ROUTES = [("Home", r"^/home"), ("a library", r"^/(movies|tv|music|list|
                    ("preferences: playback", r"^/mypreferencesplayback"), ("preferences: subtitles", r"^/mypreferencessubtitles"),
                    ("now playing", r"^/(queue|nowplaying)")]
 LIBRARY = {"movies": r"^/movies", "tvshows": r"^/tv", "music": r"^/music", "livetv": r"^/livetv", "homevideos": r"^/homevideos", "books": r"^/books",
-           "musicvideos": r"^/musicvideos", "playlists": r"^/list"}
+           "musicvideos": r"^/musicvideos", "playlists": r"^/(list|playlists)"}  # (QA Mosaic 1: Mosaic's route is #/playlists)
 ITEM_TYPES = ["Movie", "Series", "Season", "Episode", "Audio", "MusicAlbum", "MusicArtist", "Person", "Playlist", "BoxSet", "Book", "Photo"]
 SEVERITY = {"broken-back": "high", "back-focus": "medium", "dead-control": "medium", "no-focus-indicator": "high", "unreachable-by-input": "medium",
             "focus-lost": "high", "obscured": "low", "script-error": "high", "required-missing": "medium", "hover-no-focus": "low", "shift-tab": "low",
@@ -325,11 +338,13 @@ def skip_reason(c, title=""):
         return "denylist"
     if "dashboard" in hr or "configurationpage" in hr or hr.startswith("http"):
         return "dashboard or external"
-    if cw.WAYBACK.match(lab):
+    # (QA Tide 2) the menu's "Home" link to the home preferences page is not a way back
+    if cw.WAYBACK.match(lab) and "mypreferences" not in hr:
         return "a way back"
     # a settings entry named for its page (Display, Subtitles, Audio) opens that page or section, it chooses nothing
     # (QA 3 re-walk, Media Center: its settings entries are buttons, so Display was never opened by any run)
-    if PERSISTS.search(lab) and not hr and not SETTINGS_ENTRY.match(lab.strip()):
+    # an entry may carry a sub-line: "Display, how it looks: language, dates" (QA Mosaic 1)
+    if PERSISTS.search(lab) and not hr and not SETTINGS_ENTRY.match(lab.strip()) and not SETTINGS_ENTRY.match(lab.split(",")[0].strip()):
         return "persists a view choice"
     if title and WALKER_GROUP.search(lab):
         return "another walker's group (parallel walk)"
@@ -627,6 +642,9 @@ class Walker:
         k = s["route"]
         if k.startswith("/details") and s.get("item"):
             k += f" [{self.item_type(s['item'])}]"
+        # a theme's active pivot is part of the screen: "/home · music" (no pivot header: no suffix) (QA Mosaic 1)
+        if s.get("pivot"):
+            k += f" · {s['pivot']}"
         # a sub-screen (a folder or section a theme opens in place on the same route): the level whose control set is on screen
         if self.subs.get(k):
             # judged by the controls that tell the levels apart: the ones the screen keeps at every level (a header, a
@@ -636,9 +654,15 @@ class Walker:
             cur, best, bo = self.ckeys(), None, 0.2499
             for sk in self.subs[k]:
                 st = self.screens[sk]["sub"]
-                ks, pre = set(st["keys"]) | set(st.get("seen", [])), set(st["pre"])
+                # (QA Tide 2) a way back is not part of a level's identity: every level of a route shows the same trail step
+                ks, pre = own_keys(set(st["keys"]) | set(st.get("seen", []))), own_keys(st["pre"])
                 own, gone = ks - pre, pre - ks
                 if not own:
+                    # an empty level (only ways back): it is on screen when the page has none of its own either
+                    if gone and len(cur & gone) * 2 > len(gone):
+                        continue
+                    if not (own_keys(cur) - pre) and ((set(st["keys"]) - own_keys(st["keys"])) & cur) and bo < 1.0:
+                        best, bo = sk, 1.0
                     continue
                 o = len(cur & own) / len(own)
                 if gone and len(cur & gone) * 2 > len(gone):
@@ -665,11 +689,20 @@ class Walker:
         post = self.ckeys()
         if len(pre & post) * 2 >= len(pre) or f["key"] not in post or f["key"] in pre:
             return None
+        # most of the controls are ones this screen has shown already: a deck that slid to another of its panels (QA Mosaic 1)
+        # (QA Tide 2) ways back are not part of a level's identity, here and below
+        pk = own_keys(post)
+        if pk and len(pk & set(here["elements"])) * 2 >= len(pk):
+            return None
         rk = sup["rkey"] if sup else k
         for other in self.subs.get(rk, []):         # the way back to a level already known is not a new level
             st = self.screens[other]["sub"]
-            for ref in (set(st["pre"]), set(st["keys"])):
-                if ref and len(post & ref) * 2 >= len(ref):
+            if not pk:                              # an empty level looks like every other empty one of the route
+                if not own_keys(st["keys"]) - own_keys(st["pre"]) and set(st["keys"]) & post:
+                    return None
+                continue
+            for ref in (own_keys(st["pre"]), own_keys(st["keys"])):
+                if ref and len(pk & ref) * 2 >= len(ref):
                     return None
         sk = f"{k} > {label}"
         if sk in self.screens:
@@ -830,7 +863,23 @@ class Walker:
         return True
 
     def stop_play(self):
-        self.js("window.icefinPlaybackManager && window.icefinPlaybackManager.isPlaying && window.icefinPlaybackManager.isPlaying() && window.icefinPlaybackManager.stop && window.icefinPlaybackManager.stop(); true")
+        """Stops playback. When it did, waits up to 3 s for the route to leave /video: jellyfin-web closes the player by
+        itself and a press made meanwhile lands on the page behind (QA Baseline 1: a Back raced it, two levels up).
+        True when playback was stopped."""
+        stopped = self.js("(() => { const m = window.icefinPlaybackManager; if (m && m.isPlaying && m.isPlaying() && m.stop) { m.stop(); return true; } return false; })()")
+        if stopped:
+            t0 = time.time()
+            while time.time() - t0 < 3.0 and self.screen()["route"].startswith("/video"):
+                time.sleep(0.2)
+            time.sleep(0.3)
+        return bool(stopped)
+
+    def close_dialog(self):
+        """(QA Baseline 1) Back once if a dialog or panel is open; True when none is open after it."""
+        if self.screen()["dialog"]:
+            self.drv.back(0)
+            self.settle(t=1.5)
+        return not self.screen()["dialog"]
 
     def dismiss(self):
         for _ in range(3):
@@ -861,6 +910,11 @@ class Walker:
         self.js(f"location.hash = {json.dumps(here['hash'])}; true")
         s = self.settle()
         got = self.screen_key(s)
+        pv = re.search(r" · ([^>]+?)$", base(k).split(" > ")[0])
+        if got != k and pv and not (self.screens.get(base(got), {}).get("sub")):
+            # the screen is a pivot of the route: show it by its header (QA Mosaic 1)
+            self.js("(() => { const t = %s; const h = [...document.querySelectorAll('#icefin-theme-root .icefin-pivot-header')].find((e) => (e.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase() === t); if (h) h.click(); return !!h; })()" % json.dumps(pv.group(1)))
+            got = self.screen_key(self.settle(prev=got, t=2.0))
         if got != k and (self.screens.get(base(got), {}).get("sub") or {}).get("rkey") == k:
             # still in a level the theme keeps on this route (Back did not leave it, the hash is the same): a fresh load
             self.tr("reloading to leave", got)
@@ -893,8 +947,16 @@ class Walker:
         sub = here["sub"]
         ok = self.go_here(sub["parent"]) and self.position(sub["parent"], sub["opener"])
         if ok:
+            pre = self.ckeys()
             self.drv.activate()
-            ok = self.screen_key(self.settle(prev=sub["parent"])) == k
+            s = self.settle(prev=sub["parent"])
+            ok = self.screen_key(s) == k
+            # (QA Tide 2) a level opened that the walker doesn't recognise, on the parent's route: close it, or a theme that
+            # remembers its levels (by route) reopens it on the next visit and the walker believes it is on the root
+            if not ok and sub["parent"].startswith(s["route"]) and self.ckeys() != pre:
+                self.tr("closing the level that did not match", k)
+                self.drv.back(0)
+                self.settle(t=2.0)
         if not ok:
             here["unreachable"] = True
             self.tr("sub-screen unreachable", k)
@@ -1158,6 +1220,12 @@ class Walker:
         if not self.js(f"window.inputWalk.off({json.dumps(before['key'])})"):
             return
         v = self.js(f"window.inputWalk.vis({json.dumps(before['key'])})")
+        if v is False:
+            # the unfocused look may still be mid-transition: look again 200 ms later before judging it the same (QA Mosaic 1)
+            time.sleep(0.2)
+            if not self.js(f"window.inputWalk.off({json.dumps(before['key'])})"):
+                return
+            v = self.js(f"window.inputWalk.vis({json.dumps(before['key'])})")
         if v is None:
             return
         el = self.element(k, before)
@@ -1258,10 +1326,18 @@ class Walker:
             self.tr("  at", (f2 or {}).get("key", "nothing")[-48:], "" if moved_to[0] else "(did not move)", "(seen)" if f2 and f2["key"] in seen else "")
             if not f2 or f2["key"] in seen:
                 return None
+            # (QA Tide 2) a move that opens a level in place (a theme's right opens the focused entry): the new focus is not
+            # among the first view's controls and under half of those remain. An opener, not a control: Back, not taken
+            if first_view and f2["key"] not in first_view and len(self.ckeys() & first_view) * 2 < len(first_view) \
+                    and self.js("!!(window.icefinTheme && window.icefinTheme._engine && window.icefinTheme._engine.hasScreen())"):     # themed screens only: stock lists scroll
+                # logged only for now: on a theme whose rows scroll with focus (tiles, carousels) the same test may read a
+                # scroll as an opener; the trace shows whether it would misfire before it acts (QA Tide 2)
+                self.tr("  moving", d, "may have opened a level in place (logged, not acted on)")
             take(f2, path)
             return f2
 
         moved_to = [False]
+        first_view = set()
 
         def climb():
             # up to the top, over controls already seen too (each snake starts at the top: a bar of categories over a
@@ -1280,6 +1356,9 @@ class Walker:
             here["first_key"] = f["key"]
         if f:
             take(f, path)
+        # the first view's controls are elements before the snake runs off it (a pivot's edge): check_unreached tries the
+        # ones the snake missed (QA Mosaic 1)
+        first_view.update(c["key"] for c in (self.enum(k) or []))
         climb()
 
         cut = [False]
@@ -1289,17 +1368,23 @@ class Walker:
                 if self.late():
                     cut[0] = True
                     break
-                moved, over = False, 0
-                for _ in range(14):
-                    if step(horiz):
-                        moved, over = True, 0
-                        continue
-                    # over up to 3 controls already taken: a bar or row the other snake crossed may go on past them
-                    # (the second snake starts where the first left the screen's state, not where the first began)
-                    if moved_to[0] and over < 3:
-                        over += 1
-                        continue
-                    break
+                # a row entered mid-row (a tab row the Down press landed in) is swept to its near edge first, so both ways
+                # are walked (QA Baseline 1)
+                moved = False
+                for h in ("left" if horiz == "right" else "right", horiz):
+                    over = 0
+                    for _ in range(14):
+                        if step(h):
+                            moved, over = True, 0
+                            continue
+                        # over up to 3 controls already taken: a bar or row the other snake crossed may go on past them
+                        # (the second snake starts where the first left the screen's state, not where the first began)
+                        if moved_to[0] and over < 3:
+                            over += 1
+                            continue
+                        break
+                    if self.late():
+                        break
                 if not step("down") and not moved:
                     break
                 horiz = "left" if horiz == "right" else "right"
@@ -1584,9 +1669,11 @@ class Walker:
                 self.video(pk)
         elif outcome == "dialog":   # a dialog, sheet, menu or keyboard
             self.add_screen(pk, s, here["reached_by"] + [label], queue=False)
+            self.dlg_left = False
             if not self.dialog_done(pk) and not self.late():
                 cc = dict(c)
-                reopen = lambda: self.position(k, cc) and (self.drv.activate(), self.settle(prev=k))[1] and self.screen_key(self.screen()) == pk
+                # (QA Baseline 1) a panel still open is closed by Back first: Enter on the opener would press a row in it
+                reopen = lambda: self.close_dialog() and self.position(k, cc) and (self.drv.activate(), self.settle(prev=k))[1] and self.screen_key(self.screen()) == pk
                 self.dialog_pass(k, pk, reopen, here["reached_by"] + [label])
         # a control that is itself a way back: the level it reaches is a level up, not one opened, so no Back check (QA Tide 1)
         if outcome in ("screen", "sub") and re.match(r"^\s*(back to |go back)", label, re.I):
@@ -1606,8 +1693,13 @@ class Walker:
             self.finding("broken-back", k, label, f"Back from {pk} ended on {kk} (want {k})")
             self.restore(k, c.get("path", []))
             return
+        # a dialog one of its own rows closed or left (go_here put the walker back) was not closed by Back: no back-focus verdict (QA Baseline 1)
+        if outcome == "dialog" and getattr(self, "dlg_left", False):
+            el["back_ok"] = None
+            self.tr("the dialog was closed by its own row; no back-focus check")
+            return
         # the mouse: judged only where hovering focused the control (else nothing tells us what Back should focus)
-        judged = not self.mouse or bool(pf and pf["key"] == c["key"])
+        judged =not self.mouse or bool(pf and pf["key"] == c["key"])
         f = self.stable_focus() if judged else None
         want = pf["key"] if (pf and judged) else None
         if want is not None:
@@ -1671,7 +1763,10 @@ class Walker:
                 self.settle(t=2.0)
                 return "root", kk
             if opened.split(" ")[0].startswith("/video"):
-                self.stop_play()
+                # stopping closed the player and the page is back at k: a Back now would leave it (QA Baseline 1)
+                if self.stop_play() and self.screen_key(self.screen()) == k:
+                    self.tr("the player closed itself on stop; no Back check")
+                    return "root", k
             self.drv.back(i)
             kk = self.screen_key(self.settle(prev=opened, t=3.0))
             # a dialog or sheet closing animates: wait until what is on screen holds for 400 ms before deciding to press
@@ -1827,7 +1922,9 @@ class Walker:
                     self.finding("dead-control", dk, c["label"], "no screen, dialog or visible change", plugin=c.get("plugin", False))
             elif pk == k:
                 el["outcome"] = "closes"
+                self.dlg_left = True
             else:
+                self.dlg_left = True
                 el["outcome"] = f"screen: {pk}"
                 self.add_screen(pk, s, via + [c["label"]])
                 if s["route"].startswith("/video"):
@@ -1838,6 +1935,9 @@ class Walker:
             if status == "fail":
                 self.finding("broken-back", k, dk, f"Back from the dialog '{title}' ended on {kk}")
                 self.go_here(k)
+
+    SEED_TYPES = {"Series": r"\b(shows|series)\b", "MusicAlbum": r"\balbums?\b", "MusicArtist": r"\bartists?\b",
+                  "Audio": r"\bsongs?\b", "Season": r"\bseasons?\b", "Episode": r"\bepisodes?\b"}
 
     # -------------------------------------------------------------- one screen
     def explore(self, k, limit):
@@ -1855,9 +1955,14 @@ class Walker:
         # categories shares one kind, and each opens its own screen)
         names = {n.strip().lower() for n in self.present.get("names", [])}
 
+        # an entry that leads to an item type the server has and no screen shows yet is a seed too (QA Tide 2): a column's
+        # entries share one kind, so "All shows" waited behind empty ones for round two
+        lack = [rx for t, rx in self.SEED_TYPES.items() if t in self.present.get("types", []) and not any(f"[{t}]" in s for s in self.screens)]
+
         def seed(c):
             lab = (c.get("label") or "").strip().lower()
-            return lab in names or lab.split(",")[0].strip() in names or lab == "search"
+            head = lab.split(",")[0].strip()
+            return lab in names or head in names or lab == "search" or any(re.search(rx, head) for rx in lack)
         for _pass in range(4):
             if self.mouse and _pass:
                 self.adopt(k, self.enum(k))     # (QA Orbit 1, W-A) controls that showed late since the last pass
